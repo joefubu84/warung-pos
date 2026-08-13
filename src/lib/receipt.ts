@@ -187,8 +187,15 @@ export function generateReceiptHTML(
   <table class="totals-table">
     ${order.delivery_fee && Number(order.delivery_fee) > 0 ? `
     <tr>
-      <td>Delivery Fee</td>
+      <td>Subtotal</td>
+      <td class="text-right">RM ${(order.total_amount - Number(order.delivery_fee)).toFixed(2)}</td>
+    </tr>
+    <tr>
+      <td>Delivery</td>
       <td class="text-right">RM ${Number(order.delivery_fee).toFixed(2)}</td>
+    </tr>
+    <tr>
+      <td colspan="2"><div class="divider" style="margin: 5px 0;"></div></td>
     </tr>
     ` : ''}
     <tr class="grand-total">
@@ -332,7 +339,7 @@ export async function shareReceiptWhatsApp(
 
     // 4. Create Pre-filled Message Summary
     const typeLabel = order.type === 'delivery' ? 'Delivery' : order.type === 'dine_in' ? 'Dine-In' : 'Takeaway';
-    const deliveryFeeStr = order.type === 'delivery' && order.delivery_fee ? `Delivery Fee: RM ${Number(order.delivery_fee).toFixed(2)}\n` : '';
+    const deliveryFeeStr = order.type === 'delivery' && order.delivery_fee ? `Subtotal: RM ${(order.total_amount - Number(order.delivery_fee)).toFixed(2)}\nDelivery: RM ${Number(order.delivery_fee).toFixed(2)}\n────────────────────\n` : '';
     const message = `*Order Summary*\nStore: ${store.name}\nOrder ID: #${order.id.split('-')[0]!.toUpperCase()}\nDate: ${dateStr} ${timeStr}\nType: ${typeLabel}\n\n${deliveryFeeStr}*Total: RM ${order.total_amount.toFixed(2)}*\n\nThank you for your visit!`;
 
     // 5. Try Native Web Share API first (Perfect for Mobile)
