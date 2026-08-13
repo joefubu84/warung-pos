@@ -338,7 +338,6 @@ export type Database = {
           table_id: string | null
           total_amount: number
           type: Database["public"]["Enums"]["order_type"]
-          delivery_service?: "jnj" | "grabfood" | "shopeefood" | "custom"
         }
         Insert: {
           created_at?: string
@@ -350,7 +349,6 @@ export type Database = {
           table_id?: string | null
           total_amount?: number
           type: Database["public"]["Enums"]["order_type"]
-          delivery_service?: "jnj" | "grabfood" | "shopeefood" | "custom"
         }
         Update: {
           created_at?: string
@@ -362,7 +360,6 @@ export type Database = {
           table_id?: string | null
           total_amount?: number
           type?: Database["public"]["Enums"]["order_type"]
-          delivery_service?: "jnj" | "grabfood" | "shopeefood" | "custom"
         }
         Relationships: [
           {
@@ -431,9 +428,6 @@ export type Database = {
           print_on_status: string[] | null
           printer_name: string | null
           store_id: string
-          sound_choice: string | null
-          sound_file_url: string | null
-          badge_colors: Json | null
         }
         Insert: {
           auto_print?: boolean | null
@@ -442,9 +436,6 @@ export type Database = {
           print_on_status?: string[] | null
           printer_name?: string | null
           store_id: string
-          sound_choice?: string | null
-          sound_file_url?: string | null
-          badge_colors?: Json | null
         }
         Update: {
           auto_print?: boolean | null
@@ -453,9 +444,6 @@ export type Database = {
           print_on_status?: string[] | null
           printer_name?: string | null
           store_id?: string
-          sound_choice?: string | null
-          sound_file_url?: string | null
-          badge_colors?: Json | null
         }
         Relationships: [
           {
