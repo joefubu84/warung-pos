@@ -358,7 +358,10 @@ function KitchenPage() {
                             <span className="font-bold">x{item.quantity}</span>
                           </div>
                           {item.notes && expandedNotes[order.id] && (
-                            <div className="text-xs text-slate-300 italic pl-4 mt-1 border-l-2 border-slate-500 ml-1">
+                            <div 
+                              className="text-xs text-black italic py-2 px-3 mt-2 rounded border border-yellow-400 ml-1" 
+                              style={{ backgroundColor: '#FEF08A' }}
+                            >
                               ✏️ {item.notes}
                             </div>
                           )}
