@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect, useRef } from 'react';
 import { requireStaffAuth } from '@/lib/auth-guard';
+import { playKitchenSound } from '@/lib/sounds';
 
 export const Route = createFileRoute('/kitchen')({
   ssr: false,
@@ -21,12 +22,14 @@ interface OrderItem {
   menu_items: {
     name: string;
   };
+  notes?: string;
 }
 
 interface Order {
   id: string;
   status: OrderStatus;
-  type: 'dine_in' | 'takeaway';
+  type: 'dine_in' | 'takeaway' | 'delivery';
+  delivery_service?: 'jnj' | 'grabfood' | 'shopeefood' | 'custom' | null;
   customer_name: string | null;
   table_id: string | null;
   tables: {
@@ -37,70 +40,73 @@ interface Order {
 }
 
 function KitchenPage() {
+  const { storeId } = Route.useRouteContext();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
+  const [printerSettings, setPrinterSettings] = useState<any>(null);
+  const settingsRef = useRef<any>(null);
+
   // Real-time highlight states
   const [highlightedOrders, setHighlightedOrders] = useState<Record<string, { type: 'new' | 'updated', timestamp: number }>>({});
   const [highlightedItems, setHighlightedItems] = useState<Record<string, number>>({});
+  const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
+  
   const ordersRef = useRef<Order[]>([]);
+  const isInitialLoad = useRef(true);
 
-  useEffect(() => {
-    // 10-second highlight cleanup timer
-    const timer = setInterval(() => {
-      const now = Date.now();
-      
-      setHighlightedOrders(prev => {
-        const next = { ...prev };
-        let changed = false;
-        for (const [id, data] of Object.entries(next)) {
-          if (now - data.timestamp > 10000) {
-            delete next[id];
-            changed = true;
-          }
-        }
-        return changed ? next : prev;
-      });
+  const fetchPrinterSettings = async () => {
+    const { data } = await supabase
+      .from('printer_settings')
+      .select('*')
+      .eq('store_id', storeId)
+      .maybeSingle();
+    if (data) {
+      setPrinterSettings(data);
+      settingsRef.current = data;
+    }
+  };
 
+  const acknowledgeOrder = (orderId: string) => {
+    setHighlightedOrders(prev => {
+      const next = { ...prev };
+      delete next[orderId];
+      return next;
+    });
+    
+    const order = ordersRef.current.find(o => o.id === orderId);
+    if (order) {
       setHighlightedItems(prev => {
         const next = { ...prev };
-        let changed = false;
-        for (const [id, timestamp] of Object.entries(next)) {
-          if (now - timestamp > 10000) {
-            delete next[id];
-            changed = true;
-          }
-        }
-        return changed ? next : prev;
+        order.order_items.forEach(item => {
+          delete next[item.id];
+        });
+        return next;
       });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, []);
+    }
+  };
 
   useEffect(() => {
     console.log('Fetching initial orders...');
+    fetchPrinterSettings();
     fetchActiveOrders();
 
-    console.log('Setting up 5-second polling...');
     const pollInterval = setInterval(() => {
-      fetchActiveOrders();
+      fetchActiveOrders(true);
     }, 5000);
 
-    return () => {
-      console.log('Clearing polling interval');
-      clearInterval(pollInterval);
-    };
+    return () => clearInterval(pollInterval);
   }, []);
 
-  const fetchActiveOrders = async () => {
-    setIsLoading(true);
+  const fetchActiveOrders = async (isSilent = false) => {
+    if (!isSilent) setIsLoading(true);
     const { data, error } = await supabase
       .from('orders')
       .select(`
         id,
         status,
         type,
+        delivery_service,
         customer_name,
         table_id,
         created_at,
@@ -110,6 +116,7 @@ function KitchenPage() {
           quantity,
           fulfillment_type,
           container_size,
+          notes,
           menu_items (name)
         )
       `)
@@ -121,22 +128,22 @@ function KitchenPage() {
     } else if (data) {
       const newOrdersData = data as unknown as Order[];
       const now = Date.now();
-      let hasChanges = false;
+      let hasNewOrder = false;
+      let hasUpdatedOrder = false;
       const newHighlights: Record<string, any> = {};
       const newItemHighlights: Record<string, number> = {};
       
-      // Only track highlights if this is NOT the initial load
-      if (ordersRef.current.length > 0) {
+      if (!isInitialLoad.current) {
         newOrdersData.forEach(newOrder => {
           const oldOrder = ordersRef.current.find(o => o.id === newOrder.id);
+          
           if (!oldOrder) {
-            // Completely new order
             newHighlights[newOrder.id] = { type: 'new', timestamp: now };
-            hasChanges = true;
-          } else if (newOrder.order_items.length > oldOrder.order_items.length) {
-            // Existing order was updated (items added)
+            hasNewOrder = true;
+          } 
+          else if (newOrder.order_items.length > oldOrder.order_items.length) {
             newHighlights[newOrder.id] = { type: 'updated', timestamp: now };
-            hasChanges = true;
+            hasUpdatedOrder = true;
             
             const oldItemIds = new Set(oldOrder.order_items.map(i => i.id));
             newOrder.order_items.forEach(item => {
@@ -148,14 +155,28 @@ function KitchenPage() {
         });
       }
 
+      const hasChanges = hasNewOrder || hasUpdatedOrder;
+
       if (hasChanges) {
         setHighlightedOrders(prev => ({ ...prev, ...newHighlights }));
         setHighlightedItems(prev => ({ ...prev, ...newItemHighlights }));
+        
+        const settings = settingsRef.current;
+        if (settings && settings.sound_choice) {
+          playKitchenSound(settings.sound_choice, settings.sound_file_url);
+        } else {
+          playKitchenSound('kitchen_bell');
+        }
       }
       
-      ordersRef.current = newOrdersData;
-      setOrders(newOrdersData);
-      console.log('State updated, total orders:', newOrdersData.length);
+      const hasContentChanged = JSON.stringify(newOrdersData) !== JSON.stringify(ordersRef.current);
+      
+      if (hasContentChanged || hasChanges) {
+        ordersRef.current = newOrdersData;
+        setOrders(newOrdersData);
+      }
+      
+      isInitialLoad.current = false;
     }
     setIsLoading(false);
   };
@@ -167,7 +188,7 @@ function KitchenPage() {
     } else if (currentStatus === 'preparing') {
       nextStatus = 'ready';
     } else {
-      return; // Already ready or further
+      return; 
     }
 
     const { error } = await supabase
@@ -185,6 +206,27 @@ function KitchenPage() {
 
   if (isLoading) return <div className="p-8">Loading Kitchen...</div>;
 
+  const badgeColors = printerSettings?.badge_colors || {
+    dineIn: '#3B82F6',
+    takeaway: '#F97316',
+    delivery: '#8B5CF6',
+    specialRequests: '#EC4899'
+  };
+
+  const deliveryServiceColors: Record<string, string> = {
+    'jnj': '#22C55E',
+    'grabfood': '#EF4444',
+    'shopeefood': '#FBBF24',
+    'custom': '#6B7280'
+  };
+  
+  const deliveryServiceNames: Record<string, string> = {
+    'jnj': 'J&J Delivery',
+    'grabfood': 'GrabFood',
+    'shopeefood': 'ShopeeFood',
+    'custom': 'Custom Delivery'
+  };
+
   return (
     <div className="p-8 font-sans min-h-screen bg-slate-900 text-slate-100">
       <h1 className="text-2xl font-bold mb-6 text-white">Kitchen Display</h1>
@@ -195,6 +237,7 @@ function KitchenPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {orders.map((order) => {
             const highlight = highlightedOrders[order.id];
+            const hasNotes = order.order_items.some(item => item.notes);
             let cardClasses = "border-2 p-4 rounded shadow-sm flex flex-col justify-between transition-colors duration-1000 ";
             
             if (highlight?.type === 'new') {
@@ -210,38 +253,77 @@ function KitchenPage() {
                 <div>
                   <div className="flex flex-col gap-1 mb-2">
                     <div className="flex justify-between items-start">
-                      <div className="flex flex-col">
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${
-                          order.type === 'dine_in' ? 'text-blue-400' : 'text-purple-400'
-                        }`}>
-                          {order.type === 'dine_in' ? 'Dine-in' : 'Takeaway'}
-                        </span>
-                        <h2 className="text-lg font-bold leading-tight flex items-center gap-2 text-white">
-                          {order.type === 'dine_in' 
-                            ? `Table ${order.tables?.table_number || '?'}` 
-                            : (order.customer_name || 'Anonymous Customer')}
+                      <div className="flex flex-col gap-2">
+                        <div className="flex gap-2 items-center flex-wrap">
+                          <span 
+                            className="text-[10px] font-bold uppercase tracking-wider text-white px-2 py-0.5 rounded-full"
+                            style={{ 
+                              backgroundColor: order.type === 'dine_in' ? badgeColors.dineIn : 
+                                               order.type === 'takeaway' ? badgeColors.takeaway : 
+                                               badgeColors.delivery 
+                            }}
+                          >
+                            {order.type === 'dine_in' ? 'DINE-IN' : order.type === 'takeaway' ? 'TAKEAWAY' : 'DELIVERY'}
+                          </span>
                           
+                          {order.type === 'delivery' && order.delivery_service && (
+                            <span 
+                              className="text-[10px] font-bold uppercase tracking-wider text-white px-2 py-0.5 rounded-full"
+                              style={{ backgroundColor: deliveryServiceColors[order.delivery_service] || deliveryServiceColors.custom }}
+                            >
+                              🚚 {deliveryServiceNames[order.delivery_service] || 'DELIVERY'}
+                            </span>
+                          )}
+
                           {highlight?.type === 'new' && (
-                            <span className="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            <span className="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wider animate-bounce">
                               🆕 NEW ORDER
                             </span>
                           )}
                           {highlight?.type === 'updated' && (
-                            <span className="text-[10px] bg-yellow-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            <span className="text-[10px] bg-yellow-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wider animate-bounce">
                               🔔 ORDER UPDATED
                             </span>
                           )}
+                          
+                          {hasNotes && (
+                            <button 
+                              onClick={() => setExpandedNotes(prev => ({ ...prev, [order.id]: !prev[order.id] }))}
+                              style={{ backgroundColor: badgeColors.specialRequests || '#EC4899' }}
+                              className="text-[10px] text-white px-2 py-0.5 rounded-full uppercase tracking-wider hover:opacity-80 transition-opacity"
+                            >
+                              📌 SPECIAL REQUESTS {expandedNotes[order.id] ? '▲' : '▼'}
+                            </button>
+                          )}
+                        </div>
+                        
+                        <h2 className="text-lg font-bold leading-tight flex items-center gap-2 text-white">
+                          {order.type === 'dine_in' 
+                            ? `Table ${order.tables?.table_number || '?'}` 
+                            : (order.customer_name || 'Anonymous Customer')}
                         </h2>
                       </div>
-                      <span className={`px-2 py-1 text-[10px] font-bold rounded uppercase ${
-                        order.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-                      }`}>
-                        {order.status}
-                      </span>
+                      
+                      <div className="flex flex-col gap-2 items-end">
+                        <span className={`px-2 py-1 text-[10px] font-bold rounded uppercase ${
+                          order.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                        }`}>
+                          {order.status}
+                        </span>
+                        
+                        {highlight && (
+                          <button 
+                            onClick={() => acknowledgeOrder(order.id)}
+                            className="bg-white text-black text-[10px] font-bold px-3 py-1 rounded shadow hover:bg-gray-200 transition-colors"
+                          >
+                            ✅ ACKNOWLEDGE
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
-                  <div className="space-y-2 mb-4">
+                  <div className="space-y-2 mb-4 mt-4">
                     {(() => {
                       if (highlight?.type === 'updated') {
                         const newCount = order.order_items.filter(i => highlightedItems[i.id]).length;
@@ -259,27 +341,34 @@ function KitchenPage() {
                     {order.order_items.map((item) => {
                       const isNewItem = highlightedItems[item.id];
                       return (
-                        <div key={item.id} className={`flex justify-between items-center text-sm p-1 rounded transition-colors duration-1000 ${isNewItem ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold' : ''}`}>
-                          <span className="flex items-center gap-2">
-                            {item.menu_items.name}
-                            {item.fulfillment_type === 'dine_in' ? (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 border border-slate-600">
-                                Eat here
-                              </span>
-                            ) : (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30 font-bold uppercase">
-                                TAKEAWAY - PACK {item.container_size ? `(${item.container_size.charAt(0).toUpperCase() + item.container_size.slice(1)})` : ''}
-                              </span>
-                            )}
-                          </span>
-                          <span className="font-bold">x{item.quantity}</span>
+                        <div key={item.id} className={`flex flex-col p-1 rounded transition-colors duration-1000 ${isNewItem ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold' : ''}`}>
+                          <div className="flex justify-between items-center text-sm">
+                            <span className="flex items-center gap-2">
+                              {item.menu_items.name}
+                              {item.fulfillment_type === 'dine_in' ? (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 border border-slate-600">
+                                  Eat here
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30 font-bold uppercase">
+                                  TAKEAWAY - PACK {item.container_size ? `(${item.container_size.charAt(0).toUpperCase() + item.container_size.slice(1)})` : ''}
+                                </span>
+                              )}
+                            </span>
+                            <span className="font-bold">x{item.quantity}</span>
+                          </div>
+                          {item.notes && expandedNotes[order.id] && (
+                            <div className="text-xs text-slate-300 italic pl-4 mt-1 border-l-2 border-slate-500 ml-1">
+                              ✏️ {item.notes}
+                            </div>
+                          )}
                         </div>
                       );
                     })}
                   </div>
                 </div>
 
-                <div className="border-t border-slate-700 pt-4">
+                <div className="border-t border-slate-700 pt-4 mt-4">
                   <p className="text-xs text-slate-400 mb-2">
                     Ordered: {new Date(order.created_at).toLocaleTimeString()}
                   </p>

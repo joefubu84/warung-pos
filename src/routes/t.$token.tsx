@@ -31,6 +31,7 @@ interface CartItem {
   fulfillmentType: 'dine_in' | 'takeaway';
   containerSize?: 'small' | 'large' | null;
   containerCharge?: number;
+  notes?: string;
 }
 
 function TableQRPage() {
@@ -135,12 +136,17 @@ function TableQRPage() {
       quantity: qty,
       fulfillmentType: globalFulfillmentType,
       containerSize: globalFulfillmentType === 'takeaway' ? globalContainerSize : null,
-      containerCharge: globalFulfillmentType === 'takeaway' ? (globalContainerSize === 'large' ? 1 : 0) : 0
+      containerCharge: globalFulfillmentType === 'takeaway' ? (globalContainerSize === 'large' ? 1 : 0) : 0,
+      notes: ''
     };
     setCart([...cart, newItem]);
     // Reset individual item qty field after adding? User didn't specify, but often good. 
     // Let's keep it as is or reset to 1.
     handleQtyChange(item.id, 1);
+  };
+
+  const updateCartItemNotes = (cartItemId: string, notes: string) => {
+    setCart(cart.map(item => item.id === cartItemId ? { ...item, notes: notes.slice(0, 100) } : item));
   };
 
   const removeFromCart = (cartItemId: string) => {
@@ -207,7 +213,7 @@ function TableQRPage() {
         fulfillment_type: item.fulfillmentType,
         container_size: item.containerSize || null,
         container_charge: item.containerCharge || 0,
-        notes: ''
+        notes: item.notes || ''
       }));
 
       const { error: itemsError } = await supabase
@@ -244,7 +250,7 @@ function TableQRPage() {
         fulfillment_type: item.fulfillmentType,
         container_size: item.containerSize || null,
         container_charge: item.containerCharge || 0,
-        notes: ''
+        notes: item.notes || ''
       }));
 
       const { error: itemsError } = await supabase
@@ -422,22 +428,35 @@ function TableQRPage() {
               <div className="space-y-4">
                 <ul className="divide-y divide-gray-200">
                   {cart.map((item) => (
-                    <li key={item.id} className="py-3 flex justify-between items-start">
-                      <div>
-                        <div className="font-medium text-sm">{item.name}</div>
-                        <div className="text-xs text-gray-500">
-                          {item.quantity} x RM{(item.price + (item.containerCharge || 0)).toFixed(2)}
-                          {item.fulfillmentType === 'takeaway' && ` (Pack - ${item.containerSize})`}
+                    <li key={item.id} className="py-3 flex flex-col gap-2 border-b last:border-b-0 border-gray-100">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="font-medium text-sm">{item.name}</div>
+                          <div className="text-xs text-gray-500">
+                            {item.quantity} x RM{(item.price + (item.containerCharge || 0)).toFixed(2)}
+                            {item.fulfillmentType === 'takeaway' && ` (Pack - ${item.containerSize})`}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-sm font-semibold">RM{((item.price + (item.containerCharge || 0)) * item.quantity).toFixed(2)}</div>
+                          <button 
+                            onClick={() => removeFromCart(item.id)}
+                            className="text-red-500 text-xs mt-1 hover:underline"
+                          >
+                            Remove
+                          </button>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="text-sm font-semibold">RM{((item.price + (item.containerCharge || 0)) * item.quantity).toFixed(2)}</div>
-                        <button 
-                          onClick={() => removeFromCart(item.id)}
-                          className="text-red-500 text-xs mt-1 hover:underline"
-                        >
-                          Remove
-                        </button>
+                      <div className="mt-1 w-full max-w-sm">
+                        <label className="text-[10px] font-semibold text-gray-500 uppercase">Special Requests:</label>
+                        <input
+                          type="text"
+                          value={item.notes || ''}
+                          onChange={(e) => updateCartItemNotes(item.id, e.target.value)}
+                          placeholder="Special Requests / Max 100 characters"
+                          className="w-full text-xs border rounded p-1.5 mt-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          maxLength={100}
+                        />
                       </div>
                     </li>
                   ))}

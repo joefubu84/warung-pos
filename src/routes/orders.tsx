@@ -90,6 +90,7 @@ interface CartItem {
   fulfillmentType: 'dine_in' | 'takeaway';
   containerSize?: 'small' | 'large' | null;
   containerCharge?: number;
+  notes?: string;
 }
 
 function OrdersPage() {
@@ -216,8 +217,9 @@ function OrdersPage() {
         if (original) {
           const qtyChanged = original.quantity !== current.quantity;
           const typeChanged = original.fulfillment_type !== current.fulfillment_type;
+          const notesChanged = (original.notes || '') !== (current.notes || '');
           
-          if (qtyChanged || typeChanged) {
+          if (qtyChanged || typeChanged || notesChanged) {
             logs.push({
               order_id: editingOrder.id,
               edited_by: user.id,
@@ -226,14 +228,16 @@ function OrdersPage() {
                 item_name: current.menu_items?.name,
                 changes: {
                   ...(qtyChanged ? { quantity: { old: original.quantity, new: current.quantity } } : {}),
-                  ...(typeChanged ? { fulfillment_type: { old: original.fulfillment_type, new: current.fulfillment_type } } : {})
+                  ...(typeChanged ? { fulfillment_type: { old: original.fulfillment_type, new: current.fulfillment_type } } : {}),
+                  ...(notesChanged ? { notes: { old: original.notes, new: current.notes } } : {})
                 }
               },
               reason: editReason
             });
             const { error: upErr } = await supabase.from('order_items').update({
               quantity: current.quantity,
-              fulfillment_type: current.fulfillment_type
+              fulfillment_type: current.fulfillment_type,
+              notes: current.notes
             }).eq('id', current.id);
             if (upErr) throw upErr;
           }
@@ -335,12 +339,17 @@ function OrdersPage() {
       quantity: quantity,
       fulfillmentType: itemFulfillmentType,
       containerSize: itemFulfillmentType === 'takeaway' ? containerSize : null,
-      containerCharge: itemFulfillmentType === 'takeaway' ? (containerSize === 'large' ? 1 : 0) : 0
+      containerCharge: itemFulfillmentType === 'takeaway' ? (containerSize === 'large' ? 1 : 0) : 0,
+      notes: ''
     };
 
     setCart([...cart, newItem]);
     setSelectedMenuItemId('');
     setQuantity(1);
+  };
+
+  const updateCartItemNotes = (cartItemId: string, notes: string) => {
+    setCart(cart.map(item => item.id === cartItemId ? { ...item, notes: notes.slice(0, 100) } : item));
   };
 
   const removeFromCart = (cartItemId: string) => {
@@ -396,7 +405,7 @@ function OrdersPage() {
         fulfillment_type: item.fulfillmentType,
         container_size: item.containerSize || null,
         container_charge: item.containerCharge || 0,
-        notes: ''
+        notes: item.notes || ''
       }));
 
       const { error: itemsError } = await supabase
@@ -528,16 +537,28 @@ function OrdersPage() {
             ) : (
               <div className="space-y-1">
                 {cart.map(item => (
-                  <div key={item.id} className="flex justify-between items-center bg-gray-50 p-2 text-sm">
-                    <span>
-                      {item.name} x {item.quantity} ({item.fulfillmentType === 'dine_in' ? 'Eat here' : `Takeaway - ${item.containerSize}`}) = RM{((item.price + (item.containerCharge || 0)) * item.quantity).toFixed(2)}
-                    </span>
-                    <button 
-                      onClick={() => removeFromCart(item.id)}
-                      className="text-red-500 font-bold ml-4"
-                    >
-                      [Remove]
-                    </button>
+                  <div key={item.id} className="flex flex-col bg-gray-50 p-2 text-sm border-b">
+                    <div className="flex justify-between items-start">
+                      <span>
+                        {item.name} x {item.quantity} ({item.fulfillmentType === 'dine_in' ? 'Eat here' : `Takeaway - ${item.containerSize}`}) = RM{((item.price + (item.containerCharge || 0)) * item.quantity).toFixed(2)}
+                      </span>
+                      <button 
+                        onClick={() => removeFromCart(item.id)}
+                        className="text-red-500 font-bold ml-4"
+                      >
+                        [Remove]
+                      </button>
+                    </div>
+                    <div className="mt-1 w-full max-w-sm">
+                      <input
+                        type="text"
+                        value={item.notes || ''}
+                        onChange={(e) => updateCartItemNotes(item.id, e.target.value)}
+                        placeholder="Special Requests (e.g., less spicy)"
+                        className="w-full text-xs border rounded p-1"
+                        maxLength={100}
+                      />
+                    </div>
                   </div>
                 ))}
                 <div className="font-bold border-t mt-2 pt-2 flex justify-between">
@@ -610,7 +631,8 @@ function OrdersPage() {
                               price: i.price_at_order,
                               quantity: i.quantity,
                               container_size: (i as any).container_size,
-                              container_charge: (i as any).container_charge
+                              container_charge: (i as any).container_charge,
+                              notes: (i as any).notes
                             }));
 
                             const html = generateReceiptHTML(order as any, store, "Staff", itemsForPrint);
@@ -640,7 +662,8 @@ function OrdersPage() {
                               price: i.price_at_order,
                               quantity: i.quantity,
                               container_size: (i as any).container_size,
-                              container_charge: (i as any).container_charge
+                              container_charge: (i as any).container_charge,
+                              notes: (i as any).notes
                             }));
 
                             shareReceiptWhatsApp(order as any, store, "Staff", itemsForPrint);
@@ -772,6 +795,26 @@ function OrdersPage() {
                         }
                       }}
                       className="w-20 h-8"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px]">Notes</label>
+                    <Input 
+                      type="text"
+                      value={item.notes || ''}
+                      onChange={(e) => {
+                        const newItems = [...editItems];
+                        const itemToUpdate = newItems[index];
+                        if (itemToUpdate) {
+                          newItems[index] = {
+                            ...itemToUpdate,
+                            notes: e.target.value.slice(0, 100)
+                          };
+                          setEditItems(newItems);
+                        }
+                      }}
+                      className="w-32 h-8 text-xs"
+                      placeholder="Requests..."
                     />
                   </div>
                   <div>

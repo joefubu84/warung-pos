@@ -8,9 +8,9 @@ export interface Store {
 export interface OrderItem {
   name: string;
   price: number;
-  quantity: number;
   container_size?: string | null;
   container_charge?: number;
+  notes?: string | null;
 }
 
 export interface Order {
@@ -50,6 +50,15 @@ export function generateReceiptHTML(
         <td class="item-total">RM ${itemTotal}</td>
       </tr>
     `;
+
+    if (item.notes) {
+      itemHtml += `
+        <tr>
+          <td class="item-qty"></td>
+          <td class="item-price indent" colspan="2" style="font-style: italic;">&rarr; ${item.notes}</td>
+        </tr>
+      `;
+    }
 
     if (item.container_charge && item.container_charge > 0) {
       const containerTotal = (item.container_charge * item.quantity).toFixed(2);

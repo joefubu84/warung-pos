@@ -73,14 +73,23 @@ function SettingsPage() {
   });
 
   const updatePrinterMutation = useMutation({
-    mutationFn: async (values: { printer_name: string; print_on_status: string[] }) => {
+    mutationFn: async (values: { 
+      printer_name: string; 
+      print_on_status: string[];
+      sound_choice: string;
+      sound_file_url: string | null;
+      badge_colors: Record<string, string>;
+    }) => {
       if (printerSettings) {
         const { error } = await supabase
           .from('printer_settings')
           .update({
             printer_name: values.printer_name,
             print_on_status: values.print_on_status,
-            auto_print: values.print_on_status.length > 0
+            auto_print: values.print_on_status.length > 0,
+            sound_choice: values.sound_choice,
+            sound_file_url: values.sound_file_url,
+            badge_colors: values.badge_colors
           })
           .eq('store_id', storeId);
         if (error) throw error;
@@ -91,20 +100,37 @@ function SettingsPage() {
             store_id: storeId,
             printer_name: values.printer_name,
             print_on_status: values.print_on_status,
-            auto_print: values.print_on_status.length > 0
+            auto_print: values.print_on_status.length > 0,
+            sound_choice: values.sound_choice,
+            sound_file_url: values.sound_file_url,
+            badge_colors: values.badge_colors
           });
         if (error) throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['printer-settings', storeId] });
-      toast.success('Printer settings updated');
+      toast.success('Printer and Kitchen settings updated');
     },
     onError: (error) => toast.error(error.message),
   });
 
   const [storeForm, setStoreForm] = useState({ logo_url: '', phone_number: '', phone_number_2: '' });
-  const [printerForm, setPrinterForm] = useState({ printer_name: '', print_on_status: [] as string[] });
+  const [printerForm, setPrinterForm] = useState({ 
+    printer_name: '', 
+    print_on_status: [] as string[],
+    sound_choice: 'kitchen_bell',
+    sound_file_url: null as string | null,
+    badge_colors: {
+      dineIn: '#3B82F6',
+      takeaway: '#F97316',
+      delivery: '#8B5CF6',
+      specialRequests: '#EC4899'
+    } as Record<string, string>
+  });
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
 
   useEffect(() => {
     if (store) {
@@ -121,6 +147,14 @@ function SettingsPage() {
       setPrinterForm({
         printer_name: printerSettings.printer_name || '',
         print_on_status: printerSettings.print_on_status || [],
+        sound_choice: printerSettings.sound_choice || 'kitchen_bell',
+        sound_file_url: printerSettings.sound_file_url || null,
+        badge_colors: (printerSettings.badge_colors as Record<string, string>) || {
+          dineIn: '#3B82F6',
+          takeaway: '#F97316',
+          delivery: '#8B5CF6',
+          specialRequests: '#EC4899'
+        }
       });
     }
   }, [printerSettings]);
@@ -134,6 +168,72 @@ function SettingsPage() {
         ? prev.print_on_status.filter(s => s !== status)
         : [...prev.print_on_status, status]
     }));
+  };
+
+  const handleTestSound = async () => {
+    const { playKitchenSound } = await import('@/lib/sounds');
+    playKitchenSound(printerForm.sound_choice, printerForm.sound_file_url);
+  };
+
+  const handleStartRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+      
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunks.push(e.data);
+      };
+      
+      recorder.onstop = async () => {
+        const audioBlob = new Blob(chunks, { type: 'audio/webm' });
+        const file = new File([audioBlob], `voice_${Date.now()}.webm`, { type: 'audio/webm' });
+        await handleSoundUpload(file);
+        stream.getTracks().forEach(track => track.stop());
+      };
+      
+      setMediaRecorder(recorder);
+      recorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      toast.error('Microphone access denied or unavailable');
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (mediaRecorder && isRecording) {
+      mediaRecorder.stop();
+      setIsRecording(false);
+      setMediaRecorder(null);
+    }
+  };
+
+  const handleSoundUpload = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      return toast.error('File size must be less than 5MB');
+    }
+    
+    try {
+      const filePath = `${storeId}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from('sounds')
+        .upload(filePath, file, { upsert: true });
+        
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('sounds')
+        .getPublicUrl(filePath);
+        
+      setPrinterForm(prev => ({ 
+        ...prev, 
+        sound_choice: 'custom',
+        sound_file_url: publicUrl 
+      }));
+      toast.success('Sound uploaded successfully');
+    } catch (err: any) {
+      toast.error(`Upload failed: ${err.message}`);
+    }
   };
 
   return (
@@ -232,9 +332,9 @@ function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Printer Settings</CardTitle>
+          <CardTitle>Kitchen Display & Printer Settings</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="printer_name">Printer Name</Label>
             <Input
@@ -262,9 +362,101 @@ function SettingsPage() {
               </div>
             ))}
           </div>
+          
+          <div className="space-y-4 pt-4 border-t">
+            <h3 className="font-bold text-lg">🔊 Kitchen Alert Sounds</h3>
+            
+            <div className="space-y-2">
+              <Label>Select Sound</Label>
+              <div className="grid grid-cols-2 gap-2">
+                {['kitchen_bell', 'beep_alert', 'ding_dong', 'whistle', 'buzzer', 'custom'].map(choice => (
+                  <div key={choice} className="flex items-center space-x-2">
+                    <input 
+                      type="radio" 
+                      id={`sound-${choice}`} 
+                      name="sound_choice" 
+                      value={choice}
+                      checked={printerForm.sound_choice === choice}
+                      onChange={(e) => setPrinterForm(prev => ({ ...prev, sound_choice: e.target.value }))}
+                      className="cursor-pointer"
+                    />
+                    <Label htmlFor={`sound-${choice}`} className="cursor-pointer capitalize">
+                      {choice.replace('_', ' ')}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={handleTestSound}>
+                Test Current Sound
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Upload Custom Sound (MP3/WAV/WebM max 5MB)</Label>
+              <Input
+                type="file"
+                accept="audio/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleSoundUpload(file);
+                }}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Or Record Voice Message</Label>
+              <div>
+                {!isRecording ? (
+                  <Button type="button" variant="outline" onClick={handleStartRecording} className="text-red-500 hover:text-red-700">
+                    🔴 Record Voice
+                  </Button>
+                ) : (
+                  <Button type="button" variant="destructive" onClick={handleStopRecording} className="animate-pulse">
+                    ⏹ Stop Recording
+                  </Button>
+                )}
+              </div>
+            </div>
+            {printerForm.sound_file_url && printerForm.sound_choice === 'custom' && (
+              <p className="text-sm text-green-600">✓ Custom sound ready</p>
+            )}
+          </div>
+
+          <div className="space-y-4 pt-4 border-t">
+            <h3 className="font-bold text-lg">🎨 Badge Colors</h3>
+            <div className="grid grid-cols-2 gap-4">
+              {['dineIn', 'takeaway', 'delivery', 'specialRequests'].map(key => (
+                <div key={key} className="space-y-1">
+                  <Label className="capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</Label>
+                  <div className="flex gap-2">
+                    <input
+                      type="color"
+                      value={printerForm.badge_colors[key]}
+                      onChange={(e) => setPrinterForm(prev => ({
+                        ...prev,
+                        badge_colors: { ...prev.badge_colors, [key]: e.target.value }
+                      }))}
+                      className="h-10 w-10 p-1 rounded border"
+                    />
+                    <Input
+                      value={printerForm.badge_colors[key]}
+                      onChange={(e) => setPrinterForm(prev => ({
+                        ...prev,
+                        badge_colors: { ...prev.badge_colors, [key]: e.target.value }
+                      }))}
+                      className="flex-1 font-mono text-sm"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <Button 
-            className="w-full" 
+            className="w-full mt-4" 
             onClick={() => updatePrinterMutation.mutate(printerForm)}
             disabled={updatePrinterMutation.isPending}
           >
