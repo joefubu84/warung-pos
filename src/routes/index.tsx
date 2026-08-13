@@ -68,6 +68,9 @@ function LandingPage() {
             <Link to="/orders">
               <Button variant="ghost" className="hidden sm:inline-flex rounded-full">Orders</Button>
             </Link>
+            <Link to="/dashboard">
+              <Button variant="ghost" className="hidden sm:inline-flex rounded-full">Dashboard</Button>
+            </Link>
             <Link to="/tables">
               <Button variant="ghost" className="hidden sm:inline-flex rounded-full">Staff Portal</Button>
             </Link>

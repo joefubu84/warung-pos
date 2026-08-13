@@ -105,10 +105,20 @@ const OrderCard = memo(({
                 )}
               </div>
               
-              <h2 className="text-lg font-bold leading-tight flex items-center gap-2 text-white">
+              <h2 className="text-lg font-bold leading-tight flex items-center gap-2 text-white flex-wrap">
                 {order.type === 'dine_in' 
                   ? `Table ${order.tables?.table_number || '?'}` 
                   : (order.customer_name || 'Anonymous Customer')}
+                
+                {order.paid ? (
+                  <span className="text-[10px] bg-green-500/20 text-green-300 px-2 py-0.5 rounded border border-green-500/30 whitespace-nowrap">
+                    ✓ PAID {order.payment_method === 'card' ? '💳' : '💵'}
+                  </span>
+                ) : (
+                  <span className="text-[10px] bg-red-500/20 text-red-300 px-2 py-0.5 rounded border border-red-500/30 whitespace-nowrap">
+                    ❌ NOT PAID
+                  </span>
+                )}
               </h2>
             </div>
             
@@ -270,6 +280,8 @@ function KitchenPage() {
         delivery_service,
         customer_name,
         table_id,
+        paid,
+        payment_method,
         created_at,
         tables (table_number),
         order_edit_logs (id),

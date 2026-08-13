@@ -59,6 +59,8 @@ interface Order {
   created_at: string;
   delivery_service?: string | null;
   delivery_fee?: number;
+  paid?: boolean;
+  payment_method?: string | null;
   payments?: Payment[];
   order_items?: OrderItem[];
 }
@@ -102,6 +104,7 @@ function OrdersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Form & Cart state
   const [customerName, setCustomerName] = useState('');
@@ -119,6 +122,8 @@ function OrdersPage() {
   const [editNotes, setEditNotes] = useState('');
   const [editOrderType, setEditOrderType] = useState<'dine_in' | 'takeaway' | 'delivery'>('dine_in');
   const [editDeliveryFee, setEditDeliveryFee] = useState<number>(0);
+  const [editIsPaid, setEditIsPaid] = useState<boolean>(false);
+  const [editPaymentMethod, setEditPaymentMethod] = useState<'cash' | 'card'>('cash');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Delete Order state
@@ -176,6 +181,8 @@ function OrdersPage() {
         total_amount, 
         delivery_fee,
         delivery_service,
+        paid,
+        payment_method,
         created_at, 
         payments (id, order_id, amount, payment_method, paid_by, created_at),
         order_items (id, order_id, menu_item_id, quantity, price_at_order, fulfillment_type, notes, menu_items(name))
@@ -195,6 +202,8 @@ function OrdersPage() {
     setEditItems(order.order_items ? [...order.order_items] : []);
     setEditOrderType(order.type || 'takeaway');
     setEditDeliveryFee(Number(order.delivery_fee || 0));
+    setEditIsPaid(!!order.paid);
+    setEditPaymentMethod((order.payment_method as 'cash' | 'card') || 'cash');
     setEditReason('');
   };
 
@@ -291,20 +300,28 @@ function OrdersPage() {
         total_amount: newTotalAmount,
         type: editOrderType,
         delivery_fee: editOrderType === 'delivery' ? editDeliveryFee : 0,
-        delivery_service: editOrderType === 'delivery' ? 'grabfood' : null
+        delivery_service: editOrderType === 'delivery' ? 'grabfood' : null,
+        paid: editIsPaid,
+        payment_method: editPaymentMethod
       };
 
       const { error: orderUpErr } = await supabase.from('orders').update(orderUpdatePayload).eq('id', editingOrder.id);
       
       if (orderUpErr) throw orderUpErr;
 
-      if (changesDetails.items_modified.length > 0 || changesDetails.items_added.length > 0 || changesDetails.items_deleted.length > 0 || editingOrder.type !== editOrderType || editingOrder.delivery_fee !== editDeliveryFee) {
+      if (changesDetails.items_modified.length > 0 || changesDetails.items_added.length > 0 || changesDetails.items_deleted.length > 0 || editingOrder.type !== editOrderType || editingOrder.delivery_fee !== editDeliveryFee || !!editingOrder.paid !== editIsPaid || editingOrder.payment_method !== editPaymentMethod) {
         
         if (editingOrder.type !== editOrderType) {
           changesDetails.type_changed = `${editingOrder.type} -> ${editOrderType}`;
         }
         if (editOrderType === 'delivery') {
           changesDetails.delivery_fee = editDeliveryFee;
+        }
+        if (!!editingOrder.paid !== editIsPaid) {
+          changesDetails.payment_status = editIsPaid ? 'Marked as Paid' : 'Marked as Unpaid';
+        }
+        if (editingOrder.payment_method !== editPaymentMethod) {
+          changesDetails.payment_method = `${editingOrder.payment_method || 'cash'} -> ${editPaymentMethod}`;
         }
 
         const { error: logErr } = await supabase.from('order_edit_logs').insert({
@@ -656,22 +673,53 @@ function OrdersPage() {
         </div>
       </div>
       
-      <h2 className="text-lg font-bold mb-2">Recent Orders</h2>
-      {orders.length === 0 ? (
-        <p>No orders yet</p>
-      ) : (
-        <div className="space-y-2">
-          {orders.map((order) => {
-            const totalPaid = (order.payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
-            const remainingBalance = Math.max(0, order.total_amount - totalPaid);
-            const isFullyPaid = remainingBalance <= 0;
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-lg font-bold">Recent Orders</h2>
+        <div className="relative w-64">
+          <Input 
+            placeholder="Search by ID, Name, or Table..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full text-sm"
+          />
+        </div>
+      </div>
 
-            return (
+      {(() => {
+        const sq = searchQuery.toLowerCase();
+        const filteredOrders = orders.filter(o => {
+          if (!sq) return true;
+          const matchesId = o.id.toLowerCase().includes(sq);
+          const matchesName = o.customer_name?.toLowerCase().includes(sq);
+          const tableName = o.table_id ? tables.find(t => t.id === o.table_id)?.table_number?.toLowerCase() : null;
+          const matchesTable = tableName?.includes(sq);
+          return matchesId || matchesName || matchesTable;
+        });
+
+        if (filteredOrders.length === 0) {
+          return <p>No orders found.</p>;
+        }
+
+        return (
+          <div className="space-y-2">
+            {filteredOrders.map((order) => {
+              const totalPaid = (order.payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
+              const remainingBalance = Math.max(0, order.total_amount - totalPaid);
+              const isFullyPaid = remainingBalance <= 0 || order.paid;
+              const payMethodStr = order.payment_method === 'card' ? '💳 Card' : '💵 Cash';
+
+              return (
               <div key={order.id} className="border-b pb-4 mb-4">
                 <div className="flex justify-between items-start flex-wrap gap-2">
                   <div>
-                    <p className="font-bold">
-                      {order.type === 'dine_in' ? `DINE-IN` : `TAKEAWAY`} {order.table_id ? `(Table ${tables.find(t => t.id === order.table_id)?.table_number || 'N/A'})` : ''} {order.customer_name ? `- ${order.customer_name}` : ''}
+                    <p className="font-bold flex items-center gap-2">
+                      {order.type === 'delivery' ? `DELIVERY (Grab)` : (order.type === 'takeaway' ? `TAKEAWAY` : `DINE-IN`)} {order.table_id ? `(Table ${tables.find(t => t.id === order.table_id)?.table_number || 'N/A'})` : ''} {order.customer_name ? `- ${order.customer_name}` : ''}
+                      
+                      {isFullyPaid ? (
+                        <span className="text-[10px] bg-green-100 text-green-700 px-1 py-0.5 rounded font-bold">✓ PAID {payMethodStr}</span>
+                      ) : (
+                        <span className="text-[10px] bg-red-100 text-red-700 px-1 py-0.5 rounded font-bold">❌ NOT PAID</span>
+                      )}
                     </p>
                     <p className="text-sm text-gray-600">
                       ID: {order.id.slice(0, 8)} | {new Date(order.created_at).toLocaleString()}
@@ -842,7 +890,7 @@ function OrdersPage() {
             );
           })}
         </div>
-      )}
+      )})();
       {/* Edit Order Dialog */}
       <Dialog open={!!editingOrder} onOpenChange={(open) => !open && setEditingOrder(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -1001,6 +1049,43 @@ function OrdersPage() {
                 >
                   Add
                 </Button>
+              </div>
+            </div>
+
+            {/* Payment Section */}
+            <div className="border-t pt-4">
+              <h3 className="font-bold mb-2">Payment Status</h3>
+              <div className="flex items-center gap-6">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editIsPaid}
+                    onChange={(e) => setEditIsPaid(e.target.checked)}
+                    className="w-4 h-4"
+                  />
+                  Mark as Paid
+                </label>
+                
+                {editIsPaid && (
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={editPaymentMethod === 'cash'}
+                        onChange={() => setEditPaymentMethod('cash')}
+                      />
+                      💵 Cash
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={editPaymentMethod === 'card'}
+                        onChange={() => setEditPaymentMethod('card')}
+                      />
+                      💳 Card
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
 
