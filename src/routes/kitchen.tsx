@@ -50,7 +50,6 @@ function KitchenPage() {
   // Real-time highlight states
   const [highlightedOrders, setHighlightedOrders] = useState<Record<string, { type: 'new' | 'updated', timestamp: number }>>({});
   const [highlightedItems, setHighlightedItems] = useState<Record<string, number>>({});
-  const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({});
   
   const ordersRef = useRef<Order[]>([]);
   const isInitialLoad = useRef(true);
@@ -285,16 +284,6 @@ function KitchenPage() {
                               🔔 ORDER UPDATED
                             </span>
                           )}
-                          
-                          {hasNotes && (
-                            <button 
-                              onClick={() => setExpandedNotes(prev => ({ ...prev, [order.id]: !prev[order.id] }))}
-                              style={{ backgroundColor: badgeColors.specialRequests || '#EC4899' }}
-                              className="text-[10px] text-white px-2 py-0.5 rounded-full uppercase tracking-wider hover:opacity-80 transition-opacity"
-                            >
-                              📌 SPECIAL REQUESTS {expandedNotes[order.id] ? '▲' : '▼'}
-                            </button>
-                          )}
                         </div>
                         
                         <h2 className="text-lg font-bold leading-tight flex items-center gap-2 text-white">
@@ -357,7 +346,7 @@ function KitchenPage() {
                             </span>
                             <span className="font-bold">x{item.quantity}</span>
                           </div>
-                          {item.notes && expandedNotes[order.id] && (
+                          {item.notes && (
                             <div 
                               className="text-xs text-black italic py-2 px-3 mt-2 rounded border border-yellow-400 ml-1" 
                               style={{ backgroundColor: '#FEF08A' }}
