@@ -1073,6 +1073,8 @@ function OrdersPage() {
               {isDeleting ? 'Deleting...' : 'YES, DELETE'}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

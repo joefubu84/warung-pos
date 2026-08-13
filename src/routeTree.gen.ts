@@ -18,6 +18,7 @@ import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as ResetTestUserRouteImport } from './routes/reset-test-user'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TablesRouteImport } from './routes/tables'
+import { Route as SettingsAuditLogRouteImport } from './routes/settings_.audit-log'
 import { Route as TTokenRouteImport } from './routes/t.$token'
 import { Route as ApiPublicMcpRouteImport } from './routes/api/public/mcp'
 
@@ -66,6 +67,11 @@ const TablesRoute = TablesRouteImport.update({
   path: '/tables',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsAuditLogRoute = SettingsAuditLogRouteImport.update({
+  id: '/settings_/audit-log',
+  path: '/settings/audit-log',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TTokenRoute = TTokenRouteImport.update({
   id: '/t/$token',
   path: '/t/$token',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/reset-test-user': typeof ResetTestUserRoute
   '/settings': typeof SettingsRoute
   '/tables': typeof TablesRoute
+  '/settings/audit-log': typeof SettingsAuditLogRoute
   '/t/$token': typeof TTokenRoute
   '/api/public/mcp': typeof ApiPublicMcpRoute
 }
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/reset-test-user': typeof ResetTestUserRoute
   '/settings': typeof SettingsRoute
   '/tables': typeof TablesRoute
+  '/settings/audit-log': typeof SettingsAuditLogRoute
   '/t/$token': typeof TTokenRoute
   '/api/public/mcp': typeof ApiPublicMcpRoute
 }
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/reset-test-user': typeof ResetTestUserRoute
   '/settings': typeof SettingsRoute
   '/tables': typeof TablesRoute
+  '/settings_/audit-log': typeof SettingsAuditLogRoute
   '/t/$token': typeof TTokenRoute
   '/api/public/mcp': typeof ApiPublicMcpRoute
 }
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/reset-test-user'
     | '/settings'
     | '/tables'
+    | '/settings/audit-log'
     | '/t/$token'
     | '/api/public/mcp'
   fileRoutesByTo: FileRoutesByTo
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/reset-test-user'
     | '/settings'
     | '/tables'
+    | '/settings/audit-log'
     | '/t/$token'
     | '/api/public/mcp'
   id:
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/reset-test-user'
     | '/settings'
     | '/tables'
+    | '/settings_/audit-log'
     | '/t/$token'
     | '/api/public/mcp'
   fileRoutesById: FileRoutesById
@@ -169,6 +181,7 @@ export interface RootRouteChildren {
   ResetTestUserRoute: typeof ResetTestUserRoute
   SettingsRoute: typeof SettingsRoute
   TablesRoute: typeof TablesRoute
+  SettingsAuditLogRoute: typeof SettingsAuditLogRoute
   TTokenRoute: typeof TTokenRoute
   ApiPublicMcpRoute: typeof ApiPublicMcpRoute
 }
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TablesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings_/audit-log': {
+      id: '/settings_/audit-log'
+      path: '/settings/audit-log'
+      fullPath: '/settings/audit-log'
+      preLoaderRoute: typeof SettingsAuditLogRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/t/$token': {
       id: '/t/$token'
       path: '/t/$token'
@@ -265,6 +285,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetTestUserRoute: ResetTestUserRoute,
   SettingsRoute: SettingsRoute,
   TablesRoute: TablesRoute,
+  SettingsAuditLogRoute: SettingsAuditLogRoute,
   TTokenRoute: TTokenRoute,
   ApiPublicMcpRoute: ApiPublicMcpRoute,
 }
