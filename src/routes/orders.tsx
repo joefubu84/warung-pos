@@ -51,12 +51,14 @@ interface OrderEditLog {
 
 interface Order {
   id: string;
-  type: 'dine_in' | 'takeaway';
+  type: 'dine_in' | 'takeaway' | 'delivery';
   status: OrderStatus;
   table_id: string | null;
   customer_name: string | null;
   total_amount: number;
   created_at: string;
+  delivery_service?: string | null;
+  delivery_fee?: number;
   payments?: Payment[];
   order_items?: OrderItem[];
 }
@@ -115,6 +117,8 @@ function OrdersPage() {
   const [editItems, setEditItems] = useState<OrderItem[]>([]);
   const [editReason, setEditReason] = useState('');
   const [editNotes, setEditNotes] = useState('');
+  const [editOrderType, setEditOrderType] = useState<'dine_in' | 'takeaway' | 'delivery'>('dine_in');
+  const [editDeliveryFee, setEditDeliveryFee] = useState<number>(0);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Delete Order state
@@ -187,6 +191,8 @@ function OrdersPage() {
   const handleEditClick = (order: Order) => {
     setEditingOrder(order);
     setEditItems(order.order_items ? [...order.order_items] : []);
+    setEditOrderType(order.type || 'takeaway');
+    setEditDeliveryFee(Number(order.delivery_fee || 0));
     setEditReason('');
   };
 
@@ -219,7 +225,11 @@ function OrdersPage() {
       if (!user) throw new Error('Not authenticated');
 
       const originalItems = editingOrder.order_items || [];
-      const newTotalAmount = editItems.reduce((sum, item) => sum + (Number(item.price_at_order) * item.quantity) + (Number((item as any).container_charge || 0) * item.quantity), 0);
+      let newTotalAmount = editItems.reduce((sum, item) => sum + (Number(item.price_at_order) * item.quantity) + (Number((item as any).container_charge || 0) * item.quantity), 0);
+      
+      if (editOrderType === 'delivery') {
+        newTotalAmount += Number(editDeliveryFee);
+      }
       
       const changesDetails: any = {
         items_modified: [],
@@ -275,16 +285,26 @@ function OrdersPage() {
       }
 
       // 4. Update Order Total and Type
-      const hasDineIn = editItems.some(item => item.fulfillment_type === 'dine_in');
-      const { error: orderUpErr } = await supabase.from('orders').update({
+      const orderUpdatePayload: any = {
         total_amount: newTotalAmount,
-        type: hasDineIn ? 'dine_in' : 'takeaway'
-      }).eq('id', editingOrder.id);
+        type: editOrderType,
+        delivery_fee: editOrderType === 'delivery' ? editDeliveryFee : 0,
+        delivery_service: editOrderType === 'delivery' ? 'grab' : null
+      };
+
+      const { error: orderUpErr } = await supabase.from('orders').update(orderUpdatePayload).eq('id', editingOrder.id);
       
       if (orderUpErr) throw orderUpErr;
 
-      // 5. Insert Log (Single record for the whole edit)
-      if (changesDetails.items_modified.length > 0 || changesDetails.items_added.length > 0 || changesDetails.items_deleted.length > 0) {
+      if (changesDetails.items_modified.length > 0 || changesDetails.items_added.length > 0 || changesDetails.items_deleted.length > 0 || editingOrder.type !== editOrderType || editingOrder.delivery_fee !== editDeliveryFee) {
+        
+        if (editingOrder.type !== editOrderType) {
+          changesDetails.type_changed = `${editingOrder.type} -> ${editOrderType}`;
+        }
+        if (editOrderType === 'delivery') {
+          changesDetails.delivery_fee = editDeliveryFee;
+        }
+
         const { error: logErr } = await supabase.from('order_edit_logs').insert({
           order_id: editingOrder.id,
           action: 'edit',
@@ -829,6 +849,37 @@ function OrdersPage() {
           </DialogHeader>
           
           <div className="space-y-6 py-4">
+            {/* Order Type */}
+            <div className="space-y-4 border-b pb-4">
+              <h3 className="font-bold text-sm uppercase text-gray-500">Order Type</h3>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="edit_type" value="dine_in" checked={editOrderType === 'dine_in'} onChange={() => setEditOrderType('dine_in')} /> Dine-In
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="edit_type" value="takeaway" checked={editOrderType === 'takeaway'} onChange={() => setEditOrderType('takeaway')} /> Takeaway
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="radio" name="edit_type" value="delivery" checked={editOrderType === 'delivery'} onChange={() => setEditOrderType('delivery')} /> Delivery (Grab)
+                  </label>
+                </div>
+                {editOrderType === 'delivery' && (
+                  <div className="mt-2 pl-4 border-l-2 border-blue-500">
+                    <label className="block text-sm font-bold mb-1">Delivery Fee (RM)</label>
+                    <Input 
+                      type="number" 
+                      min="0"
+                      step="0.10"
+                      value={editDeliveryFee} 
+                      onChange={(e) => setEditDeliveryFee(parseFloat(e.target.value) || 0)}
+                      className="w-32"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Existing & Modified Items */}
             <div className="space-y-4">
               <h3 className="font-bold text-sm uppercase text-gray-500">Items</h3>
@@ -948,6 +999,42 @@ function OrdersPage() {
                 >
                   Add
                 </Button>
+              </div>
+            </div>
+
+            {/* Summary */}
+            <div className="border-t pt-4">
+              <h3 className="font-bold text-sm uppercase text-gray-500 mb-2">Summary</h3>
+              <div className="space-y-1 text-sm bg-gray-50 p-3 rounded">
+                <div className="flex justify-between">
+                  <span>Subtotal:</span>
+                  <span>RM {editItems.reduce((sum, item) => sum + (Number(item.price_at_order) * item.quantity), 0).toFixed(2)}</span>
+                </div>
+                {(() => {
+                  const containerTotal = editItems.reduce((sum, item) => sum + (Number((item as any).container_charge || 0) * item.quantity), 0);
+                  if (containerTotal > 0) {
+                    return (
+                      <div className="flex justify-between">
+                        <span>Container Fee:</span>
+                        <span>RM {containerTotal.toFixed(2)}</span>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+                {editOrderType === 'delivery' && (
+                  <div className="flex justify-between text-blue-600 font-medium">
+                    <span>Delivery Fee:</span>
+                    <span>RM {Number(editDeliveryFee || 0).toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-lg pt-2 border-t mt-2">
+                  <span>TOTAL:</span>
+                  <span>RM {(
+                    editItems.reduce((sum, item) => sum + (Number(item.price_at_order) * item.quantity) + (Number((item as any).container_charge || 0) * item.quantity), 0)
+                    + (editOrderType === 'delivery' ? Number(editDeliveryFee || 0) : 0)
+                  ).toFixed(2)}</span>
+                </div>
               </div>
             </div>
 
