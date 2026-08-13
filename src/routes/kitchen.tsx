@@ -32,6 +32,8 @@ interface Order {
   delivery_service?: 'jnj' | 'grabfood' | 'shopeefood' | 'custom' | null;
   customer_name: string | null;
   table_id: string | null;
+  paid: boolean;
+  payment_method: string | null;
   tables: {
     table_number: string;
   } | null;
@@ -204,7 +206,7 @@ const OrderCard = memo(({
       </div>
     </div>
   );
-}, (prevProps, nextProps) => {
+}, (prevProps: any, nextProps: any) => {
   return prevProps.order.status === nextProps.order.status &&
          prevProps.order.order_items.length === nextProps.order.order_items.length &&
          prevProps.highlight?.type === nextProps.highlight?.type &&

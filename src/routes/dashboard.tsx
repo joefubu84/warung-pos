@@ -62,11 +62,11 @@ function DashboardPage() {
       .lte('created_at', endOfDay.toISOString());
 
     if (!orderError && orderData) {
-      setOrders(orderData as Order[]);
+      setOrders(orderData as any as Order[]);
     }
     
     if (!logError && logData) {
-      setLogs(logData as OrderEditLog[]);
+      setLogs(logData as any as OrderEditLog[]);
     }
     
     setIsLoading(false);

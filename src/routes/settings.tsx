@@ -210,7 +210,8 @@ function SettingsPage() {
 
   const handleSoundUpload = async (file: File) => {
     if (file.size > 5 * 1024 * 1024) {
-      return toast.error('File size must be less than 5MB');
+      toast.error('File size must be less than 5MB');
+      return;
     }
     
     try {

@@ -8,6 +8,7 @@ export interface Store {
 export interface OrderItem {
   name: string;
   price: number;
+  quantity: number;
   container_size?: string | null;
   container_charge?: number;
   notes?: string | null;

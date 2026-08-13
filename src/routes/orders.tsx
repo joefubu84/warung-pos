@@ -332,7 +332,7 @@ function OrdersPage() {
           before_total: editingOrder.total_amount,
           after_total: newTotalAmount,
           changes: changesDetails
-        });
+        } as any);
         if (logErr) throw logErr;
       }
 
@@ -367,7 +367,7 @@ function OrdersPage() {
         before_total: deletingOrder.total_amount,
         after_total: 0,
         changes: { notes: deleteNotes }
-      });
+      } as any);
       if (logErr) throw logErr;
 
       setDeletingOrder(null);
@@ -890,7 +890,8 @@ function OrdersPage() {
             );
           })}
         </div>
-      )})();
+      );
+      })()}
       {/* Edit Order Dialog */}
       <Dialog open={!!editingOrder} onOpenChange={(open) => !open && setEditingOrder(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

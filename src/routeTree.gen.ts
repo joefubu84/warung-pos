@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CashRouteImport } from './routes/cash'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as KitchenRouteImport } from './routes/kitchen'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as OrdersRouteImport } from './routes/orders'
@@ -35,6 +36,11 @@ const AuthRoute = AuthRouteImport.update({
 const CashRoute = CashRouteImport.update({
   id: '/cash',
   path: '/cash',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KitchenRoute = KitchenRouteImport.update({
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cash': typeof CashRoute
+  '/dashboard': typeof DashboardRoute
   '/kitchen': typeof KitchenRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cash': typeof CashRoute
+  '/dashboard': typeof DashboardRoute
   '/kitchen': typeof KitchenRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cash': typeof CashRoute
+  '/dashboard': typeof DashboardRoute
   '/kitchen': typeof KitchenRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/cash'
+    | '/dashboard'
     | '/kitchen'
     | '/menu'
     | '/orders'
@@ -146,6 +156,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/cash'
+    | '/dashboard'
     | '/kitchen'
     | '/menu'
     | '/orders'
@@ -160,6 +171,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/cash'
+    | '/dashboard'
     | '/kitchen'
     | '/menu'
     | '/orders'
@@ -175,6 +187,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   CashRoute: typeof CashRoute
+  DashboardRoute: typeof DashboardRoute
   KitchenRoute: typeof KitchenRoute
   MenuRoute: typeof MenuRoute
   OrdersRoute: typeof OrdersRoute
@@ -207,6 +220,13 @@ declare module '@tanstack/react-router' {
       path: '/cash'
       fullPath: '/cash'
       preLoaderRoute: typeof CashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/kitchen': {
@@ -279,6 +299,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   CashRoute: CashRoute,
+  DashboardRoute: DashboardRoute,
   KitchenRoute: KitchenRoute,
   MenuRoute: MenuRoute,
   OrdersRoute: OrdersRoute,
