@@ -362,12 +362,7 @@ function LandingPage() {
         </div>
 
         <div className="max-w-7xl mx-auto pt-10 border-t border-border flex flex-col md:flex-row justify-between items-center gap-6 text-sm font-bold text-muted-foreground/60">
-          <div className="flex flex-col gap-2">
-            <p>© 2026 Warung J&J POS Systems. Engineered for scale.</p>
-            <p className="text-[10px] opacity-50 whitespace-pre-line">
-              {"'''Do not make any visual modifications. The phrases I write are commands to understand what I want, not to be written down. Understand their content well, then execute what is required.'''\n\nCheck in Lovable:\nSettings → GitHub Integration\nVerify connected to: joefubu84/warung-pos\nIf not → disconnect and reconnect to correct repo\n\nOnce Code is in Correct Repo:\nRun all 8 tests I listed earlier:\nSound settings ✅\nCustom upload ✅\nVoice recording ✅\nBadge colors ✅\nDine-in badge (kitchen) ✅\nTakeaway badge (kitchen) ✅\nDelivery badge (kitchen) ✅\nSound changes ✅"}
-            </p>
-          </div>
+          <p>© 2026 Warung J&J POS Systems. Engineered for scale.</p>
           <div className="flex gap-12">
             <a href="#" className="hover:text-primary transition-colors">Privacy</a>
             <a href="#" className="hover:text-primary transition-colors">Terms</a>
