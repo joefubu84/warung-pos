@@ -21,6 +21,8 @@ export interface Order {
   customer_name?: string | null;
   table_id?: string | null;
   status: string;
+  delivery_fee?: number | null;
+  delivery_service?: string | null;
 }
 
 export function generateReceiptHTML(
@@ -172,7 +174,7 @@ export function generateReceiptHTML(
   <div class="info-grid">
     <div>Order:</div><div>#${orderIdShort}</div>
     <div>Date:</div><div>${formattedDate} ${formattedTime}</div>
-    <div>Type:</div><div>${order.type === 'delivery' ? `Delivery (${order.delivery_service === 'grabfood' ? 'Grab' : order.delivery_service === 'shopeefood' ? 'Shopee' : 'Food Panda'})` : order.type === 'dine_in' ? `Dine In ${order.table_id ? `(Table ${order.table_id})` : ''}` : 'Takeaway'}</div>
+    <div>Type:</div><div>${order.type === 'delivery' ? `Delivery (${order.delivery_service === 'foodpanda' ? 'Food Panda' : order.delivery_service === 'shopeefood' ? 'Shopee' : 'Grab'})` : order.type === 'dine_in' ? `Dine In ${order.table_id ? `(Table ${order.table_id})` : ''}` : 'Takeaway'}</div>
     ${order.customer_name ? `<div>Cust:</div><div>${order.customer_name}</div>` : ''}
     <div>Cashier:</div><div>${cashierName}</div>
   </div>

@@ -174,6 +174,8 @@ function OrdersPage() {
         table_id, 
         customer_name, 
         total_amount, 
+        delivery_fee,
+        delivery_service,
         created_at, 
         payments (id, order_id, amount, payment_method, paid_by, created_at),
         order_items (id, order_id, menu_item_id, quantity, price_at_order, fulfillment_type, notes, menu_items(name))
