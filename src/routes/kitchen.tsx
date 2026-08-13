@@ -36,6 +36,7 @@ interface Order {
     table_number: string;
   } | null;
   order_items: OrderItem[];
+  order_edit_logs?: { id: string }[];
   created_at: string;
 }
 
@@ -95,6 +96,11 @@ const OrderCard = memo(({
                 {highlight?.type === 'updated' && (
                   <span className="text-[10px] bg-yellow-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wider animate-bounce">
                     🔔 ORDER UPDATED
+                  </span>
+                )}
+                {order.order_edit_logs && order.order_edit_logs.length > 0 && highlight?.type !== 'new' && (
+                  <span className="text-[10px] bg-orange-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wider font-bold shadow-[0_0_8px_rgba(234,88,12,0.6)]">
+                    ✏️ EDITED
                   </span>
                 )}
               </div>
@@ -266,6 +272,7 @@ function KitchenPage() {
         table_id,
         created_at,
         tables (table_number),
+        order_edit_logs (id),
         order_items (
           id,
           quantity,

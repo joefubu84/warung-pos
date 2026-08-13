@@ -114,7 +114,33 @@ function OrdersPage() {
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [editItems, setEditItems] = useState<OrderItem[]>([]);
   const [editReason, setEditReason] = useState('');
+  const [editNotes, setEditNotes] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Delete Order state
+  const [deletingOrder, setDeletingOrder] = useState<Order | null>(null);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [deleteNotes, setDeleteNotes] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const EDIT_REASONS = [
+    "Customer request",
+    "Hair/Quality issue",
+    "Wrong price entered",
+    "Customer complaint",
+    "Staff mistake",
+    "Discount/Promo",
+    "Other"
+  ];
+
+  const DELETE_REASONS = [
+    "Customer cancelled",
+    "Duplicate entry",
+    "Wrong order created",
+    "Staff error",
+    "System test",
+    "Other"
+  ];
 
   // History state
   const [historyOrder, setHistoryOrder] = useState<Order | null>(null);
@@ -182,7 +208,7 @@ function OrdersPage() {
   };
 
   const handleSaveEdit = async () => {
-    if (!editingOrder || !editReason.trim()) {
+    if (!editingOrder || !editReason) {
       alert('Please provide a reason for the change.');
       return;
     }
@@ -195,18 +221,17 @@ function OrdersPage() {
       const originalItems = editingOrder.order_items || [];
       const newTotalAmount = editItems.reduce((sum, item) => sum + (Number(item.price_at_order) * item.quantity) + (Number((item as any).container_charge || 0) * item.quantity), 0);
       
-      const logs = [];
+      const changesDetails: any = {
+        items_modified: [],
+        items_added: [],
+        items_deleted: [],
+        notes: editNotes
+      };
 
       // 1. Identify Deleted Items
       const deletedItems = originalItems.filter(orig => !editItems.find(curr => curr.id === orig.id));
       for (const item of deletedItems) {
-        logs.push({
-          order_id: editingOrder.id,
-          edited_by: user.id,
-          action: 'item_deleted',
-          details: { item_name: item.menu_items?.name, old_quantity: item.quantity },
-          reason: editReason
-        });
+        changesDetails.items_deleted.push(`${item.menu_items?.name} (x${item.quantity})`);
         const { error: delErr } = await supabase.from('order_items').delete().eq('id', item.id);
         if (delErr) throw delErr;
       }
@@ -220,20 +245,11 @@ function OrdersPage() {
           const notesChanged = (original.notes || '') !== (current.notes || '');
           
           if (qtyChanged || typeChanged || notesChanged) {
-            logs.push({
-              order_id: editingOrder.id,
-              edited_by: user.id,
-              action: 'item_updated',
-              details: { 
-                item_name: current.menu_items?.name,
-                changes: {
-                  ...(qtyChanged ? { quantity: { old: original.quantity, new: current.quantity } } : {}),
-                  ...(typeChanged ? { fulfillment_type: { old: original.fulfillment_type, new: current.fulfillment_type } } : {}),
-                  ...(notesChanged ? { notes: { old: original.notes, new: current.notes } } : {})
-                }
-              },
-              reason: editReason
-            });
+            changesDetails.items_modified.push(
+              `${current.menu_items?.name || 'Item'}: ` + 
+              (qtyChanged ? `Qty ${original.quantity}->${current.quantity} ` : '') +
+              (notesChanged ? `Notes changed ` : '')
+            );
             const { error: upErr } = await supabase.from('order_items').update({
               quantity: current.quantity,
               fulfillment_type: current.fulfillment_type,
@@ -250,18 +266,11 @@ function OrdersPage() {
             quantity: current.quantity,
             price_at_order: menuItem?.price || 0,
             fulfillment_type: current.fulfillment_type,
-            notes: ''
+            notes: current.notes || ''
           }).select('*, menu_items(name)').single();
           
           if (insErr) throw insErr;
-
-          logs.push({
-            order_id: editingOrder.id,
-            edited_by: user.id,
-            action: 'item_added',
-            details: { item_name: (newItem as any).menu_items?.name, quantity: current.quantity },
-            reason: editReason
-          });
+          changesDetails.items_added.push(`${(newItem as any).menu_items?.name} (x${current.quantity})`);
         }
       }
 
@@ -274,9 +283,17 @@ function OrdersPage() {
       
       if (orderUpErr) throw orderUpErr;
 
-      // 5. Insert Logs
-      if (logs.length > 0) {
-        const { error: logErr } = await supabase.from('order_edit_logs').insert(logs);
+      // 5. Insert Log (Single record for the whole edit)
+      if (changesDetails.items_modified.length > 0 || changesDetails.items_added.length > 0 || changesDetails.items_deleted.length > 0) {
+        const { error: logErr } = await supabase.from('order_edit_logs').insert({
+          order_id: editingOrder.id,
+          action: 'edit',
+          reason: editReason,
+          edited_by: user.id,
+          before_total: editingOrder.total_amount,
+          after_total: newTotalAmount,
+          changes: changesDetails
+        });
         if (logErr) throw logErr;
       }
 
@@ -286,6 +303,40 @@ function OrdersPage() {
       alert('Failed to save changes: ' + err.message);
     } finally {
       setIsSavingEdit(false);
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!deletingOrder || !deleteReason) {
+      alert('Please provide a reason for deletion.');
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const { error: orderUpErr } = await supabase.from('orders').delete().eq('id', deletingOrder.id);
+      if (orderUpErr) throw orderUpErr;
+
+      const { error: logErr } = await supabase.from('order_edit_logs').insert({
+        order_id: deletingOrder.id,
+        action: 'delete',
+        reason: deleteReason,
+        edited_by: user.id,
+        before_total: deletingOrder.total_amount,
+        after_total: 0,
+        changes: { notes: deleteNotes }
+      });
+      if (logErr) throw logErr;
+
+      setDeletingOrder(null);
+      await fetchOrders();
+    } catch (err: any) {
+      alert('Failed to delete order: ' + err.message);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -611,6 +662,16 @@ function OrdersPage() {
                         Edit Order
                       </button>
                       <button 
+                        onClick={() => {
+                          setDeletingOrder(order);
+                          setDeleteReason('');
+                          setDeleteNotes('');
+                        }}
+                        className="text-red-600 text-xs font-semibold hover:underline"
+                      >
+                        Delete Order
+                      </button>
+                      <button 
                         onClick={() => handleViewHistory(order)}
                         className="text-gray-600 text-xs font-semibold hover:underline"
                       >
@@ -893,11 +954,20 @@ function OrdersPage() {
             {/* Reason for Change */}
             <div className="border-t pt-4">
               <label className="block text-sm font-bold mb-1">Reason for change (Mandatory)</label>
-              <Textarea 
-                placeholder="Mistake in order / Customer requested change..."
+              <select 
                 value={editReason}
                 onChange={(e) => setEditReason(e.target.value)}
-                className="h-20"
+                className="w-full border p-2 rounded mb-2"
+              >
+                <option value="" disabled>Select a reason...</option>
+                {EDIT_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+              <label className="block text-sm font-bold mb-1 mt-2">Notes (Optional)</label>
+              <Textarea 
+                placeholder="Additional details..."
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                className="h-16"
               />
             </div>
           </div>
@@ -906,7 +976,7 @@ function OrdersPage() {
             <Button variant="outline" onClick={() => setEditingOrder(null)}>Cancel</Button>
             <Button 
               onClick={handleSaveEdit} 
-              disabled={isSavingEdit || !editReason.trim()}
+              disabled={isSavingEdit || !editReason}
             >
               {isSavingEdit ? 'Saving...' : 'Save Changes'}
             </Button>
@@ -963,6 +1033,46 @@ function OrdersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Delete Order Dialog */}
+      <Dialog open={!!deletingOrder} onOpenChange={(open) => !open && setDeletingOrder(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>DELETE ORDER?</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="font-bold mb-2">
+              Order {deletingOrder?.id.slice(0, 8)} <br/>
+              {deletingOrder?.type === 'dine_in' ? `Table ${tables.find(t => t.id === deletingOrder?.table_id)?.table_number || 'N/A'}` : 'Takeaway'} | RM {deletingOrder?.total_amount.toFixed(2)}
+            </p>
+            <div className="mt-4">
+              <label className="block text-sm font-bold mb-1">Reason for deletion (Mandatory)</label>
+              <select 
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+                className="w-full border p-2 rounded mb-2"
+              >
+                <option value="" disabled>Select a reason...</option>
+                {DELETE_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
+              </select>
+              <label className="block text-sm font-bold mb-1 mt-2">Notes (Optional)</label>
+              <Textarea 
+                placeholder="Additional details..."
+                value={deleteNotes}
+                onChange={(e) => setDeleteNotes(e.target.value)}
+                className="h-16"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeletingOrder(null)}>NO, CANCEL</Button>
+            <Button 
+              variant="destructive"
+              onClick={handleDeleteOrder} 
+              disabled={isDeleting || !deleteReason}
+            >
+              {isDeleting ? 'Deleting...' : 'YES, DELETE'}
+            </Button>
+          </DialogFooter>
     </div>
   );
 }

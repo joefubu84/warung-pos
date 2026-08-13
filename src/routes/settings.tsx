@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { requireAdminAuth } from '@/lib/auth-guard';
 import { useState, useEffect } from 'react';
@@ -462,6 +462,22 @@ function SettingsPage() {
           >
             {updatePrinterMutation.isPending ? 'Saving...' : 'Save Printer Settings'}
           </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Audit & Security</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-gray-500 mb-4">
+            View detailed logs of all order edits and deletions to monitor staff activity and protect your business.
+          </p>
+          <Link to="/settings/audit-log">
+            <Button variant="secondary" className="w-full">
+              View Audit Log
+            </Button>
+          </Link>
         </CardContent>
       </Card>
     </div>
