@@ -289,7 +289,7 @@ function OrdersPage() {
         total_amount: newTotalAmount,
         type: editOrderType,
         delivery_fee: editOrderType === 'delivery' ? editDeliveryFee : 0,
-        delivery_service: editOrderType === 'delivery' ? 'grab' : null
+        delivery_service: editOrderType === 'delivery' ? 'grabfood' : null
       };
 
       const { error: orderUpErr } = await supabase.from('orders').update(orderUpdatePayload).eq('id', editingOrder.id);
