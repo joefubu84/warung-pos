@@ -172,7 +172,7 @@ export function generateReceiptHTML(
   <div class="info-grid">
     <div>Order:</div><div>#${orderIdShort}</div>
     <div>Date:</div><div>${formattedDate} ${formattedTime}</div>
-    <div>Type:</div><div>${order.type === 'dine_in' ? `Dine In ${order.table_id ? `(Table ${order.table_id})` : ''}` : 'Takeaway'}</div>
+    <div>Type:</div><div>${order.type === 'delivery' ? `Delivery (${order.delivery_service === 'grabfood' ? 'Grab' : order.delivery_service === 'shopeefood' ? 'Shopee' : 'Food Panda'})` : order.type === 'dine_in' ? `Dine In ${order.table_id ? `(Table ${order.table_id})` : ''}` : 'Takeaway'}</div>
     ${order.customer_name ? `<div>Cust:</div><div>${order.customer_name}</div>` : ''}
     <div>Cashier:</div><div>${cashierName}</div>
   </div>
@@ -185,6 +185,12 @@ export function generateReceiptHTML(
 
   <div class="divider"></div>
   <table class="totals-table">
+    ${order.delivery_fee && Number(order.delivery_fee) > 0 ? `
+    <tr>
+      <td>Delivery Fee</td>
+      <td class="text-right">RM ${Number(order.delivery_fee).toFixed(2)}</td>
+    </tr>
+    ` : ''}
     <tr class="grand-total">
       <td>TOTAL</td>
       <td class="text-right">RM ${order.total_amount.toFixed(2)}</td>
@@ -325,8 +331,9 @@ export async function shareReceiptWhatsApp(
     const timeStr = orderDate.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' });
 
     // 4. Create Pre-filled Message Summary
-    const typeLabel = order.type === 'dine_in' ? 'Dine-In' : 'Takeaway';
-    const message = `*Order Summary*\nStore: ${store.name}\nOrder ID: #${order.id.split('-')[0]!.toUpperCase()}\nDate: ${dateStr} ${timeStr}\nType: ${typeLabel}\n\n*Total: RM ${order.total_amount.toFixed(2)}*\n\nThank you for your visit!`;
+    const typeLabel = order.type === 'delivery' ? 'Delivery' : order.type === 'dine_in' ? 'Dine-In' : 'Takeaway';
+    const deliveryFeeStr = order.type === 'delivery' && order.delivery_fee ? `Delivery Fee: RM ${Number(order.delivery_fee).toFixed(2)}\n` : '';
+    const message = `*Order Summary*\nStore: ${store.name}\nOrder ID: #${order.id.split('-')[0]!.toUpperCase()}\nDate: ${dateStr} ${timeStr}\nType: ${typeLabel}\n\n${deliveryFeeStr}*Total: RM ${order.total_amount.toFixed(2)}*\n\nThank you for your visit!`;
 
     // 5. Try Native Web Share API first (Perfect for Mobile)
     if (isMobile && navigator.share) {
