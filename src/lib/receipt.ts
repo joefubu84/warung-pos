@@ -8,9 +8,9 @@ export interface Store {
 export interface OrderItem {
   name: string;
   price: number;
+  quantity: number;
   container_size?: string | null;
   container_charge?: number;
-  notes?: string | null;
 }
 
 export interface Order {
@@ -36,7 +36,7 @@ export function generateReceiptHTML(
   const formattedTime = orderDate.toLocaleTimeString('en-MY', {
     hour: '2-digit', minute: '2-digit'
   });
-  const orderIdShort = order.id.split('-')[0]!.toUpperCase();
+  const orderIdShort = order.id.split('-')[0].toUpperCase();
 
   const itemsHtml = items.map(item => {
     const itemTotal = (item.price * item.quantity).toFixed(2);
@@ -50,15 +50,6 @@ export function generateReceiptHTML(
         <td class="item-total">RM ${itemTotal}</td>
       </tr>
     `;
-
-    if (item.notes) {
-      itemHtml += `
-        <tr>
-          <td class="item-qty"></td>
-          <td class="item-price indent" colspan="2" style="font-style: italic;">&rarr; ${item.notes}</td>
-        </tr>
-      `;
-    }
 
     if (item.container_charge && item.container_charge > 0) {
       const containerTotal = (item.container_charge * item.quantity).toFixed(2);
@@ -326,16 +317,16 @@ export async function shareReceiptWhatsApp(
 
     // 4. Create Pre-filled Message Summary
     const typeLabel = order.type === 'dine_in' ? 'Dine-In' : 'Takeaway';
-    const message = `*Order Summary*\nStore: ${store.name}\nOrder ID: #${order.id.split('-')[0]!.toUpperCase()}\nDate: ${dateStr} ${timeStr}\nType: ${typeLabel}\n\n*Total: RM ${order.total_amount.toFixed(2)}*\n\nThank you for your visit!`;
+    const message = `*Order Summary*\nStore: ${store.name}\nOrder ID: #${order.id.split('-')[0].toUpperCase()}\nDate: ${dateStr} ${timeStr}\nType: ${typeLabel}\n\n*Total: RM ${order.total_amount.toFixed(2)}*\n\nThank you for your visit!`;
 
     // 5. Try Native Web Share API first (Perfect for Mobile)
     if (isMobile && navigator.share) {
-      const file = new File([imageBlob], `Receipt_${order.id.split('-')[0]!.toUpperCase()}.png`, { type: 'image/png' });
+      const file = new File([imageBlob], `Receipt_${order.id.split('-')[0].toUpperCase()}.png`, { type: 'image/png' });
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({
             files: [file],
-            title: `Receipt for Order #${order.id.split('-')[0]!.toUpperCase()}`,
+            title: `Receipt for Order #${order.id.split('-')[0].toUpperCase()}`,
             text: message
           });
           return; // Native share successful, we are done!
@@ -349,7 +340,7 @@ export async function shareReceiptWhatsApp(
     const downloadUrl = URL.createObjectURL(imageBlob);
     const downloadLink = document.createElement('a');
     downloadLink.href = downloadUrl;
-    downloadLink.download = `Receipt_${order.id.split('-')[0]!.toUpperCase()}.png`;
+    downloadLink.download = `Receipt_${order.id.split('-')[0].toUpperCase()}.png`;
     document.body.appendChild(downloadLink);
     downloadLink.click();
     document.body.removeChild(downloadLink);

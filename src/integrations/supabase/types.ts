@@ -331,9 +331,6 @@ export type Database = {
         Row: {
           created_at: string
           customer_name: string | null
-          delivery_service:
-            | Database["public"]["Enums"]["delivery_service_enum"]
-            | null
           id: string
           member_id: string | null
           status: Database["public"]["Enums"]["order_status"]
@@ -345,9 +342,6 @@ export type Database = {
         Insert: {
           created_at?: string
           customer_name?: string | null
-          delivery_service?:
-            | Database["public"]["Enums"]["delivery_service_enum"]
-            | null
           id?: string
           member_id?: string | null
           status?: Database["public"]["Enums"]["order_status"]
@@ -359,9 +353,6 @@ export type Database = {
         Update: {
           created_at?: string
           customer_name?: string | null
-          delivery_service?:
-            | Database["public"]["Enums"]["delivery_service_enum"]
-            | null
           id?: string
           member_id?: string | null
           status?: Database["public"]["Enums"]["order_status"]
@@ -432,35 +423,26 @@ export type Database = {
       printer_settings: {
         Row: {
           auto_print: boolean | null
-          badge_colors: Json | null
           created_at: string | null
           id: string
           print_on_status: string[] | null
           printer_name: string | null
-          sound_choice: string | null
-          sound_file_url: string | null
           store_id: string
         }
         Insert: {
           auto_print?: boolean | null
-          badge_colors?: Json | null
           created_at?: string | null
           id?: string
           print_on_status?: string[] | null
           printer_name?: string | null
-          sound_choice?: string | null
-          sound_file_url?: string | null
           store_id: string
         }
         Update: {
           auto_print?: boolean | null
-          badge_colors?: Json | null
           created_at?: string | null
           id?: string
           print_on_status?: string[] | null
           printer_name?: string | null
-          sound_choice?: string | null
-          sound_file_url?: string | null
           store_id?: string
         }
         Relationships: [
@@ -628,7 +610,6 @@ export type Database = {
     Enums: {
       app_role: "staff" | "member" | "rider" | "admin"
       container_size_enum: "small" | "large"
-      delivery_service_enum: "jnj" | "grabfood" | "shopeefood" | "custom"
       fulfillment_type_enum: "dine_in" | "takeaway"
       kyc_status: "pending" | "verified" | "rejected"
       order_status:
@@ -769,7 +750,6 @@ export const Constants = {
     Enums: {
       app_role: ["staff", "member", "rider", "admin"],
       container_size_enum: ["small", "large"],
-      delivery_service_enum: ["jnj", "grabfood", "shopeefood", "custom"],
       fulfillment_type_enum: ["dine_in", "takeaway"],
       kyc_status: ["pending", "verified", "rejected"],
       order_status: ["pending", "preparing", "ready", "completed", "cancelled"],
