@@ -67,10 +67,12 @@ export async function updateOrderStatusAgent(orderId: string, nextStatus: OrderS
     .insert({
       order_id: orderId,
       action: 'status_update',
-      previous_status: currentOrder.status,
-      new_status: nextStatus,
-      changed_by: agentId,
-      notes: `Agent ${agentId} advanced order to ${nextStatus} via MCP`
+      details: {
+        previous_status: currentOrder.status,
+        new_status: nextStatus,
+        agent_id: agentId,
+      },
+      reason: `Agent ${agentId} advanced order to ${nextStatus} via MCP`
     });
 
   if (auditError) {

@@ -1,6 +1,8 @@
-import { createAPIFileRoute } from '@tanstack/react-start/api';
+import { createFileRoute } from '@tanstack/react-router';
 
-export const Route = createAPIFileRoute('/api/public/mcp')({
+export const Route = createFileRoute('/api/public/mcp')({
+  server: {
+    handlers: {
   GET: async ({ request }) => {
     return new Response(
       JSON.stringify({
@@ -38,5 +40,7 @@ export const Route = createAPIFileRoute('/api/public/mcp')({
         },
       }
     );
+      },
+    },
   },
 });
