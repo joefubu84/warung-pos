@@ -292,11 +292,20 @@ function KitchenPage() {
     fetchPrinterSettings();
     fetchActiveOrders();
 
-    const pollInterval = setInterval(() => {
-      fetchActiveOrders(true);
-    }, 5000);
+    const channel = supabase.channel('kitchen_orders')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        console.log('Realtime event received: orders table');
+        fetchActiveOrders(true);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, () => {
+        console.log('Realtime event received: order_items table');
+        fetchActiveOrders(true);
+      })
+      .subscribe();
 
-    return () => clearInterval(pollInterval);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchPrinterSettings]);
 
   const fetchActiveOrders = async (isSilent = false) => {
