@@ -91,6 +91,14 @@ const addSplitPayment = () => {
   };
   
   const totalSplitAmount = splitPayments.reduce((sum, sp) => sum + (Number(sp.amount) || 0), 0);
+  
+  const cartTotal = cart.reduce((sum, item) => sum + ((item.price + (item.containerCharge || 0)) * item.quantity), 0);
+  
+  const discountAmount = discount.type === 'percentage' 
+    ? cartTotal * (discount.value / 100)
+    : discount.value;
+  const finalTotal = Math.max(0, cartTotal - discountAmount);
+
   const remainingSplitAmount = Math.max(0, finalTotal - totalSplitAmount);
 
   // Audio ref for beep
