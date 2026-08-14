@@ -480,7 +480,7 @@ function LandingPage() {
             Fastest Order: Y min{"\n"}
             Slowest Order: Z min{"\n"}
             Orders Ready: N/M{"\n"}
-            ✅ Numbers make sense (fastest < avg < slowest){"\n"}
+            ✅ Numbers make sense (fastest {"<"} avg {"<"} slowest){"\n"}
             Screenshot: Kitchen stats footer{"\n"}
             {"\n"}
             Test 10 — Dashboard Timing Card{"\n"}
