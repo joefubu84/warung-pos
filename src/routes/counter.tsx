@@ -12,6 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, Minus, Search, Trash2, ShoppingCart, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute('/counter')({
@@ -63,11 +65,33 @@ function CounterPage() {
   const [selectedTableId, setSelectedTableId] = useState('');
   const [orderType, setOrderType] = useState<'dine_in' | 'takeaway'>('dine_in');
   
-  // Submission
+// Submission
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  // Phase 2: Discount & Split Payment
+  const [discount, setDiscount] = useState<{type: 'fixed'|'percentage', value: number}>({ type: 'fixed', value: 0 });
+  const [splitPayments, setSplitPayments] = useState<{amount: number, method: 'cash'|'card'|'qr'|'bank_transfer'}[]>([]);
+  const [paymentMode, setPaymentMode] = useState<'full' | 'split'>('full');
+
+const addSplitPayment = () => {
+    setSplitPayments([...splitPayments, { amount: 0, method: 'cash' }]);
+  };
+
+  const updateSplitPayment = (index: number, field: 'amount' | 'method', value: any) => {
+    const newSplits = [...splitPayments];
+    newSplits[index] = { ...newSplits[index], [field]: value };
+    setSplitPayments(newSplits);
+  };
+
+  const removeSplitPayment = (index: number) => {
+    setSplitPayments(splitPayments.filter((_, i) => i !== index));
+  };
+  
+  const totalSplitAmount = splitPayments.reduce((sum, sp) => sum + (Number(sp.amount) || 0), 0);
+  const remainingSplitAmount = Math.max(0, finalTotal - totalSplitAmount);
 
   // Audio ref for beep
   const beepAudio = useRef<HTMLAudioElement | null>(null);
@@ -192,7 +216,12 @@ function CounterPage() {
     }
   };
 
-  const cartTotal = cart.reduce((sum, item) => sum + ((item.price + (item.containerCharge || 0)) * item.quantity), 0);
+const cartTotal = cart.reduce((sum, item) => sum + ((item.price + (item.containerCharge || 0)) * item.quantity), 0);
+  
+  const discountAmount = discount.type === 'percentage' 
+    ? cartTotal * (discount.value / 100)
+    : discount.value;
+  const finalTotal = Math.max(0, cartTotal - discountAmount);
 
   const categories = ['All', ...Array.from(new Set(menuItems.map(m => m.category || 'Uncategorized')))];
 
@@ -202,7 +231,7 @@ function CounterPage() {
     return true;
   });
 
-  const handlePlaceOrderClick = () => {
+const handlePlaceOrderClick = () => {
     if (cart.length === 0) {
       setError('Cart is empty.');
       return;
@@ -212,10 +241,13 @@ function CounterPage() {
       return;
     }
     setError(null);
+    setDiscount({ type: 'fixed', value: 0 });
+    setPaymentMode('full');
+    setSplitPayments([]);
     setIsConfirmOpen(true);
   };
 
-  const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'unpaid') => {
+const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'unpaid') => {
     setIsSubmitting(true);
     setError(null);
 
@@ -240,7 +272,9 @@ function CounterPage() {
           status: 'pending',
           table_id: selectedTableId || null,
           customer_name: customerName || null,
-          total_amount: cartTotal
+          total_amount: finalTotal,
+          discount_amount: discountAmount,
+          discount_type: discount.type
         })
         .select()
         .single();
@@ -265,17 +299,28 @@ function CounterPage() {
 
       if (itemsError) throw itemsError;
 
-      // 3. Process payment if requested immediately
-      if (paymentMethod !== 'unpaid') {
+      // 3. Process payments
+      if (paymentMode === 'full' && paymentMethod !== 'unpaid') {
         const { error: paymentError } = await supabase
           .from('payments')
           .insert({
             order_id: orderData.id,
-            amount: cartTotal,
+            amount: finalTotal,
             payment_method: paymentMethod,
             paid_by: 'Counter Staff'
           });
-        
+        if (paymentError) throw paymentError;
+      } else if (paymentMode === 'split' && splitPayments.length > 0) {
+        const { error: paymentError } = await supabase
+          .from('payments')
+          .insert(
+            splitPayments.map(sp => ({
+              order_id: orderData.id,
+              amount: sp.amount,
+              payment_method: sp.method,
+              paid_by: 'Counter Staff'
+            }))
+          );
         if (paymentError) throw paymentError;
       }
 
@@ -547,62 +592,181 @@ function CounterPage() {
         </div>
       </div>
 
+      
       {/* CONFIRMATION DIALOG */}
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <DialogContent className="sm:max-w-md font-sans">
+        <DialogContent className="sm:max-w-xl font-sans max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black">Confirm Order</DialogTitle>
+            <DialogTitle className="text-2xl font-black">Confirm Order & Payment</DialogTitle>
           </DialogHeader>
           
-          <div className="py-4">
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4 max-h-[40vh] overflow-y-auto">
-              {cart.map(item => (
-                <div key={item.id} className="flex justify-between items-start mb-2 last:mb-0 text-sm">
-                  <div>
-                    <span className="font-bold">{item.name}</span> <span className="text-gray-500">x{item.quantity}</span>
-                    {item.notes && <p className="text-xs text-red-500 italic mt-0.5">Notes: {item.notes}</p>}
+          <div className="py-2 space-y-4">
+            
+            {/* 1. ORDER SUMMARY */}
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+              <h3 className="font-bold text-gray-700 mb-2">Order Summary</h3>
+              <div className="max-h-[25vh] overflow-y-auto mb-3 pr-2">
+                {cart.map(item => (
+                  <div key={item.id} className="flex justify-between items-start mb-2 last:mb-0 text-sm">
+                    <div>
+                      <span className="font-bold">{item.name}</span> <span className="text-gray-500">x{item.quantity}</span>
+                      {item.containerSize && <span className="ml-1 text-xs px-1 bg-orange-100 text-orange-700 rounded-sm">🥡 {item.containerSize} (+RM{item.containerCharge})</span>}
+                      {item.notes && <p className="text-xs text-red-500 italic mt-0.5">Notes: {item.notes}</p>}
+                    </div>
+                    <span className="font-bold">RM{((item.price + (item.containerCharge || 0)) * item.quantity).toFixed(2)}</span>
                   </div>
-                  <span className="font-bold">RM{((item.price + (item.containerCharge || 0)) * item.quantity).toFixed(2)}</span>
+                ))}
+              </div>
+              
+              <div className="border-t border-gray-300 pt-2 flex justify-between items-center">
+                <span className="text-gray-500">Subtotal:</span>
+                <span className="font-bold text-gray-700">RM {cartTotal.toFixed(2)}</span>
+              </div>
+              
+              {/* 2. DISCOUNT MODULE */}
+              <div className="border-t border-gray-300 mt-2 pt-2 pb-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-gray-500 w-20">Discount:</span>
+                  <Select 
+                    value={discount.type} 
+                    onValueChange={(val: 'fixed'|'percentage') => setDiscount({ ...discount, type: val })}
+                  >
+                    <SelectTrigger className="w-24 h-8 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fixed">RM</SelectItem>
+                      <SelectItem value="percentage">%</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input 
+                    type="number" 
+                    min="0"
+                    step="0.1"
+                    className="h-8 w-24 text-right"
+                    value={discount.value || ''}
+                    onChange={(e) => setDiscount({ ...discount, value: parseFloat(e.target.value) || 0 })}
+                  />
                 </div>
-              ))}
-              <div className="border-t border-gray-300 mt-3 pt-3 flex justify-between items-center text-lg">
-                <span className="font-bold text-gray-500">TOTAL:</span>
-                <span className="font-black text-black">RM {cartTotal.toFixed(2)}</span>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between items-center text-green-600">
+                    <span>Discount Applied:</span>
+                    <span>- RM {discountAmount.toFixed(2)}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-gray-300 mt-2 pt-2 flex justify-between items-center text-xl">
+                <span className="font-black text-gray-900">FINAL TOTAL:</span>
+                <span className="font-black text-blue-600">RM {finalTotal.toFixed(2)}</span>
               </div>
             </div>
 
-            <div className="space-y-2 text-sm text-gray-600 bg-blue-50 p-3 rounded-lg border border-blue-100 mb-6">
-              <p><strong className="text-gray-900">Type:</strong> {orderType === 'dine_in' ? `Dine-in (Table ${tables.find(t=>t.id === selectedTableId)?.table_number})` : 'Takeaway'}</p>
-              {customerName && <p><strong className="text-gray-900">Customer:</strong> {customerName}</p>}
-            </div>
+            {/* 3. PAYMENT TYPE TABS */}
+            <Tabs value={paymentMode} onValueChange={(v) => setPaymentMode(v as 'full'|'split')} className="w-full">
+              <TabsList className="w-full grid grid-cols-2">
+                <TabsTrigger value="full" className="font-bold">Full Payment</TabsTrigger>
+                <TabsTrigger value="split" className="font-bold">Split Payment</TabsTrigger>
+              </TabsList>
 
-            <p className="font-bold text-gray-900 mb-2">Process Payment Now?</p>
-            <div className="grid grid-cols-2 gap-2 mb-2">
-              <Button 
-                variant="outline" 
-                className="h-14 font-bold border-2 border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
-                onClick={() => handleSubmitOrder('cash')}
-                disabled={isSubmitting}
-              >
-                💵 PAID CASH
-              </Button>
-              <Button 
-                variant="outline" 
-                className="h-14 font-bold border-2 border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800"
-                onClick={() => handleSubmitOrder('card')}
-                disabled={isSubmitting}
-              >
-                💳 PAID CARD/QR
-              </Button>
-            </div>
-            <Button 
-              variant="outline" 
-              className="w-full h-12 font-bold bg-gray-100 hover:bg-gray-200 text-gray-600"
-              onClick={() => handleSubmitOrder('unpaid')}
-              disabled={isSubmitting}
-            >
-              PAY LATER (Unpaid)
-            </Button>
+              <TabsContent value="full" className="mt-4 space-y-3">
+                <p className="font-bold text-gray-900">Select Payment Method:</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    className="h-14 font-bold border-2 border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
+                    onClick={() => handleSubmitOrder('cash')}
+                    disabled={isSubmitting}
+                  >
+                    💵 PAID CASH
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="h-14 font-bold border-2 border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800"
+                    onClick={() => handleSubmitOrder('card')}
+                    disabled={isSubmitting}
+                  >
+                    💳 PAID CARD/QR
+                  </Button>
+                </div>
+                <Button 
+                  variant="outline" 
+                  className="w-full h-12 font-bold bg-gray-100 hover:bg-gray-200 text-gray-600"
+                  onClick={() => handleSubmitOrder('unpaid')}
+                  disabled={isSubmitting}
+                >
+                  PAY LATER (Unpaid)
+                </Button>
+              </TabsContent>
+
+              <TabsContent value="split" className="mt-4">
+                <div className="bg-white border border-gray-200 rounded-lg p-3">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="font-bold">Split Breakdown</span>
+                    <Button variant="outline" size="sm" onClick={addSplitPayment}>+ Add Person</Button>
+                  </div>
+                  
+                  {splitPayments.length === 0 && (
+                    <p className="text-sm text-gray-500 italic text-center py-2">Add a split payment to begin.</p>
+                  )}
+
+                  <div className="space-y-2 mb-4">
+                    {splitPayments.map((sp, idx) => (
+                      <div key={idx} className="flex gap-2 items-center">
+                        <span className="font-bold text-gray-500 w-6">{idx + 1}.</span>
+                        <div className="flex-1">
+                          <Input 
+                            type="number" 
+                            step="0.01" 
+                            min="0"
+                            placeholder="Amount (RM)" 
+                            value={sp.amount || ''}
+                            onChange={(e) => updateSplitPayment(idx, 'amount', parseFloat(e.target.value) || 0)}
+                          />
+                        </div>
+                        <div className="w-[100px]">
+                          <Select 
+                            value={sp.method} 
+                            onValueChange={(val: 'cash'|'card'|'qr'|'bank_transfer') => updateSplitPayment(idx, 'method', val)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="cash">Cash</SelectItem>
+                              <SelectItem value="card">Card</SelectItem>
+                              <SelectItem value="qr">QR</SelectItem>
+                              <SelectItem value="bank_transfer">Transfer</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button variant="ghost" size="icon" className="text-red-500 h-10 w-10 shrink-0" onClick={() => removeSplitPayment(idx)}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="border-t border-gray-100 pt-3 flex justify-between items-center text-sm">
+                    <span className="text-gray-500">Remaining to split:</span>
+                    <span className={`font-bold ${remainingSplitAmount > 0 ? 'text-red-500' : 'text-green-600'}`}>
+                      RM {remainingSplitAmount.toFixed(2)}
+                    </span>
+                  </div>
+                  
+                  <div className="mt-4">
+                    <Button 
+                      className="w-full h-12 font-bold"
+                      onClick={() => handleSubmitOrder('cash')} // Payment method arg is ignored for split payments in handleSubmitOrder
+                      disabled={isSubmitting || splitPayments.length === 0 || remainingSplitAmount > 0.01}
+                    >
+                      SUBMIT SPLIT PAYMENT
+                    </Button>
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+
           </div>
 
           <DialogFooter className="flex gap-2 sm:justify-start">
