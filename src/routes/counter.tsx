@@ -158,7 +158,26 @@ function CounterPage() {
 
 
   const toggleCartItemFulfillment = (cartItemId: string) => {
-    setCart(cart.map(item => item.id === cartItemId ? { ...item, fulfillmentType: item.fulfillmentType === 'dine_in' ? 'takeaway' : 'dine_in' } : item));
+    setCart(cart.map(item => {
+      if (item.id === cartItemId) {
+        const isNowTakeaway = item.fulfillmentType === 'dine_in';
+        return { 
+          ...item, 
+          fulfillmentType: isNowTakeaway ? 'takeaway' : 'dine_in',
+          containerSize: isNowTakeaway ? 'small' : null,
+          containerCharge: isNowTakeaway ? 0 : 0
+        };
+      }
+      return item;
+    }));
+  };
+
+  const updateCartItemContainerSize = (cartItemId: string, size: 'small' | 'large') => {
+    setCart(cart.map(item => item.id === cartItemId ? { 
+      ...item, 
+      containerSize: size,
+      containerCharge: size === 'large' ? 1.00 : 0
+    } : item));
   };
 
   const removeFromCart = (cartItemId: string) => {
@@ -485,6 +504,22 @@ function CounterPage() {
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
+                    {item.fulfillmentType === 'takeaway' && (
+                      <div className="flex bg-orange-50 p-1 rounded border border-orange-100">
+                        <button
+                          onClick={() => updateCartItemContainerSize(item.id, 'small')}
+                          className={`flex-1 text-[10px] py-1 rounded font-bold transition-colors ${item.containerSize !== 'large' ? 'bg-orange-500 text-white shadow-sm' : 'text-orange-600 hover:bg-orange-100'}`}
+                        >
+                          Small (+RM0)
+                        </button>
+                        <button
+                          onClick={() => updateCartItemContainerSize(item.id, 'large')}
+                          className={`flex-1 text-[10px] py-1 rounded font-bold transition-colors ${item.containerSize === 'large' ? 'bg-orange-500 text-white shadow-sm' : 'text-orange-600 hover:bg-orange-100'}`}
+                        >
+                          Large (+RM1)
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))
               )}
