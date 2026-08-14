@@ -59,6 +59,90 @@ export type Database = {
           },
         ]
       }
+      cash_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          daily_cash_id: string | null
+          id: string
+          notes: string | null
+          order_id: string | null
+          type: string | null
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          daily_cash_id?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          type?: string | null
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          daily_cash_id?: string | null
+          id?: string
+          notes?: string | null
+          order_id?: string | null
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_transactions_daily_cash_id_fkey"
+            columns: ["daily_cash_id"]
+            isOneToOne: false
+            referencedRelation: "daily_cash"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_transactions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      daily_cash: {
+        Row: {
+          closed_at: string | null
+          closed_by: string | null
+          closing_balance: number | null
+          created_at: string | null
+          date: string
+          expected_closing: number | null
+          id: string
+          notes: string | null
+          opening_balance: number
+          variance: number | null
+        }
+        Insert: {
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_balance?: number | null
+          created_at?: string | null
+          date: string
+          expected_closing?: number | null
+          id?: string
+          notes?: string | null
+          opening_balance: number
+          variance?: number | null
+        }
+        Update: {
+          closed_at?: string | null
+          closed_by?: string | null
+          closing_balance?: number | null
+          created_at?: string | null
+          date?: string
+          expected_closing?: number | null
+          id?: string
+          notes?: string | null
+          opening_balance?: number
+          variance?: number | null
+        }
+        Relationships: []
+      }
       deliveries: {
         Row: {
           id: string
@@ -222,6 +306,9 @@ export type Database = {
       order_edit_logs: {
         Row: {
           action: string
+          after_total: number | null
+          before_total: number | null
+          changes: Json | null
           created_at: string | null
           details: Json | null
           edited_by: string | null
@@ -231,6 +318,9 @@ export type Database = {
         }
         Insert: {
           action: string
+          after_total?: number | null
+          before_total?: number | null
+          changes?: Json | null
           created_at?: string | null
           details?: Json | null
           edited_by?: string | null
@@ -240,6 +330,9 @@ export type Database = {
         }
         Update: {
           action?: string
+          after_total?: number | null
+          before_total?: number | null
+          changes?: Json | null
           created_at?: string | null
           details?: Json | null
           edited_by?: string | null
@@ -253,13 +346,6 @@ export type Database = {
             columns: ["edited_by"]
             isOneToOne: false
             referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "order_edit_logs_order_id_fkey"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
             referencedColumns: ["id"]
           },
         ]
@@ -329,13 +415,21 @@ export type Database = {
       }
       orders: {
         Row: {
+          completed_at: string | null
           created_at: string
           customer_name: string | null
+          customer_phone: string | null
+          delivery_address: string | null
+          delivery_fee: number | null
           delivery_service:
             | Database["public"]["Enums"]["delivery_service_enum"]
             | null
           id: string
           member_id: string | null
+          paid: boolean | null
+          payment_method: string | null
+          phone_number: string | null
+          ready_at: string | null
           status: Database["public"]["Enums"]["order_status"]
           store_id: string
           table_id: string | null
@@ -343,13 +437,21 @@ export type Database = {
           type: Database["public"]["Enums"]["order_type"]
         }
         Insert: {
+          completed_at?: string | null
           created_at?: string
           customer_name?: string | null
+          customer_phone?: string | null
+          delivery_address?: string | null
+          delivery_fee?: number | null
           delivery_service?:
             | Database["public"]["Enums"]["delivery_service_enum"]
             | null
           id?: string
           member_id?: string | null
+          paid?: boolean | null
+          payment_method?: string | null
+          phone_number?: string | null
+          ready_at?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           store_id: string
           table_id?: string | null
@@ -357,13 +459,21 @@ export type Database = {
           type: Database["public"]["Enums"]["order_type"]
         }
         Update: {
+          completed_at?: string | null
           created_at?: string
           customer_name?: string | null
+          customer_phone?: string | null
+          delivery_address?: string | null
+          delivery_fee?: number | null
           delivery_service?:
             | Database["public"]["Enums"]["delivery_service_enum"]
             | null
           id?: string
           member_id?: string | null
+          paid?: boolean | null
+          payment_method?: string | null
+          phone_number?: string | null
+          ready_at?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           store_id?: string
           table_id?: string | null
