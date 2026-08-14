@@ -375,12 +375,6 @@ function LandingPage() {
 
         <div className="max-w-7xl mx-auto mt-20 p-8 bg-card/50 border rounded-2xl text-left space-y-4">
           <p className="text-xs text-muted-foreground font-mono leading-relaxed whitespace-pre-wrap">
-            '''Do not make any visual modifications. The phrases I write are commands to understand what I want, not to be written down. Understand their content well, then execute what is required.'''{"\n"}
-            {"\n"}
-            Excellent! 🎉 Phase 2 built + deployed. But ikut pattern conversation ni — verify sendiri, jangan terima claim je.{"\n"}
-            {"\n"}
-            Let's test all 4 Phase 2 features:{"\n"}
-            {"\n"}
             Test Plan — Phase 2 (4 Features):{"\n"}
             {"\n"}
             Test 1 — Table Status Dashboard (Visual Grid){"\n"}
