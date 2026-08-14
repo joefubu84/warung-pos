@@ -160,8 +160,11 @@ const addSplitPayment = () => {
     
     if (existingIndex >= 0) {
       const newCart = [...cart];
-      newCart[existingIndex].quantity += 1;
-      setCart(newCart);
+      const itemToUpdate = newCart[existingIndex];
+      if (itemToUpdate) {
+        itemToUpdate.quantity += 1;
+        setCart(newCart);
+      }
     } else {
       const newItem: CartItem = {
         id: Math.random().toString(36).substr(2, 9),

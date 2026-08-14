@@ -146,7 +146,6 @@ function TableQRPage() {
     }
 
     const newItem: CartItem = {
-        fulfillmentType: 'dine_in', // default to dine_in for QR menu
       id: Math.random().toString(36).substr(2, 9),
       menuItemId: item.id,
       name: item.name,
@@ -241,7 +240,6 @@ function TableQRPage() {
         order_id: orderData.id,
         menu_item_id: item.menuItemId,
         quantity: item.quantity,
-        fulfillment_type: item.fulfillmentType,
         price_at_order: item.price,
         fulfillment_type: item.fulfillmentType,
         container_size: item.containerSize || null,
@@ -279,7 +277,6 @@ function TableQRPage() {
         order_id: existingOrder.id,
         menu_item_id: item.menuItemId,
         quantity: item.quantity,
-        fulfillment_type: item.fulfillmentType,
         price_at_order: item.price,
         fulfillment_type: item.fulfillmentType,
         container_size: item.containerSize || null,
@@ -399,7 +396,7 @@ function TableQRPage() {
                       <p className="text-sm text-gray-500">{item.category}</p>
                       <div className="flex items-center gap-2 mt-1">
                         <p className="text-blue-600 font-bold">RM{item.price.toFixed(2)}</p>
-                        {item.stock_count !== null && item.stock_count > 0 && item.stock_count <= 5 && (
+                        {(item.stock_count ?? 0) > 0 && (item.stock_count ?? 0) <= 5 && (
                           <span className="text-yellow-700 text-xs font-bold bg-yellow-100 px-2 py-0.5 rounded">⚠️ {item.stock_count} Left</span>
                         )}
                       </div>
