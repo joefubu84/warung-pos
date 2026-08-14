@@ -653,7 +653,10 @@ function OrdersPage() {
                         {(order.order_items || []).map((item, idx) => (
                           <div key={idx} className="text-sm">
                             <p className="font-semibold text-gray-800">
-                              • {item.menu_items?.name || 'Item'} <span className="text-gray-500">x{item.quantity}</span> 
+                              • {item.menu_items?.name || 'Item'} <span className="text-gray-500">x{item.quantity}</span>
+                              <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${item.fulfillment_type === 'takeaway' ? 'bg-orange-100 text-orange-600 border border-orange-200' : 'bg-blue-50 text-blue-500 border border-blue-100'}`}>
+                                {item.fulfillment_type === 'takeaway' ? '🥡 Takeaway' : '🍽️ Dine-in'}
+                              </span> 
                               <span className="text-gray-400 ml-2">RM{Number(item.price_at_order * item.quantity).toFixed(2)}</span>
                             </p>
                             {(item as any).notes && (

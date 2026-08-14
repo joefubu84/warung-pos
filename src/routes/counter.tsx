@@ -156,6 +156,11 @@ function CounterPage() {
     setCart(cart.map(item => item.id === cartItemId ? { ...item, notes: notes.slice(0, 100) } : item));
   };
 
+
+  const toggleCartItemFulfillment = (cartItemId: string) => {
+    setCart(cart.map(item => item.id === cartItemId ? { ...item, fulfillmentType: item.fulfillmentType === 'dine_in' ? 'takeaway' : 'dine_in' } : item));
+  };
+
   const removeFromCart = (cartItemId: string) => {
     setCart(cart.filter(item => item.id !== cartItemId));
   };
@@ -437,7 +442,15 @@ function CounterPage() {
                   <div key={item.id} className="bg-white border border-gray-200 rounded-xl p-3 shadow-sm flex flex-col gap-2">
                     <div className="flex justify-between items-start">
                       <div className="pr-2">
-                        <h4 className="font-bold text-gray-800 leading-tight">{item.name}</h4>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 mb-1">
+                          <h4 className="font-bold text-gray-800 leading-tight">{item.name}</h4>
+                          <button 
+                            onClick={() => toggleCartItemFulfillment(item.id)}
+                            className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase transition-colors self-start sm:self-auto active:scale-95 ${item.fulfillmentType === 'takeaway' ? 'bg-orange-100 text-orange-600 border border-orange-200' : 'bg-blue-50 text-blue-500 border border-blue-100'}`}
+                          >
+                            {item.fulfillmentType === 'takeaway' ? '🥡 Takeaway' : '🍽️ Dine-in'}
+                          </button>
+                        </div>
                         <p className="text-sm font-bold text-blue-600">RM{((item.price + (item.containerCharge || 0)) * item.quantity).toFixed(2)}</p>
                       </div>
                       
