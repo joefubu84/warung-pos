@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
   Plus, 
@@ -10,42 +10,21 @@ import {
   Table as TableIcon,
   QrCode,
   AlertCircle,
-  Loader2
+  Loader2,
+  Clock,
+  Receipt,
+  Utensils
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { requireStaffAuth } from '@/lib/auth-guard';
-
-// --- 21st.dev Inspired Components (Simulated MCP fetch) ---
-
-const Badge = ({ children, variant = 'default', className }: { 
-  children: React.ReactNode; 
-  variant?: 'default' | 'success' | 'warning' | 'error';
-  className?: string;
-}) => {
-  const variants = {
-    default: 'bg-muted text-muted-foreground border-border',
-    success: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-    warning: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-    error: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
-  };
-  return (
-    <span className={cn(
-      "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
-      variants[variant],
-      className
-    )}>
-      {children}
-    </span>
-  );
-};
-
-const Card = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn("bg-card border border-border/50 rounded-[2rem] shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden", className)}>
-    {children}
-  </div>
-);
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 // --- Route Definition ---
 
@@ -85,36 +64,135 @@ interface Table {
   store_id: string;
 }
 
+const TableCard = memo(({ 
+  table, 
+  activeOrder, 
+  onClick 
+}: { 
+  table: Table, 
+  activeOrder: any, 
+  onClick: (t: Table, o: any) => void 
+}) => {
+  const isOccupied = !!activeOrder;
+  
+  return (
+    <motion.button
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      onClick={() => onClick(table, activeOrder)}
+      className={cn(
+        "p-4 rounded-2xl border text-left flex flex-col h-32 relative overflow-hidden transition-all duration-300 ease-in-out",
+        isOccupied 
+          ? "bg-rose-50 border-rose-200" 
+          : "bg-emerald-50 border-emerald-200"
+      )}
+    >
+      <div className="flex justify-between items-start w-full">
+        <span className={cn("text-2xl font-black transition-colors duration-300", isOccupied ? "text-rose-900" : "text-emerald-900")}>
+          {table.table_number}
+        </span>
+        <div className={cn("w-3 h-3 rounded-full transition-colors duration-300", isOccupied ? "bg-rose-500 animate-pulse" : "bg-emerald-500")} />
+      </div>
+      
+      <div className="mt-auto">
+        {isOccupied ? (
+          <>
+            <p className="text-xs font-bold text-rose-700 uppercase">Occupied</p>
+            <p className="text-[10px] text-rose-600 font-mono">#{activeOrder.id.slice(0,8).toUpperCase()}</p>
+          </>
+        ) : (
+          <p className="text-xs font-bold text-emerald-700 uppercase">Available</p>
+        )}
+      </div>
+    </motion.button>
+  );
+});
+
 function TablesPage() {
+  const [activeTab, setActiveTab] = useState<'grid' | 'manage'>('grid');
+  
   const [tables, setTables] = useState<Table[]>([]);
+  const [activeOrders, setActiveOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Manage state
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [newTableNumber, setNewTableNumber] = useState('');
   const [appBaseUrl, setAppBaseUrl] = useState('');
 
+  // Modal state
+  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const [tableOrder, setTableOrder] = useState<any>(null);
+
   useEffect(() => {
-    // We use the stable preview/production domain provided by the environment 
-    // or fallback to window.location.origin
     const origin = window.location.origin.replace("-preview--", "--");
     setAppBaseUrl(origin);
-    fetchTables();
+    fetchData();
+    
+    // Realtime subscription instead of polling
+    const channel = supabase
+      .channel('tables-orders-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => {
+        setActiveOrders(prev => {
+          const newRow = payload.new as any;
+          const oldRow = payload.old as any;
+          if (payload.eventType === 'INSERT' && newRow.type === 'dine_in' && newRow.status !== 'completed' && newRow.status !== 'cancelled') {
+            return [...prev, newRow];
+          } else if (payload.eventType === 'UPDATE') {
+            if (newRow.status === 'completed' || newRow.status === 'cancelled') {
+              return prev.filter(o => o.id !== newRow.id);
+            }
+            const exists = prev.find(o => o.id === newRow.id);
+            if (exists) {
+              return prev.map(o => o.id === newRow.id ? newRow : o);
+            } else if (newRow.type === 'dine_in') {
+              return [...prev, newRow];
+            }
+          } else if (payload.eventType === 'DELETE') {
+            return prev.filter(o => o.id !== oldRow.id);
+          }
+          return prev;
+        });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, payload => {
+        setTables(prev => {
+          const newRow = payload.new as any;
+          const oldRow = payload.old as any;
+          if (payload.eventType === 'INSERT') return [...prev, newRow as Table].sort((a,b) => a.table_number.localeCompare(b.table_number));
+          if (payload.eventType === 'UPDATE') return prev.map(t => t.id === newRow.id ? newRow as Table : t);
+          if (payload.eventType === 'DELETE') return prev.filter(t => t.id !== oldRow.id);
+          return prev;
+        });
+      })
+      .subscribe();
+      
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const fetchTables = async () => {
-    setIsLoading(true);
-    const { data, error } = await supabase
-      .from('tables')
-      .select('*')
-      .order('table_number', { ascending: true });
+  const fetchData = async () => {
+    // We intentionally don't set isLoading(true) for background polling
+    if (tables.length === 0) setIsLoading(true);
+    
+    try {
+      const [{ data: tablesData }, { data: ordersData }] = await Promise.all([
+        supabase.from('tables').select('*').order('table_number', { ascending: true }),
+        supabase.from('orders')
+          .select('id, table_id, status, total_amount, created_at')
+          .eq('type', 'dine_in')
+          .neq('status', 'completed')
+      ]);
 
-    if (error) {
-      toast.error('Failed to fetch tables');
-    } else {
-      setTables(data as Table[]);
+      if (tablesData) setTables(tablesData as Table[]);
+      if (ordersData) setActiveOrders(ordersData);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const handleAddTable = async (e: React.FormEvent) => {
@@ -161,11 +239,7 @@ function TablesPage() {
 
   const handleDeleteTable = async (table: Table) => {
     if (confirm('Are you sure you want to delete this table?')) {
-      const { error } = await supabase
-        .from('tables')
-        .delete()
-        .eq('id', table.id);
-
+      const { error } = await supabase.from('tables').delete().eq('id', table.id);
       if (error) {
         toast.error('Failed to delete table');
       } else {
@@ -175,26 +249,9 @@ function TablesPage() {
     }
   };
 
-  const handleUpdateStatus = async (id: string, newStatus: TableStatus) => {
-    const { error } = await supabase
-      .from('tables')
-      .update({ status: newStatus })
-      .eq('id', id);
-
-    if (error) {
-      toast.error('Failed to update status');
-    } else {
-      setTables(tables.map(t => t.id === id ? { ...t, status: newStatus } : t));
-    }
-  };
-
   const handleSaveEdit = async (id: string) => {
     if (!editValue.trim()) return;
-    const { error } = await supabase
-      .from('tables')
-      .update({ table_number: editValue })
-      .eq('id', id);
-
+    const { error } = await supabase.from('tables').update({ table_number: editValue }).eq('id', id);
     if (error) {
       toast.error('Failed to update table number');
     } else {
@@ -203,86 +260,220 @@ function TablesPage() {
       toast.success('Table updated');
     }
   };
+  
+  const handleMarkReady = async (orderId: string) => {
+    try {
+      const { error } = await supabase.from('orders').update({ 
+        status: 'ready',
+        ready_at: new Date().toISOString()
+      } as any).eq('id', orderId);
+      if (error) throw error;
+      toast.success('Order marked ready');
+      setSelectedTable(null);
+      fetchData();
+    } catch (err: any) {
+      toast.error('Failed to update order');
+    }
+  };
+
+  const handleCloseTable = async (orderId: string) => {
+    try {
+      const { error } = await supabase.from('orders').update({ 
+        status: 'completed',
+        completed_at: new Date().toISOString()
+      } as any).eq('id', orderId);
+      if (error) throw error;
+      toast.success('Table closed and order completed');
+      setSelectedTable(null);
+      fetchData();
+    } catch (err: any) {
+      toast.error('Failed to close table');
+    }
+  };
+
+  const getWaitTime = (createdAt: string) => {
+    const diff = Date.now() - new Date(createdAt).getTime();
+    return Math.floor(diff / 60000); // minutes
+  };
+
+  if (isLoading) {
+    return <div className="p-8 flex items-center justify-center h-[50vh]"><Loader2 className="w-8 h-8 animate-spin" /></div>;
+  }
 
   return (
-    <div className="p-8">
-      <form onSubmit={handleAddTable} className="mb-8 flex gap-2">
-        <input
-          type="text"
-          value={newTableNumber}
-          onChange={(e) => setNewTableNumber(e.target.value)}
-          placeholder="Table number"
-          className="border p-2 rounded"
-          disabled={isAdding}
-        />
-        <button 
-          type="submit" 
-          className="bg-primary text-primary-foreground px-4 py-2 rounded disabled:opacity-50"
-          disabled={isAdding}
-        >
-          {isAdding ? 'Adding...' : 'Add Table'}
-        </button>
-      </form>
+    <div className="p-6 md:p-8 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-black tracking-tight">Table Management</h1>
+          <p className="text-muted-foreground">Monitor and manage dine-in tables</p>
+        </div>
+        
+        <div className="flex bg-muted p-1 rounded-xl">
+          <button 
+            onClick={() => setActiveTab('grid')}
+            className={cn("px-6 py-2 rounded-lg text-sm font-semibold transition-all", activeTab === 'grid' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}
+          >
+            Live Grid
+          </button>
+          <button 
+            onClick={() => setActiveTab('manage')}
+            className={cn("px-6 py-2 rounded-lg text-sm font-semibold transition-all", activeTab === 'manage' ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground")}
+          >
+            Manage Setup
+          </button>
+        </div>
+      </div>
 
-      {isLoading ? (
-        <p>Loading...</p>
-      ) : tables.length === 0 ? (
-        <p>No tables yet</p>
-      ) : (
-        <div className="space-y-1">
-          {tables.map((table) => (
-            <div key={table.id} className="text-sm font-mono flex items-center gap-2">
-              {editingId === table.id ? (
-                <>
-                  <input
-                    type="text"
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    className="border p-1 rounded"
-                  />
-                  <button onClick={() => handleSaveEdit(table.id)} className="underline">
-                    Save
-                  </button>
-                  <button onClick={() => setEditingId(null)} className="underline">
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  <span>{table.table_number}</span>
-                  <select 
-                    value={table.status} 
-                    onChange={(e) => handleUpdateStatus(table.id, e.target.value as TableStatus)}
-                    className="border rounded p-0.5"
-                  >
-                    <option value="available">available</option>
-                    <option value="occupied">occupied</option>
-                    <option value="reserved">reserved</option>
-                  </select>
-                  <div className="bg-white p-1 border inline-block">
-                    <QRCodeSVG 
-                      value={`${appBaseUrl}/t/${table.qr_token}`} 
-                      size={48}
-                    />
-                  </div>
-                  <button
-                    onClick={() => {
-                      setEditingId(table.id);
-                      setEditValue(table.table_number);
-                    }}
-                    className="underline"
-                  >
-                    Edit
-                  </button>
-                  <button onClick={() => handleDeleteTable(table)} className="underline">
-                    Delete
-                  </button>
-                </>
-              )}
-            </div>
-          ))}
+      {activeTab === 'grid' && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {tables.map(table => {
+            const activeOrder = activeOrders.find(o => o.table_id === table.id);
+            const isOccupied = !!activeOrder;
+            
+            return (
+              <TableCard 
+                key={table.id}
+                table={table}
+                activeOrder={activeOrder}
+                onClick={(t, o) => {
+                  setSelectedTable(t);
+                  setTableOrder(o);
+                }}
+              />
+            )
+          })}
         </div>
       )}
+
+      {activeTab === 'manage' && (
+        <div className="bg-card border rounded-2xl p-6">
+          <form onSubmit={handleAddTable} className="mb-8 flex gap-2 max-w-sm">
+            <input
+              type="text"
+              value={newTableNumber}
+              onChange={(e) => setNewTableNumber(e.target.value)}
+              placeholder="New table number (e.g. A1)"
+              className="border px-4 py-2 rounded-xl flex-1 text-sm font-medium focus:ring-2 focus:ring-primary outline-none transition-all"
+              disabled={isAdding}
+            />
+            <button 
+              type="submit" 
+              className="bg-primary text-primary-foreground px-6 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-primary/90 disabled:opacity-50 flex items-center gap-2"
+              disabled={isAdding}
+            >
+              <Plus className="w-4 h-4" />
+              Add
+            </button>
+          </form>
+
+          <div className="space-y-3">
+            {tables.map((table) => (
+              <div key={table.id} className="flex items-center justify-between p-4 bg-muted/30 border rounded-xl">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-background border rounded-lg flex items-center justify-center font-black text-lg">
+                    {table.table_number}
+                  </div>
+                  <div className="bg-white p-1 rounded shadow-sm">
+                    <QRCodeSVG value={`${appBaseUrl}/t/${table.qr_token}`} size={40} />
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button onClick={() => {
+                    const newNum = prompt("Enter new table number:", table.table_number);
+                    if (newNum) {
+                      setEditValue(newNum);
+                      handleSaveEdit(table.id);
+                    }
+                  }} className="p-2 hover:bg-black/5 rounded-lg text-muted-foreground transition-colors">
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => handleDeleteTable(table)} className="p-2 hover:bg-rose-500/10 text-rose-500 rounded-lg transition-colors">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            {tables.length === 0 && (
+              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">
+                <TableIcon className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                <p>No tables configured yet.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Table Detail Modal */}
+      <Dialog open={!!selectedTable} onOpenChange={(open) => !open && setSelectedTable(null)}>
+        <DialogContent className="max-w-md sm:rounded-3xl p-0 overflow-hidden border-0">
+          {selectedTable && (
+            <>
+              <div className={cn(
+                "p-6 text-white relative overflow-hidden",
+                tableOrder ? "bg-gradient-to-br from-rose-500 to-rose-700" : "bg-gradient-to-br from-emerald-500 to-emerald-700"
+              )}>
+                <div className="absolute top-0 right-0 p-8 opacity-10">
+                  <TableIcon className="w-32 h-32" />
+                </div>
+                <div className="relative z-10">
+                  <h2 className="text-4xl font-black mb-1">Table {selectedTable.table_number}</h2>
+                  <p className="text-white/80 font-medium uppercase tracking-widest text-xs">
+                    {tableOrder ? 'Occupied' : 'Available'}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="p-6 bg-background">
+                {tableOrder ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-muted rounded-xl p-4">
+                        <p className="text-xs text-muted-foreground font-bold uppercase mb-1 flex items-center gap-1"><Receipt className="w-3 h-3"/> Order ID</p>
+                        <p className="font-mono text-sm font-medium">#{tableOrder.id.slice(0,8).toUpperCase()}</p>
+                      </div>
+                      <div className="bg-muted rounded-xl p-4">
+                        <p className="text-xs text-muted-foreground font-bold uppercase mb-1 flex items-center gap-1"><Clock className="w-3 h-3"/> Wait Time</p>
+                        <p className="font-mono text-sm font-medium">{getWaitTime(tableOrder.created_at)} min</p>
+                      </div>
+                      <div className="bg-muted rounded-xl p-4">
+                        <p className="text-xs text-muted-foreground font-bold uppercase mb-1 flex items-center gap-1"><Utensils className="w-3 h-3"/> Status</p>
+                        <p className="font-mono text-sm font-medium uppercase text-rose-500">{tableOrder.status}</p>
+                      </div>
+                      <div className="bg-muted rounded-xl p-4">
+                        <p className="text-xs text-muted-foreground font-bold uppercase mb-1">Total</p>
+                        <p className="font-mono text-sm font-medium">RM {tableOrder.total_amount.toFixed(2)}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-2 pt-4">
+                      <a href="/orders" className="w-full text-center bg-secondary text-secondary-foreground py-3 rounded-xl font-bold hover:bg-secondary/80 transition-colors">
+                        View Orders Page
+                      </a>
+                      {tableOrder.status !== 'ready' && (
+                        <button onClick={() => handleMarkReady(tableOrder.id)} className="w-full bg-amber-500 text-white py-3 rounded-xl font-bold hover:bg-amber-600 transition-colors">
+                          Mark Ready
+                        </button>
+                      )}
+                      <button onClick={() => handleCloseTable(tableOrder.id)} className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg shadow-emerald-500/20">
+                        Complete Order & Close Table
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-8 text-center text-muted-foreground flex flex-col items-center">
+                    <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                      <QrCode className="w-8 h-8 opacity-50" />
+                    </div>
+                    <p className="mb-2">This table is currently free.</p>
+                    <p className="text-sm">Customers can scan the QR code to begin ordering.</p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

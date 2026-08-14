@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CashRouteImport } from './routes/cash'
+import { Route as CashManagementRouteImport } from './routes/cash-management'
+import { Route as CounterRouteImport } from './routes/counter'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as KitchenRouteImport } from './routes/kitchen'
 import { Route as MenuRouteImport } from './routes/menu'
@@ -36,6 +38,16 @@ const AuthRoute = AuthRouteImport.update({
 const CashRoute = CashRouteImport.update({
   id: '/cash',
   path: '/cash',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CashManagementRoute = CashManagementRouteImport.update({
+  id: '/cash-management',
+  path: '/cash-management',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CounterRoute = CounterRouteImport.update({
+  id: '/counter',
+  path: '/counter',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -93,6 +105,8 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cash': typeof CashRoute
+  '/cash-management': typeof CashManagementRoute
+  '/counter': typeof CounterRoute
   '/dashboard': typeof DashboardRoute
   '/kitchen': typeof KitchenRoute
   '/menu': typeof MenuRoute
@@ -108,6 +122,8 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cash': typeof CashRoute
+  '/cash-management': typeof CashManagementRoute
+  '/counter': typeof CounterRoute
   '/dashboard': typeof DashboardRoute
   '/kitchen': typeof KitchenRoute
   '/menu': typeof MenuRoute
@@ -124,6 +140,8 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/cash': typeof CashRoute
+  '/cash-management': typeof CashManagementRoute
+  '/counter': typeof CounterRoute
   '/dashboard': typeof DashboardRoute
   '/kitchen': typeof KitchenRoute
   '/menu': typeof MenuRoute
@@ -141,6 +159,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/cash'
+    | '/cash-management'
+    | '/counter'
     | '/dashboard'
     | '/kitchen'
     | '/menu'
@@ -156,6 +176,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/cash'
+    | '/cash-management'
+    | '/counter'
     | '/dashboard'
     | '/kitchen'
     | '/menu'
@@ -171,6 +193,8 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/cash'
+    | '/cash-management'
+    | '/counter'
     | '/dashboard'
     | '/kitchen'
     | '/menu'
@@ -187,6 +211,8 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
   CashRoute: typeof CashRoute
+  CashManagementRoute: typeof CashManagementRoute
+  CounterRoute: typeof CounterRoute
   DashboardRoute: typeof DashboardRoute
   KitchenRoute: typeof KitchenRoute
   MenuRoute: typeof MenuRoute
@@ -220,6 +246,20 @@ declare module '@tanstack/react-router' {
       path: '/cash'
       fullPath: '/cash'
       preLoaderRoute: typeof CashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cash-management': {
+      id: '/cash-management'
+      path: '/cash-management'
+      fullPath: '/cash-management'
+      preLoaderRoute: typeof CashManagementRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/counter': {
+      id: '/counter'
+      path: '/counter'
+      fullPath: '/counter'
+      preLoaderRoute: typeof CounterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -299,6 +339,8 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
   CashRoute: CashRoute,
+  CashManagementRoute: CashManagementRoute,
+  CounterRoute: CounterRoute,
   DashboardRoute: DashboardRoute,
   KitchenRoute: KitchenRoute,
   MenuRoute: MenuRoute,

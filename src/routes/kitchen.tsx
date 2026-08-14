@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
-import { requireStaffAuth } from '@/lib/auth-guard';
+import { requireChefAuth } from '@/lib/auth-guard';
 import { playKitchenSound } from '@/lib/sounds';
 
 export const Route = createFileRoute('/kitchen')({
   ssr: false,
   beforeLoad: async ({ context, location }) => {
-    return await requireStaffAuth(location, context.auth);
+    return await requireChefAuth(location, context.auth);
   },
   component: KitchenPage,
 });
@@ -39,8 +39,29 @@ interface Order {
   } | null;
   order_items: OrderItem[];
   order_edit_logs?: { id: string }[];
+  customer_phone?: string | null;
+  delivery_address?: string | null;
   created_at: string;
+  ready_at?: string | null;
 }
+
+const WaitTimer = ({ createdAt }: { createdAt: string }) => {
+  const [elapsed, setElapsed] = useState('');
+
+  useEffect(() => {
+    const updateTimer = () => {
+      const diffMs = Date.now() - new Date(createdAt).getTime();
+      const mins = Math.floor(diffMs / 60000);
+      const secs = Math.floor((diffMs % 60000) / 1000);
+      setElapsed(`${mins}m ${secs.toString().padStart(2, '0')}s`);
+    };
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [createdAt]);
+
+  return <span className="text-yellow-300 ml-auto tabular-nums font-mono">⏱️ {elapsed}</span>;
+};
 
 const OrderCard = memo(({ 
   order, 
@@ -107,7 +128,7 @@ const OrderCard = memo(({
                 )}
               </div>
               
-              <h2 className="text-lg font-bold leading-tight flex items-center gap-2 text-white flex-wrap">
+              <h2 className="text-lg font-bold leading-tight flex items-center gap-2 text-white flex-wrap w-full">
                 {order.type === 'dine_in' 
                   ? `Table ${order.tables?.table_number || '?'}` 
                   : (order.customer_name || 'Anonymous Customer')}
@@ -121,7 +142,14 @@ const OrderCard = memo(({
                     ❌ NOT PAID
                   </span>
                 )}
+                <WaitTimer createdAt={order.created_at} />
               </h2>
+              {order.type === 'delivery' && (order.customer_phone || order.delivery_address) && (
+                <div className="bg-slate-900/50 p-2 rounded text-xs text-slate-300 mt-1 border border-slate-700 w-full">
+                  {order.customer_phone && <p className="mb-1"><span className="opacity-70">📞</span> {order.customer_phone}</p>}
+                  {order.delivery_address && <p><span className="opacity-70">📍</span> {order.delivery_address}</p>}
+                </div>
+              )}
             </div>
             
             <div className="flex flex-col gap-2 items-end">
@@ -284,7 +312,11 @@ function KitchenPage() {
         table_id,
         paid,
         payment_method,
+        delivery_service,
+        customer_phone,
+        delivery_address,
         created_at,
+        ready_at,
         tables (table_number),
         order_edit_logs (id),
         order_items (
@@ -376,9 +408,13 @@ function KitchenPage() {
       return newOrders;
     });
 
+    const payload: any = { status: nextStatus };
+    if (nextStatus === 'ready') payload.ready_at = new Date().toISOString();
+    if (nextStatus === 'completed') payload.completed_at = new Date().toISOString();
+
     const { error } = await supabase
       .from('orders')
-      .update({ status: nextStatus })
+      .update(payload)
       .eq('id', orderId);
 
     if (error) {
@@ -435,6 +471,76 @@ function KitchenPage() {
           ))}
         </div>
       )}
+
+      {/* Kitchen Stats Footer */}
+      <div className="mt-8 pt-4 border-t border-slate-700">
+        <KitchenStats activeOrders={orders} />
+      </div>
     </div>
   );
 }
+
+const KitchenStats = ({ activeOrders }: { activeOrders: Order[] }) => {
+  const [stats, setStats] = useState({ avg: 0, fast: 0, slow: 0, count: 0 });
+
+  useEffect(() => {
+    const fetchTodayStats = async () => {
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      
+      const { data } = await supabase
+        .from('orders')
+        .select('created_at, ready_at, status')
+        .gte('created_at', today.toISOString())
+        .not('ready_at', 'is', null);
+
+      if (data && data.length > 0) {
+        let total = 0;
+        let fast = Infinity;
+        let slow = 0;
+        
+        data.forEach(order => {
+          if (order.ready_at) {
+            const diff = (new Date(order.ready_at).getTime() - new Date(order.created_at).getTime()) / 60000;
+            total += diff;
+            if (diff < fast) fast = diff;
+            if (diff > slow) slow = diff;
+          }
+        });
+        
+        setStats({
+          avg: total / data.length,
+          fast: fast === Infinity ? 0 : fast,
+          slow,
+          count: data.length
+        });
+      }
+    };
+    
+    fetchTodayStats();
+    const interval = setInterval(fetchTodayStats, 60000);
+    return () => clearInterval(interval);
+  }, [activeOrders]); // Re-fetch if orders change (like one getting marked ready)
+
+  const readyCount = activeOrders.filter(o => o.status === 'ready').length;
+
+  return (
+    <div className="flex flex-wrap gap-4 text-xs font-mono text-slate-400 justify-center">
+      <div className="bg-slate-800 px-3 py-2 rounded border border-slate-700">
+        <span className="opacity-50">Currently Ready:</span> <span className="text-white font-bold">{readyCount}</span>
+      </div>
+      <div className="bg-slate-800 px-3 py-2 rounded border border-slate-700">
+        <span className="opacity-50">Today's Avg Prep:</span> <span className="text-white font-bold">{stats.avg.toFixed(1)}m</span>
+      </div>
+      <div className="bg-slate-800 px-3 py-2 rounded border border-slate-700">
+        <span className="opacity-50">Fastest:</span> <span className="text-emerald-400 font-bold">{stats.fast.toFixed(1)}m</span>
+      </div>
+      <div className="bg-slate-800 px-3 py-2 rounded border border-slate-700">
+        <span className="opacity-50">Slowest:</span> <span className="text-rose-400 font-bold">{stats.slow.toFixed(1)}m</span>
+      </div>
+      <div className="bg-slate-800 px-3 py-2 rounded border border-slate-700">
+        <span className="opacity-50">Total Prepped:</span> <span className="text-white font-bold">{stats.count}</span>
+      </div>
+    </div>
+  );
+};

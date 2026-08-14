@@ -23,6 +23,8 @@ export type Database = {
           opening_balance: number
           staff_id: string
           store_id: string
+          stock_count?: number | null
+          low_stock_threshold?: number | null
         }
         Insert: {
           closed_at?: string | null
@@ -32,6 +34,8 @@ export type Database = {
           opening_balance: number
           staff_id: string
           store_id: string
+          stock_count?: number | null
+          low_stock_threshold?: number | null
         }
         Update: {
           closed_at?: string | null
@@ -196,6 +200,8 @@ export type Database = {
           id: string
           receipt_url: string | null
           store_id: string
+          stock_count?: number | null
+          low_stock_threshold?: number | null
         }
         Insert: {
           ai_extracted_data?: Json | null
@@ -204,6 +210,8 @@ export type Database = {
           id?: string
           receipt_url?: string | null
           store_id: string
+          stock_count?: number | null
+          low_stock_threshold?: number | null
         }
         Update: {
           ai_extracted_data?: Json | null
@@ -274,6 +282,8 @@ export type Database = {
           name: string
           price: number
           store_id: string
+          stock_count?: number | null
+          low_stock_threshold?: number | null
         }
         Insert: {
           category: string
@@ -283,6 +293,8 @@ export type Database = {
           name: string
           price: number
           store_id: string
+          stock_count?: number | null
+          low_stock_threshold?: number | null
         }
         Update: {
           category?: string
@@ -550,6 +562,8 @@ export type Database = {
           sound_choice: string | null
           sound_file_url: string | null
           store_id: string
+          stock_count?: number | null
+          low_stock_threshold?: number | null
         }
         Insert: {
           auto_print?: boolean | null
@@ -561,6 +575,8 @@ export type Database = {
           sound_choice?: string | null
           sound_file_url?: string | null
           store_id: string
+          stock_count?: number | null
+          low_stock_threshold?: number | null
         }
         Update: {
           auto_print?: boolean | null
@@ -695,6 +711,8 @@ export type Database = {
           phone: string | null
           role: Database["public"]["Enums"]["app_role"]
           store_id: string
+          stock_count?: number | null
+          low_stock_threshold?: number | null
         }
         Insert: {
           created_at?: string
@@ -703,6 +721,8 @@ export type Database = {
           phone?: string | null
           role?: Database["public"]["Enums"]["app_role"]
           store_id: string
+          stock_count?: number | null
+          low_stock_threshold?: number | null
         }
         Update: {
           created_at?: string

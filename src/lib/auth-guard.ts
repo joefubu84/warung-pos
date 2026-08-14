@@ -2,10 +2,16 @@ import { redirect } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import type { AuthState } from '@/lib/auth-state';
 
-export async function requireAdminAuth(
-  location: { pathname: string },
-  auth: AuthState,
-) {
+async function getUserProfile(session: any) {
+  const { data: userProfile, error } = await supabase
+    .from('users')
+    .select('role, store_id')
+    .eq('id', session.user.id)
+    .single();
+  return { userProfile, error };
+}
+
+export async function requireAuth(location: { pathname: string }, auth: AuthState, allowedRoles: string[]) {
   await auth.waitForInitialization();
   const session = auth.session;
 
@@ -16,42 +22,28 @@ export async function requireAdminAuth(
     });
   }
 
-  const { data: userProfile, error } = await supabase
-    .from('users')
-    .select('role, store_id')
-    .eq('id', session.user.id)
-    .single();
+  const { userProfile, error } = await getUserProfile(session);
 
-  if (error || !userProfile || userProfile.role !== 'admin') {
-    throw new Error('Access Denied: Admin only');
+  if (error || !userProfile || !allowedRoles.includes(userProfile.role)) {
+    throw new Error(`Access Denied: Requires one of [${allowedRoles.join(', ')}]`);
   }
 
   return { session, role: userProfile.role, storeId: userProfile.store_id };
 }
 
-export async function requireStaffAuth(
-  location: { pathname: string },
-  auth: AuthState,
-) {
-  await auth.waitForInitialization();
-  const session = auth.session;
-
-  if (!session) {
-    throw redirect({
-      to: '/auth',
-      search: { redirect: location.pathname },
-    });
-  }
-
-  const { data: userProfile, error } = await supabase
-    .from('users')
-    .select('role, store_id')
-    .eq('id', session.user.id)
-    .single();
-
-  if (error || !userProfile || (userProfile.role !== 'staff' && userProfile.role !== 'admin')) {
-    throw new Error('Access Denied: Staff only');
-  }
-
-  return { session, role: userProfile.role, storeId: userProfile.store_id };
+export async function requireAdminAuth(location: { pathname: string }, auth: AuthState) {
+  return requireAuth(location, auth, ['admin']);
 }
+
+export async function requireCashierAuth(location: { pathname: string }, auth: AuthState) {
+  return requireAuth(location, auth, ['admin', 'cashier']);
+}
+
+export async function requireChefAuth(location: { pathname: string }, auth: AuthState) {
+  return requireAuth(location, auth, ['admin', 'chef']);
+}
+
+export async function requireStaffAuth(location: { pathname: string }, auth: AuthState) {
+  return requireAuth(location, auth, ['admin', 'cashier', 'chef', 'staff']);
+}
+

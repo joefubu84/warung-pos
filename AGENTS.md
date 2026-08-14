@@ -8,3 +8,46 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+## PERFORMANCE BEST PRACTICES - NO BLINKING PAGES
+
+For EVERY new page/feature built, follow these rules:
+
+1. **COMPONENT OPTIMIZATION**
+   - Use `React.memo` to prevent child re-renders when parent updates.
+
+2. **STATE UPDATES (Only What Changed)**
+   - Don't refetch all data on a single item update. Update only that item in state.
+
+3. **DATA FETCHING (No Constant Refetches)**
+   - Fetch data once on mount with an empty dependency array `[]`.
+
+4. **REALTIME UPDATES (Don't Re-render All)**
+   - Use targeted subscriptions (Supabase realtime/WebSockets).
+   - Only update when data actually changes.
+
+5. **CSS TRANSITIONS (Smooth, Not Snap)**
+   - Add to every animating element: `transition: all 0.3s ease;`
+
+6. **AVOID POLLING (Use Events Instead)**
+   - No `setInterval` polling. Use realtime subscriptions.
+
+7. **LAZY LOADING (Don't Load Everything)**
+   - Paginate data, use virtual scrolling, load on demand.
+
+8. **TESTING FOR BLINKING**
+   - Open page in browser, perform an action, watch for ANY flicker.
+   - If flicker appears -> MUST FIX before deployment.
+   - Test 3+ times to confirm smooth.
+
+CHECKLIST FOR EVERY NEW PAGE:
+- [ ] No full-page re-render on data update
+- [ ] Only changed items update (not entire list)
+- [ ] CSS transitions applied (smooth animations)
+- [ ] No unnecessary API calls
+- [ ] Realtime subscriptions (not polling)
+- [ ] React.memo used for list items
+- [ ] No blinking when tested 3x
+- [ ] Performance acceptable (< 100ms updates)
+
+RULE: If a page blinks, it's not done. Must be smooth, responsive, professional.

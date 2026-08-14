@@ -1,12 +1,19 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
-import { requireStaffAuth } from '@/lib/auth-guard';
+import { requireAdminAuth } from '@/lib/auth-guard';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Edit2, Trash2, Plus, Image as ImageIcon, Loader2, UtensilsCrossed } from 'lucide-react';
 
 export const Route = createFileRoute('/menu')({
   ssr: false,
   beforeLoad: async ({ context, location }) => {
-    return await requireStaffAuth(location, context.auth);
+    return await requireAdminAuth(location, context.auth);
   },
   component: MenuPage,
 });
@@ -19,6 +26,8 @@ interface MenuItem {
   is_available: boolean;
   store_id: string;
   image_url?: string | null;
+  stock_count?: number | null;
+  low_stock_threshold?: number | null;
 }
 
 function MenuPage() {
@@ -26,12 +35,10 @@ function MenuPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState('');
-  const [editCategory, setEditCategory] = useState('');
-  const [editPrice, setEditPrice] = useState('');
 
   // Form state
   const [name, setName] = useState('');
@@ -39,46 +46,8 @@ function MenuPage() {
   const [price, setPrice] = useState('');
   const [isAvailable, setIsAvailable] = useState(true);
   const [imageUrl, setImageUrl] = useState('');
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this item?')) return;
-    
-    const { error } = await supabase
-      .from('menu_items')
-      .delete()
-      .eq('id', id);
-
-    if (error) {
-      alert('Error deleting item: ' + error.message);
-    } else {
-      await fetchMenuItems();
-    }
-  };
-
-  const startEditing = (item: MenuItem) => {
-    setEditingId(item.id);
-    setEditName(item.name);
-    setEditCategory(item.category);
-    setEditPrice(item.price.toString());
-  };
-
-  const handleUpdate = async (id: string) => {
-    const { error } = await supabase
-      .from('menu_items')
-      .update({
-        name: editName,
-        category: editCategory,
-        price: parseFloat(editPrice),
-      })
-      .eq('id', id);
-
-    if (error) {
-      alert('Error updating item: ' + error.message);
-    } else {
-      setEditingId(null);
-      await fetchMenuItems();
-    }
-  };
+  const [stockCount, setStockCount] = useState<string>('');
+  const [lowStockThreshold, setLowStockThreshold] = useState<string>('5');
 
   useEffect(() => {
     fetchMenuItems();
@@ -89,12 +58,40 @@ function MenuPage() {
     const { data, error } = await supabase
       .from('menu_items')
       .select('*')
+      .order('category', { ascending: true })
       .order('name', { ascending: true });
 
     if (!error && data) {
       setItems(data as MenuItem[]);
     }
     setIsLoading(false);
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingPhoto(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('menu-items')
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('menu-items')
+        .getPublicUrl(fileName);
+
+      setImageUrl(data.publicUrl);
+    } catch (err: any) {
+      alert('Error uploading image: ' + err.message);
+    } finally {
+      setUploadingPhoto(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,168 +111,294 @@ function MenuPage() {
 
       if (!userProfile?.store_id) throw new Error('Store not found for user');
 
-      const { error: insertError } = await supabase
-        .from('menu_items')
-        .insert({
-          name,
-          category,
-          price: parseFloat(price),
-          is_available: isAvailable,
-          store_id: userProfile.store_id,
-          image_url: imageUrl || null
-        });
+      const payload = {
+        name,
+        category,
+        price: parseFloat(price),
+        is_available: isAvailable,
+        store_id: userProfile.store_id,
+        image_url: imageUrl || null,
+        stock_count: stockCount ? parseInt(stockCount) : null,
+        low_stock_threshold: lowStockThreshold ? parseInt(lowStockThreshold) : 5
+      };
 
-      if (insertError) throw insertError;
+      if (editingId) {
+        const { error: updateError } = await supabase
+          .from('menu_items')
+          .update(payload)
+          .eq('id', editingId);
+        if (updateError) throw updateError;
+      } else {
+        const { error: insertError } = await supabase
+          .from('menu_items')
+          .insert(payload);
+        if (insertError) throw insertError;
+      }
 
-      // Reset form and refresh list
-      setName('');
-      setCategory('');
-      setPrice('');
-      setIsAvailable(true);
-      setImageUrl('');
+      // Reset form and refresh
+      cancelEdit();
       await fetchMenuItems();
     } catch (err: any) {
-      setError(err.message || 'Failed to add menu item');
+      setError(err.message || 'Failed to save menu item');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (isLoading) return <div className="p-8">Loading...</div>;
+  const startEditing = (item: MenuItem) => {
+    setEditingId(item.id);
+    setName(item.name);
+    setCategory(item.category);
+    setPrice(item.price.toString());
+    setIsAvailable(item.is_available);
+    setImageUrl(item.image_url || '');
+    setStockCount(item.stock_count?.toString() || '');
+    setLowStockThreshold(item.low_stock_threshold?.toString() || '5');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setName('');
+    setCategory('');
+    setPrice('');
+    setIsAvailable(true);
+    setImageUrl('');
+    setStockCount('');
+    setLowStockThreshold('5');
+    setError(null);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this item?')) return;
+    
+    const { error } = await supabase
+      .from('menu_items')
+      .delete()
+      .eq('id', id);
+
+    if (error) alert('Error deleting item: ' + error.message);
+    else await fetchMenuItems();
+  };
+
+  const toggleAvailability = async (id: string, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from('menu_items')
+      .update({ is_available: !currentStatus })
+      .eq('id', id);
+      
+    if (error) alert('Error updating status: ' + error.message);
+    else {
+      setItems(items.map(item => item.id === id ? { ...item, is_available: !currentStatus } : item));
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/20">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="p-8 font-sans">
-      <h1 className="text-2xl font-bold mb-4">Menu Management</h1>
-      
-      <div className="mb-8 border p-4">
-        <h2 className="text-lg font-bold mb-2">Add New Item</h2>
-        <form onSubmit={handleSubmit} className="space-y-2">
+    <div className="min-h-screen bg-muted/20 pb-20 pt-24 px-4 md:px-8">
+      <div className="max-w-6xl mx-auto space-y-8">
+        
+        <div className="flex items-center justify-between">
           <div>
-            <label className="block">Name:</label>
-            <input 
-              type="text" 
-              value={name} 
-              onChange={(e) => setName(e.target.value)} 
-              className="border p-1" 
-              required 
-            />
+            <h1 className="text-3xl font-black tracking-tight">Menu & Inventory</h1>
+            <p className="text-muted-foreground mt-1">Manage your dishes and track stock levels.</p>
           </div>
-          <div>
-            <label className="block">Category:</label>
-            <input 
-              type="text" 
-              value={category} 
-              onChange={(e) => setCategory(e.target.value)} 
-              className="border p-1" 
-              required 
-            />
-          </div>
-          <div>
-            <label className="block">Price (RM):</label>
-            <input 
-              type="number" 
-              step="0.01" 
-              value={price} 
-              onChange={(e) => setPrice(e.target.value)} 
-              className="border p-1" 
-              required 
-            />
-          </div>
-          <div>
-            <label className="block">Image URL (optional):</label>
-            <input 
-              type="text" 
-              value={imageUrl} 
-              onChange={(e) => setImageUrl(e.target.value)} 
-              className="border p-1 w-full max-w-xs" 
-            />
-          </div>
-          <div>
-            <label className="flex items-center gap-2">
-              <input 
-                type="checkbox" 
-                checked={isAvailable} 
-                onChange={(e) => setIsAvailable(e.target.checked)} 
-              />
-              Available
-            </label>
-          </div>
-          <button 
-            type="submit" 
-            disabled={isSubmitting}
-            className="bg-blue-500 text-white px-4 py-1 disabled:opacity-50"
-          >
-            {isSubmitting ? 'Adding...' : 'Add Item'}
-          </button>
-        </form>
-        {error && <p className="text-red-500 mt-2">{error}</p>}
-      </div>
-
-      <h2 className="text-lg font-bold mb-2">Current Items</h2>
-      {items.length === 0 ? (
-        <p>No menu items yet</p>
-      ) : (
-        <div className="space-y-4">
-          {items.map((item) => (
-            <div key={item.id} className="flex items-center gap-4">
-              {item.image_url ? (
-                <img 
-                  src={item.image_url} 
-                  alt={item.name} 
-                  className="w-[60px] h-[60px] object-cover bg-gray-100" 
-                />
-              ) : (
-                <div className="w-[60px] h-[60px] bg-gray-200 flex items-center justify-center text-xs text-gray-500">
-                  No Image
-                </div>
-              )}
-              <div className="flex-grow">
-                {editingId === item.id ? (
-                  <div className="space-y-1">
-                    <input 
-                      value={editName} 
-                      onChange={(e) => setEditName(e.target.value)} 
-                      className="border p-1 text-sm mr-2" 
-                    />
-                    <input 
-                      value={editCategory} 
-                      onChange={(e) => setEditCategory(e.target.value)} 
-                      className="border p-1 text-sm mr-2" 
-                    />
-                    <input 
-                      type="number" 
-                      step="0.01"
-                      value={editPrice} 
-                      onChange={(e) => setEditPrice(e.target.value)} 
-                      className="border p-1 text-sm w-20 mr-2" 
-                    />
-                    <button onClick={() => handleUpdate(item.id)} className="bg-green-500 text-white px-2 py-1 text-xs mr-1">Save</button>
-                    <button onClick={() => setEditingId(null)} className="bg-gray-500 text-white px-2 py-1 text-xs">Cancel</button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <p>
-                      {item.name} | {item.category} | RM{item.price.toFixed(2)} | {item.is_available ? 'Available' : 'Unavailable'}
-                    </p>
-                    <button 
-                      onClick={() => startEditing(item)}
-                      className="bg-gray-200 px-2 py-1 text-xs"
-                    >
-                      Edit
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(item.id)}
-                      className="bg-red-500 text-white px-2 py-1 text-xs"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
         </div>
-      )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Editor Sidebar */}
+          <div className="lg:col-span-1">
+            <Card className="sticky top-28 border-border/50 shadow-lg bg-card/50 backdrop-blur-xl">
+              <CardHeader>
+                <CardTitle className="text-xl font-bold flex items-center gap-2">
+                  {editingId ? <><Edit2 className="w-5 h-5"/> Edit Item</> : <><Plus className="w-5 h-5"/> Add New Item</>}
+                </CardTitle>
+                <CardDescription>
+                  {editingId ? "Update dish details and stock." : "Add a new dish to your menu."}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  
+                  {/* Photo Upload */}
+                  <div className="space-y-2">
+                    <Label>Dish Photo</Label>
+                    <div className="flex items-center gap-4">
+                      {imageUrl ? (
+                        <div className="relative w-20 h-20 rounded-xl overflow-hidden border">
+                          <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-20 h-20 rounded-xl border-2 border-dashed flex items-center justify-center bg-muted/50 text-muted-foreground">
+                          <ImageIcon className="w-6 h-6" />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <Input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handlePhotoUpload} 
+                          disabled={uploadingPhoto}
+                          className="cursor-pointer file:cursor-pointer"
+                        />
+                        {uploadingPhoto && <p className="text-xs text-primary mt-1 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin"/> Uploading...</p>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Dish Name</Label>
+                    <Input value={name} onChange={e => setName(e.target.value)} required placeholder="e.g. Nasi Goreng Ayam" />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Category</Label>
+                      <Input value={category} onChange={e => setCategory(e.target.value)} required placeholder="e.g. Mains" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Price (RM)</Label>
+                      <Input type="number" step="0.01" value={price} onChange={e => setPrice(e.target.value)} required placeholder="8.50" />
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-muted/30 rounded-xl space-y-4 border">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Available for Ordering</Label>
+                        <p className="text-xs text-muted-foreground">Is this item currently available?</p>
+                      </div>
+                      <Switch checked={isAvailable} onCheckedChange={setIsAvailable} />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 pt-2 border-t">
+                      <div className="space-y-2">
+                        <Label>Stock Level</Label>
+                        <Input 
+                          type="number" 
+                          value={stockCount} 
+                          onChange={e => setStockCount(e.target.value)} 
+                          placeholder="Leave empty for unlimited" 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Low Alert At</Label>
+                        <Input 
+                          type="number" 
+                          value={lowStockThreshold} 
+                          onChange={e => setLowStockThreshold(e.target.value)} 
+                          placeholder="5" 
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
+                  
+                  <div className="flex gap-3 pt-2">
+                    <Button type="submit" disabled={isSubmitting || uploadingPhoto} className="flex-1">
+                      {isSubmitting ? 'Saving...' : (editingId ? 'Save Changes' : 'Add Item')}
+                    </Button>
+                    {editingId && (
+                      <Button type="button" variant="outline" onClick={cancelEdit}>
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Menu Items Grid */}
+          <div className="lg:col-span-2">
+            {items.length === 0 ? (
+              <div className="text-center py-20 bg-card rounded-2xl border border-dashed">
+                <UtensilsCrossed className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
+                <h3 className="text-lg font-bold">Menu is empty</h3>
+                <p className="text-muted-foreground">Add your first dish using the form.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {items.map((item) => {
+                  const isLowStock = item.stock_count !== null && item.low_stock_threshold !== null && item.stock_count <= item.low_stock_threshold;
+                  const isOutOfStock = item.stock_count === 0 || !item.is_available;
+
+                  return (
+                    <Card key={item.id} className={`overflow-hidden transition-all duration-300 ${isOutOfStock ? 'opacity-70 grayscale-[0.5]' : 'hover:shadow-md hover:border-primary/30'}`}>
+                      <div className="h-40 bg-muted relative">
+                        {item.image_url ? (
+                          <img src={item.image_url} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                            <ImageIcon className="w-8 h-8 opacity-20" />
+                          </div>
+                        )}
+                        <div className="absolute top-2 right-2 flex flex-col gap-2">
+                           <Badge variant={item.is_available ? "default" : "destructive"} className="shadow-sm">
+                             {item.is_available ? 'Available' : 'Disabled'}
+                           </Badge>
+                        </div>
+                      </div>
+                      
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h3 className="font-bold text-lg leading-tight">{item.name}</h3>
+                            <p className="text-sm text-muted-foreground">{item.category}</p>
+                          </div>
+                          <p className="font-black text-primary">RM{item.price.toFixed(2)}</p>
+                        </div>
+
+                        {/* Inventory Badges */}
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {item.stock_count !== null ? (
+                            <Badge variant={isOutOfStock ? "destructive" : (isLowStock ? "warning" : "secondary")} className="flex gap-1">
+                              {isOutOfStock ? "Sold Out (0)" : (isLowStock ? `⚠️ Low Stock (${item.stock_count})` : `📦 Stock: ${item.stock_count}`)}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-xs text-muted-foreground">∞ Unlimited</Badge>
+                          )}
+                        </div>
+
+                        <div className="mt-4 pt-4 border-t flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            <Switch 
+                              checked={item.is_available} 
+                              onCheckedChange={() => toggleAvailability(item.id, item.is_available)}
+                            />
+                            <span className={item.is_available ? 'text-foreground' : 'text-muted-foreground'}>
+                              {item.is_available ? 'On Menu' : 'Off Menu'}
+                            </span>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="icon" variant="secondary" onClick={() => startEditing(item)}>
+                              <Edit2 className="w-4 h-4" />
+                            </Button>
+                            <Button size="icon" variant="destructive" onClick={() => handleDelete(item.id)}>
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }
+

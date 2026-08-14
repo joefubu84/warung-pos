@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 export const Route = createFileRoute('/orders')({
   ssr: false,
-  beforeLoad: async ({ context, location }) => {
+  beforeLoad: async ({ context, location }: any) => {
     return await requireStaffAuth(location, context.auth);
   },
   component: OrdersPage,
@@ -105,6 +105,7 @@ function OrdersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<'pending' | 'preparing' | 'ready' | 'completed' | 'all'>('pending');
 
   // Form & Cart state
   const [customerName, setCustomerName] = useState('');
@@ -521,377 +522,267 @@ function OrdersPage() {
   const statusOptions: OrderStatus[] = ['pending', 'preparing', 'ready', 'completed', 'cancelled'];
 
   return (
-    <div className="p-8 font-sans">
-      <h1 className="text-2xl font-bold mb-4">Order Management</h1>
-
-      <div className="mb-8 border p-4">
-        <h2 className="text-lg font-bold mb-4">Create New Order</h2>
-        
-        <div className="space-y-4">
-          {/* Table Selection */}
-          <div>
-            <label className="block font-medium">Step 1: Select Table (Required for all walk-ins)</label>
-            <select 
-              value={selectedTableId} 
-              onChange={(e) => setSelectedTableId(e.target.value)}
-              className="border p-1 mt-1"
-            >
-              <option value="">Select Table</option>
-              {tables.map(table => (
-                <option key={table.id} value={table.id}>
-                  Table {table.table_number}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Table Selection or Customer Name */}
-          <div>
-            <label className="block font-medium">Step 2: Customer Name (Optional)</label>
+    <div className="p-4 md:p-8 font-sans max-w-7xl mx-auto">
+      
+      {/* ORDER MANAGEMENT */}
+      <div className="mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <h1 className="text-2xl md:text-3xl font-black tracking-tight">Order Management</h1>
+          <div className="relative w-full md:w-64">
             <input 
-              type="text"
-              placeholder="Enter name"
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              className="border p-1 mt-1 w-full max-w-xs"
+              placeholder="Search by ID, Name, or Table..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-sm rounded-full shadow-sm border border-gray-300 px-4 py-2"
             />
           </div>
-
-          {/* Item Selector */}
-          <div className="border-t pt-4">
-            <label className="block font-medium">Step 3: Add Items</label>
-            <div className="flex gap-4 items-end mt-1 flex-wrap">
-              <div>
-                <label className="block text-sm">Item</label>
-                <select 
-                  value={selectedMenuItemId} 
-                  onChange={(e) => setSelectedMenuItemId(e.target.value)}
-                  className="border p-1"
-                >
-                  <option value="">Select Item</option>
-                  {menuItems.map(item => (
-                    <option key={item.id} value={item.id}>
-                      {item.name} (RM{item.price.toFixed(2)})
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm">Qty</label>
-                <input 
-                  type="number" 
-                  min="1" 
-                  value={quantity} 
-                  onChange={(e) => setQuantity(parseInt(e.target.value))} 
-                  className="border p-1 w-16"
-                />
-              </div>
-              <div>
-                <label className="block text-sm">Fulfillment</label>
-                <select 
-                  value={itemFulfillmentType}
-                  onChange={(e) => setItemFulfillmentType(e.target.value as 'dine_in' | 'takeaway')}
-                  className="border p-1"
-                >
-                  <option value="dine_in">Eat here</option>
-                  <option value="takeaway">Takeaway</option>
-                </select>
-              </div>
-              {itemFulfillmentType === 'takeaway' && (
-                <div>
-                  <label className="block text-sm">Container</label>
-                  <select 
-                    value={containerSize}
-                    onChange={(e) => setContainerSize(e.target.value as 'small' | 'large')}
-                    className="border p-1"
-                  >
-                    <option value="small">Small (free)</option>
-                    <option value="large">Large (+RM1)</option>
-                  </select>
-                </div>
-              )}
-              <button 
-                onClick={handleAddToCart}
-                className="bg-green-600 text-white px-4 py-1"
-              >
-                Add to Cart
-              </button>
-            </div>
-          </div>
-
-          {/* Cart Display */}
-          <div className="border-t pt-4">
-            <label className="block font-medium mb-2">Step 4: Cart List</label>
-            {cart.length === 0 ? (
-              <p className="text-gray-500 italic text-sm">Cart is empty</p>
-            ) : (
-              <div className="space-y-1">
-                {cart.map(item => (
-                  <div key={item.id} className="flex flex-col bg-gray-50 p-2 text-sm border-b">
-                    <div className="flex justify-between items-start">
-                      <span>
-                        {item.name} x {item.quantity} ({item.fulfillmentType === 'dine_in' ? 'Eat here' : `Takeaway - ${item.containerSize}`}) = RM{((item.price + (item.containerCharge || 0)) * item.quantity).toFixed(2)}
-                      </span>
-                      <button 
-                        onClick={() => removeFromCart(item.id)}
-                        className="text-red-500 font-bold ml-4"
-                      >
-                        [Remove]
-                      </button>
-                    </div>
-                    <div className="mt-1 w-full max-w-sm">
-                      <input
-                        type="text"
-                        value={item.notes || ''}
-                        onChange={(e) => updateCartItemNotes(item.id, e.target.value)}
-                        placeholder="Special Requests (e.g., less spicy)"
-                        className="w-full text-xs border rounded p-1"
-                        maxLength={100}
-                      />
-                    </div>
-                  </div>
-                ))}
-                <div className="font-bold border-t mt-2 pt-2 flex justify-between">
-                  <span>Running Total:</span>
-                  <span>RM{cartTotal.toFixed(2)}</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Submit Button */}
-          <div className="border-t pt-4">
-            <button 
-              onClick={handleSubmitOrder}
-              disabled={isSubmitting || cart.length === 0}
-              className="bg-blue-600 text-white px-8 py-2 font-bold disabled:opacity-50"
-            >
-              {isSubmitting ? 'Submitting...' : 'Submit Order'}
-            </button>
-            {error && <p className="text-red-500 mt-2">{error}</p>}
-          </div>
         </div>
-      </div>
-      
-      <div className="flex justify-between items-center mb-2">
-        <h2 className="text-lg font-bold">Recent Orders</h2>
-        <div className="relative w-64">
-          <Input 
-            placeholder="Search by ID, Name, or Table..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-sm"
-          />
+
+        {/* Tab Navigation */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
+          <button 
+            onClick={() => setActiveTab('pending')}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'pending' ? 'bg-yellow-400 text-yellow-900 shadow-md scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+          >
+            🟡 Pending
+          </button>
+          <button 
+            onClick={() => setActiveTab('preparing')}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'preparing' ? 'bg-blue-400 text-white shadow-md scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+          >
+            🔵 Preparing
+          </button>
+          <button 
+            onClick={() => setActiveTab('ready')}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'ready' ? 'bg-green-500 text-white shadow-md scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+          >
+            🟢 Ready
+          </button>
+          <button 
+            onClick={() => setActiveTab('completed')}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'completed' ? 'bg-gray-700 text-white shadow-md scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+          >
+            ⚪ Completed
+          </button>
+          <button 
+            onClick={() => setActiveTab('all')}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'all' ? 'bg-black text-white shadow-md scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+          >
+            📋 All Orders
+          </button>
         </div>
-      </div>
 
-      {(() => {
-        const sq = searchQuery.toLowerCase();
-        const filteredOrders = orders.filter(o => {
-          if (!sq) return true;
-          const matchesId = o.id.toLowerCase().includes(sq);
-          const matchesName = o.customer_name?.toLowerCase().includes(sq);
-          const tableName = o.table_id ? tables.find(t => t.id === o.table_id)?.table_number?.toLowerCase() : null;
-          const matchesTable = tableName?.includes(sq);
-          return matchesId || matchesName || matchesTable;
-        });
+        {/* Orders Grid */}
+        {(() => {
+          const sq = searchQuery.toLowerCase();
+          const filteredOrders = orders.filter(o => {
+            if (activeTab !== 'all' && o.status !== activeTab) return false;
+            if (!sq) return true;
+            const matchesId = o.id.toLowerCase().includes(sq);
+            const matchesName = o.customer_name?.toLowerCase().includes(sq);
+            const tableName = o.table_id ? tables.find(t => t.id === o.table_id)?.table_number?.toLowerCase() : null;
+            const matchesTable = tableName?.includes(sq);
+            return matchesId || matchesName || matchesTable;
+          });
 
-        if (filteredOrders.length === 0) {
-          return <p>No orders found.</p>;
-        }
-
-        return (
-          <div className="space-y-2">
-            {filteredOrders.map((order) => {
-              const totalPaid = (order.payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
-              const remainingBalance = Math.max(0, order.total_amount - totalPaid);
-              const isFullyPaid = remainingBalance <= 0 || order.paid;
-              const payMethodStr = order.payment_method === 'card' ? '💳 Card' : '💵 Cash';
-
-              return (
-              <div key={order.id} className="border-b pb-4 mb-4">
-                <div className="flex justify-between items-start flex-wrap gap-2">
-                  <div>
-                    <p className="font-bold flex items-center gap-2">
-                      {order.type === 'delivery' ? `DELIVERY (Grab)` : (order.type === 'takeaway' ? `TAKEAWAY` : `DINE-IN`)} {order.table_id ? `(Table ${tables.find(t => t.id === order.table_id)?.table_number || 'N/A'})` : ''} {order.customer_name ? `- ${order.customer_name}` : ''}
-                      
-                      {isFullyPaid ? (
-                        <span className="text-[10px] bg-green-100 text-green-700 px-1 py-0.5 rounded font-bold">✓ PAID {payMethodStr}</span>
-                      ) : (
-                        <span className="text-[10px] bg-red-100 text-red-700 px-1 py-0.5 rounded font-bold">❌ NOT PAID</span>
-                      )}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      ID: {order.id.slice(0, 8)} | {new Date(order.created_at).toLocaleString()}
-                    </p>
-                    <div className="flex gap-4 mt-1">
-                      <button 
-                        onClick={() => handleEditClick(order)}
-                        className="text-blue-600 text-xs font-semibold hover:underline"
-                      >
-                        Edit Order
-                      </button>
-                      <button 
-                        onClick={() => {
-                          setDeletingOrder(order);
-                          setDeleteReason('');
-                          setDeleteNotes('');
-                        }}
-                        className="text-red-600 text-xs font-semibold hover:underline"
-                      >
-                        Delete Order
-                      </button>
-                      <button 
-                        onClick={() => handleViewHistory(order)}
-                        className="text-gray-600 text-xs font-semibold hover:underline"
-                      >
-                        View Edit History
-                      </button>
-                      <button 
-                        onClick={() => {
-                          import('@/lib/receipt').then(({ generateReceiptHTML }) => {
-                            const store = {
-                              name: "Warung J&J",
-                              logo_url: window.location.origin + "/favicon.png",
-                              phone_number: "60172221784",
-                              phone_number_2: "60178284578"
-                            };
-                            
-                            const itemsForPrint = (order.order_items || []).map(i => ({
-                              name: i.menu_items?.name || 'Item',
-                              price: i.price_at_order,
-                              quantity: i.quantity,
-                              container_size: (i as any).container_size,
-                              container_charge: (i as any).container_charge,
-                              notes: (i as any).notes
-                            }));
-
-                            const html = generateReceiptHTML(order as any, store, "Staff", itemsForPrint);
-                            const printWindow = window.open('', '_blank');
-                            if (printWindow) {
-                              printWindow.document.write(html);
-                              printWindow.document.close();
-                            }
-                          });
-                        }}
-                        className="text-green-600 text-xs font-semibold hover:underline"
-                      >
-                        Print Receipt
-                      </button>
-                      <button 
-                        onClick={() => {
-                          import('@/lib/receipt').then(({ shareReceiptWhatsApp }) => {
-                            const store = {
-                              name: "Warung J&J",
-                              logo_url: window.location.origin + "/favicon.png",
-                              phone_number: "60172221784",
-                              phone_number_2: "60178284578"
-                            };
-                            
-                            const itemsForPrint = (order.order_items || []).map(i => ({
-                              name: i.menu_items?.name || 'Item',
-                              price: i.price_at_order,
-                              quantity: i.quantity,
-                              container_size: (i as any).container_size,
-                              container_charge: (i as any).container_charge,
-                              notes: (i as any).notes
-                            }));
-
-                            shareReceiptWhatsApp(order as any, store, "Staff", itemsForPrint);
-                          });
-                        }}
-                        className="text-emerald-500 text-xs font-semibold hover:underline"
-                      >
-                        Share via WhatsApp
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 items-center">
-                    <span className="text-sm">Status:</span>
-                    <select 
-                      value={order.status} 
-                      onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
-                      className="border p-1 text-sm"
-                    >
-                      {statusOptions.map(status => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                
-                <div className="mt-2 text-sm">
-                  <span className="mr-4">Total: <span className="font-semibold">RM{order.total_amount.toFixed(2)}</span></span>
-                  <span className="mr-4">Paid: <span className="text-green-600 font-semibold">RM{totalPaid.toFixed(2)}</span></span>
-                  <span>Balance: <span className={`${remainingBalance > 0 ? 'text-red-600' : 'text-blue-600'} font-bold`}>
-                    {isFullyPaid ? 'FULLY PAID' : `RM${remainingBalance.toFixed(2)}`}
-                  </span></span>
-                </div>
-
-                {!isFullyPaid && (
-                  <div className="mt-3 bg-gray-50 p-2 rounded">
-                    <p className="text-xs font-bold mb-1 uppercase text-gray-500">Record Payment</p>
-                    <form 
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        const form = e.currentTarget;
-                        const formData = new FormData(form);
-                        const amount = parseFloat(formData.get('amount') as string);
-                        const method = formData.get('method') as string;
-                        const paidBy = formData.get('paid_by') as string;
-
-                        if (isNaN(amount) || amount <= 0) return alert('Invalid amount');
-
-                        const { error } = await supabase
-                          .from('payments')
-                          .insert({
-                            order_id: order.id,
-                            amount: amount,
-                            payment_method: method as any,
-                            paid_by: paidBy || null
-                          });
-
-                        if (error) {
-                          alert('Payment failed: ' + error.message);
-                        } else {
-                          // Optional: If fully paid after this, could auto-update status to 'completed'
-                          // but instructions say "optionally update status", I'll stick to refresh for now.
-                          await fetchOrders();
-                        }
-                      }}
-                      className="flex gap-2 items-end flex-wrap"
-                    >
-                      <div>
-                        <label className="block text-[10px]">Amount</label>
-                        <input name="amount" type="number" step="0.01" defaultValue={remainingBalance.toFixed(2)} className="border p-1 text-sm w-20" required />
-                      </div>
-                      <div>
-                        <label className="block text-[10px]">Method</label>
-                        <select name="method" className="border p-1 text-sm">
-                          <option value="cash">Cash</option>
-                          <option value="card">Card</option>
-                          <option value="qr">QR</option>
-                          <option value="bank_transfer">Bank Transfer</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-[10px]">Paid By (Optional)</label>
-                        <input name="paid_by" type="text" className="border p-1 text-sm w-24" placeholder="Name" />
-                      </div>
-                      <button type="submit" className="bg-blue-600 text-white px-3 py-1 text-sm rounded hover:bg-blue-700">
-                        Add Payment
-                      </button>
-                    </form>
-                  </div>
-                )}
+          if (filteredOrders.length === 0) {
+            return (
+              <div className="bg-gray-50 rounded-2xl p-12 text-center text-gray-400 border border-dashed border-gray-200">
+                <p className="text-lg font-medium">No orders found in this section.</p>
               </div>
             );
-          })}
-        </div>
-      );
-      })()}
+          }
+
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredOrders.map((order) => {
+                const totalPaid = (order.payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
+                const remainingBalance = Math.max(0, order.total_amount - totalPaid);
+                const isFullyPaid = remainingBalance <= 0 || order.paid;
+                
+                // Color coding based on status
+                let bgClass = "bg-white";
+                let borderClass = "border-gray-200";
+                
+                if (order.status === 'pending') { bgClass = "bg-yellow-50"; borderClass = "border-yellow-200"; }
+                if (order.status === 'preparing') { bgClass = "bg-blue-50"; borderClass = "border-blue-200"; }
+                if (order.status === 'ready') { bgClass = "bg-green-50"; borderClass = "border-green-200"; }
+                if (order.status === 'completed') { bgClass = "bg-gray-100"; borderClass = "border-gray-300"; }
+
+                return (
+                  <div key={order.id} className={`border-2 ${borderClass} ${bgClass} rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between`}>
+                    <div>
+                      {/* Header */}
+                      <div className="flex justify-between items-start gap-2 mb-3 border-b border-black/10 pb-3">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-black text-lg text-gray-900">
+                              {order.type === 'delivery' ? `DELIVERY (Grab)` : (order.type === 'takeaway' ? `TAKEAWAY` : `TABLE ${tables.find(t => t.id === order.table_id)?.table_number || 'N/A'}`)}
+                            </span>
+                            {isFullyPaid ? (
+                              <span className="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded-full font-bold">✓ PAID</span>
+                            ) : (
+                              <span className="text-[10px] bg-red-200 text-red-800 px-2 py-0.5 rounded-full font-bold">❌ NOT PAID</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-500 font-medium">Order #{order.id.slice(0, 8)}</p>
+                          <p className="text-xs text-gray-600 mt-1 flex items-center gap-1">
+                            <span>📍 Ordered: {new Date(order.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            <span className="text-gray-400">({Math.floor((Date.now() - new Date(order.created_at).getTime()) / 60000)} min ago)</span>
+                          </p>
+                          {order.customer_name && <p className="text-xs text-gray-600 mt-1">👤 Customer: {order.customer_name}</p>}
+                        </div>
+                        
+                        {/* Status Select */}
+                        <div className="flex flex-col items-end gap-1">
+                          <select 
+                            value={order.status} 
+                            onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
+                            className="text-xs border-2 border-black/10 bg-white/50 p-1.5 rounded-lg font-bold shadow-sm outline-none"
+                          >
+                            {statusOptions.map(status => (
+                              <option key={status} value={status}>{status.toUpperCase()}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Items */}
+                      <div className="mb-4 space-y-2">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Items</p>
+                        {(order.order_items || []).map((item, idx) => (
+                          <div key={idx} className="text-sm">
+                            <p className="font-semibold text-gray-800">
+                              • {item.menu_items?.name || 'Item'} <span className="text-gray-500">x{item.quantity}</span> 
+                              <span className="text-gray-400 ml-2">RM{Number(item.price_at_order * item.quantity).toFixed(2)}</span>
+                            </p>
+                            {(item as any).notes && (
+                              <p className="text-xs text-red-600 font-medium italic ml-3 mt-0.5 flex items-start gap-1">
+                                <span>↳</span> Notes: {(item as any).notes}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div>
+                      {/* Financials */}
+                      <div className="bg-white/60 p-3 rounded-xl border border-black/5 mb-3 flex flex-wrap gap-x-4 gap-y-1 text-sm justify-between">
+                        <div>
+                          <span className="text-gray-500 mr-1">Total:</span> 
+                          <span className="font-black">RM{order.total_amount.toFixed(2)}</span>
+                        </div>
+                        {!isFullyPaid && (
+                          <div>
+                            <span className="text-gray-500 mr-1">Paid:</span> 
+                            <span className="font-bold text-green-700">RM{totalPaid.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {!isFullyPaid && (
+                          <div className="w-full mt-1">
+                            <span className="text-gray-500 mr-1">Balance:</span> 
+                            <span className="text-red-600 font-black">RM{remainingBalance.toFixed(2)}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Payment form if not paid */}
+                      {!isFullyPaid && (
+                        <div className="mb-3">
+                          <form 
+                            onSubmit={async (e) => {
+                              e.preventDefault();
+                              const form = e.currentTarget;
+                              const formData = new FormData(form);
+                              const amount = parseFloat(formData.get('amount') as string);
+                              const method = formData.get('method') as string;
+                              const paidBy = formData.get('paid_by') as string;
+
+                              if (isNaN(amount) || amount <= 0) return alert('Invalid amount');
+
+                              const { error } = await supabase
+                                .from('payments')
+                                .insert({
+                                  order_id: order.id,
+                                  amount: amount,
+                                  payment_method: method as any,
+                                  paid_by: paidBy || null
+                                });
+
+                              if (error) {
+                                alert('Payment failed: ' + error.message);
+                              } else {
+                                await fetchOrders();
+                              }
+                            }}
+                            className="flex gap-2 items-center flex-wrap bg-white/60 p-2 rounded-lg border border-black/10"
+                          >
+                            <input name="amount" type="number" step="0.01" defaultValue={remainingBalance.toFixed(2)} className="border p-1 text-xs w-16 rounded" required />
+                            <select name="method" className="border p-1 text-xs rounded">
+                              <option value="cash">Cash</option>
+                              <option value="card">Card</option>
+                              <option value="qr">QR</option>
+                            </select>
+                            <button type="submit" className="bg-green-600 text-white px-2 py-1 text-xs font-bold rounded hover:bg-green-700 shadow-sm">
+                              PAY
+                            </button>
+                          </form>
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div className="flex gap-2 flex-wrap border-t border-black/10 pt-3">
+                        <button 
+                          onClick={() => handleEditClick(order)}
+                          className="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-50 shadow-sm"
+                        >
+                          EDIT
+                        </button>
+                        <button 
+                          onClick={() => {
+                            setDeletingOrder(order);
+                            setDeleteReason('');
+                            setDeleteNotes('');
+                          }}
+                          className="bg-white border border-red-200 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-50 shadow-sm"
+                        >
+                          DELETE
+                        </button>
+                        <div className="flex-1"></div>
+                        <button 
+                          onClick={() => handleViewHistory(order)}
+                          className="text-gray-500 text-xs font-semibold hover:underline px-2 py-1.5"
+                        >
+                          History
+                        </button>
+                        <button 
+                          onClick={() => {
+                            import('@/lib/receipt').then(({ generateReceiptHTML }) => {
+                              const store = { name: "Warung J&J", logo_url: window.location.origin + "/favicon.png", phone_number: "60172221784", phone_number_2: "60178284578" };
+                              const itemsForPrint = (order.order_items || []).map(i => ({
+                                name: i.menu_items?.name || 'Item', price: i.price_at_order, quantity: i.quantity, container_size: (i as any).container_size, container_charge: (i as any).container_charge, notes: (i as any).notes
+                              }));
+                              const html = generateReceiptHTML(order as any, store, "Staff", itemsForPrint);
+                              const printWindow = window.open('', '_blank');
+                              if (printWindow) { printWindow.document.write(html); printWindow.document.close(); }
+                            });
+                          }}
+                          className="bg-black text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm"
+                        >
+                          PRINT
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </div>
+
       {/* Edit Order Dialog */}
       <Dialog open={!!editingOrder} onOpenChange={(open) => !open && setEditingOrder(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

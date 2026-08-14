@@ -20,6 +20,7 @@ interface MenuItem {
   category: string;
   price: number;
   image_url: string | null;
+  stock_count?: number | null;
 }
 
 interface CartItem {
@@ -51,6 +52,12 @@ function TableQRPage() {
   const [mergedNotification, setMergedNotification] = useState<string | null>(null);
   const [globalFulfillmentType, setGlobalFulfillmentType] = useState<'dine_in' | 'takeaway'>('dine_in');
   const [globalContainerSize, setGlobalContainerSize] = useState<'small' | 'large'>('small');
+  
+  // Order Level settings
+  const [orderType, setOrderType] = useState<'dine_in' | 'takeaway' | 'delivery'>('dine_in');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [deliveryAddress, setDeliveryAddress] = useState('');
+  const deliveryFee = 8.00;
   
   // Mobile Cart State
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
@@ -89,7 +96,7 @@ function TableQRPage() {
         // 2. Query menu_items for that store_id
         const { data: menuData, error: menuError } = await supabase
           .from('menu_items')
-          .select('id, name, category, price, image_url')
+          .select('id, name, category, price, image_url, stock_count')
           .eq('store_id', sId)
           .eq('is_available', true)
           .order('category', { ascending: true })
@@ -128,6 +135,16 @@ function TableQRPage() {
 
   const handleAddToCart = (item: MenuItem) => {
     const qty = itemQuantities[item.id] || 1;
+    
+    // Check against available stock
+    if (item.stock_count !== null && item.stock_count !== undefined) {
+      const currentInCart = cart.filter(c => c.menuItemId === item.id).reduce((sum, c) => sum + c.quantity, 0);
+      if (currentInCart + qty > item.stock_count) {
+        alert(`Sorry, only ${Math.max(0, item.stock_count - currentInCart)} more available in stock.`);
+        return;
+      }
+    }
+
     const newItem: CartItem = {
       id: Math.random().toString(36).substr(2, 9),
       menuItemId: item.id,
@@ -153,7 +170,8 @@ function TableQRPage() {
     setCart(cart.filter(item => item.id !== cartItemId));
   };
 
-  const cartTotal = cart.reduce((sum, item) => sum + ((item.price + (item.containerCharge || 0)) * item.quantity), 0);
+  const subTotal = cart.reduce((sum, item) => sum + ((item.price + (item.containerCharge || 0)) * item.quantity), 0);
+  const cartTotal = subTotal + (orderType === 'delivery' ? deliveryFee : 0);
 
   const handlePlaceOrder = async (forceNew: boolean = false) => {
     if (cart.length === 0 || !storeId || !tableId) return;
@@ -162,6 +180,15 @@ function TableQRPage() {
     setError(null);
 
     try {
+      if (orderType === 'delivery') {
+        if (!/^60\d{8,10}$/.test(customerPhone)) {
+          throw new Error('Please enter a valid Malaysian phone number starting with 60');
+        }
+        if (deliveryAddress.length < 10) {
+          throw new Error('Please enter a complete delivery address (min 10 characters)');
+        }
+      }
+
       if (!forceNew) {
         // Step 1: Check for existing order on this table
         const { data: existingData, error: checkError } = await supabase
@@ -194,11 +221,15 @@ function TableQRPage() {
         .from('orders')
         .insert({
           store_id: storeId,
-          type: 'dine_in',
+          type: orderType,
           status: 'pending',
           table_id: tableId,
-          total_amount: cartTotal
-        })
+          total_amount: cartTotal,
+          delivery_fee: orderType === 'delivery' ? deliveryFee : null,
+          delivery_service: orderType === 'delivery' ? 'grabfood' : null,
+          customer_phone: orderType === 'delivery' ? customerPhone : null,
+          delivery_address: orderType === 'delivery' ? deliveryAddress : null,
+        } as any)
         .select()
         .single();
 
@@ -324,7 +355,7 @@ function TableQRPage() {
 
       <header className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">{storeName}</h1>
-        <p className="text-gray-500 italic mt-1">Dine-in Menu</p>
+        {orderType !== 'delivery' && <p className="text-gray-500 italic mt-1">Table Menu</p>}
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -336,17 +367,26 @@ function TableQRPage() {
           ) : (
             <div className="space-y-6">
               {menuItems.map((item) => (
-                <div key={item.id} className="flex gap-4 p-2 border rounded-lg hover:shadow-sm transition-shadow">
-                  <div className="flex-shrink-0">
+                <div key={item.id} className={`flex gap-4 p-2 border rounded-lg hover:shadow-sm transition-shadow ${item.stock_count === 0 ? 'opacity-50 grayscale' : ''}`}>
+                  <div className="flex-shrink-0 relative w-24 h-24 overflow-hidden rounded-md border border-gray-200 bg-gray-100">
                     {item.image_url ? (
                       <img 
                         src={item.image_url} 
                         alt={item.name} 
-                        className="w-24 h-24 object-cover rounded-md"
+                        className="w-full h-full object-cover relative z-0"
                       />
                     ) : (
-                      <div className="w-24 h-24 bg-gray-100 flex items-center justify-center text-gray-400 text-xs text-center p-2 rounded-md">
+                      <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs text-center p-2 relative z-0">
                         No Image
+                      </div>
+                    )}
+                    
+                    {/* SOLD OUT BANNER */}
+                    {Number(item.stock_count) === 0 && (
+                      <div className="absolute top-0 left-0 w-full h-full bg-black/60 z-50 flex items-center justify-center">
+                        <span className="bg-red-600 text-white text-[11px] font-black px-2 py-1 uppercase tracking-widest transform -rotate-12 border border-red-700 shadow-2xl">
+                          Sold Out
+                        </span>
                       </div>
                     )}
                   </div>
@@ -354,16 +394,22 @@ function TableQRPage() {
                     <div>
                       <h3 className="font-bold text-lg">{item.name}</h3>
                       <p className="text-sm text-gray-500">{item.category}</p>
-                      <p className="text-blue-600 font-bold mt-1">RM{item.price.toFixed(2)}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className="text-blue-600 font-bold">RM{item.price.toFixed(2)}</p>
+                        {item.stock_count !== null && item.stock_count > 0 && item.stock_count <= 5 && (
+                          <span className="text-yellow-700 text-xs font-bold bg-yellow-100 px-2 py-0.5 rounded">⚠️ {item.stock_count} Left</span>
+                        )}
+                      </div>
                     </div>
                     <div className="mt-2 flex flex-col gap-2">
-                      <div className="flex items-center gap-4">
+                      <div className="flex flex-wrap items-center gap-4">
                         <div className="flex flex-col">
                           <label className="text-xs text-gray-500 uppercase font-bold mb-1">Type</label>
                           <select 
                             value={globalFulfillmentType}
                             onChange={(e) => setGlobalFulfillmentType(e.target.value as 'dine_in' | 'takeaway')}
                             className="text-sm border rounded px-2 py-1 bg-white"
+                            disabled={item.stock_count === 0}
                           >
                             <option value="dine_in">Eat here</option>
                             <option value="takeaway">Takeaway</option>
@@ -376,6 +422,7 @@ function TableQRPage() {
                               value={globalContainerSize}
                               onChange={(e) => setGlobalContainerSize(e.target.value as 'small' | 'large')}
                               className="text-sm border rounded px-2 py-1 bg-white"
+                              disabled={item.stock_count === 0}
                             >
                               <option value="small">Small (free)</option>
                               <option value="large">Large (+RM1)</option>
@@ -384,22 +431,51 @@ function TableQRPage() {
                         )}
                         <div className="flex flex-col">
                           <label className="text-xs text-gray-500 uppercase font-bold mb-1">Qty</label>
-                          <input 
-                            type="number" 
-                            min="1" 
-                            value={itemQuantities[item.id] || 1} 
-                            onChange={(e) => handleQtyChange(item.id, parseInt(e.target.value))}
-                            className="w-16 border rounded px-2 py-1 text-center"
-                          />
+                          <div className="flex items-center border rounded bg-white overflow-hidden shadow-sm">
+                            <button
+                              type="button"
+                              disabled={item.stock_count === 0}
+                              onClick={() => handleQtyChange(item.id, Math.max(1, (itemQuantities[item.id] || 1) - 1))}
+                              className="px-4 py-2 text-gray-600 hover:bg-gray-100 font-bold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer touch-manipulation active:bg-gray-200"
+                            >
+                              -
+                            </button>
+                            <span className="w-10 text-center text-sm font-bold bg-white">
+                              {itemQuantities[item.id] || 1}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={item.stock_count === 0}
+                              onClick={() => {
+                                const current = itemQuantities[item.id] || 1;
+                                const max = item.stock_count != null ? item.stock_count : 99;
+                                handleQtyChange(item.id, Math.min(max, current + 1));
+                              }}
+                              className="px-4 py-2 text-gray-600 hover:bg-gray-100 font-bold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer touch-manipulation active:bg-gray-200"
+                            >
+                              +
+                            </button>
+                          </div>
                         </div>
                       </div>
-                      <button 
-                        type="button"
-                        onClick={() => handleAddToCart(item)}
-                        className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700 w-full relative z-10 cursor-pointer touch-manipulation"
-                      >
-                        Add to Cart
-                      </button>
+                      
+                      {item.stock_count === 0 ? (
+                        <button 
+                          type="button"
+                          disabled
+                          className="bg-gray-200 text-gray-500 px-4 py-2 rounded text-sm font-bold w-full cursor-not-allowed uppercase"
+                        >
+                          Add to Cart Disabled
+                        </button>
+                      ) : (
+                        <button 
+                          type="button"
+                          onClick={() => handleAddToCart(item)}
+                          className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700 w-full relative z-10 cursor-pointer touch-manipulation"
+                        >
+                          + Add to Cart
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -463,9 +539,58 @@ function TableQRPage() {
                 </ul>
                 
                 <div className="border-t pt-4">
-                  <div className="flex justify-between items-center mb-6">
-                    <span className="text-lg font-bold">Total:</span>
-                    <span className="text-2xl font-bold text-blue-600">RM{cartTotal.toFixed(2)}</span>
+                  <div className="mb-4">
+                    <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Order Type</label>
+                    <select 
+                      value={orderType}
+                      onChange={(e) => setOrderType(e.target.value as any)}
+                      className="w-full border rounded p-2 text-sm bg-white"
+                    >
+                      <option value="dine_in">Dine-in (Eat here)</option>
+                      <option value="takeaway">Takeaway</option>
+                      <option value="delivery">Delivery (Grab)</option>
+                    </select>
+                  </div>
+                  
+                  {orderType === 'delivery' && (
+                    <div className="mb-4 space-y-3 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                      <div>
+                        <label className="text-xs font-bold text-blue-900 mb-1 block">Customer Phone *</label>
+                        <input 
+                          type="tel" 
+                          placeholder="60xxxxxxxxxx"
+                          value={customerPhone}
+                          onChange={(e) => setCustomerPhone(e.target.value)}
+                          className="w-full text-sm border rounded p-2"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-bold text-blue-900 mb-1 block">Delivery Address *</label>
+                        <textarea 
+                          placeholder="123 Jalan Merdeka..."
+                          value={deliveryAddress}
+                          onChange={(e) => setDeliveryAddress(e.target.value)}
+                          className="w-full text-sm border rounded p-2 h-16 resize-none"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-1 mb-6">
+                    <div className="flex justify-between text-sm text-gray-500">
+                      <span>Subtotal:</span>
+                      <span>RM{subTotal.toFixed(2)}</span>
+                    </div>
+                    {orderType === 'delivery' && (
+                      <div className="flex justify-between text-sm text-gray-500">
+                        <span>Delivery Fee:</span>
+                        <span>RM{deliveryFee.toFixed(2)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between items-center pt-2 border-t font-bold">
+                      <span className="text-lg">Total:</span>
+                      <span className="text-2xl text-blue-600">RM{cartTotal.toFixed(2)}</span>
+                    </div>
                   </div>
                   
                   <button 
