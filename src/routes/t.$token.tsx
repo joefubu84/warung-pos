@@ -146,6 +146,7 @@ function TableQRPage() {
     }
 
     const newItem: CartItem = {
+        fulfillmentType: 'dine_in', // default to dine_in for QR menu
       id: Math.random().toString(36).substr(2, 9),
       menuItemId: item.id,
       name: item.name,
@@ -171,7 +172,7 @@ function TableQRPage() {
   };
 
   const subTotal = cart.reduce((sum, item) => sum + ((item.price + (item.containerCharge || 0)) * item.quantity), 0);
-  const cartTotal = subTotal + (orderType === 'delivery' ? deliveryFee : 0);
+  const cartTotal = subTotal;
 
   const handlePlaceOrder = async (forceNew: boolean = false) => {
     if (cart.length === 0 || !storeId || !tableId) return;
@@ -221,14 +222,14 @@ function TableQRPage() {
         .from('orders')
         .insert({
           store_id: storeId,
-          type: orderType,
+          type: cart.some(item => item.fulfillmentType === 'dine_in') ? 'dine_in' : 'takeaway',
           status: 'pending',
           table_id: tableId,
           total_amount: cartTotal,
-          delivery_fee: orderType === 'delivery' ? deliveryFee : null,
-          delivery_service: orderType === 'delivery' ? 'grabfood' : null,
-          customer_phone: orderType === 'delivery' ? customerPhone : null,
-          delivery_address: orderType === 'delivery' ? deliveryAddress : null,
+          delivery_fee: null,
+          delivery_service: null,
+          customer_phone: null,
+          delivery_address: null,
         } as any)
         .select()
         .single();
@@ -240,6 +241,7 @@ function TableQRPage() {
         order_id: orderData.id,
         menu_item_id: item.menuItemId,
         quantity: item.quantity,
+        fulfillment_type: item.fulfillmentType,
         price_at_order: item.price,
         fulfillment_type: item.fulfillmentType,
         container_size: item.containerSize || null,
@@ -277,6 +279,7 @@ function TableQRPage() {
         order_id: existingOrder.id,
         menu_item_id: item.menuItemId,
         quantity: item.quantity,
+        fulfillment_type: item.fulfillmentType,
         price_at_order: item.price,
         fulfillment_type: item.fulfillmentType,
         container_size: item.containerSize || null,
@@ -539,54 +542,12 @@ function TableQRPage() {
                 </ul>
                 
                 <div className="border-t pt-4">
-                  <div className="mb-4">
-                    <label className="text-xs font-bold uppercase text-gray-500 mb-1 block">Order Type</label>
-                    <select 
-                      value={orderType}
-                      onChange={(e) => setOrderType(e.target.value as any)}
-                      className="w-full border rounded p-2 text-sm bg-white"
-                    >
-                      <option value="dine_in">Dine-in (Eat here)</option>
-                      <option value="takeaway">Takeaway</option>
-                      <option value="delivery">Delivery (Grab)</option>
-                    </select>
-                  </div>
-                  
-                  {orderType === 'delivery' && (
-                    <div className="mb-4 space-y-3 bg-blue-50 p-3 rounded-lg border border-blue-100">
-                      <div>
-                        <label className="text-xs font-bold text-blue-900 mb-1 block">Customer Phone *</label>
-                        <input 
-                          type="tel" 
-                          placeholder="60xxxxxxxxxx"
-                          value={customerPhone}
-                          onChange={(e) => setCustomerPhone(e.target.value)}
-                          className="w-full text-sm border rounded p-2"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-bold text-blue-900 mb-1 block">Delivery Address *</label>
-                        <textarea 
-                          placeholder="123 Jalan Merdeka..."
-                          value={deliveryAddress}
-                          onChange={(e) => setDeliveryAddress(e.target.value)}
-                          className="w-full text-sm border rounded p-2 h-16 resize-none"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-1 mb-6">
+<div className="space-y-1 mb-6">
                     <div className="flex justify-between text-sm text-gray-500">
                       <span>Subtotal:</span>
                       <span>RM{subTotal.toFixed(2)}</span>
                     </div>
-                    {orderType === 'delivery' && (
-                      <div className="flex justify-between text-sm text-gray-500">
-                        <span>Delivery Fee:</span>
-                        <span>RM{deliveryFee.toFixed(2)}</span>
-                      </div>
-                    )}
+                    
                     <div className="flex justify-between items-center pt-2 border-t font-bold">
                       <span className="text-lg">Total:</span>
                       <span className="text-2xl text-blue-600">RM{cartTotal.toFixed(2)}</span>

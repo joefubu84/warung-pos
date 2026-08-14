@@ -239,9 +239,7 @@ function OrdersPage() {
       const originalItems = editingOrder.order_items || [];
       let newTotalAmount = editItems.reduce((sum, item) => sum + (Number(item.price_at_order) * item.quantity) + (Number((item as any).container_charge || 0) * item.quantity), 0);
       
-      if (editOrderType === 'delivery') {
-        newTotalAmount += Number(editDeliveryFee);
-      }
+      
       
       const changesDetails: any = {
         items_modified: [],
@@ -310,11 +308,9 @@ function OrdersPage() {
       
       if (orderUpErr) throw orderUpErr;
 
-      if (changesDetails.items_modified.length > 0 || changesDetails.items_added.length > 0 || changesDetails.items_deleted.length > 0 || editingOrder.type !== editOrderType || editingOrder.delivery_fee !== editDeliveryFee || !!editingOrder.paid !== editIsPaid || editingOrder.payment_method !== editPaymentMethod) {
+      if (changesDetails.items_modified.length > 0 || changesDetails.items_added.length > 0 || changesDetails.items_deleted.length > 0 || !!editingOrder.paid !== editIsPaid || editingOrder.payment_method !== editPaymentMethod) {
         
-        if (editingOrder.type !== editOrderType) {
-          changesDetails.type_changed = `${editingOrder.type} -> ${editOrderType}`;
-        }
+        
         if (editOrderType === 'delivery') {
           changesDetails.delivery_fee = editDeliveryFee;
         }
@@ -1014,7 +1010,7 @@ function OrdersPage() {
                   <span>TOTAL:</span>
                   <span>RM {(
                     editItems.reduce((sum, item) => sum + (Number(item.price_at_order) * item.quantity) + (Number((item as any).container_charge || 0) * item.quantity), 0)
-                    + (editOrderType === 'delivery' ? Number(editDeliveryFee || 0) : 0)
+                    
                   ).toFixed(2)}</span>
                 </div>
               </div>
