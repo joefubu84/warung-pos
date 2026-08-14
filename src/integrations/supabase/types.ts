@@ -430,6 +430,8 @@ export type Database = {
           delivery_service:
             | Database["public"]["Enums"]["delivery_service_enum"]
             | null
+          discount_amount: number | null
+          discount_type: string | null
           id: string
           member_id: string | null
           paid: boolean | null
@@ -440,8 +442,6 @@ export type Database = {
           store_id: string
           table_id: string | null
           total_amount: number
-          discount_amount: number | null
-          discount_type: string | null
           type: Database["public"]["Enums"]["order_type"]
         }
         Insert: {
@@ -454,6 +454,8 @@ export type Database = {
           delivery_service?:
             | Database["public"]["Enums"]["delivery_service_enum"]
             | null
+          discount_amount?: number | null
+          discount_type?: string | null
           id?: string
           member_id?: string | null
           paid?: boolean | null
@@ -464,8 +466,6 @@ export type Database = {
           store_id: string
           table_id?: string | null
           total_amount?: number
-          discount_amount?: number | null
-          discount_type?: string | null
           type: Database["public"]["Enums"]["order_type"]
         }
         Update: {
@@ -478,6 +478,8 @@ export type Database = {
           delivery_service?:
             | Database["public"]["Enums"]["delivery_service_enum"]
             | null
+          discount_amount?: number | null
+          discount_type?: string | null
           id?: string
           member_id?: string | null
           paid?: boolean | null
@@ -488,8 +490,6 @@ export type Database = {
           store_id?: string
           table_id?: string | null
           total_amount?: number
-          discount_amount?: number | null
-          discount_type?: string | null
           type?: Database["public"]["Enums"]["order_type"]
         }
         Relationships: [

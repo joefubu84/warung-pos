@@ -329,7 +329,7 @@ function MenuPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {items.map((item) => {
-                  const isLowStock = item.stock_count !== null && item.low_stock_threshold !== null && item.stock_count <= item.low_stock_threshold;
+                  const isLowStock = (item.stock_count ?? null) !== null && (item.low_stock_threshold ?? null) !== null && (item.stock_count ?? 0) <= (item.low_stock_threshold ?? 0);
                   const isOutOfStock = item.stock_count === 0 || !item.is_available;
 
                   return (
@@ -361,7 +361,7 @@ function MenuPage() {
                         {/* Inventory Badges */}
                         <div className="mt-3 flex flex-wrap gap-2">
                           {item.stock_count !== null ? (
-                            <Badge variant={isOutOfStock ? "destructive" : (isLowStock ? "warning" : "secondary")} className="flex gap-1">
+                            <Badge variant={isOutOfStock ? "destructive" : (isLowStock ? "outline" : "secondary")} className="flex gap-1">
                               {isOutOfStock ? "Sold Out (0)" : (isLowStock ? `⚠️ Low Stock (${item.stock_count})` : `📦 Stock: ${item.stock_count}`)}
                             </Badge>
                           ) : (

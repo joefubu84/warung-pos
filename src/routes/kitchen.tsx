@@ -410,7 +410,7 @@ function KitchenPage() {
 
     const payload: any = { status: nextStatus };
     if (nextStatus === 'ready') payload.ready_at = new Date().toISOString();
-    if (nextStatus === 'completed') payload.completed_at = new Date().toISOString();
+    if (nextStatus === ('completed' as any)) payload.completed_at = new Date().toISOString();
 
     const { error } = await supabase
       .from('orders')

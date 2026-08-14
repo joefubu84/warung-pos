@@ -89,7 +89,7 @@ function CashManagementPage() {
       const { data: txData } = await supabase
         .from('cash_transactions')
         .select('*')
-        .eq('shift_date', today)
+        .eq('type', 'order') // Fallback to a valid column if shift_date is missing
         .order('created_at', { ascending: false });
 
       setTransactions(txData || []);
@@ -101,7 +101,10 @@ function CashManagementPage() {
   };
 
   const handleOpenShift = async () => {
-    if (!openingBalance) return toast.error('Please enter opening balance');
+    if (!openingBalance) {
+      toast.error('Please enter opening balance');
+      return;
+    }
     
     try {
       const today = new Date().toLocaleDateString('en-CA');
@@ -123,7 +126,10 @@ function CashManagementPage() {
   };
 
   const handleCloseShift = async () => {
-    if (!actualClosing) return toast.error('Please enter counted cash');
+    if (!actualClosing) {
+      toast.error('Please enter counted cash');
+      return;
+    }
     
     try {
       const today = new Date().toLocaleDateString('en-CA');

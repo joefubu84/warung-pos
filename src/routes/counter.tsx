@@ -82,7 +82,10 @@ const addSplitPayment = () => {
 
   const updateSplitPayment = (index: number, field: 'amount' | 'method', value: any) => {
     const newSplits = [...splitPayments];
-    newSplits[index] = { ...newSplits[index], [field]: value };
+    const updated = { ...newSplits[index] };
+    if (field === 'amount') updated.amount = Number(value) || 0;
+    if (field === 'method') updated.method = value;
+    newSplits[index] = updated as { amount: number; method: 'cash' | 'card' | 'qr' | 'bank_transfer' };
     setSplitPayments(newSplits);
   };
 
@@ -91,6 +94,14 @@ const addSplitPayment = () => {
   };
   
   const totalSplitAmount = splitPayments.reduce((sum, sp) => sum + (Number(sp.amount) || 0), 0);
+  
+  const cartTotal = cart.reduce((sum, item) => sum + ((item.price + (item.containerCharge || 0)) * item.quantity), 0);
+  
+  const discountAmount = discount.type === 'percentage' 
+    ? cartTotal * (discount.value / 100)
+    : discount.value;
+  const finalTotal = Math.max(0, cartTotal - discountAmount);
+
   const remainingSplitAmount = Math.max(0, finalTotal - totalSplitAmount);
 
   // Audio ref for beep
@@ -138,7 +149,7 @@ const addSplitPayment = () => {
   };
 
   const handleAddToCart = (item: MenuItem) => {
-    if (item.stock_count !== null && item.stock_count <= 0) {
+    if (item.stock_count !== undefined && item.stock_count !== null && item.stock_count <= 0) {
       return; // Sold out
     }
 
@@ -149,8 +160,11 @@ const addSplitPayment = () => {
     
     if (existingIndex >= 0) {
       const newCart = [...cart];
-      newCart[existingIndex].quantity += 1;
-      setCart(newCart);
+      const itemToUpdate = newCart[existingIndex];
+      if (itemToUpdate) {
+        itemToUpdate.quantity += 1;
+        setCart(newCart);
+      }
     } else {
       const newItem: CartItem = {
         id: Math.random().toString(36).substr(2, 9),
@@ -216,12 +230,6 @@ const addSplitPayment = () => {
     }
   };
 
-const cartTotal = cart.reduce((sum, item) => sum + ((item.price + (item.containerCharge || 0)) * item.quantity), 0);
-  
-  const discountAmount = discount.type === 'percentage' 
-    ? cartTotal * (discount.value / 100)
-    : discount.value;
-  const finalTotal = Math.max(0, cartTotal - discountAmount);
 
   const categories = ['All', ...Array.from(new Set(menuItems.map(m => m.category || 'Uncategorized')))];
 
@@ -429,7 +437,7 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
 
               <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pb-24">
                 {filteredMenu.map(item => {
-                  const isSoldOut = item.stock_count !== null && item.stock_count <= 0;
+                  const isSoldOut = item.stock_count !== undefined && item.stock_count !== null && item.stock_count <= 0;
                   return (
                     <button
                       key={item.id}
