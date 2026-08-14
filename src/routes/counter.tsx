@@ -85,7 +85,7 @@ const addSplitPayment = () => {
     const updated = { ...newSplits[index] };
     if (field === 'amount') updated.amount = Number(value) || 0;
     if (field === 'method') updated.method = value;
-    newSplits[index] = updated;
+    newSplits[index] = updated as { amount: number; method: 'cash' | 'card' | 'qr' | 'bank_transfer' };
     setSplitPayments(newSplits);
   };
 
