@@ -114,6 +114,7 @@ export type Database = {
           expected_closing: number | null
           id: string
           notes: string | null
+          opened_by: string | null
           opening_balance: number
           variance: number | null
         }
@@ -126,6 +127,7 @@ export type Database = {
           expected_closing?: number | null
           id?: string
           notes?: string | null
+          opened_by?: string | null
           opening_balance: number
           variance?: number | null
         }
@@ -138,10 +140,59 @@ export type Database = {
           expected_closing?: number | null
           id?: string
           notes?: string | null
+          opened_by?: string | null
           opening_balance?: number
           variance?: number | null
         }
         Relationships: []
+      }
+      daily_cash_edit_logs: {
+        Row: {
+          change_reason: string | null
+          daily_cash_id: string | null
+          edited_at: string | null
+          edited_by: string | null
+          edited_by_name: string | null
+          id: string
+          new_values: Json | null
+          previous_values: Json | null
+        }
+        Insert: {
+          change_reason?: string | null
+          daily_cash_id?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          edited_by_name?: string | null
+          id?: string
+          new_values?: Json | null
+          previous_values?: Json | null
+        }
+        Update: {
+          change_reason?: string | null
+          daily_cash_id?: string | null
+          edited_at?: string | null
+          edited_by?: string | null
+          edited_by_name?: string | null
+          id?: string
+          new_values?: Json | null
+          previous_values?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_cash_edit_logs_daily_cash_id_fkey"
+            columns: ["daily_cash_id"]
+            isOneToOne: false
+            referencedRelation: "daily_cash"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "daily_cash_edit_logs_edited_by_fkey"
+            columns: ["edited_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       deliveries: {
         Row: {
@@ -734,6 +785,36 @@ export type Database = {
           },
         ]
       }
+      whatsapp_otps: {
+        Row: {
+          attempts: number
+          created_at: string
+          expires_at: string
+          id: string
+          otp_code: string
+          phone_number: string
+          verified: boolean
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          otp_code: string
+          phone_number: string
+          verified?: boolean
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          otp_code?: string
+          phone_number?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -746,6 +827,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_auth_store_id: { Args: never; Returns: string }
+      place_order: {
+        Args: { p_items: Json; p_order: Json; p_payments: Json }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "staff" | "member" | "rider" | "admin"
