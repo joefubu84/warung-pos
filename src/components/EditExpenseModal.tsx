@@ -1,0 +1,498 @@
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { 
+  Pencil, 
+  Receipt, 
+  Camera, 
+  Upload, 
+  X, 
+  Loader2,
+  Trash2
+} from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { EXPENSE_CATEGORIES } from './AddExpenseModal';
+
+interface EditExpenseModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  expense: any | null;
+  dailyCashId: string | null;
+}
+
+const compressImageForMobile = (rawFile: File): Promise<File> => {
+  return new Promise((resolve) => {
+    if (!rawFile.type.startsWith('image/') || rawFile.size < 500 * 1024) {
+      return resolve(rawFile);
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_DIM = 1200;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > MAX_DIM) {
+            height = Math.round((height * MAX_DIM) / width);
+            width = MAX_DIM;
+          }
+        } else {
+          if (height > MAX_DIM) {
+            width = Math.round((width * MAX_DIM) / height);
+            height = MAX_DIM;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(rawFile);
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], rawFile.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              resolve(rawFile);
+            }
+          },
+          'image/jpeg',
+          0.85
+        );
+      };
+      img.onerror = () => resolve(rawFile);
+      img.src = event.target?.result as string;
+    };
+    reader.onerror = () => resolve(rawFile);
+    reader.readAsDataURL(rawFile);
+  });
+};
+
+// Utility to parse receipt URL from formatted transaction notes
+export function extractReceiptUrlFromNotes(notes: string | null | undefined): string | null {
+  if (!notes) return null;
+  const match = notes.match(/\[RECEIPT_URL:\s*([^\]]+)\]/i);
+  return match && match[1] ? match[1].trim() : null;
+}
+
+// Utility to parse clean description without tags
+export function extractCleanDescriptionFromNotes(notes: string | null | undefined): string {
+  if (!notes) return '';
+  return notes
+    .replace(/^\[Expense:[^\]]+\]\s*/i, '')
+    .replace(/\s*—\s*Recorded by.*$/i, '')
+    .replace(/\[RECEIPT_URL:[^\]]+\]/gi, '')
+    .trim();
+}
+
+export function EditExpenseModal({ isOpen, onClose, onSuccess, expense, dailyCashId }: EditExpenseModalProps) {
+  const [expenseType, setExpenseType] = useState<string>('fuel');
+  const [amountInput, setAmountInput] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
+  const [existingReceiptUrl, setExistingReceiptUrl] = useState<string | null>(null);
+  
+  // New replacement receipt photo
+  const [newReceiptFile, setNewReceiptFile] = useState<File | null>(null);
+  const [newReceiptPreview, setNewReceiptPreview] = useState<string | null>(null);
+  const [removeExistingReceipt, setRemoveExistingReceipt] = useState<boolean>(false);
+  
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [staffName, setStaffName] = useState<string>('Staff');
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadUser() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUserId(session.user.id);
+        const { data: profile } = await supabase
+          .from('users')
+          .select('name')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        if (profile?.name) setStaffName(profile.name);
+      }
+    }
+
+    if (isOpen && expense) {
+      loadUser();
+      
+      // Parse category from type ("expense_fuel" -> "fuel")
+      const cat = (expense.type || '').replace('expense_', '');
+      setExpenseType(EXPENSE_CATEGORIES.some(c => c.id === cat) ? cat : 'other');
+      setAmountInput(Number(expense.amount || 0).toFixed(2));
+      
+      const cleanDesc = extractCleanDescriptionFromNotes(expense.notes);
+      setDescription(cleanDesc);
+
+      const currentUrl = extractReceiptUrlFromNotes(expense.notes) || expense.receipt_url || null;
+      setExistingReceiptUrl(currentUrl);
+
+      setNewReceiptFile(null);
+      setNewReceiptPreview(null);
+      setRemoveExistingReceipt(false);
+    }
+  }, [isOpen, expense]);
+
+  const handleNewFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawFile = e.target.files?.[0];
+    if (!rawFile) return;
+
+    toast.info("Processing replacement receipt photo...");
+    const compressed = await compressImageForMobile(rawFile);
+    const preview = URL.createObjectURL(compressed);
+
+    setNewReceiptFile(compressed);
+    setNewReceiptPreview(preview);
+    setRemoveExistingReceipt(false);
+  };
+
+  const handleDiscardNewPhoto = () => {
+    setNewReceiptFile(null);
+    setNewReceiptPreview(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!expense) return;
+
+    const numAmount = parseFloat(amountInput);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      toast.error("Please enter a valid expense amount greater than RM 0");
+      return;
+    }
+
+    if (!description.trim()) {
+      toast.error("Please enter a brief description for this expense");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      let finalReceiptUrl = existingReceiptUrl;
+
+      // 1. If replacing or removing receipt photo
+      if (newReceiptFile) {
+        // Delete old receipt from storage if exists
+        if (existingReceiptUrl && existingReceiptUrl.includes('receipts/')) {
+          const oldPath = existingReceiptUrl.split('receipts/').pop();
+          if (oldPath) {
+            await supabase.storage.from('receipts').remove([oldPath]);
+          }
+        }
+
+        // Upload new receipt photo directly to Supabase Storage
+        toast.info("Uploading replacement receipt to Supabase Storage...");
+        const cleanName = newReceiptFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const filePath = `expenses/${Date.now()}_${cleanName}`;
+
+        const { error: uploadErr } = await supabase.storage
+          .from('receipts')
+          .upload(filePath, newReceiptFile, {
+            upsert: true,
+            contentType: newReceiptFile.type || 'image/jpeg',
+          });
+
+        if (uploadErr) {
+          toast.error(`Failed to upload replacement receipt: ${uploadErr.message}. Edit not saved.`);
+          setIsSubmitting(false);
+          return;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from('receipts')
+          .getPublicUrl(filePath);
+
+        if (publicUrlData && publicUrlData.publicUrl && !publicUrlData.publicUrl.startsWith('blob:')) {
+          finalReceiptUrl = publicUrlData.publicUrl;
+        } else {
+          toast.error("Failed to generate permanent storage URL. Edit not saved.");
+          setIsSubmitting(false);
+          return;
+        }
+      } else if (removeExistingReceipt) {
+        // Delete old receipt from storage
+        if (existingReceiptUrl && existingReceiptUrl.includes('receipts/')) {
+          const oldPath = existingReceiptUrl.split('receipts/').pop();
+          if (oldPath) {
+            await supabase.storage.from('receipts').remove([oldPath]);
+          }
+        }
+        finalReceiptUrl = null;
+      }
+
+      // 2. Format notes with audit timestamp & receipt URL
+      const categoryLabel = EXPENSE_CATEGORIES.find(c => c.id === expenseType)?.label || 'Expense';
+      const receiptTag = finalReceiptUrl ? ` [RECEIPT_URL: ${finalReceiptUrl}]` : '';
+      const auditTag = ` (Edited by ${staffName} on ${new Date().toLocaleDateString('en-GB')})`;
+      const formattedNotes = `[Expense: ${categoryLabel}] ${description.trim()}${auditTag} — Recorded by ${staffName}${receiptTag}`;
+
+      // 3. Update cash_transactions table row
+      const { error: txErr } = await supabase
+        .from('cash_transactions')
+        .update({
+          amount: numAmount,
+          type: `expense_${expenseType}`,
+          notes: formattedNotes,
+        })
+        .eq('id', expense.id);
+
+      if (txErr) throw txErr;
+
+      // 4. Update expenses table row if linked
+      try {
+        await supabase
+          .from('expenses')
+          .update({
+            amount: numAmount,
+            receipt_url: finalReceiptUrl,
+            ai_extracted_data: {
+              category: expenseType,
+              description: description.trim(),
+              last_edited_by: staffName,
+              last_edited_at: new Date().toISOString()
+            }
+          })
+          .eq('amount', expense.amount); // match expense amount
+      } catch (eErr) {
+        console.warn("Expenses table update notice:", eErr);
+      }
+
+      // 5. Insert Audit Log into daily_cash_edit_logs
+      const targetDailyCashId = expense.daily_cash_id || dailyCashId || 'system';
+      await supabase
+        .from('daily_cash_edit_logs')
+        .insert({
+          daily_cash_id: targetDailyCashId,
+          edited_by: userId,
+          edited_by_name: staffName,
+          previous_values: {
+            amount: expense.amount,
+            type: expense.type,
+            notes: expense.notes,
+            receipt_url: existingReceiptUrl
+          },
+          new_values: {
+            amount: numAmount,
+            type: `expense_${expenseType}`,
+            notes: formattedNotes,
+            receipt_url: finalReceiptUrl
+          },
+          change_reason: `Staff ${staffName} edited expense (RM ${Number(expense.amount).toFixed(2)} → RM ${numAmount.toFixed(2)})`
+        });
+
+      toast.success(`Expense updated & audit log saved!`);
+      onSuccess();
+      onClose();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to update expense");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (!expense) return null;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="bg-slate-900 text-white border-slate-800 max-w-md font-sans">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-lg font-bold text-amber-400">
+            <Pencil className="w-5 h-5" /> Edit Petty Cash Expense
+          </DialogTitle>
+          <DialogDescription className="text-slate-400 text-xs">
+            Modify amount, category, or replace receipt proof. All changes are logged into the audit trail.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {/* EXPENSE CATEGORY */}
+          <div className="space-y-1.5 font-sans">
+            <label className="text-xs font-semibold text-slate-300">Expense Category</label>
+            <Select value={expenseType} onValueChange={setExpenseType}>
+              <SelectTrigger className="bg-slate-950 border-slate-800 text-white h-10">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                {EXPENSE_CATEGORIES.map((cat) => {
+                  const IconComp = cat.icon;
+                  return (
+                    <SelectItem key={cat.id} value={cat.id} className="hover:bg-slate-800 cursor-pointer">
+                      <div className="flex items-center gap-2">
+                        <IconComp className="w-4 h-4 text-amber-400" />
+                        <span>{cat.label}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* AMOUNT INPUT */}
+          <div className="space-y-1.5 font-sans">
+            <label className="text-xs font-semibold text-slate-300">Amount Withdrawn (RM)</label>
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-sm font-bold">RM</span>
+              <Input
+                type="number"
+                step="0.01"
+                min="0.01"
+                value={amountInput}
+                onChange={(e) => setAmountInput(e.target.value)}
+                className="bg-slate-950 border-slate-800 pl-10 text-white font-mono text-base font-bold h-10"
+                required
+              />
+            </div>
+          </div>
+
+          {/* DESCRIPTION */}
+          <div className="space-y-1.5 font-sans">
+            <label className="text-xs font-semibold text-slate-300">Description / Reason</label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="bg-slate-950 border-slate-800 text-white text-xs min-h-[70px] resize-none"
+              placeholder="e.g. Bought 2 gas cylinders from Shell"
+              required
+            />
+          </div>
+
+          {/* RECEIPT MANAGEMENT SECTION */}
+          <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 font-sans">
+            <label className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-mono">
+              <Receipt className="w-4 h-4" /> Attached Receipt Photo
+            </label>
+
+            {/* Existing Receipt Preview */}
+            {existingReceiptUrl && !removeExistingReceipt && !newReceiptPreview && (
+              <div className="flex flex-col items-center gap-2 p-2 bg-slate-900 rounded-lg border border-slate-800">
+                <img
+                  src={existingReceiptUrl}
+                  alt="Existing Receipt"
+                  className="w-full max-h-40 object-contain rounded border border-slate-800"
+                />
+                <div className="flex items-center gap-2 w-full justify-between pt-1">
+                  <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                    <Receipt className="w-3 h-3" /> Current Receipt Attached
+                  </span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setRemoveExistingReceipt(true)}
+                    className="h-6 text-[10px] text-rose-400 hover:text-rose-300 hover:bg-rose-950/40"
+                  >
+                    <Trash2 className="w-3 h-3 mr-1" /> Remove
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* New Replacement Receipt Preview */}
+            {newReceiptPreview && (
+              <div className="flex flex-col items-center gap-2 p-2 bg-slate-900 rounded-lg border border-amber-500/40">
+                <img
+                  src={newReceiptPreview}
+                  alt="New Replacement Receipt"
+                  className="w-full max-h-40 object-contain rounded border border-slate-800"
+                />
+                <div className="flex items-center gap-2 w-full justify-between pt-1">
+                  <span className="text-[10px] text-amber-400 font-mono">New Replacement Photo Ready</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDiscardNewPhoto}
+                    className="h-6 text-[10px] text-rose-400 hover:text-rose-300 hover:bg-rose-950/40"
+                  >
+                    <X className="w-3 h-3 mr-1" /> Discard
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Hidden Input Triggers for Replacement Photo */}
+            <input
+              id="edit-camera-input"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={handleNewFileSelect}
+            />
+            <input
+              id="edit-file-input"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleNewFileSelect}
+            />
+
+            {!newReceiptPreview && (
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <label
+                  htmlFor="edit-camera-input"
+                  className="cursor-pointer bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center justify-center gap-1.5 py-2 rounded-lg text-center"
+                >
+                  <Camera className="w-3.5 h-3.5 text-amber-400" /> TAKE NEW PHOTO
+                </label>
+
+                <label
+                  htmlFor="edit-file-input"
+                  className="cursor-pointer bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 font-bold text-xs flex items-center justify-center gap-1.5 py-2 rounded-lg text-center"
+                >
+                  <Upload className="w-3.5 h-3.5 text-emerald-400" /> UPLOAD NEW
+                </label>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="border-slate-800 text-slate-300 hover:bg-slate-800"
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="bg-amber-600 hover:bg-amber-500 text-white font-bold"
+            >
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Saving Changes...
+                </span>
+              ) : (
+                'Save Expense Edit'
+              )}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -120,15 +120,21 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
+import { NavigationHeader } from "../components/NavigationHeader";
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <div className="min-h-screen flex flex-col bg-background text-foreground">
+        <NavigationHeader />
+        <main className="flex-1 flex flex-col">
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+          <Outlet />
+        </main>
+      </div>
       <Toaster />
     </QueryClientProvider>
-
   );
 }

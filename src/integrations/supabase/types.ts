@@ -143,6 +143,47 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_cash_edit_logs: {
+        Row: {
+          id: string
+          daily_cash_id: string
+          edited_by: string | null
+          edited_by_name: string | null
+          previous_values: Json | null
+          new_values: Json | null
+          change_reason: string | null
+          edited_at: string | null
+        }
+        Insert: {
+          id?: string
+          daily_cash_id: string
+          edited_by?: string | null
+          edited_by_name?: string | null
+          previous_values?: Json | null
+          new_values?: Json | null
+          change_reason?: string | null
+          edited_at?: string | null
+        }
+        Update: {
+          id?: string
+          daily_cash_id?: string
+          edited_by?: string | null
+          edited_by_name?: string | null
+          previous_values?: Json | null
+          new_values?: Json | null
+          change_reason?: string | null
+          edited_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_cash_edit_logs_daily_cash_id_fkey"
+            columns: ["daily_cash_id"]
+            isOneToOne: false
+            referencedRelation: "daily_cash"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       deliveries: {
         Row: {
           id: string
@@ -746,6 +787,14 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_auth_store_id: { Args: never; Returns: string }
+      place_order: {
+        Args: {
+          p_order: Json
+          p_items: Json
+          p_payments: Json
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "staff" | "member" | "rider" | "admin"

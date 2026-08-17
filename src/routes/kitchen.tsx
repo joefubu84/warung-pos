@@ -257,6 +257,7 @@ function KitchenPage() {
   const isInitialLoad = useRef(true);
 
   const fetchPrinterSettings = useCallback(async () => {
+    if (!storeId) return;
     const { data } = await supabase
       .from('printer_settings')
       .select('*')
@@ -287,30 +288,9 @@ function KitchenPage() {
     }
   }, []);
 
-  useEffect(() => {
-    console.log('Fetching initial orders...');
-    fetchPrinterSettings();
-    fetchActiveOrders();
-
-    const channel = supabase.channel('kitchen_orders')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
-        console.log('Realtime event received: orders table');
-        fetchActiveOrders(true);
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, () => {
-        console.log('Realtime event received: order_items table');
-        fetchActiveOrders(true);
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchPrinterSettings]);
-
-  const fetchActiveOrders = async (isSilent = false) => {
+  const fetchActiveOrders = useCallback(async (isSilent = false) => {
     if (!isSilent) setIsLoading(true);
-    const { data, error } = await supabase
+    let query = supabase
       .from('orders')
       .select(`
         id,
@@ -321,13 +301,11 @@ function KitchenPage() {
         table_id,
         paid,
         payment_method,
-        delivery_service,
         customer_phone,
         delivery_address,
         created_at,
         ready_at,
         tables (table_number),
-        order_edit_logs (id),
         order_items (
           id,
           quantity,
@@ -339,6 +317,12 @@ function KitchenPage() {
       `)
       .in('status', ['pending', 'preparing'])
       .order('created_at', { ascending: true });
+
+    if (storeId) {
+      query = query.eq('store_id', storeId);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error('Error fetching kitchen orders:', error);
@@ -358,16 +342,28 @@ function KitchenPage() {
             newHighlights[newOrder.id] = { type: 'new', timestamp: now };
             hasNewOrder = true;
           } 
-          else if (newOrder.order_items.length > oldOrder.order_items.length) {
-            newHighlights[newOrder.id] = { type: 'updated', timestamp: now };
-            hasUpdatedOrder = true;
-            
-            const oldItemIds = new Set(oldOrder.order_items.map(i => i.id));
-            newOrder.order_items.forEach(item => {
-              if (!oldItemIds.has(item.id)) {
-                newItemHighlights[item.id] = now;
+          else {
+            // Check for modified items via ID map
+            let isModified = false;
+            if (newOrder.order_items.length !== oldOrder.order_items.length) {
+              isModified = true;
+            } else {
+              const oldItemsMap = new Map(oldOrder.order_items.map((i: any) => [i.id, i]));
+              for (const newItem of newOrder.order_items as any[]) {
+                const oldItem = oldItemsMap.get(newItem.id);
+                if (!oldItem || 
+                    oldItem.quantity !== newItem.quantity || 
+                    oldItem.notes !== newItem.notes || 
+                    oldItem.container_size !== newItem.container_size) {
+                  isModified = true;
+                  newItemHighlights[newItem.id] = now;
+                }
               }
-            });
+            }
+            if (isModified) {
+              newHighlights[newOrder.id] = { type: 'updated', timestamp: now };
+              hasUpdatedOrder = true;
+            }
           }
         });
       }
@@ -396,7 +392,31 @@ function KitchenPage() {
       isInitialLoad.current = false;
     }
     setIsLoading(false);
-  };
+  }, [storeId]);
+
+  useEffect(() => {
+    fetchPrinterSettings();
+    fetchActiveOrders();
+
+    const channelName = `kitchen_orders_${Date.now()}`;
+    const channel = supabase.channel(channelName)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+        console.log('⚡ Realtime event received: orders table', payload);
+        fetchActiveOrders(true);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, (payload) => {
+        console.log('⚡ Realtime event received: order_items table', payload);
+        fetchActiveOrders(true);
+      })
+      .subscribe((status, err) => {
+        console.log('📡 Kitchen Realtime Status:', status, err);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchPrinterSettings, fetchActiveOrders]);
+
 
   const advanceStatus = useCallback(async (orderId: string, currentStatus: OrderStatus) => {
     let nextStatus: OrderStatus;
@@ -527,9 +547,18 @@ const KitchenStats = ({ activeOrders }: { activeOrders: Order[] }) => {
     };
     
     fetchTodayStats();
-    const interval = setInterval(fetchTodayStats, 60000);
-    return () => clearInterval(interval);
-  }, [activeOrders]); // Re-fetch if orders change (like one getting marked ready)
+    
+    // Subscribe to realtime orders that become 'ready' to update stats without polling
+    const statsChannel = supabase.channel('kitchen_stats')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'orders', filter: 'status=eq.ready' }, () => {
+        fetchTodayStats();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(statsChannel);
+    };
+  }, []); // Run on mount only
 
   const readyCount = activeOrders.filter(o => o.status === 'ready').length;
 

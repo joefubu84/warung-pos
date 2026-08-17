@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { 
   Dialog, 
   DialogContent, 
@@ -10,6 +10,49 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { getTodayCashStatus } from '@/lib/cash-guard';
+import { 
+  Lock, 
+  Search, 
+  Sparkles, 
+  Flame, 
+  Star, 
+  Plus, 
+  Minus, 
+  Trash2, 
+  ShoppingBag, 
+  Utensils, 
+  Award, 
+  ChevronRight,
+  Clock,
+  Check,
+  CheckCircle2,
+  X
+} from 'lucide-react';
+import { 
+  findMemberByPhone, 
+  fetchMembersFromSupabase,
+  addMemberPoints, 
+  deductMemberPoints, 
+  getMembershipTransactions, 
+  registerOrIdentifyMemberSupabase,
+  MembershipTransaction, 
+  LoyaltyMember 
+} from '@/lib/loyalty-config';
+import { sanitizePhone } from '@/lib/whatsapp-otp';
+import { Phone, UserCheck, ShieldCheck, ShieldAlert, Gift, History, Percent, LogOut, RefreshCw } from 'lucide-react';
+import { DishCustomizationModal, CustomizedCartItem } from '@/components/DishCustomizationModal';
+import { 
+  validateAndStartTableSession, 
+  updateTableSessionOrderTime, 
+  checkOrderRateLimit, 
+  validateOrderPricesAgainstDB, 
+  getOrCreateDeviceId 
+} from '@/lib/table-sessions';
+import { CustomerOrderTracker } from '@/components/CustomerOrderTracker';
+import { toast } from 'sonner';
+
 export const Route = createFileRoute('/t/$token')({
   component: TableQRPage,
 });
@@ -21,10 +64,11 @@ interface MenuItem {
   price: number;
   image_url: string | null;
   stock_count?: number | null;
+  description?: string;
 }
 
 interface CartItem {
-  id: string; // temp id for list rendering
+  id: string;
   menuItemId: string;
   name: string;
   price: number;
@@ -33,38 +77,156 @@ interface CartItem {
   containerSize?: 'small' | 'large' | null;
   containerCharge?: number;
   notes?: string;
+  portionSize?: string;
+  spiceLevel?: string;
+  selectedAddons?: { name: string; price: number }[];
 }
 
-function TableQRPage() {
+import { getPromoConfig, getDishBadgesMap, DishBadgeConfig } from '@/lib/addons-config';
+
+export function TableQRPage() {
   const { token } = Route.useParams();
   const [storeName, setStoreName] = useState<string | null>(null);
   const [storeId, setStoreId] = useState<string | null>(null);
   const [tableId, setTableId] = useState<string | null>(null);
+  const [tableNumber, setTableNumber] = useState<string | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isClosedForDay, setIsClosedForDay] = useState(false);
   
-  // Ordering state
+  // Search & Category Filtering
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [promoBanners, setPromoBanners] = useState<string[]>(getPromoConfig());
+  const [promoBannerIdx, setPromoBannerIdx] = useState(0);
+  const [dishBadgesMap, setDishBadgesMap] = useState<Record<string, DishBadgeConfig>>(getDishBadgesMap());
+
+  useEffect(() => {
+    const handlePromoUpdate = () => setPromoBanners(getPromoConfig());
+    const handleBadgeUpdate = () => setDishBadgesMap(getDishBadgesMap());
+    window.addEventListener('warung_promos_updated', handlePromoUpdate);
+    window.addEventListener('warung_dish_badges_updated', handleBadgeUpdate);
+    return () => {
+      window.removeEventListener('warung_promos_updated', handlePromoUpdate);
+      window.removeEventListener('warung_dish_badges_updated', handleBadgeUpdate);
+    };
+  }, []);
+
+  // Customization & Ordering state
+  const [customizingItem, setCustomizingItem] = useState<MenuItem | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [itemQuantities, setItemQuantities] = useState<Record<string, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [orderPlaced, setOrderPlaced] = useState(false);
+  const [activePlacedOrderId, setActivePlacedOrderId] = useState<string | null>(null);
   const [mergedNotification, setMergedNotification] = useState<string | null>(null);
   const [globalFulfillmentType, setGlobalFulfillmentType] = useState<'dine_in' | 'takeaway'>('dine_in');
-  const [globalContainerSize, setGlobalContainerSize] = useState<'small' | 'large'>('small');
-  
-  // Order Level settings
-  const [orderType, setOrderType] = useState<'dine_in' | 'takeaway' | 'delivery'>('dine_in');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [deliveryAddress, setDeliveryAddress] = useState('');
-  const deliveryFee = 8.00;
-  
-  // Mobile Cart State
+
+  const toggleCartFulfillment = (itemId: string) => {
+    setCart(prev => prev.map(item => {
+      if (item.id === itemId) {
+        const nextType = item.fulfillmentType === 'dine_in' ? 'takeaway' : 'dine_in';
+        let updatedNotes = item.notes || '';
+        if (updatedNotes.includes('DINE IN (Makan Sini 🍽️)')) {
+          updatedNotes = updatedNotes.replace('DINE IN (Makan Sini 🍽️)', 'TAKEAWAY (Bungkus 🥡)');
+        } else if (updatedNotes.includes('TAKEAWAY (Bungkus 🥡)')) {
+          updatedNotes = updatedNotes.replace('TAKEAWAY (Bungkus 🥡)', 'DINE IN (Makan Sini 🍽️)');
+        } else {
+          updatedNotes = (nextType === 'takeaway' ? 'TAKEAWAY (Bungkus 🥡)' : 'DINE IN (Makan Sini 🍽️)') + (updatedNotes ? ` | ${updatedNotes}` : '');
+        }
+        return {
+          ...item,
+          fulfillmentType: nextType,
+          notes: updatedNotes
+        };
+      }
+      return item;
+    }));
+  };
+
+  // Mobile Cart Drawer State
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
-  
-  // Dialog state
+
+  // Existing Active Order Dialog
   const [showOrderDialog, setShowOrderDialog] = useState(false);
   const [existingOrder, setExistingOrder] = useState<any | null>(null);
+
+  // Device + GPS Table Session Validation State
+  const [sessionBlockedMessage, setSessionBlockedMessage] = useState<string | null>(null);
+
+  // VIP Customer Member Recognition State
+  const [customerPhone, setCustomerPhone] = useState<string>(() => {
+    if (typeof window !== 'undefined') return localStorage.getItem('warung_customer_phone') || '';
+    return '';
+  });
+  const [isRm8DiscountApplied, setIsRm8DiscountApplied] = useState(false);
+  const [showTxHistory, setShowTxHistory] = useState(false);
+
+  const [memberData, setMemberData] = useState<LoyaltyMember | undefined>(() => {
+    if (typeof window !== 'undefined') {
+      const p = localStorage.getItem('warung_customer_phone');
+      if (p) return findMemberByPhone(p);
+    }
+    return undefined;
+  });
+
+  // Auto-recognize returning VIP member on any QR table scan!
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = customerPhone || localStorage.getItem('warung_customer_phone');
+    if (stored) {
+      const found = findMemberByPhone(stored);
+      if (found) {
+        setMemberData(found);
+      } else {
+        fetchMembersFromSupabase().then((members: LoyaltyMember[]) => {
+          const cleanStored = stored.replace(/\D/g, '');
+          const fresh = members.find((m: LoyaltyMember) => m.phone === stored || m.phone.replace(/\D/g, '') === cleanStored);
+          if (fresh) {
+            setCustomerPhone(fresh.phone);
+            setMemberData(fresh);
+          }
+        });
+      }
+    }
+  }, [customerPhone]);
+
+  // Direct Supabase Member Registration & Identification State
+  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
+  const [phoneInput, setPhoneInput] = useState('');
+  const [nameInput, setNameInput] = useState('');
+  const [isSubmittingMember, setIsSubmittingMember] = useState(false);
+
+  // Pure Supabase Direct Member Registration / Login Handler
+  const handleRegisterOrIdentifyMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phoneInput.trim()) {
+      toast.error("Please enter your mobile phone number (+601XXXXXXXX).");
+      return;
+    }
+
+    setIsSubmittingMember(true);
+    try {
+      const res = await registerOrIdentifyMemberSupabase(nameInput, phoneInput);
+      localStorage.setItem('warung_customer_phone', res.member.phone);
+      setCustomerPhone(res.member.phone);
+      setMemberData(res.member);
+      setIsMemberModalOpen(false);
+      toast.success(res.message);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to process member registration.");
+    } finally {
+      setIsSubmittingMember(false);
+    }
+  };
+
+  // Rotate promo banner every 4s
+  useEffect(() => {
+    if (promoBanners.length === 0) return;
+    const timer = setInterval(() => {
+      setPromoBannerIdx((prev) => (prev + 1) % promoBanners.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [promoBanners]);
 
   useEffect(() => {
     async function fetchData() {
@@ -75,12 +237,12 @@ function TableQRPage() {
         // 1. Look up table by qr_token
         const { data: tableData, error: tableError } = await supabase
           .from('tables')
-          .select('id, store_id, stores(name)')
+          .select('id, table_number, store_id, stores(name)')
           .eq('qr_token', token)
           .single();
 
         if (tableError || !tableData) {
-          setError('Invalid QR code');
+          setError('Invalid QR code scanned');
           setLoading(false);
           return;
         }
@@ -88,12 +250,21 @@ function TableQRPage() {
         const sId = tableData.store_id;
         setStoreId(sId);
         setTableId(tableData.id);
+        setTableNumber(tableData.table_number);
         
-        // @ts-ignore - Supabase type for joined relation might be tricky
-        const name = tableData.stores?.name || 'Restaurant';
+        // @ts-ignore - Supabase type for joined relation
+        const name = tableData.stores?.name || 'Warung J&J';
         setStoreName(name);
 
-        // 2. Query menu_items for that store_id
+        // Validate Device + GPS Table Session
+        const sessionRes = await validateAndStartTableSession(tableData.table_number.toString());
+        if (!sessionRes.allowed) {
+          setSessionBlockedMessage(sessionRes.message || `Table #${tableData.table_number} is currently occupied by an active customer.`);
+        } else {
+          setSessionBlockedMessage(null);
+        }
+
+        // 2. Query menu_items for store
         const { data: menuData, error: menuError } = await supabase
           .from('menu_items')
           .select('id, name, category, price, image_url, stock_count')
@@ -102,22 +273,18 @@ function TableQRPage() {
           .order('category', { ascending: true })
           .order('name', { ascending: true });
 
-        if (menuError) {
-          throw menuError;
-        }
+        if (menuError) throw menuError;
 
-        const items = menuData || [];
-        setMenuItems(items);
-        
-        // Initialize quantities to 1
-        const initialQtys: Record<string, number> = {};
-        items.forEach(item => {
-          initialQtys[item.id] = 1;
-        });
-        setItemQuantities(initialQtys);
+        setMenuItems(menuData || []);
+
+        // Check if cash register is explicitly closed for today
+        const cashRes = await getTodayCashStatus(sId);
+        if (cashRes.status === 'CLOSED') {
+          setIsClosedForDay(true);
+        }
       } catch (err: any) {
-        console.error('Error fetching data:', err);
-        setError('Failed to load menu');
+        console.error('Error loading customer menu:', err);
+        setError('Failed to load menu. Please ask staff for assistance.');
       } finally {
         setLoading(false);
       }
@@ -126,52 +293,48 @@ function TableQRPage() {
     fetchData();
   }, [token]);
 
-  const handleQtyChange = (itemId: string, qty: number) => {
-    setItemQuantities(prev => ({
-      ...prev,
-      [itemId]: Math.max(1, qty)
-    }));
-  };
+  // Unique categories list
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    menuItems.forEach(i => i.category && set.add(i.category));
+    return ['All', ...Array.from(set)];
+  }, [menuItems]);
 
-  const handleAddToCart = (item: MenuItem) => {
-    const qty = itemQuantities[item.id] || 1;
-    
-    // Check against available stock
-    if (item.stock_count !== null && item.stock_count !== undefined) {
-      const currentInCart = cart.filter(c => c.menuItemId === item.id).reduce((sum, c) => sum + c.quantity, 0);
-      if (currentInCart + qty > item.stock_count) {
-        alert(`Sorry, only ${Math.max(0, item.stock_count - currentInCart)} more available in stock.`);
-        return;
-      }
-    }
+  // Filtered menu items
+  const filteredMenuItems = useMemo(() => {
+    return menuItems.filter(item => {
+      const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                            item.category.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCat = selectedCategory === 'All' || item.category === selectedCategory;
+      return matchesSearch && matchesCat;
+    });
+  }, [menuItems, searchQuery, selectedCategory]);
 
+  // Add customized dish from modal into cart
+  const handleAddToCartCustomized = (custItem: CustomizedCartItem) => {
     const newItem: CartItem = {
-      id: Math.random().toString(36).substr(2, 9),
-      menuItemId: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: qty,
+      id: custItem.id,
+      menuItemId: custItem.menuItemId,
+      name: custItem.name,
+      price: custItem.basePrice,
+      quantity: custItem.quantity,
       fulfillmentType: globalFulfillmentType,
-      containerSize: globalFulfillmentType === 'takeaway' ? globalContainerSize : null,
-      containerCharge: globalFulfillmentType === 'takeaway' ? (globalContainerSize === 'large' ? 1 : 0) : 0,
-      notes: ''
+      notes: custItem.notes,
+      portionSize: custItem.portionSize,
+      spiceLevel: custItem.spiceLevel,
+      selectedAddons: custItem.selectedAddons
     };
-    setCart([...cart, newItem]);
-    // Reset individual item qty field after adding? User didn't specify, but often good. 
-    // Let's keep it as is or reset to 1.
-    handleQtyChange(item.id, 1);
-  };
 
-  const updateCartItemNotes = (cartItemId: string, notes: string) => {
-    setCart(cart.map(item => item.id === cartItemId ? { ...item, notes: notes.slice(0, 100) } : item));
+    setCart(prev => [...prev, newItem]);
+    toast.success(`🛒 Added ${custItem.quantity}x ${custItem.name} to cart!`);
   };
 
   const removeFromCart = (cartItemId: string) => {
-    setCart(cart.filter(item => item.id !== cartItemId));
+    setCart(prev => prev.filter(item => item.id !== cartItemId));
   };
 
-  const subTotal = cart.reduce((sum, item) => sum + ((item.price + (item.containerCharge || 0)) * item.quantity), 0);
-  const cartTotal = subTotal;
+  const cartSubtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const pointsEarned = Math.floor(cartSubtotal * 2);
 
   const handlePlaceOrder = async (forceNew: boolean = false) => {
     if (cart.length === 0 || !storeId || !tableId) return;
@@ -180,17 +343,8 @@ function TableQRPage() {
     setError(null);
 
     try {
-      if (orderType === 'delivery') {
-        if (!/^60\d{8,10}$/.test(customerPhone)) {
-          throw new Error('Please enter a valid Malaysian phone number starting with 60');
-        }
-        if (deliveryAddress.length < 10) {
-          throw new Error('Please enter a complete delivery address (min 10 characters)');
-        }
-      }
-
       if (!forceNew) {
-        // Step 1: Check for existing order on this table
+        // Check for existing active unpaid order on table
         const { data: existingData, error: checkError } = await supabase
           .from('orders')
           .select(`
@@ -208,7 +362,6 @@ function TableQRPage() {
         if (checkError) throw checkError;
 
         if (existingData) {
-          // Unpaid active order exists, show dialog
           setExistingOrder(existingData);
           setShowOrderDialog(true);
           setIsSubmitting(false);
@@ -216,18 +369,36 @@ function TableQRPage() {
         }
       }
 
-      // a. & b. Insert ONE row into orders
+      // 1. Rate Limiting per Device / Session (Max 5 orders per minute)
+      const rateLimitRes = checkOrderRateLimit(getOrCreateDeviceId());
+      if (!rateLimitRes.allowed) {
+        toast.error(`⚠️ Rate Limit Exceeded: Max 5 orders/min. Please wait ${rateLimitRes.remainingSeconds}s.`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // 2. Authoritative Database Price & Stock Re-Validation
+      const priceVal = await validateOrderPricesAgainstDB(storeId, cart);
+      if (!priceVal.isValid) {
+        toast.error(`⛔ Order Rejected: ${priceVal.message || 'Menu price or stock mismatch.'}`);
+        setIsSubmitting(false);
+        return;
+      }
+
+      const finalTotalAmount = Math.max(0, priceVal.expectedTotal - (isRm8DiscountApplied ? 8.00 : 0));
+
+      // 3. Create order
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
           store_id: storeId,
-          type: cart.some(item => item.fulfillmentType === 'dine_in') ? 'dine_in' : 'takeaway',
+          type: 'dine_in',
           status: 'pending',
           table_id: tableId,
-          total_amount: cartTotal,
+          total_amount: finalTotalAmount,
           delivery_fee: null,
           delivery_service: null,
-          customer_phone: null,
+          customer_phone: customerPhone || null,
           delivery_address: null,
         } as any)
         .select()
@@ -235,8 +406,21 @@ function TableQRPage() {
 
       if (orderError) throw orderError;
 
-      // c. Insert one order_items row per cart item
-      const orderItems = cart.map(item => ({
+      // Auto credit 1 point per dish + handle RM 8 discount deduction
+      if (customerPhone) {
+        const totalDishes = cart.reduce((sum, item) => sum + item.quantity, 0);
+        
+        if (isRm8DiscountApplied) {
+          deductMemberPoints(customerPhone, 60, `RM 8.00 Discount used on Order #${orderData.id.slice(0, 6)}`);
+        }
+
+        const updatedMem = addMemberPoints(customerPhone, totalDishes, `Earned ${totalDishes} pts (1 pt/dish) on Order #${orderData.id.slice(0, 6)}`);
+        setMemberData(updatedMem);
+        toast.success(`💎 +${totalDishes} Member Point${totalDishes > 1 ? 's' : ''} Earned! Total: ${updatedMem.points} pts`);
+      }
+
+      // 2. Insert order items
+      const orderItemsToInsert = cart.map(item => ({
         order_id: orderData.id,
         menu_item_id: item.menuItemId,
         quantity: item.quantity,
@@ -249,15 +433,22 @@ function TableQRPage() {
 
       const { error: itemsError } = await supabase
         .from('order_items')
-        .insert(orderItems);
+        .insert(orderItemsToInsert);
 
       if (itemsError) throw itemsError;
 
-      // d. Clear cart and show confirmation
+      // 3. Update active table session order timestamp
+      if (tableNumber) {
+        await updateTableSessionOrderTime(tableNumber.toString());
+      }
+
+      // 4. Clear cart & set active order tracker ID
       setCart([]);
-      setOrderPlaced(true);
+      setActivePlacedOrderId(orderData.id);
       setShowOrderDialog(false);
+      setIsMobileCartOpen(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast.success("🎉 Order placed successfully! Live progress tracker active.");
     } catch (err: any) {
       console.error('Error placing order:', err);
       setError(err.message || 'Failed to place order. Please ask staff for assistance.');
@@ -272,8 +463,7 @@ function TableQRPage() {
     setError(null);
 
     try {
-      // 1. Insert order items pointing to existing order
-      const orderItems = cart.map(item => ({
+      const orderItemsToInsert = cart.map(item => ({
         order_id: existingOrder.id,
         menu_item_id: item.menuItemId,
         quantity: item.quantity,
@@ -286,12 +476,11 @@ function TableQRPage() {
 
       const { error: itemsError } = await supabase
         .from('order_items')
-        .insert(orderItems);
+        .insert(orderItemsToInsert);
 
       if (itemsError) throw itemsError;
 
-      // 2. Update total_amount on existing order
-      const newTotal = existingOrder.total_amount + cartTotal;
+      const newTotal = existingOrder.total_amount + cartSubtotal;
       const { error: updateError } = await supabase
         .from('orders')
         .update({ total_amount: newTotal })
@@ -299,324 +488,551 @@ function TableQRPage() {
       
       if (updateError) throw updateError;
 
-      // 3. Complete
       setCart([]);
+      setActivePlacedOrderId(existingOrder.id);
       setMergedNotification(existingOrder.id);
       setShowOrderDialog(false);
+      setIsMobileCartOpen(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast.success("🎉 Items added to your active bill!");
     } catch (err: any) {
       console.error('Error adding to order:', err);
-      setError(err.message || 'Failed to add to order.');
+      setError(err.message || 'Failed to add to existing order.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (loading) return <div className="p-8">Loading...</div>;
-  if (error && !orderPlaced) return <div className="p-8 text-red-500">{error}</div>;
-
-  if (orderPlaced) {
+  if (loading) {
     return (
-      <div className="p-8 font-sans text-center">
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6">
-          <h2 className="text-xl font-bold mb-2">Order placed!</h2>
-          <p>The kitchen has received your order.</p>
-        </div>
-        <button 
-          onClick={() => setOrderPlaced(false)}
-          className="bg-blue-600 text-white px-6 py-2 rounded font-bold"
-        >
-          Back to Menu
-        </button>
+      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 font-mono">
+        <Utensils className="w-12 h-12 text-emerald-400 animate-spin mb-4" />
+        <p className="text-sm text-slate-400">Loading Warung J&J Digital Menu...</p>
       </div>
     );
   }
 
   return (
-    <div className="p-4 md:p-8 font-sans max-w-4xl mx-auto">
-      {mergedNotification && (
-        <div className="bg-blue-50 border border-blue-200 text-blue-800 p-4 rounded-lg mb-6 relative shadow-sm">
-          <button 
-            onClick={() => setMergedNotification(null)}
-            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 font-bold px-2 py-1 text-lg leading-none"
-            title="Dismiss this message"
-          >
-            ✕
-          </button>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-green-600 font-bold text-xl leading-none">✓</span>
-            <h2 className="text-lg font-bold">Items Added to Existing Order</h2>
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans pb-24 md:pb-12">
+      {/* CLOSED OVERLAY */}
+      {isClosedForDay && (
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center text-white">
+          <div className="p-5 bg-rose-500/10 border border-rose-500/30 rounded-full text-rose-400 mb-4 animate-pulse">
+            <Lock className="w-12 h-12" />
           </div>
-          <div className="border-t border-blue-200 my-2"></div>
-          <p className="font-semibold mb-1">Order ID: #{mergedNotification.slice(0, 8).toUpperCase()}</p>
-          <p className="text-sm">Your items will be prepared after current items (est. 10-15 min).</p>
+          <h2 className="text-2xl font-black mb-2 text-rose-400">⛔ ORDERS ARE CLOSED TODAY</h2>
+          <p className="text-slate-300 max-w-sm text-sm mb-6 font-mono">
+            Our cash register for today is closed. Please ask our friendly staff for assistance!
+          </p>
+          <div className="bg-slate-900 border border-slate-800 px-6 py-3 rounded-full text-xs font-mono text-slate-400">
+            Shift Closed • {storeName || 'Warung J&J'}
+          </div>
         </div>
       )}
 
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">{storeName}</h1>
-        {orderType !== 'delivery' && <p className="text-gray-500 italic mt-1">Table Menu</p>}
-      </header>
+      {/* OCCUPIED TABLE SESSION BLOCKED OVERLAY */}
+      {sessionBlockedMessage && (
+        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center text-white font-mono">
+          <div className="p-5 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 mb-4 animate-pulse">
+            <ShieldAlert className="w-12 h-12" />
+          </div>
+          <h2 className="text-2xl font-black mb-2 text-amber-400">⛔ TABLE CURRENTLY OCCUPIED</h2>
+          <p className="text-slate-300 max-w-md text-sm mb-6 leading-relaxed">
+            {sessionBlockedMessage}
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Button
+              onClick={() => window.location.reload()}
+              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-6 py-3 rounded-xl gap-2"
+            >
+              <RefreshCw className="w-4 h-4" /> Re-check Table Status
+            </Button>
+          </div>
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Menu List */}
-        <div className="md:col-span-2">
-          <h2 className="text-xl font-bold mb-4 border-b pb-2">Our Menu</h2>
-          {menuItems.length === 0 ? (
-            <p>No items available right now.</p>
-          ) : (
-            <div className="space-y-6">
-              {menuItems.map((item) => (
-                <div key={item.id} className={`flex gap-4 p-2 border rounded-lg hover:shadow-sm transition-shadow ${item.stock_count === 0 ? 'opacity-50 grayscale' : ''}`}>
-                  <div className="flex-shrink-0 relative w-24 h-24 overflow-hidden rounded-md border border-gray-200 bg-gray-100">
-                    {item.image_url ? (
-                      <img 
-                        src={item.image_url} 
-                        alt={item.name} 
-                        className="w-full h-full object-cover relative z-0"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs text-center p-2 relative z-0">
-                        No Image
-                      </div>
-                    )}
-                    
-                    {/* SOLD OUT BANNER */}
-                    {Number(item.stock_count) === 0 && (
-                      <div className="absolute top-0 left-0 w-full h-full bg-black/60 z-50 flex items-center justify-center">
-                        <span className="bg-red-600 text-white text-[11px] font-black px-2 py-1 uppercase tracking-widest transform -rotate-12 border border-red-700 shadow-2xl">
-                          Sold Out
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-grow flex flex-col justify-between">
-                    <div>
-                      <h3 className="font-bold text-lg">{item.name}</h3>
-                      <p className="text-sm text-gray-500">{item.category}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <p className="text-blue-600 font-bold">RM{item.price.toFixed(2)}</p>
-                        {(item.stock_count ?? 0) > 0 && (item.stock_count ?? 0) <= 5 && (
-                          <span className="text-yellow-700 text-xs font-bold bg-yellow-100 px-2 py-0.5 rounded">⚠️ {item.stock_count} Left</span>
+      {/* CONTAINER */}
+      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+
+        {/* HERO SECTION - MOBILE OPTIMIZED & RESPONSIVE */}
+        <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/40 border border-slate-800/80 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl relative overflow-hidden">
+          <div className="flex items-center sm:items-start gap-3.5 sm:gap-5 text-left z-10 relative">
+            <img 
+              src="/logo.png" 
+              alt="Warung J&J Logo" 
+              className="w-12 h-12 sm:w-24 sm:h-24 rounded-full object-cover border-2 sm:border-4 border-amber-400 shadow-xl shadow-amber-500/10 shrink-0" 
+            />
+            <div className="space-y-1 sm:space-y-2 flex-grow min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full">
+                  Malay Cuisine
+                </span>
+                {tableNumber && (
+                  <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider bg-amber-500/10 text-amber-300 border border-amber-500/20 px-2 py-0.5 sm:px-3 sm:py-1 rounded-full">
+                    📍 Table #{tableNumber}
+                  </span>
+                )}
+              </div>
+              <h1 className="text-lg sm:text-3xl font-black text-white tracking-tight truncate">
+                Welcome to {storeName || 'Warung J&J'}! 👋
+              </h1>
+              <p className="text-[11px] sm:text-xs text-slate-400 max-w-lg hidden sm:block">
+                Freshly cooked to order. Scan, customize your dish, and enjoy instant kitchen progress updates!
+              </p>
+            </div>
+          </div>
+
+          {/* ROTATING PROMO BANNER */}
+          {promoBanners.length > 0 && (
+            <div className="mt-5 p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center gap-3 font-mono text-xs text-amber-300 animate-fadeIn">
+              <Sparkles className="w-5 h-5 text-amber-400 shrink-0 animate-pulse" />
+              <span className="font-bold truncate">{promoBanners[promoBannerIdx % promoBanners.length]}</span>
+            </div>
+          )}
+        </div>
+
+        {/* ACTIVE LIVE ORDER TRACKER (IF ORDER PLACED) */}
+        {activePlacedOrderId && (
+          <CustomerOrderTracker 
+            orderId={activePlacedOrderId} 
+            onClose={() => setActivePlacedOrderId(null)} 
+          />
+        )}
+
+        {/* STICKY SEARCH BAR & CATEGORY PILLS */}
+        <div className="sticky top-0 z-20 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/80 py-3 space-y-3 shadow-xl -mx-4 px-4">
+          <div className="relative max-w-md mx-auto">
+            <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search Nasi Ayam, Mee Goreng, Teh C, Satay..."
+              className="bg-slate-900 border-slate-800 pl-10 text-white placeholder:text-slate-500 text-xs rounded-xl focus:border-emerald-500"
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* CATEGORY PILLS */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar font-mono text-xs">
+            {categories.map((cat) => {
+              const isSelected = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-xl font-bold shrink-0 transition-all ${
+                    isSelected
+                      ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 scale-[1.02]'
+                      : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* MAIN LAYOUT: MENU GRID (LEFT) & CART SIDEBAR (RIGHT) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+          {/* MENU GRID (2 COLUMNS MOBILE/TABLET) */}
+          <div className="md:col-span-2 space-y-4">
+            <div className="flex items-center justify-between font-mono">
+              <h2 className="text-lg font-black text-white uppercase tracking-wider flex items-center gap-2">
+                <Utensils className="w-5 h-5 text-emerald-400" />
+                <span>{selectedCategory} Menu</span>
+              </h2>
+              <span className="text-xs text-slate-500 font-bold">{filteredMenuItems.length} dishes available</span>
+            </div>
+
+            {filteredMenuItems.length === 0 ? (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center text-slate-500 space-y-2">
+                <Utensils className="w-10 h-10 mx-auto text-slate-700" />
+                <p className="text-sm font-mono">No dishes matching your search filter.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-2 gap-2.5 sm:gap-4">
+                {filteredMenuItems.map((item) => {
+                  const isSoldOut = item.stock_count === 0;
+                  const badge = dishBadgesMap[item.id] || { isPopular: true, isHalal: true, isChefSpecial: false };
+
+                  return (
+                    <div 
+                      key={item.id} 
+                      className={`bg-slate-900 border border-slate-800/80 rounded-2xl p-2.5 sm:p-3.5 flex flex-col justify-between hover:border-emerald-500/50 transition-all duration-300 shadow-xl group ${
+                        isSoldOut ? 'opacity-50 grayscale' : ''
+                      }`}
+                    >
+                      {/* UNCROPPED FOOD IMAGE CONTAINER */}
+                      <div className="relative h-28 sm:h-52 bg-slate-950 border border-slate-800/80 rounded-xl overflow-hidden flex items-center justify-center p-1.5 mb-2 sm:mb-3">
+                        {item.image_url ? (
+                          <img
+                            src={item.image_url}
+                            alt={item.name}
+                            className="w-full h-full object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="flex flex-col items-center gap-1 text-slate-700">
+                            <Utensils className="w-6 h-6 sm:w-8 sm:h-8" />
+                            <span className="text-[9px] font-mono">No Image</span>
+                          </div>
                         )}
+
+                        {/* BADGES */}
+                        <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 z-10">
+                          {badge.isPopular && (
+                            <span className="bg-amber-500 text-slate-950 text-[8px] sm:text-[9px] font-mono font-black px-1.5 py-0.5 rounded-full uppercase tracking-wider shadow-md flex items-center gap-0.5">
+                              <Flame className="w-2.5 h-2.5 fill-slate-950" /> <span className="hidden sm:inline">Popular</span>
+                            </span>
+                          )}
+                        </div>
+
+                        {/* RATING */}
+                        <div className="absolute bottom-1.5 right-1.5 bg-slate-950/90 border border-slate-800 text-amber-400 font-mono font-bold text-[9px] sm:text-[10px] px-1.5 py-0.5 rounded-full flex items-center gap-0.5 shadow-md">
+                          <Star className="w-2.5 h-2.5 fill-amber-400" /> 4.8
+                        </div>
+
+                        {/* SOLD OUT OVERLAY */}
+                        {isSoldOut && (
+                          <div className="absolute inset-0 bg-slate-950/80 z-20 flex items-center justify-center">
+                            <span className="bg-rose-600 text-white font-mono font-black text-[10px] sm:text-xs px-2 py-0.5 sm:px-3 sm:py-1 rounded-full uppercase tracking-widest transform -rotate-6 border border-rose-500 shadow-2xl">
+                              Sold Out
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* DISH DETAILS */}
+                      <div className="space-y-1 flex-grow">
+                        <h3 className="font-bold text-white text-xs sm:text-base tracking-tight group-hover:text-emerald-400 transition-colors line-clamp-1">
+                          {item.name}
+                        </h3>
+
+                        <div className="flex items-center justify-between font-mono">
+                          <span className="text-xs sm:text-base font-black text-emerald-400">
+                            RM {item.price.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* CUSTOMIZE & ADD BUTTON */}
+                      <div className="pt-2 mt-1.5 border-t border-slate-800/60">
+                        <Button
+                          disabled={isSoldOut}
+                          onClick={() => setCustomizingItem(item)}
+                          className="w-full bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white font-bold text-[11px] sm:text-xs py-2 sm:py-2.5 rounded-xl border border-emerald-500/30 hover:border-emerald-500 flex items-center justify-center gap-1 transition-all active:scale-95 touch-manipulation h-9"
+                        >
+                          <Plus className="w-3.5 h-3.5 text-emerald-400" /> Add
+                        </Button>
                       </div>
                     </div>
-                    <div className="mt-2 flex flex-col gap-2">
-                      <div className="flex flex-wrap items-center gap-4">
-                        <div className="flex flex-col">
-                          <label className="text-xs text-gray-500 uppercase font-bold mb-1">Type</label>
-                          <select 
-                            value={globalFulfillmentType}
-                            onChange={(e) => setGlobalFulfillmentType(e.target.value as 'dine_in' | 'takeaway')}
-                            className="text-sm border rounded px-2 py-1 bg-white"
-                            disabled={item.stock_count === 0}
-                          >
-                            <option value="dine_in">Eat here</option>
-                            <option value="takeaway">Takeaway</option>
-                          </select>
-                        </div>
-                        {globalFulfillmentType === 'takeaway' && (
-                          <div className="flex flex-col">
-                            <label className="text-xs text-gray-500 uppercase font-bold mb-1">Box</label>
-                            <select 
-                              value={globalContainerSize}
-                              onChange={(e) => setGlobalContainerSize(e.target.value as 'small' | 'large')}
-                              className="text-sm border rounded px-2 py-1 bg-white"
-                              disabled={item.stock_count === 0}
-                            >
-                              <option value="small">Small (free)</option>
-                              <option value="large">Large (+RM1)</option>
-                            </select>
-                          </div>
-                        )}
-                        <div className="flex flex-col">
-                          <label className="text-xs text-gray-500 uppercase font-bold mb-1">Qty</label>
-                          <div className="flex items-center border rounded bg-white overflow-hidden shadow-sm">
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* DESKTOP CART SIDEBAR */}
+          <div className="hidden md:block col-span-1">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 sticky top-24 shadow-2xl font-mono">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <ShoppingBag className="w-5 h-5 text-emerald-400" /> Your Order Cart
+                </h3>
+                <span className="text-xs bg-slate-950 text-emerald-400 border border-slate-800 px-2.5 py-0.5 rounded-full font-bold">
+                  {cart.length} items
+                </span>
+              </div>
+
+              {cart.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 text-xs space-y-2">
+                  <ShoppingBag className="w-8 h-8 mx-auto text-slate-700" />
+                  <p>Your cart is currently empty.</p>
+                  <p className="text-[10px] text-slate-600">Select dishes from the menu to add to your order.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="divide-y divide-slate-800 max-h-[350px] overflow-y-auto pr-1">
+                    {cart.map((item) => (
+                      <div key={item.id} className="py-3 space-y-1">
+                        <div className="flex justify-between items-start gap-2">
+                          <div>
+                            <span className="font-bold text-white text-xs">{item.quantity}x {item.name}</span>
                             <button
-                              type="button"
-                              disabled={item.stock_count === 0}
-                              onClick={() => handleQtyChange(item.id, Math.max(1, (itemQuantities[item.id] || 1) - 1))}
-                              className="px-4 py-2 text-gray-600 hover:bg-gray-100 font-bold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer touch-manipulation active:bg-gray-200"
+                              onClick={() => toggleCartFulfillment(item.id)}
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all inline-flex items-center gap-1 mt-1 block ${
+                                item.fulfillmentType === 'takeaway'
+                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30'
+                                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30'
+                              }`}
                             >
-                              -
+                              {item.fulfillmentType === 'takeaway' ? '🥡 Takeaway (Bungkus)' : '🍽️ Dine In'}
                             </button>
-                            <span className="w-10 text-center text-sm font-bold bg-white">
-                              {itemQuantities[item.id] || 1}
+                            {item.notes && <p className="text-[10px] text-amber-400 mt-1">{item.notes}</p>}
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="font-bold text-emerald-400 text-xs">
+                              RM {(item.price * item.quantity).toFixed(2)}
                             </span>
                             <button
-                              type="button"
-                              disabled={item.stock_count === 0}
-                              onClick={() => {
-                                const current = itemQuantities[item.id] || 1;
-                                const max = item.stock_count != null ? item.stock_count : 99;
-                                handleQtyChange(item.id, Math.min(max, current + 1));
-                              }}
-                              className="px-4 py-2 text-gray-600 hover:bg-gray-100 font-bold disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer touch-manipulation active:bg-gray-200"
+                              onClick={() => removeFromCart(item.id)}
+                              className="text-rose-400 hover:text-rose-300 text-[10px] block mt-0.5 ml-auto"
                             >
-                              +
+                              Remove
                             </button>
                           </div>
                         </div>
                       </div>
-                      
-                      {item.stock_count === 0 ? (
-                        <button 
-                          type="button"
-                          disabled
-                          className="bg-gray-200 text-gray-500 px-4 py-2 rounded text-sm font-bold w-full cursor-not-allowed uppercase"
-                        >
-                          Add to Cart Disabled
-                        </button>
-                      ) : (
-                        <button 
-                          type="button"
-                          onClick={() => handleAddToCart(item)}
-                          className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-blue-700 w-full relative z-10 cursor-pointer touch-manipulation"
-                        >
-                          + Add to Cart
-                        </button>
-                      )}
+                    ))}
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-800 space-y-2 text-xs">
+                    <div className="flex justify-between text-slate-400">
+                      <span>Subtotal ({cart.reduce((sum, i) => sum + i.quantity, 0)} dishes)</span>
+                      <span className="font-bold text-white">RM {cartSubtotal.toFixed(2)}</span>
+                    </div>
+
+                    {isRm8DiscountApplied && (
+                      <div className="flex justify-between text-rose-400 font-bold bg-rose-500/10 p-2 rounded-lg border border-rose-500/20">
+                        <span className="flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-rose-400" /> Member Discount (60 pts)</span>
+                        <span>-RM 8.00</span>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between text-amber-400 text-[11px] font-bold">
+                      <span>Earned VIP Points (1 pt/dish)</span>
+                      <span>+{cart.reduce((sum, i) => sum + i.quantity, 0)} pts</span>
+                    </div>
+
+                    <div className="flex justify-between text-sm font-black text-emerald-400 pt-2 border-t border-slate-800">
+                      <span>Total Amount</span>
+                      <span>RM {Math.max(0, cartSubtotal - (isRm8DiscountApplied ? 8.00 : 0)).toFixed(2)}</span>
+                    </div>
+
+                    <Button
+                      disabled={isSubmitting || cart.length === 0}
+                      onClick={() => handlePlaceOrder(false)}
+                      className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl shadow-xl flex items-center justify-center gap-2 text-xs"
+                    >
+                      <Check className="w-4 h-4" /> {isSubmitting ? 'Submitting Order...' : 'CONFIRM & PLACE ORDER'}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* MOBILE STICKY BOTTOM CART BAR */}
+      {cart.length > 0 && (
+        <div className="md:hidden fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-4 z-40 shadow-2xl flex items-center justify-between font-mono">
+          <div>
+            <span className="text-[10px] text-slate-400 block uppercase">Total ({cart.length} items)</span>
+            <span className="text-lg font-black text-emerald-400">RM {cartSubtotal.toFixed(2)}</span>
+          </div>
+
+          <Button
+            onClick={() => setIsMobileCartOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-3 rounded-xl shadow-xl flex items-center gap-2 text-xs"
+          >
+            <ShoppingBag className="w-4 h-4" /> View Cart ({cart.length})
+          </Button>
+        </div>
+      )}
+
+      {/* MOBILE CART DRAWER */}
+      <Dialog open={isMobileCartOpen} onOpenChange={setIsMobileCartOpen}>
+        <DialogContent className="bg-slate-900 text-white border-slate-800 max-w-md max-h-[85vh] overflow-y-auto font-mono p-5">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold text-emerald-400">
+              <ShoppingBag className="w-5 h-5" /> Your Order Cart
+            </DialogTitle>
+            <DialogDescription className="text-slate-400 text-xs">
+              Review your customized dishes before sending to kitchen
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 my-2">
+            <div className="divide-y divide-slate-800">
+              {cart.map((item) => (
+                <div key={item.id} className="py-3 space-y-1">
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <span className="font-bold text-white text-xs">{item.quantity}x {item.name}</span>
+                      <button
+                        onClick={() => toggleCartFulfillment(item.id)}
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all inline-flex items-center gap-1 mt-1 block ${
+                          item.fulfillmentType === 'takeaway'
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30'
+                            : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30'
+                        }`}
+                      >
+                        {item.fulfillmentType === 'takeaway' ? '🥡 Takeaway (Bungkus)' : '🍽️ Dine In'}
+                      </button>
+                      {item.notes && <p className="text-[10px] text-amber-400 mt-1">{item.notes}</p>}
+                    </div>
+                    <div className="text-right shrink-0">
+                      <span className="font-bold text-emerald-400 text-xs">
+                        RM {(item.price * item.quantity).toFixed(2)}
+                      </span>
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        className="text-rose-400 hover:text-rose-300 text-[10px] block mt-0.5 ml-auto"
+                      >
+                        Remove
+                      </button>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          )}
-        </div>
 
-        {/* Cart Sidebar */}
-        <div className={`md:col-span-1 fixed md:static inset-y-0 right-0 z-50 w-80 md:w-auto bg-white md:bg-transparent shadow-2xl md:shadow-none transform transition-transform duration-300 ease-in-out ${isMobileCartOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}`}>
-          <div className="border rounded-lg p-4 bg-gray-50 h-full md:h-auto overflow-y-auto md:sticky md:top-4">
-            <div className="flex justify-between items-center mb-4 border-b pb-2">
-              <h2 className="text-xl font-bold">Your Cart</h2>
-              <button 
-                onClick={() => setIsMobileCartOpen(false)}
-                className="md:hidden text-gray-500 hover:text-gray-700 font-bold text-xl px-2 leading-none"
-                title="Close Cart"
-              >
-                ✕
-              </button>
-            </div>
-            
-            {cart.length === 0 ? (
-              <p className="text-gray-500 italic text-center py-4">Your cart is empty.</p>
-            ) : (
-              <div className="space-y-4">
-                <ul className="divide-y divide-gray-200">
-                  {cart.map((item) => (
-                    <li key={item.id} className="py-3 flex flex-col gap-2 border-b last:border-b-0 border-gray-100">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-medium text-sm">{item.name}</div>
-                          <div className="text-xs text-gray-500">
-                            {item.quantity} x RM{(item.price + (item.containerCharge || 0)).toFixed(2)}
-                            {item.fulfillmentType === 'takeaway' && ` (Pack - ${item.containerSize})`}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-semibold">RM{((item.price + (item.containerCharge || 0)) * item.quantity).toFixed(2)}</div>
-                          <button 
-                            onClick={() => removeFromCart(item.id)}
-                            className="text-red-500 text-xs mt-1 hover:underline"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      </div>
-                      <div className="mt-1 w-full max-w-sm">
-                        <label className="text-[10px] font-semibold text-gray-500 uppercase">Special Requests:</label>
-                        <input
-                          type="text"
-                          value={item.notes || ''}
-                          onChange={(e) => updateCartItemNotes(item.id, e.target.value)}
-                          placeholder="Special Requests / Max 100 characters"
-                          className="w-full text-xs border rounded p-1.5 mt-1 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
-                          maxLength={100}
-                        />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-                
-                <div className="border-t pt-4">
-<div className="space-y-1 mb-6">
-                    <div className="flex justify-between text-sm text-gray-500">
-                      <span>Subtotal:</span>
-                      <span>RM{subTotal.toFixed(2)}</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center pt-2 border-t font-bold">
-                      <span className="text-lg">Total:</span>
-                      <span className="text-2xl text-blue-600">RM{cartTotal.toFixed(2)}</span>
-                    </div>
-                  </div>
-                  
-                  <button 
-                    onClick={() => handlePlaceOrder(false)}
-                    disabled={isSubmitting || cart.length === 0}
-                    className="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
-                  >
-                    {isSubmitting ? 'Placing Order...' : 'Place Order'}
-                  </button>
-                  {error && <p className="text-red-500 text-xs mt-2 text-center">{error}</p>}
+            <div className="pt-3 border-t border-slate-800 space-y-2 text-xs">
+              <div className="flex justify-between text-slate-400">
+                <span>Subtotal ({cart.reduce((sum, i) => sum + i.quantity, 0)} dishes)</span>
+                <span className="font-bold text-white">RM {cartSubtotal.toFixed(2)}</span>
+              </div>
+
+              {isRm8DiscountApplied && (
+                <div className="flex justify-between text-rose-400 font-bold bg-rose-500/10 p-2 rounded-lg border border-rose-500/20">
+                  <span className="flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-rose-400" /> Member Discount (60 pts)</span>
+                  <span>-RM 8.00</span>
                 </div>
+              )}
+
+              <div className="flex justify-between text-amber-400 font-bold">
+                <span>Earned VIP Points (1 pt/dish)</span>
+                <span>+{cart.reduce((sum, i) => sum + i.quantity, 0)} pts</span>
+              </div>
+
+              <div className="flex justify-between text-base font-black text-emerald-400 pt-2 border-t border-slate-800">
+                <span>Total Amount</span>
+                <span>RM {Math.max(0, cartSubtotal - (isRm8DiscountApplied ? 8.00 : 0)).toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsMobileCartOpen(false)} className="border-slate-800 text-slate-300">
+              Close
+            </Button>
+            <Button
+              disabled={isSubmitting || cart.length === 0}
+              onClick={() => handlePlaceOrder(false)}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+            >
+              Confirm & Place Order
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* MEMBER POINT TRANSACTION HISTORY MODAL */}
+      <Dialog open={showTxHistory} onOpenChange={setShowTxHistory}>
+        <DialogContent className="bg-slate-900 text-white border-slate-800 max-w-md max-h-[80vh] overflow-y-auto font-mono p-5">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold text-amber-400">
+              <History className="w-5 h-5 text-emerald-400" /> Point Activity & Recent Orders
+            </DialogTitle>
+            <DialogDescription className="text-slate-400 text-xs">
+              Loyalty transactions & points log for +{customerPhone}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 my-2 text-xs">
+            {getMembershipTransactions(customerPhone).length === 0 ? (
+              <div className="p-8 text-center text-slate-500 space-y-1">
+                <Gift className="w-8 h-8 mx-auto text-slate-700" />
+                <p>No transactions recorded yet.</p>
+                <p className="text-[10px] text-slate-600">Order dishes to earn 1 point per dish!</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-800">
+                {getMembershipTransactions(customerPhone).map((tx) => (
+                  <div key={tx.id} className="py-2.5 flex justify-between items-center">
+                    <div>
+                      <div className="font-bold text-white text-xs">{tx.description}</div>
+                      <div className="text-[10px] text-slate-400">
+                        {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {tx.type.replace('_', ' ')}
+                      </div>
+                    </div>
+                    <span className={`font-mono font-bold text-sm ${tx.pointsChange >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                      {tx.pointsChange >= 0 ? `+${tx.pointsChange}` : tx.pointsChange} pts
+                    </span>
+                  </div>
+                ))}
               </div>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* Floating Cart Button for Mobile */}
-      <button 
-        onClick={() => setIsMobileCartOpen(true)}
-        className="md:hidden fixed bottom-6 right-6 z-40 bg-blue-600 text-white p-4 rounded-full shadow-2xl flex items-center justify-center font-bold hover:bg-blue-700 active:scale-95 transition-transform"
-      >
-        🛒 CART {cart.length > 0 && (
-          <span className="ml-2 bg-red-500 text-white rounded-full px-2 py-0.5 text-xs">
-            {cart.length}
-          </span>
-        )}
-      </button>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowTxHistory(false)} className="border-slate-800 text-slate-300">
+              Close History
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
+      {/* DISH CUSTOMIZATION MODAL */}
+      <DishCustomizationModal
+        isOpen={!!customizingItem}
+        onClose={() => setCustomizingItem(null)}
+        onAddToCart={handleAddToCartCustomized}
+        menuItem={customizingItem}
+      />
+
+      {/* EXISTING ORDER CONFIRMATION DIALOG */}
       <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="bg-slate-900 text-white border-slate-800 max-w-md font-sans">
           <DialogHeader>
-            <DialogTitle>Existing Order Found</DialogTitle>
-            <DialogDescription>
-              There is already an active order for this table. Would you like to add your items to the existing bill, or create a new separate bill?
+            <DialogTitle className="text-amber-400 flex items-center gap-2 text-lg font-bold">
+              <Utensils className="w-5 h-5" /> Existing Order Found on Table #{tableNumber}
+            </DialogTitle>
+            <DialogDescription className="text-slate-400 text-xs font-mono">
+              There is already an active order for this table. Would you like to add these items to the existing bill or start a new bill?
             </DialogDescription>
           </DialogHeader>
-          
+
           {existingOrder && (
-            <div className="bg-gray-50 p-4 rounded-md border border-gray-200 my-4 text-sm">
-              <div className="grid grid-cols-2 gap-2">
-                <span className="text-gray-500 font-medium">Order ID:</span>
-                <span className="font-semibold text-right">#{existingOrder.id.slice(0, 8)}</span>
-                
-                <span className="text-gray-500 font-medium">Status:</span>
-                <span className="font-semibold text-right capitalize text-blue-600">{existingOrder.status}</span>
-                
-                <span className="text-gray-500 font-medium">Items Count:</span>
-                <span className="font-semibold text-right">{existingOrder.order_items?.length || 0} items</span>
-                
-                <span className="text-gray-500 font-medium border-t pt-2 mt-1">Current Total:</span>
-                <span className="font-bold text-right border-t pt-2 mt-1">RM {existingOrder.total_amount?.toFixed(2)}</span>
+            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 text-xs font-mono">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Order ID:</span>
+                <span className="font-bold text-white">#{existingOrder.id.slice(0, 8)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Current Status:</span>
+                <span className="font-bold text-amber-400 uppercase">{existingOrder.status}</span>
+              </div>
+              <div className="flex justify-between border-t border-slate-800 pt-2">
+                <span className="text-slate-400">Current Bill Total:</span>
+                <span className="font-bold text-emerald-400">RM {Number(existingOrder.total_amount || 0).toFixed(2)}</span>
               </div>
             </div>
           )}
 
-          <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2 mt-4">
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-2 font-mono">
             <Button 
               variant="outline" 
               onClick={() => handlePlaceOrder(true)}
               disabled={isSubmitting}
+              className="border-slate-800 text-slate-300"
             >
-              Create New Order
+              Start New Order
             </Button>
             <Button 
               onClick={handleAddToExisting}
               disabled={isSubmitting}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
             >
               Add to Existing Bill
             </Button>

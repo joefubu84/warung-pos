@@ -1,6 +1,7 @@
 import { redirect } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import type { AuthState } from '@/lib/auth-state';
+import { getTodayCashStatus } from '@/lib/cash-guard';
 
 async function getUserProfile(session: any) {
   const { data: userProfile, error } = await supabase
@@ -47,3 +48,23 @@ export async function requireStaffAuth(location: { pathname: string }, auth: Aut
   return requireAuth(location, auth, ['admin', 'cashier', 'chef', 'staff']);
 }
 
+export async function requireOrderingAuth(location: { pathname: string }, auth: AuthState) {
+  const authData = await requireStaffAuth(location, auth);
+  
+  try {
+    const cashStatus = await getTodayCashStatus(authData.storeId);
+    if (cashStatus.status === 'NOT_OPENED') {
+      throw redirect({
+        to: '/cash-management',
+        search: { reason: 'not_opened' },
+      });
+    }
+    return { ...authData, cashStatus };
+  } catch (err) {
+    if ((err as any)?.to) {
+      throw err;
+    }
+    console.error('Error in requireOrderingAuth:', err);
+    return { ...authData, cashStatus: { status: 'OPEN', dailyCash: null, closedAt: null } as any };
+  }
+}

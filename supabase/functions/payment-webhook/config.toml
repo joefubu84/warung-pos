@@ -1,0 +1,4 @@
+# supabase/functions/payment-webhook/config.toml
+# Disables JWT verification so ToyyibPay server-to-server callbacks can reach the webhook
+
+verify_jwt = false

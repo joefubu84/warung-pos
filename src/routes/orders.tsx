@@ -106,6 +106,8 @@ function OrdersPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'pending' | 'preparing' | 'ready' | 'completed' | 'all'>('pending');
+  const [dateFilter, setDateFilter] = useState<'today' | 'yesterday' | 'last7days' | 'all' | 'custom'>('today');
+  const [customDate, setCustomDate] = useState<string>('');
 
   // Form & Cart state
   const [customerName, setCustomerName] = useState('');
@@ -518,61 +520,151 @@ function OrdersPage() {
   const statusOptions: OrderStatus[] = ['pending', 'preparing', 'ready', 'completed', 'cancelled'];
 
   return (
-    <div className="p-4 md:p-8 font-sans max-w-7xl mx-auto">
+    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans">
+      <div className="max-w-7xl mx-auto space-y-6">
       
-      {/* ORDER MANAGEMENT */}
-      <div className="mb-8">
+      {/* ORDER MANAGEMENT HEADER */}
+      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <h1 className="text-2xl md:text-3xl font-black tracking-tight">Order Management</h1>
-          <div className="relative w-full md:w-64">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">Order Management</h1>
+            <p className="text-xs text-slate-400 font-mono mt-1">Live order tracking, kitchen status & payment processing</p>
+          </div>
+          <div className="relative w-full md:w-72">
             <input 
               placeholder="Search by ID, Name, or Table..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-sm rounded-full shadow-sm border border-gray-300 px-4 py-2"
+              className="w-full text-sm bg-slate-950 border border-slate-800 text-white placeholder-slate-500 rounded-full px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+            />
+          </div>
+        </div>
+
+        {/* DATE SCOPE FILTER ROW */}
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-950/80 p-3 rounded-xl border border-slate-800 mb-4">
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-0.5">
+            <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
+              📅 Date View:
+            </span>
+            <button
+              onClick={() => setDateFilter('today')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                dateFilter === 'today'
+                  ? 'bg-emerald-600 text-white shadow-md ring-1 ring-emerald-400 font-black'
+                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+              }`}
+            >
+              <span>⚡ Today / Shift</span>
+            </button>
+            <button
+              onClick={() => setDateFilter('yesterday')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                dateFilter === 'yesterday'
+                  ? 'bg-amber-600 text-slate-950 shadow-md font-black'
+                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+              }`}
+            >
+              <span>📅 Yesterday</span>
+            </button>
+            <button
+              onClick={() => setDateFilter('last7days')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                dateFilter === 'last7days'
+                  ? 'bg-sky-600 text-white shadow-md font-black'
+                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+              }`}
+            >
+              <span>🗓️ Last 7 Days</span>
+            </button>
+            <button
+              onClick={() => setDateFilter('all')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                dateFilter === 'all'
+                  ? 'bg-purple-600 text-white shadow-md font-black'
+                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+              }`}
+            >
+              <span>📜 All Time History</span>
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-[11px] font-mono text-slate-500">Pick Date:</span>
+            <input
+              type="date"
+              value={customDate}
+              onChange={(e) => {
+                setCustomDate(e.target.value);
+                if (e.target.value) setDateFilter('custom');
+              }}
+              className="bg-slate-900 border border-slate-800 text-xs text-white px-2 py-1 rounded-lg font-mono outline-none focus:ring-1 focus:ring-emerald-500"
             />
           </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex gap-2 overflow-x-auto pb-2 mb-6 scrollbar-hide">
+        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
           <button 
             onClick={() => setActiveTab('pending')}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'pending' ? 'bg-yellow-400 text-yellow-900 shadow-md scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'pending' ? 'bg-amber-500 text-slate-950 shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
           >
             🟡 Pending
           </button>
           <button 
             onClick={() => setActiveTab('preparing')}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'preparing' ? 'bg-blue-400 text-white shadow-md scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'preparing' ? 'bg-sky-500 text-white shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
           >
             🔵 Preparing
           </button>
           <button 
             onClick={() => setActiveTab('ready')}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'ready' ? 'bg-green-500 text-white shadow-md scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'ready' ? 'bg-emerald-600 text-white shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
           >
             🟢 Ready
           </button>
           <button 
             onClick={() => setActiveTab('completed')}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'completed' ? 'bg-gray-700 text-white shadow-md scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'completed' ? 'bg-slate-700 text-white shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
           >
             ⚪ Completed
           </button>
           <button 
             onClick={() => setActiveTab('all')}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'all' ? 'bg-black text-white shadow-md scale-105' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'all' ? 'bg-white text-slate-950 shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
           >
             📋 All Orders
           </button>
         </div>
+      </div>
 
         {/* Orders Grid */}
         {(() => {
           const sq = searchQuery.toLowerCase();
+
+          // Date Math
+          const now = new Date();
+          const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+          const yesterdayStart = todayStart - (24 * 60 * 60 * 1000);
+          const last7DaysStart = todayStart - (7 * 24 * 60 * 60 * 1000);
+
           const filteredOrders = orders.filter(o => {
             if (activeTab !== 'all' && o.status !== activeTab) return false;
+
+            const orderTime = new Date(o.created_at).getTime();
+
+            if (dateFilter === 'today') {
+              if (orderTime < todayStart) return false;
+            } else if (dateFilter === 'yesterday') {
+              if (orderTime < yesterdayStart || orderTime >= todayStart) return false;
+            } else if (dateFilter === 'last7days') {
+              if (orderTime < last7DaysStart) return false;
+            } else if (dateFilter === 'custom' && customDate) {
+              const selectedTime = new Date(customDate).getTime();
+              const selStart = new Date(new Date(selectedTime).setHours(0,0,0,0)).getTime();
+              const selEnd = selStart + (24 * 60 * 60 * 1000);
+              if (orderTime < selStart || orderTime >= selEnd) return false;
+            }
+
             if (!sq) return true;
             const matchesId = o.id.toLowerCase().includes(sq);
             const matchesName = o.customer_name?.toLowerCase().includes(sq);
@@ -583,8 +675,8 @@ function OrdersPage() {
 
           if (filteredOrders.length === 0) {
             return (
-              <div className="bg-gray-50 rounded-2xl p-12 text-center text-gray-400 border border-dashed border-gray-200">
-                <p className="text-lg font-medium">No orders found in this section.</p>
+              <div className="bg-slate-900 rounded-2xl p-12 text-center text-slate-400 border border-slate-800 shadow-xl">
+                <p className="text-lg font-bold">No orders found in this section.</p>
               </div>
             );
           }
@@ -597,36 +689,41 @@ function OrdersPage() {
                 const isFullyPaid = remainingBalance <= 0 || order.paid;
                 
                 // Color coding based on status
-                let bgClass = "bg-white";
-                let borderClass = "border-gray-200";
+                let bgClass = "bg-slate-900";
+                let borderClass = "border-slate-800";
                 
-                if (order.status === 'pending') { bgClass = "bg-yellow-50"; borderClass = "border-yellow-200"; }
-                if (order.status === 'preparing') { bgClass = "bg-blue-50"; borderClass = "border-blue-200"; }
-                if (order.status === 'ready') { bgClass = "bg-green-50"; borderClass = "border-green-200"; }
-                if (order.status === 'completed') { bgClass = "bg-gray-100"; borderClass = "border-gray-300"; }
+                if (order.status === 'pending') { bgClass = "bg-amber-950/20"; borderClass = "border-amber-500/30"; }
+                if (order.status === 'preparing') { bgClass = "bg-sky-950/20"; borderClass = "border-sky-500/30"; }
+                if (order.status === 'ready') { bgClass = "bg-emerald-950/20"; borderClass = "border-emerald-500/30"; }
+                if (order.status === 'completed') { bgClass = "bg-slate-900/60"; borderClass = "border-slate-800/80"; }
 
                 return (
-                  <div key={order.id} className={`border-2 ${borderClass} ${bgClass} rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between`}>
+                  <div key={order.id} className={`border ${borderClass} ${bgClass} rounded-2xl p-5 shadow-xl transition-all flex flex-col justify-between`}>
                     <div>
                       {/* Header */}
-                      <div className="flex justify-between items-start gap-2 mb-3 border-b border-black/10 pb-3">
+                      <div className="flex justify-between items-start gap-2 mb-3 border-b border-slate-800 pb-3">
                         <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-black text-lg text-gray-900">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <span className="font-black text-lg text-white">
                               {order.type === 'delivery' ? `DELIVERY (Grab)` : (order.type === 'takeaway' ? `TAKEAWAY` : `TABLE ${tables.find(t => t.id === order.table_id)?.table_number || 'N/A'}`)}
                             </span>
                             {isFullyPaid ? (
-                              <span className="text-[10px] bg-green-200 text-green-800 px-2 py-0.5 rounded-full font-bold">✓ PAID</span>
+                              <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">✓ PAID</span>
                             ) : (
-                              <span className="text-[10px] bg-red-200 text-red-800 px-2 py-0.5 rounded-full font-bold">❌ NOT PAID</span>
+                              <span className="text-[10px] bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded-full font-bold">❌ NOT PAID</span>
+                            )}
+                            {(order.order_items || []).some(i => i.fulfillment_type === 'takeaway') && (
+                              <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">
+                                🥡 Has Takeaway Items (Deliver to Table)
+                              </span>
                             )}
                           </div>
                           <p className="text-xs text-gray-500 font-medium">Order #{order.id.slice(0, 8)}</p>
-                          <p className="text-xs text-gray-600 mt-1 flex items-center gap-1">
-                            <span>📍 Ordered: {new Date(order.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                            <span className="text-gray-400">({Math.floor((Date.now() - new Date(order.created_at).getTime()) / 60000)} min ago)</span>
+                          <p className="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-1.5 font-mono">
+                            <span>📍 Opened: {new Date(order.created_at).toLocaleDateString([], { day: '2-digit', month: 'short', year: '2-digit' })}, {new Date(order.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            <span className="text-slate-500">({Math.floor((Date.now() - new Date(order.created_at).getTime()) / 60000)}m ago)</span>
                           </p>
-                          {order.customer_name && <p className="text-xs text-gray-600 mt-1">👤 Customer: {order.customer_name}</p>}
+                          {order.customer_name && <p className="text-xs text-slate-300 mt-1">👤 Customer: {order.customer_name}</p>}
                         </div>
                         
                         {/* Status Select */}
@@ -634,7 +731,7 @@ function OrdersPage() {
                           <select 
                             value={order.status} 
                             onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
-                            className="text-xs border-2 border-black/10 bg-white/50 p-1.5 rounded-lg font-bold shadow-sm outline-none"
+                            className="text-xs border border-slate-800 bg-slate-950 text-white p-1.5 rounded-lg font-bold shadow-sm outline-none focus:ring-1 focus:ring-emerald-500"
                           >
                             {statusOptions.map(status => (
                               <option key={status} value={status}>{status.toUpperCase()}</option>
@@ -645,18 +742,18 @@ function OrdersPage() {
 
                       {/* Items */}
                       <div className="mb-4 space-y-2">
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Items</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Items</p>
                         {(order.order_items || []).map((item, idx) => (
                           <div key={idx} className="text-sm">
-                            <p className="font-semibold text-gray-800">
-                              • {item.menu_items?.name || 'Item'} <span className="text-gray-500">x{item.quantity}</span>
-                              <span className={`ml-2 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${item.fulfillment_type === 'takeaway' ? 'bg-orange-100 text-orange-600 border border-orange-200' : 'bg-blue-50 text-blue-500 border border-blue-100'}`}>
+                            <p className="font-semibold text-slate-200">
+                              • {item.menu_items?.name || 'Item'} <span className="text-slate-400">x{item.quantity}</span>
+                              <span className={`ml-2 text-[10px] px-2 py-0.5 rounded font-bold uppercase ${item.fulfillment_type === 'takeaway' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
                                 {item.fulfillment_type === 'takeaway' ? '🥡 Takeaway' : '🍽️ Dine-in'}
                               </span> 
-                              <span className="text-gray-400 ml-2">RM{Number(item.price_at_order * item.quantity).toFixed(2)}</span>
+                              <span className="text-emerald-400 font-mono ml-2">RM{Number(item.price_at_order * item.quantity).toFixed(2)}</span>
                             </p>
                             {(item as any).notes && (
-                              <p className="text-xs text-red-600 font-medium italic ml-3 mt-0.5 flex items-start gap-1">
+                              <p className="text-xs text-amber-400 font-medium italic ml-3 mt-0.5 flex items-start gap-1">
                                 <span>↳</span> Notes: {(item as any).notes}
                               </p>
                             )}
@@ -668,15 +765,15 @@ function OrdersPage() {
                     {/* Footer */}
                     <div>
                       {/* Financials */}
-                      <div className="bg-white/60 p-3 rounded-xl border border-black/5 mb-3 flex flex-wrap gap-x-4 gap-y-1 text-sm justify-between">
+                      <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 mb-3 flex flex-wrap gap-x-4 gap-y-1 text-sm justify-between text-white">
                         <div>
-                          <span className="text-gray-500 mr-1">Total:</span> 
-                          <span className="font-black">RM{order.total_amount.toFixed(2)}</span>
+                          <span className="text-slate-400 mr-1">Total:</span> 
+                          <span className="font-black text-emerald-400 font-mono">RM{order.total_amount.toFixed(2)}</span>
                         </div>
                         {!isFullyPaid && (
                           <div>
-                            <span className="text-gray-500 mr-1">Paid:</span> 
-                            <span className="font-bold text-green-700">RM{totalPaid.toFixed(2)}</span>
+                            <span className="text-slate-400 mr-1">Paid:</span> 
+                            <span className="font-bold text-emerald-500 font-mono">RM{totalPaid.toFixed(2)}</span>
                           </div>
                         )}
                         {!isFullyPaid && (

@@ -126,13 +126,17 @@ function LandingPage() {
           </motion.p>
 
           <motion.div variants={item} className="flex flex-col sm:flex-row items-center justify-center gap-5 pt-4">
-            <Button size="lg" className="h-16 px-10 rounded-2xl text-lg font-black shadow-[0_20px_50px_rgba(8,_112,_184,_0.3)] hover:shadow-[0_20px_50px_rgba(8,_112,_184,_0.5)] transition-all group bg-primary text-primary-foreground">
-              Launch Your Store
-              <ArrowRight className="ml-2 w-6 h-6 group-hover:translate-x-1 transition-transform" />
-            </Button>
-            <Button size="lg" variant="outline" className="h-16 px-10 rounded-2xl text-lg font-black border-2 hover:bg-secondary transition-all">
-              Watch Experience
-            </Button>
+            <Link to="/delivery">
+              <Button size="lg" className="h-16 px-10 rounded-2xl text-lg font-black shadow-[0_20px_50px_rgba(16,_185,_129,_0.3)] hover:shadow-[0_20px_50px_rgba(16,_185,_129,_0.5)] transition-all bg-emerald-600 hover:bg-emerald-500 text-white">
+                🛵 ORDER HOME DELIVERY
+                <ArrowRight className="ml-2 w-6 h-6" />
+              </Button>
+            </Link>
+            <Link to="/t/$token" params={{ token: 'token-a1' }}>
+              <Button size="lg" variant="outline" className="h-16 px-10 rounded-2xl text-lg font-black border-2 border-slate-700 hover:bg-secondary transition-all">
+                🍽️ DINE-IN TABLE MENU
+              </Button>
+            </Link>
           </motion.div>
         </motion.div>
       </section>

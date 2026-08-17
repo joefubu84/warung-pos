@@ -1,0 +1,152 @@
+export interface CustomAddon {
+  id: string;
+  name: string;
+  price: number;
+  available: boolean;
+}
+
+export interface PromoConfig {
+  banners: string[];
+}
+
+const DEFAULT_ADDONS: CustomAddon[] = [
+  { id: 'egg', name: 'Telur Mata (Fried Egg)', price: 1.50, available: true },
+  { id: 'sambal', name: 'Extra Sambal Special', price: 1.00, available: true },
+  { id: 'rice', name: 'Extra Nasi (Extra Rice)', price: 1.50, available: true },
+  { id: 'cheese', name: 'Melted Cheese Slice', price: 2.00, available: true },
+  { id: 'soup', name: 'Extra Soup Bowl', price: 1.00, available: true },
+];
+
+const DEFAULT_PROMOS: string[] = [
+  "⚡ Happy Hour Special: 20% OFF All Beverages!",
+  "🎁 Order > RM 30 & get FREE Teh O Ais!",
+  "🌟 Today's Special: Nasi Ayam Warung + Drink for RM 14.90",
+];
+
+const ADDONS_STORAGE_KEY = 'warung_addons_config_v1';
+const PROMO_STORAGE_KEY = 'warung_promos_config_v1';
+
+export function getAddonsConfig(): CustomAddon[] {
+  try {
+    const stored = localStorage.getItem(ADDONS_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.warn("Failed to parse stored addons config:", e);
+  }
+  return DEFAULT_ADDONS;
+}
+
+export function saveAddonsConfig(addons: CustomAddon[]) {
+  try {
+    localStorage.setItem(ADDONS_STORAGE_KEY, JSON.stringify(addons));
+    window.dispatchEvent(new Event('warung_addons_updated'));
+  } catch (e) {
+    console.error("Failed to save addons config:", e);
+  }
+}
+
+export function getPromoConfig(): string[] {
+  try {
+    const stored = localStorage.getItem(PROMO_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.warn("Failed to parse stored promo config:", e);
+  }
+  return DEFAULT_PROMOS;
+}
+
+export function savePromoConfig(banners: string[]) {
+  try {
+    localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(banners));
+    window.dispatchEvent(new Event('warung_promos_updated'));
+  } catch (e) {
+    console.error("Failed to save promo config:", e);
+  }
+}
+
+export interface DishBadgeConfig {
+  isPopular: boolean;
+  isHalal: boolean;
+  isChefSpecial: boolean;
+  customTag?: string;
+}
+
+const BADGES_STORAGE_KEY = 'warung_dish_badges_v1';
+
+export function getDishBadgesMap(): Record<string, DishBadgeConfig> {
+  try {
+    const stored = localStorage.getItem(BADGES_STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.warn("Failed to parse stored dish badges:", e);
+  }
+  return {};
+}
+
+export function saveDishBadge(dishId: string, badge: DishBadgeConfig) {
+  try {
+    const map = getDishBadgesMap();
+    map[dishId] = badge;
+    localStorage.setItem(BADGES_STORAGE_KEY, JSON.stringify(map));
+    window.dispatchEvent(new Event('warung_dish_badges_updated'));
+  } catch (e) {
+    console.error("Failed to save dish badge:", e);
+  }
+}
+
+export interface NavItemConfig {
+  id: string;
+  label: string;
+  path: string;
+  emoji: string;
+  visible: boolean;
+}
+
+export const DEFAULT_NAV_ORDER: NavItemConfig[] = [
+  { id: 'counter', label: 'Counter', path: '/counter', emoji: '🛒', visible: true },
+  { id: 'menu', label: 'Menu', path: '/menu', emoji: '🍱', visible: true },
+  { id: 'orders', label: 'Orders', path: '/orders', emoji: '📋', visible: true },
+  { id: 'kitchen', label: 'Kitchen', path: '/kitchen', emoji: '🍳', visible: true },
+  { id: 'loyalty', label: 'Loyalty', path: '/loyalty', emoji: '💎', visible: true },
+  { id: 'dashboard', label: 'Dashboard', path: '/dashboard', emoji: '📊', visible: true },
+  { id: 'cash', label: 'Cash', path: '/cash', emoji: '💰', visible: true },
+  { id: 'tables', label: 'Tables', path: '/tables', emoji: '📱', visible: true },
+  { id: 'settings', label: 'Settings', path: '/settings', emoji: '⚙️', visible: true },
+];
+
+const NAV_STORAGE_KEY = 'warung_nav_order_v1';
+
+export function getNavOrderConfig(): NavItemConfig[] {
+  try {
+    const stored = localStorage.getItem(NAV_STORAGE_KEY);
+    if (stored) {
+      const parsed: NavItemConfig[] = JSON.parse(stored);
+      // Merge defaults if any new item was added
+      const existingIds = new Set(parsed.map(i => i.id));
+      const missingDefaults = DEFAULT_NAV_ORDER.filter(d => !existingIds.has(d.id));
+      return [...parsed, ...missingDefaults];
+    }
+  } catch (e) {
+    console.warn("Failed to parse stored nav order:", e);
+  }
+  return DEFAULT_NAV_ORDER;
+}
+
+export function saveNavOrderConfig(items: NavItemConfig[]) {
+  try {
+    localStorage.setItem(NAV_STORAGE_KEY, JSON.stringify(items));
+    window.dispatchEvent(new Event('warung_nav_order_updated'));
+  } catch (e) {
+    console.error("Failed to save nav order:", e);
+  }
+}
+
+export function resetNavOrderConfig() {
+  saveNavOrderConfig(DEFAULT_NAV_ORDER);
+}

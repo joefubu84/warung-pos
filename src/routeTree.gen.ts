@@ -15,7 +15,9 @@ import { Route as CashRouteImport } from './routes/cash'
 import { Route as CashManagementRouteImport } from './routes/cash-management'
 import { Route as CounterRouteImport } from './routes/counter'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DeliveryRouteImport } from './routes/delivery'
 import { Route as KitchenRouteImport } from './routes/kitchen'
+import { Route as LoyaltyRouteImport } from './routes/loyalty'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as ResetTestUserRouteImport } from './routes/reset-test-user'
@@ -55,9 +57,19 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DeliveryRoute = DeliveryRouteImport.update({
+  id: '/delivery',
+  path: '/delivery',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const KitchenRoute = KitchenRouteImport.update({
   id: '/kitchen',
   path: '/kitchen',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoyaltyRoute = LoyaltyRouteImport.update({
+  id: '/loyalty',
+  path: '/loyalty',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MenuRoute = MenuRouteImport.update({
@@ -108,7 +120,9 @@ export interface FileRoutesByFullPath {
   '/cash-management': typeof CashManagementRoute
   '/counter': typeof CounterRoute
   '/dashboard': typeof DashboardRoute
+  '/delivery': typeof DeliveryRoute
   '/kitchen': typeof KitchenRoute
+  '/loyalty': typeof LoyaltyRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/reset-test-user': typeof ResetTestUserRoute
@@ -125,7 +139,9 @@ export interface FileRoutesByTo {
   '/cash-management': typeof CashManagementRoute
   '/counter': typeof CounterRoute
   '/dashboard': typeof DashboardRoute
+  '/delivery': typeof DeliveryRoute
   '/kitchen': typeof KitchenRoute
+  '/loyalty': typeof LoyaltyRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/reset-test-user': typeof ResetTestUserRoute
@@ -143,7 +159,9 @@ export interface FileRoutesById {
   '/cash-management': typeof CashManagementRoute
   '/counter': typeof CounterRoute
   '/dashboard': typeof DashboardRoute
+  '/delivery': typeof DeliveryRoute
   '/kitchen': typeof KitchenRoute
+  '/loyalty': typeof LoyaltyRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
   '/reset-test-user': typeof ResetTestUserRoute
@@ -162,7 +180,9 @@ export interface FileRouteTypes {
     | '/cash-management'
     | '/counter'
     | '/dashboard'
+    | '/delivery'
     | '/kitchen'
+    | '/loyalty'
     | '/menu'
     | '/orders'
     | '/reset-test-user'
@@ -179,7 +199,9 @@ export interface FileRouteTypes {
     | '/cash-management'
     | '/counter'
     | '/dashboard'
+    | '/delivery'
     | '/kitchen'
+    | '/loyalty'
     | '/menu'
     | '/orders'
     | '/reset-test-user'
@@ -196,7 +218,9 @@ export interface FileRouteTypes {
     | '/cash-management'
     | '/counter'
     | '/dashboard'
+    | '/delivery'
     | '/kitchen'
+    | '/loyalty'
     | '/menu'
     | '/orders'
     | '/reset-test-user'
@@ -214,7 +238,9 @@ export interface RootRouteChildren {
   CashManagementRoute: typeof CashManagementRoute
   CounterRoute: typeof CounterRoute
   DashboardRoute: typeof DashboardRoute
+  DeliveryRoute: typeof DeliveryRoute
   KitchenRoute: typeof KitchenRoute
+  LoyaltyRoute: typeof LoyaltyRoute
   MenuRoute: typeof MenuRoute
   OrdersRoute: typeof OrdersRoute
   ResetTestUserRoute: typeof ResetTestUserRoute
@@ -269,11 +295,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/delivery': {
+      id: '/delivery'
+      path: '/delivery'
+      fullPath: '/delivery'
+      preLoaderRoute: typeof DeliveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/kitchen': {
       id: '/kitchen'
       path: '/kitchen'
       fullPath: '/kitchen'
       preLoaderRoute: typeof KitchenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/loyalty': {
+      id: '/loyalty'
+      path: '/loyalty'
+      fullPath: '/loyalty'
+      preLoaderRoute: typeof LoyaltyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/menu': {
@@ -342,7 +382,9 @@ const rootRouteChildren: RootRouteChildren = {
   CashManagementRoute: CashManagementRoute,
   CounterRoute: CounterRoute,
   DashboardRoute: DashboardRoute,
+  DeliveryRoute: DeliveryRoute,
   KitchenRoute: KitchenRoute,
+  LoyaltyRoute: LoyaltyRoute,
   MenuRoute: MenuRoute,
   OrdersRoute: OrdersRoute,
   ResetTestUserRoute: ResetTestUserRoute,

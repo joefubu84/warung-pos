@@ -1,0 +1,32 @@
+2026/08/15-13:43:47.780 5224 Creating DB C:\Users\joefubu05\Downloads\latestwarung\whatsapp-auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb since it was missing.
+2026/08/15-13:43:47.805 5224 Reusing MANIFEST C:\Users\joefubu05\Downloads\latestwarung\whatsapp-auth\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/08/15-14:57:52.254 5224 Level-0 table #5: started
+2026/08/15-14:57:52.282 5224 Level-0 table #5: 1100313 bytes OK
+2026/08/15-14:57:52.286 5224 Delete type=0 #3
+2026/08/15-15:43:40.697 5254 Level-0 table #7: started
+2026/08/15-15:43:40.720 5254 Level-0 table #7: 810038 bytes OK
+2026/08/15-15:43:40.725 5254 Delete type=0 #4
+2026/08/15-15:46:16.412 5254 Compacting 1@1 + 1@2 files
+2026/08/15-15:46:16.454 5254 Generated table #8@1: 9178 keys, 810530 bytes
+2026/08/15-15:46:16.454 5254 Compacted 1@1 + 1@2 files => 810530 bytes
+2026/08/15-15:46:16.456 5254 compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/08/15-15:46:16.457 5254 Delete type=2 #5
+2026/08/15-15:46:16.457 5254 Delete type=2 #7
+2026/08/15-16:18:03.517 5224 Level-0 table #10: started
+2026/08/15-16:18:03.536 5224 Level-0 table #10: 750886 bytes OK
+2026/08/15-16:18:03.540 5224 Delete type=0 #6
+2026/08/15-16:18:49.730 5254 Compacting 1@1 + 1@2 files
+2026/08/15-16:18:49.779 5254 Generated table #11@1: 11073 keys, 1170399 bytes
+2026/08/15-16:18:49.780 5254 Compacted 1@1 + 1@2 files => 1170399 bytes
+2026/08/15-16:18:49.782 5254 compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/08/15-16:18:49.783 5254 Delete type=2 #8
+2026/08/15-16:18:49.783 5254 Delete type=2 #10
+2026/08/15-16:47:00.651 5254 Level-0 table #13: started
+2026/08/15-16:47:00.671 5254 Level-0 table #13: 711565 bytes OK
+2026/08/15-16:47:00.675 5254 Delete type=0 #9
+2026/08/15-16:47:01.992 5254 Compacting 1@1 + 1@2 files
+2026/08/15-16:47:02.052 5254 Generated table #14@1: 12752 keys, 1489469 bytes
+2026/08/15-16:47:02.052 5254 Compacted 1@1 + 1@2 files => 1489469 bytes
+2026/08/15-16:47:02.053 5254 compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/08/15-16:47:02.053 5254 Delete type=2 #11
+2026/08/15-16:47:02.054 5254 Delete type=2 #13
