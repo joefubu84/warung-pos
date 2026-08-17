@@ -114,6 +114,7 @@ export type Database = {
           expected_closing: number | null
           id: string
           notes: string | null
+          opened_by: string | null
           opening_balance: number
           variance: number | null
         }
@@ -126,6 +127,7 @@ export type Database = {
           expected_closing?: number | null
           id?: string
           notes?: string | null
+          opened_by?: string | null
           opening_balance: number
           variance?: number | null
         }
@@ -138,6 +140,7 @@ export type Database = {
           expected_closing?: number | null
           id?: string
           notes?: string | null
+          opened_by?: string | null
           opening_balance?: number
           variance?: number | null
         }
@@ -145,34 +148,35 @@ export type Database = {
       }
       daily_cash_edit_logs: {
         Row: {
-          id: string
-          daily_cash_id: string
+          change_reason: string | null
+          daily_cash_id: string | null
+          edited_at: string | null
           edited_by: string | null
           edited_by_name: string | null
-          previous_values: Json | null
+          id: string
           new_values: Json | null
-          change_reason: string | null
-          edited_at: string | null
+          previous_values: Json | null
         }
         Insert: {
-          id?: string
-          daily_cash_id: string
+          change_reason?: string | null
+          daily_cash_id?: string | null
+          edited_at?: string | null
           edited_by?: string | null
           edited_by_name?: string | null
-          previous_values?: Json | null
+          id?: string
           new_values?: Json | null
-          change_reason?: string | null
-          edited_at?: string | null
+          previous_values?: Json | null
         }
         Update: {
-          id?: string
-          daily_cash_id?: string
+          change_reason?: string | null
+          daily_cash_id?: string | null
+          edited_at?: string | null
           edited_by?: string | null
           edited_by_name?: string | null
-          previous_values?: Json | null
+          id?: string
           new_values?: Json | null
-          change_reason?: string | null
-          edited_at?: string | null
+          previous_values?: Json | null
+        }
         }
         Relationships: [
           {
@@ -774,6 +778,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      whatsapp_otps: {
+        Row: {
+          attempts: number
+          created_at: string
+          expires_at: string
+          id: string
+          otp_code: string
+          phone_number: string
+          verified: boolean
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          otp_code: string
+          phone_number: string
+          verified?: boolean
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          otp_code?: string
+          phone_number?: string
+          verified?: boolean
+        }
+        Relationships: []
       }
     }
     Views: {
