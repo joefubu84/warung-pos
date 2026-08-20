@@ -19,7 +19,7 @@ import {
   resetNavOrderConfig, 
   NavItemConfig 
 } from '@/lib/addons-config';
-import { MessageSquare, ShieldCheck, QrCode, Phone, AlertTriangle, RefreshCw, Globe, Key, ExternalLink } from 'lucide-react';
+import { MessageSquare, ShieldCheck, QrCode, Phone, AlertTriangle, RefreshCw, Globe, Key, ExternalLink, Lock } from 'lucide-react';
 import { markManualRefundComplete } from '@/lib/riders';
 import { getToyyibPayConfig, saveToyyibPayConfig, ToyyibPayConfig } from '@/lib/toyyibpay';
 
