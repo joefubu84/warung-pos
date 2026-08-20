@@ -318,124 +318,53 @@ function SettingsPage() {
           <p className="text-xs text-slate-400 font-mono mt-1">Configure store branding, kitchen printer triggers, alert audio & audit logs</p>
         </div>
 
-        {/* STORE INFO CARD */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
-          <h2 className="text-xl font-black text-white tracking-tight border-b border-slate-800 pb-3">Store Information</h2>
-          <div className="space-y-4">
-            {/* RESTAURANT NAME & ADDRESS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="storeName" className="text-slate-300 font-bold">Restaurant / Store Name</Label>
-                <Input
-                  id="storeName"
-                  value={storeForm.name}
-                  placeholder="e.g. Warung J&J (Main Branch)"
-                  onChange={(e) => setStoreForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="bg-slate-950 border-slate-800 text-white rounded-xl font-bold text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="storeAddress" className="text-slate-300 font-bold">Restaurant Address / Location</Label>
-                <Input
-                  id="storeAddress"
-                  value={storeForm.address}
-                  placeholder="e.g. No 12, Jalan Sultan Ismail, Kuala Lumpur"
-                  onChange={(e) => setStoreForm(prev => ({ ...prev, address: e.target.value }))}
-                  className="bg-slate-950 border-slate-800 text-white rounded-xl text-sm"
-                />
+        {/* STORE INFO & LICENSE CARD (LOCKED TO BACKEND ONLY) */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5 relative overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                🔒 Maklumat Premis & Pelesenan Sistem
+              </h2>
+              <p className="text-xs text-slate-400 font-mono mt-0.5">Sistem Eksklusif Warung J&J Penampang, Sabah</p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 w-fit">
+              <Lock className="w-3.5 h-3.5" /> Terkunci (Backend Sahaja)
+            </span>
+          </div>
+
+          <div className="bg-slate-950/80 border border-slate-800/80 p-4 rounded-xl space-y-3 text-xs leading-relaxed text-slate-300">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <strong className="text-white block font-bold">Perlindungan Pelesenan Proprietary:</strong>
+                Maklumat kedai, nama restoran, dan lokasi dikunci secara kekal pada antaramuka ini untuk mengelakkan sebarang pengubahsuaian tidak sah. Sebarang pengemaskinian rasmi hanya boleh dilakukan melalui pangkalan data backend.
               </div>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="logo" className="text-slate-300 font-bold">Store Logo</Label>
-              <div className="flex items-center gap-4">
-                <img 
-                  src={storeForm.logo_url || '/logo.png'} 
-                  alt="Store logo" 
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/logo.png';
-                  }}
-                  className="w-16 h-16 object-cover border-2 border-amber-400 rounded-full bg-slate-950 shadow-md shrink-0 p-0.5"
-                />
-                <div className="flex-1 space-y-1">
-                  <Input
-                    id="logo"
-                    type="file"
-                    accept="image/*"
-                    className="bg-slate-950 border-slate-800 text-slate-300 rounded-xl"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-
-                    try {
-                      const filePath = `${storeId}/logo.png`;
-                      
-                      const { error: uploadError } = await supabase.storage
-                        .from('logos')
-                        .upload(filePath, file, { 
-                          upsert: true,
-                          contentType: 'image/png'
-                        });
-                      
-                      if (uploadError) throw uploadError;
-
-                      const { data: { publicUrl } } = supabase.storage
-                        .from('logos')
-                        .getPublicUrl(filePath);
-                      const bustedUrl = `${publicUrl}?v=${Date.now()}`;
-
-                      setStoreForm(prev => ({ ...prev, logo_url: bustedUrl }));
-
-                      const { data: updated, error: updateError } = await supabase
-                        .from('stores')
-                        .update({ logo_url: bustedUrl })
-                        .eq('id', storeId)
-                        .select('id, logo_url');
-                      if (updateError) throw updateError;
-                      if (!updated || updated.length === 0) {
-                        throw new Error('Logo URL could not be saved — admin permission required.');
-                      }
-
-                      queryClient.invalidateQueries({ queryKey: ['store', storeId] });
-                      toast.success('Logo uploaded and saved');
-                    } catch (error: any) {
-                      toast.error(`Upload failed: ${error.message}`);
-                    }
-                  }}
-                />
-                <p className="text-[10px] text-slate-500 font-mono">Recommended: PNG or JPG image, max 5MB</p>
-              </div>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="phone" className="text-slate-300 font-bold">Primary Phone Number</Label>
-                <Input
-                  id="phone"
-                  value={storeForm.phone_number}
-                  onChange={(e) => setStoreForm(prev => ({ ...prev, phone_number: e.target.value }))}
-                  className="bg-slate-950 border-slate-800 text-white rounded-xl font-mono text-sm"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="phone2" className="text-slate-300 font-bold">Secondary Phone Number</Label>
-                <Input
-                  id="phone2"
-                  value={storeForm.phone_number_2}
-                  onChange={(e) => setStoreForm(prev => ({ ...prev, phone_number_2: e.target.value }))}
-                  className="bg-slate-950 border-slate-800 text-white rounded-xl font-mono text-sm"
-                />
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/60 space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Nama Restoran / Premis</span>
+              <p className="text-base font-black text-white">{storeForm.name || 'Warung J&J (Penampang)'}</p>
+              <span className="text-[10px] text-emerald-400 font-mono font-semibold">Status: Aktif & Berlesen</span>
             </div>
 
-            <Button 
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl py-3 shadow-md active:scale-95 transition-all" 
-              onClick={() => updateStoreMutation.mutate(storeForm)}
-              disabled={updateStoreMutation.isPending}
-            >
-              {updateStoreMutation.isPending ? 'Saving Store Info...' : 'Save Store Info'}
-            </Button>
+            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/60 space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Alamat / Lokasi Operasi</span>
+              <p className="text-sm font-semibold text-slate-200">{storeForm.address || 'Jalan Penampang, 89500 Penampang, Sabah'}</p>
+              <span className="text-[10px] text-slate-400 font-mono">Koordinat: 5.918° N, 116.082° E</span>
+            </div>
+
+            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/60 space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">No. Telefon Utama</span>
+              <p className="text-sm font-mono font-bold text-white">{storeForm.phone_number || '017-222 1784'}</p>
+            </div>
+
+            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/60 space-y-1">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Kategori Pelesenan</span>
+              <p className="text-sm font-bold text-emerald-400">POS Single-Tenant Proprietary License</p>
+              <span className="text-[10px] text-slate-400 font-mono">ID: {storeId || '1094d737-8104-4a55-b678-0fe9097beba0'}</span>
+            </div>
           </div>
         </div>
 
