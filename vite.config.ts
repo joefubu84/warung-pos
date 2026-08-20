@@ -12,6 +12,13 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  nitro: {
+    rollupConfig: {
+      output: {
+        inlineDynamicImports: true,
+      },
+    },
+  },
   vite: {
     plugins: [
       {
