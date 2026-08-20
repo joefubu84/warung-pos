@@ -13,21 +13,25 @@ export function createAuthState(): AuthState {
     markInitialized = resolve;
   });
 
+  const isServer = typeof window === "undefined";
+
   const auth: AuthState = {
-    authInitialized: false,
+    authInitialized: isServer,
     session: null,
-    waitForInitialization: () => initialized,
+    waitForInitialization: () => (isServer ? Promise.resolve() : initialized),
   };
 
-  supabase.auth.onAuthStateChange((_event, session) => {
-    auth.session = session;
+  if (!isServer) {
+    supabase.auth.onAuthStateChange((_event, session) => {
+      auth.session = session;
 
-    if (!auth.authInitialized) {
-      auth.authInitialized = true;
-      markInitialized?.();
-      markInitialized = undefined;
-    }
-  });
+      if (!auth.authInitialized) {
+        auth.authInitialized = true;
+        markInitialized?.();
+        markInitialized = undefined;
+      }
+    });
+  }
 
   return auth;
 }
