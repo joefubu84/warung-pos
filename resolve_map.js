@@ -1,0 +1,1 @@
+const https = require('https'); function getRedirect(url) { https.get(url, (res) => { if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) { console.log(res.headers.location); getRedirect(res.headers.location); } else { console.log('Final URL:', url); } }).on('error', (e) => { console.error(e); }); } getRedirect('https://share.google/QnAwg0vYtPvytnOG5');

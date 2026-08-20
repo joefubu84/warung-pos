@@ -19,8 +19,9 @@ import {
   resetNavOrderConfig, 
   NavItemConfig 
 } from '@/lib/addons-config';
-import { MessageSquare, ShieldCheck, QrCode, Phone, AlertTriangle, RefreshCw } from 'lucide-react';
+import { MessageSquare, ShieldCheck, QrCode, Phone, AlertTriangle, RefreshCw, Globe, Key, ExternalLink } from 'lucide-react';
 import { markManualRefundComplete } from '@/lib/riders';
+import { getToyyibPayConfig, saveToyyibPayConfig, ToyyibPayConfig } from '@/lib/toyyibpay';
 
 export const Route = createFileRoute('/settings')({
   ssr: false,
@@ -55,6 +56,19 @@ function SettingsPage() {
         .select('*')
         .eq('store_id', storeId)
         .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: menuItems, isLoading: menuLoading } = useQuery({
+    queryKey: ['menu_items', storeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('menu_items')
+        .select('id, name, image_url')
+        .eq('store_id', storeId)
+        .order('name');
       if (error) throw error;
       return data;
     },
@@ -129,6 +143,27 @@ function SettingsPage() {
     onError: (error) => toast.error(error.message),
   });
 
+  const updateHomepageMutation = useMutation({
+    mutationFn: async (homepageSettings: any) => {
+      const currentSettings = (store as any)?.settings || {};
+      const { data, error } = await supabase
+        .from('stores')
+        .update({
+          settings: {
+            ...currentSettings,
+            homepage: homepageSettings
+          }
+        })
+        .eq('id', storeId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['store', storeId] });
+      toast.success('Homepage settings updated');
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
   const [storeForm, setStoreForm] = useState({ name: '', address: '', logo_url: '', phone_number: '', phone_number_2: '' });
 
   const [printerForm, setPrinterForm] = useState({ 
@@ -147,6 +182,15 @@ function SettingsPage() {
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
 
+  const [homepageForm, setHomepageForm] = useState({
+    hero_item_id: '',
+    hero_title: 'Taste the Soul of Malaysia',
+    bento_1_item_id: '',
+    bento_1_title: 'The Perfect Atmosphere',
+    bento_2_item_id: '',
+    bento_2_title: 'Uncompromised Spices',
+  });
+
   useEffect(() => {
     if (store) {
       setStoreForm({
@@ -155,6 +199,16 @@ function SettingsPage() {
         logo_url: store.logo_url || '/logo.png',
         phone_number: store.phone_number || '',
         phone_number_2: (store as any).phone_number_2 || '',
+      });
+      
+      const hp = (store as any).settings?.homepage || {};
+      setHomepageForm({
+        hero_item_id: hp.hero_item_id || '',
+        hero_title: hp.hero_title || 'Taste the Soul of Malaysia',
+        bento_1_item_id: hp.bento_1_item_id || '',
+        bento_1_title: hp.bento_1_title || 'The Perfect Atmosphere',
+        bento_2_item_id: hp.bento_2_item_id || '',
+        bento_2_title: hp.bento_2_title || 'Uncompromised Spices',
       });
     }
   }, [store]);
@@ -176,7 +230,7 @@ function SettingsPage() {
     }
   }, [printerSettings]);
 
-  if (storeLoading || printerLoading) return <div className="p-8 text-center">Loading settings...</div>;
+  if (storeLoading || printerLoading || menuLoading) return <div className="p-8 text-center">Loading settings...</div>;
 
   const handleToggleStatus = (status: string) => {
     setPrinterForm(prev => ({
@@ -385,6 +439,110 @@ function SettingsPage() {
           </div>
         </div>
 
+        {/* HOMEPAGE CUSTOMIZATION CARD */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+          <h2 className="text-xl font-black text-white tracking-tight border-b border-slate-800 pb-3">Homepage Customization</h2>
+          <div className="space-y-6">
+            
+            {/* HERO SECTION */}
+            <div className="space-y-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800/50">
+              <h3 className="font-bold text-slate-200">Main Hero Section</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="heroTitle" className="text-slate-400 text-xs">Hero Title</Label>
+                  <Input
+                    id="heroTitle"
+                    value={homepageForm.hero_title}
+                    onChange={(e) => setHomepageForm(prev => ({ ...prev, hero_title: e.target.value }))}
+                    className="bg-slate-950 border-slate-800 text-white rounded-xl text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="heroImage" className="text-slate-400 text-xs">Hero Image (Menu Item)</Label>
+                  <select
+                    id="heroImage"
+                    value={homepageForm.hero_item_id}
+                    onChange={(e) => setHomepageForm(prev => ({ ...prev, hero_item_id: e.target.value }))}
+                    className="flex h-10 w-full items-center justify-between rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:outline-none"
+                  >
+                    <option value="">-- Use Default (1st Featured Item) --</option>
+                    {menuItems?.filter(i => i.image_url).map(item => (
+                      <option key={item.id} value={item.id}>{item.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* TOP BENTO SECTION */}
+            <div className="space-y-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800/50">
+              <h3 className="font-bold text-slate-200">Top Bento Grid</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bento1Title" className="text-slate-400 text-xs">Title</Label>
+                  <Input
+                    id="bento1Title"
+                    value={homepageForm.bento_1_title}
+                    onChange={(e) => setHomepageForm(prev => ({ ...prev, bento_1_title: e.target.value }))}
+                    className="bg-slate-950 border-slate-800 text-white rounded-xl text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bento1Image" className="text-slate-400 text-xs">Image (Menu Item)</Label>
+                  <select
+                    id="bento1Image"
+                    value={homepageForm.bento_1_item_id}
+                    onChange={(e) => setHomepageForm(prev => ({ ...prev, bento_1_item_id: e.target.value }))}
+                    className="flex h-10 w-full items-center justify-between rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:outline-none"
+                  >
+                    <option value="">-- Use Default (2nd Featured Item) --</option>
+                    {menuItems?.filter(i => i.image_url).map(item => (
+                      <option key={item.id} value={item.id}>{item.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* BOTTOM BENTO SECTION */}
+            <div className="space-y-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800/50">
+              <h3 className="font-bold text-slate-200">Bottom Bento Grid</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bento2Title" className="text-slate-400 text-xs">Title</Label>
+                  <Input
+                    id="bento2Title"
+                    value={homepageForm.bento_2_title}
+                    onChange={(e) => setHomepageForm(prev => ({ ...prev, bento_2_title: e.target.value }))}
+                    className="bg-slate-950 border-slate-800 text-white rounded-xl text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bento2Image" className="text-slate-400 text-xs">Image (Menu Item)</Label>
+                  <select
+                    id="bento2Image"
+                    value={homepageForm.bento_2_item_id}
+                    onChange={(e) => setHomepageForm(prev => ({ ...prev, bento_2_item_id: e.target.value }))}
+                    className="flex h-10 w-full items-center justify-between rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:outline-none"
+                  >
+                    <option value="">-- Use Default (3rd Featured Item) --</option>
+                    {menuItems?.filter(i => i.image_url).map(item => (
+                      <option key={item.id} value={item.id}>{item.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <Button 
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl py-3 shadow-md active:scale-95 transition-all" 
+              onClick={() => updateHomepageMutation.mutate(homepageForm)}
+              disabled={updateHomepageMutation.isPending}
+            >
+              {updateHomepageMutation.isPending ? 'Saving Homepage...' : 'Save Homepage Settings'}
+            </Button>
+          </div>
+        </div>
 
 
         {/* KITCHEN DISPLAY & PRINTER SETTINGS CARD */}
@@ -589,6 +747,9 @@ function SettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* TOYYIBPAY FPX GATEWAY CONFIGURATION CARD */}
+        <ToyyibPaySettingsCard />
 
         {/* MANUAL STAFF REFUND QUEUE CARD */}
         <RefundQueueCard />
@@ -925,6 +1086,130 @@ function RefundQueueCard() {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+function ToyyibPaySettingsCard() {
+  const [config, setConfig] = useState<ToyyibPayConfig>({
+    userSecretKey: '',
+    categoryCode: '',
+    isSandbox: false,
+    chargeToCustomer: true,
+  });
+
+  useEffect(() => {
+    setConfig(getToyyibPayConfig());
+  }, []);
+
+  const handleSave = () => {
+    saveToyyibPayConfig(config);
+    toast.success('Tetapan ToyyibPay FPX berjaya disimpan! 🎉');
+  };
+
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+        <div>
+          <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+            <Globe className="w-5 h-5 text-emerald-400" />
+            ToyyibPay FPX Gateway Settings
+          </h2>
+          <p className="text-xs text-slate-400 font-mono mt-0.5">
+            Sistem pembayaran automatik FPX Online Banking Malaysia (Maybank, CIMB, Bank Islam, etc.)
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {config.userSecretKey && config.categoryCode ? (
+            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs px-2.5 py-0.5 font-bold">
+              ● API Siap Dikonfigurasi
+            </Badge>
+          ) : (
+            <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs px-2.5 py-0.5 font-bold">
+              ⏳ Menunggu Kelulusan / Kunci API
+            </Badge>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* User Secret Key */}
+        <div className="space-y-1.5">
+          <Label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+            <Key className="w-3.5 h-3.5 text-amber-400" /> ToyyibPay User Secret Key
+          </Label>
+          <Input 
+            type="password"
+            placeholder="e.g. w5x7srq7-rx5r-3t89-2ou2-k7361x2jewhn"
+            value={config.userSecretKey}
+            onChange={(e) => setConfig(prev => ({ ...prev, userSecretKey: e.target.value }))}
+            className="bg-slate-950 border-slate-800 text-slate-100 font-mono text-xs h-10 rounded-xl"
+          />
+          <p className="text-[11px] text-slate-500">
+            Dapatkan User Secret Key daripada portal rasmi ToyyibPay selepas pendaftaran diluluskan.
+          </p>
+        </div>
+
+        {/* Category Code */}
+        <div className="space-y-1.5">
+          <Label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+            <Globe className="w-3.5 h-3.5 text-sky-400" /> ToyyibPay Category Code
+          </Label>
+          <Input 
+            placeholder="e.g. gcbhict9"
+            value={config.categoryCode}
+            onChange={(e) => setConfig(prev => ({ ...prev, categoryCode: e.target.value }))}
+            className="bg-slate-950 border-slate-800 text-slate-100 font-mono text-xs h-10 rounded-xl"
+          />
+          <p className="text-[11px] text-slate-500">
+            Kod kategori bil yang dicipta di bawah menu Category dalam akaun ToyyibPay anda.
+          </p>
+        </div>
+      </div>
+
+      {/* Options */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800">
+        <div className="flex items-center justify-between bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+          <div className="space-y-0.5">
+            <Label className="text-xs font-bold text-slate-200 block">Caj FPX kepada Pelanggan</Label>
+            <span className="text-[10px] text-slate-400 block">Caj RM1.00 FPX ditanggung oleh pembeli</span>
+          </div>
+          <Switch 
+            checked={config.chargeToCustomer} 
+            onCheckedChange={(checked) => setConfig(prev => ({ ...prev, chargeToCustomer: checked }))} 
+          />
+        </div>
+
+        <div className="flex items-center justify-between bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+          <div className="space-y-0.5">
+            <Label className="text-xs font-bold text-slate-200 block">Mod Sandbox (Testing)</Label>
+            <span className="text-[10px] text-slate-400 block">Gunakan akaun dev.toyyibpay.com untuk ujian</span>
+          </div>
+          <Switch 
+            checked={config.isSandbox} 
+            onCheckedChange={(checked) => setConfig(prev => ({ ...prev, isSandbox: checked }))} 
+          />
+        </div>
+      </div>
+
+      {/* Save Button & Link */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+        <a 
+          href="https://toyyibpay.com" 
+          target="_blank" 
+          rel="noreferrer" 
+          className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 underline"
+        >
+          <ExternalLink className="w-3.5 h-3.5" /> Buka Portal ToyyibPay Malaysia
+        </a>
+
+        <Button 
+          onClick={handleSave}
+          className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 h-10 rounded-xl shadow-lg shadow-emerald-600/20"
+        >
+          Simpan Tetapan ToyyibPay 💾
+        </Button>
+      </div>
     </div>
   );
 }

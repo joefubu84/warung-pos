@@ -121,14 +121,22 @@ function RootShell({ children }: { children: ReactNode }) {
 }
 
 import { NavigationHeader } from "../components/NavigationHeader";
+import { useLocation } from "@tanstack/react-router";
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const location = useLocation();
+  
+  // Hide the POS admin header on customer-facing pages
+  const isCustomerFacing = 
+    location.pathname === '/' || 
+    location.pathname === '/delivery' || 
+    location.pathname.startsWith('/t/');
 
   return (
     <QueryClientProvider client={queryClient}>
       <div className="min-h-screen flex flex-col bg-background text-foreground">
-        <NavigationHeader />
+        {!isCustomerFacing && <NavigationHeader />}
         <main className="flex-1 flex flex-col">
           {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />

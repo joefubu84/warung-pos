@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { 
   ShoppingBag, 
   MapPin, 
@@ -18,7 +20,16 @@ import {
   Loader2, 
   Sparkles, 
   ChevronRight,
-  ShieldCheck
+  ShieldCheck,
+  MessageCircle,
+  Download,
+  Copy,
+  Check,
+  QrCode,
+  Receipt,
+  Building2,
+  CreditCard,
+  Globe
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createToyyibPayCheckout } from '@/lib/toyyibpay';
@@ -46,9 +57,9 @@ interface CartItem {
   containerCharge?: number;
 }
 
-// Base Coordinates for Warung J&J (Kuala Lumpur)
-const WARUNG_LAT = 3.1390;
-const WARUNG_LNG = 101.6869;
+// Base Coordinates for Warung J&J (de Baxters Café, Penampang, Sabah)
+const WARUNG_LAT = 5.918;
+const WARUNG_LNG = 116.082;
 
 function calculateHaversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth radius in km
@@ -71,12 +82,13 @@ function CustomerDeliveryPage() {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
-  const [custLat, setCustLat] = useState<number>(3.1420);
-  const [custLng, setCustLng] = useState<number>(101.6900);
+  const [custLat, setCustLat] = useState<number>(5.919);
+  const [custLng, setCustLng] = useState<number>(116.085);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<'menu' | 'cart' | 'checkout'>('menu');
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
+  const [showDuitNowModal, setShowDuitNowModal] = useState(false);
 
   // Distance & Fee Calculations
   const distanceKm = calculateHaversineKm(WARUNG_LAT, WARUNG_LNG, custLat, custLng);
@@ -85,12 +97,117 @@ function CustomerDeliveryPage() {
 
   const foodSubtotal = cart.reduce((sum, item) => sum + (item.price + (item.containerCharge || 0)) * item.quantity, 0);
   const grandTotal = foodSubtotal + (cart.length > 0 ? deliveryFee : 0);
+  const [storeId, setStoreId] = useState<string | null>(null);
+  const [storePhone, setStorePhone] = useState<string>('60172221784');
+  const [copiedAmount, setCopiedAmount] = useState(false);
 
   useEffect(() => {
-    fetchMenu();
+    fetchMenuItems();
+    fetchStore();
+
+    // Check for ToyyibPay FPX redirect return params
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const statusId = searchParams.get('status_id');
+      const orderIdParam = searchParams.get('order_id');
+
+      if (statusId === '1') {
+        toast.success('🎉 Pembayaran FPX berjaya disahkan! Pesanan anda sedang diproses.', { duration: 6000 });
+        if (orderIdParam) {
+          supabase
+            .from('orders')
+            .update({
+              payment_status: 'paid',
+              status: 'confirmed',
+            })
+            .eq('id', orderIdParam)
+            .then(() => {});
+        }
+        setCart([]);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      } else if (statusId === '3') {
+        toast.error('❌ Pembayaran FPX tidak berjaya atau dibatalkan. Sila cuba lagi.');
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
   }, []);
 
-  const fetchMenu = async () => {
+  const fetchStore = async () => {
+    const { data } = await supabase.from('stores').select('id, phone_number, phone_number_2').limit(1).single();
+    if (data) {
+      setStoreId(data.id);
+      if (data.phone_number) setStorePhone(data.phone_number);
+    }
+  };
+
+  const handleSendWhatsAppProof = () => {
+    const cleanPhone = (storePhone || '60172221784').replace(/\D/g, '');
+    const shortId = activeOrderId ? activeOrderId.slice(0, 8).toUpperCase() : 'NEW';
+    const message = `*HALO WARUNG J&J, SAYA TELAH MEMBUAT BAYARAN DELIVERY:*
+
+🆔 *Order ID:* #${shortId}
+👤 *Nama:* ${customerName}
+📞 *Telefon:* ${customerPhone}
+📍 *Alamat:* ${deliveryAddress}
+💰 *Jumlah Bayaran:* RM ${grandTotal.toFixed(2)}
+
+(Sila semak resit pembayaran yang saya lampirkan ini 🙏)`;
+
+    const waUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`;
+    window.open(waUrl, '_blank');
+  };
+
+  const handleDownloadQR = () => {
+    const link = document.createElement('a');
+    link.href = '/duitnow-qr.png';
+    link.download = 'Warung_JJ_DuitNow_QR.png';
+    link.click();
+    toast.success('DuitNow QR downloaded! Scan it from your banking app photo gallery.');
+  };
+
+  const handleCopyAmount = () => {
+    navigator.clipboard.writeText(grandTotal.toFixed(2));
+    setCopiedAmount(true);
+    toast.success(`Amount RM ${grandTotal.toFixed(2)} copied!`);
+    setTimeout(() => setCopiedAmount(false), 2000);
+  };
+
+  const [copiedBankAcc, setCopiedBankAcc] = useState(false);
+  const [isFPXLoading, setIsFPXLoading] = useState(false);
+
+  const handleCopyBankAcc = (accNum: string) => {
+    navigator.clipboard.writeText(accNum);
+    setCopiedBankAcc(true);
+    toast.success('No. Akaun Alliance Bank disalin! 📋');
+    setTimeout(() => setCopiedBankAcc(false), 2000);
+  };
+
+  const handleProceedToFPX = async () => {
+    setIsFPXLoading(true);
+    try {
+      const orderRefId = activeOrderId || 'ORD-' + Date.now().toString().slice(-6);
+      const res = await createToyyibPayCheckout({
+        orderId: orderRefId,
+        totalAmount: grandTotal,
+        customerName: customerName,
+        customerPhone: customerPhone,
+      });
+      if (res.success && res.paymentUrl) {
+        toast.success('Membuka portal FPX Online Banking...');
+        setTimeout(() => {
+          window.location.href = res.paymentUrl!;
+        }, 1000);
+      } else {
+        toast.error(res.message || 'Sesi FPX tidak dapat dimulakan.');
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Ralat pembayaran FPX.');
+    } finally {
+      setIsFPXLoading(false);
+    }
+  };
+
+  const fetchMenuItems = async () => {
     setLoadingItems(true);
     const { data, error } = await supabase
       .from('menu_items')
@@ -100,6 +217,9 @@ function CustomerDeliveryPage() {
 
     if (!error && data) {
       setMenuItems(data as MenuItem[]);
+      if (data.length > 0 && (data[0] as any).store_id) {
+        setStoreId((data[0] as any).store_id);
+      }
     }
     setLoadingItems(false);
   };
@@ -129,10 +249,23 @@ function CustomerDeliveryPage() {
 
   const handleGetLocation = () => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((pos) => {
+      navigator.geolocation.getCurrentPosition(async (pos) => {
         setCustLat(pos.coords.latitude);
         setCustLng(pos.coords.longitude);
-        toast.success(`GPS Location acquired: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+        
+        // Reverse Geocode
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+          const data = await res.json();
+          if (data && data.display_name) {
+            setDeliveryAddress(data.display_name);
+            toast.success("Location address acquired successfully!");
+          } else {
+            toast.success(`GPS Location acquired: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+          }
+        } catch (e) {
+          toast.success(`GPS Location acquired: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+        }
       }, () => {
         toast.error("Could not fetch GPS location automatically.");
       });
@@ -174,12 +307,13 @@ function CustomerDeliveryPage() {
           delivery_lat: custLat,
           delivery_lng: custLng,
           discount_type: 'fixed',
-          discount_value: 0
+          discount_value: 0,
+          store_id: storeId
         },
         p_items: cart.map(item => ({
           menu_item_id: item.menuItemId,
           quantity: item.quantity,
-          fulfillment_type: 'delivery',
+          fulfillment_type: 'takeaway',
           container_charge: item.containerCharge || 1.00,
           notes: item.notes || ''
         })),
@@ -196,22 +330,9 @@ function CustomerDeliveryPage() {
       const newOrderId = resObj.order_id;
       setActiveOrderId(newOrderId);
 
-      // Create ToyyibPay Checkout Session
-      const checkoutRes = await createToyyibPayCheckout({
-        orderId: newOrderId,
-        totalAmount: resObj.total_amount || grandTotal,
-        customerName: customerName,
-        customerPhone: customerPhone,
-      });
-
-      if (checkoutRes.success && checkoutRes.paymentUrl) {
-        toast.success('Order created! Redirecting to ToyyibPay FPX Payment Gateway...');
-        setTimeout(() => {
-          window.location.href = checkoutRes.paymentUrl!;
-        }, 1500);
-      } else {
-        toast.error(checkoutRes.message || 'Order saved, but payment gateway connection failed.');
-      }
+      // Show DuitNow QR Modal instead of ToyyibPay FPX
+      setShowDuitNowModal(true);
+      toast.success('Order saved! Please proceed to DuitNow payment.');
     } catch (err: any) {
       toast.error(`Order Failed: ${err.message}`);
     } finally {
@@ -404,23 +525,206 @@ function CustomerDeliveryPage() {
                   ⚠️ Minimum food subtotal for delivery is RM 15.00. Add RM {(15.00 - foodSubtotal).toFixed(2)} more items to proceed.
                 </div>
               )}
-
-              <Button
-                onClick={handlePlaceDeliveryOrder}
-                disabled={isSubmitting || isOutOfZone}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-2xl py-4 text-base shadow-xl active:scale-95 transition-all"
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="w-5 h-5 animate-spin" /> Processing Payment...
-                  </span>
-                ) : (
-                  `PAY RM ${grandTotal.toFixed(2)} VIA TOYYIBPAY FPX 💳`
-                )}
-              </Button>
             </CardContent>
           </Card>
         )}
+
+        {/* FLOATING CHECKOUT BAR */}
+        <div className="fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 p-4 md:p-6 z-40">
+          <div className="max-w-md mx-auto">
+            <Button 
+              className="w-full h-14 text-base md:text-lg font-bold bg-emerald-500 hover:bg-emerald-600 text-white rounded-2xl shadow-lg shadow-emerald-500/20"
+              onClick={handlePlaceDeliveryOrder}
+              disabled={isSubmitting || cart.length === 0 || isOutOfZone || foodSubtotal < 15.00}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" /> Processing Order...
+                </>
+              ) : (
+                `PROCEED TO PAYMENT (RM ${grandTotal.toFixed(2)}) 💳`
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* 3-IN-1 MALAYSIAN PAYMENT MODAL */}
+        <Dialog open={showDuitNowModal} onOpenChange={setShowDuitNowModal}>
+          <DialogContent className="sm:max-w-[420px] bg-slate-900 text-white border-slate-800 p-4 sm:p-5 rounded-3xl max-h-[92vh] overflow-y-auto">
+            <DialogHeader className="text-center sm:text-center pb-1">
+              <DialogTitle className="text-xl font-black flex items-center justify-center gap-2 text-rose-400">
+                <CreditCard className="w-5 h-5 text-rose-500" /> Kaedah Pembayaran
+              </DialogTitle>
+            </DialogHeader>
+
+            <Tabs defaultValue="duitnow" className="w-full">
+              {/* PAYMENT TABS SELECTOR */}
+              <TabsList className="grid grid-cols-3 bg-slate-950 p-1 rounded-2xl border border-slate-800 h-10 w-full mb-3">
+                <TabsTrigger value="duitnow" className="text-[11px] font-bold rounded-xl data-[state=active]:bg-rose-600 data-[state=active]:text-white">
+                  📱 DuitNow
+                </TabsTrigger>
+                <TabsTrigger value="bank" className="text-[11px] font-bold rounded-xl data-[state=active]:bg-sky-600 data-[state=active]:text-white">
+                  🏦 Transfer
+                </TabsTrigger>
+                <TabsTrigger value="fpx" className="text-[11px] font-bold rounded-xl data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+                  🌐 FPX Pay
+                </TabsTrigger>
+              </TabsList>
+
+              {/* TAB 1: DUITNOW QR */}
+              <TabsContent value="duitnow" className="space-y-3 mt-0 focus-visible:outline-none">
+                <div className="flex flex-col items-center justify-center space-y-2.5">
+                  <div className="relative group bg-white p-2.5 rounded-2xl shadow-2xl border-4 border-[#a6192e] w-full max-w-[230px] flex flex-col items-center text-center">
+                    {/* Header */}
+                    <div className="w-full bg-[#a6192e] text-white text-[10px] font-black py-1 px-2.5 rounded-lg tracking-wider uppercase flex items-center justify-between mb-1.5">
+                      <span className="font-sans font-bold">WARUNG JNJ</span>
+                      <span className="text-[9px] font-mono bg-white/20 px-1.5 py-0.5 rounded-full">DuitNow QR</span>
+                    </div>
+
+                    {/* QR Code with Centered Warung Logo */}
+                    <div className="relative w-full flex items-center justify-center">
+                      <img 
+                        src="/duitnow-qr.png" 
+                        alt="Warung JNJ DuitNow QR" 
+                        className="w-full h-auto rounded-lg object-contain max-h-[160px]"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="bg-white p-0.5 rounded-lg shadow-md border-2 border-[#a6192e]">
+                          <img src="/warung-logo.png" alt="Warung JNJ Logo" className="w-7 h-7 object-contain rounded-md" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="w-full mt-1.5 pt-1.5 border-t border-gray-100 font-mono text-center">
+                      <p className="text-[10px] font-black text-[#a6192e] uppercase tracking-wide">Alliance Bank</p>
+                      <p className="text-[8px] text-gray-500 font-semibold leading-none">Alliance Bank Malaysia Berhad</p>
+                    </div>
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDownloadQR}
+                    className="bg-slate-800/80 border-slate-700 text-slate-200 hover:bg-slate-700 hover:text-white rounded-xl text-xs gap-1.5 h-7 px-3"
+                  >
+                    <Download className="w-3 h-3 text-rose-400" />
+                    Simpan / Download QR
+                  </Button>
+                </div>
+              </TabsContent>
+
+              {/* TAB 2: DIRECT BANK TRANSFER (ALLIANCE BANK) */}
+              <TabsContent value="bank" className="space-y-3 mt-0 focus-visible:outline-none">
+                <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-4 space-y-3 text-left">
+                  <div className="flex items-center gap-2.5 border-b border-slate-800 pb-2.5">
+                    <div className="bg-sky-500/20 p-2 rounded-xl text-sky-400">
+                      <Building2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-white">Alliance Bank Malaysia</h4>
+                      <p className="text-[11px] text-slate-400 font-mono">Instant Online Transfer (Free)</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 text-xs">
+                    <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800">
+                      <span className="text-slate-400 block text-[10px]">Nama Pemegang Akaun:</span>
+                      <span className="text-white font-bold text-xs">J&J CAFE & CATERING</span>
+                    </div>
+
+                    <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 flex items-center justify-between">
+                      <div>
+                        <span className="text-slate-400 block text-[10px]">No. Akaun Alliance Bank:</span>
+                        <span className="text-sky-300 font-mono font-bold text-sm">101960010088888</span>
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => handleCopyBankAcc('101960010088888')}
+                        className="bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 rounded-lg text-xs gap-1 h-8 px-2.5"
+                      >
+                        {copiedBankAcc ? <Check className="w-3 h-3 text-sky-400" /> : <Copy className="w-3 h-3" />}
+                        {copiedBankAcc ? 'Disalin!' : 'Salin No'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* TAB 3: TOYYIBPAY FPX ONLINE BANKING */}
+              <TabsContent value="fpx" className="space-y-3 mt-0 focus-visible:outline-none">
+                <div className="bg-slate-950/90 border border-slate-800 rounded-2xl p-4 space-y-3 text-center">
+                  <div className="flex items-center justify-center gap-2 text-emerald-400">
+                    <Globe className="w-6 h-6 animate-pulse" />
+                    <span className="font-bold text-sm">FPX Online Banking Malaysia</span>
+                  </div>
+                  
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Bayar terus melalui portal perbankan rasmi (Maybank2u, CIMB Clicks, Bank Islam, RHB, Public Bank, dll).
+                  </p>
+
+                  <Button
+                    onClick={handleProceedToFPX}
+                    disabled={isFPXLoading}
+                    className="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-emerald-600/30 gap-2 flex items-center justify-center transition-all"
+                  >
+                    {isFPXLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" /> Membuka FPX...
+                      </>
+                    ) : (
+                      `Buka FPX Gateway (RM ${grandTotal.toFixed(2)}) 🌐`
+                    )}
+                  </Button>
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            {/* TOTAL AMOUNT BAR */}
+            <div className="w-full bg-slate-950/90 border border-slate-800 rounded-xl p-2.5 px-3.5 flex items-center justify-between mt-1">
+              <div>
+                <p className="text-[11px] text-slate-400 font-medium">Jumlah Perlu Dibayar</p>
+                <p className="text-xl font-black text-emerald-400 tracking-tight">
+                  RM {grandTotal.toFixed(2)}
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={handleCopyAmount}
+                className="bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 rounded-lg text-xs gap-1 h-8 px-2.5"
+              >
+                {copiedAmount ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                {copiedAmount ? 'Tersalin!' : 'Salin RM'}
+              </Button>
+            </div>
+
+            {/* ACTIONS */}
+            <div className="w-full space-y-2 pt-1">
+              {/* WHATSAPP SEND PROOF BUTTON */}
+              <Button 
+                className="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-xl shadow-lg shadow-emerald-600/30 gap-2 flex items-center justify-center transition-all active:scale-[0.98]"
+                onClick={handleSendWhatsAppProof}
+              >
+                <MessageCircle className="w-4 h-4 fill-current" />
+                Hantar Resit Bayaran via WhatsApp 💬
+              </Button>
+
+              {/* I HAVE PAID CONFIRMATION BUTTON */}
+              <Button 
+                variant="outline"
+                className="w-full h-10 bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white font-semibold text-xs border-slate-700 rounded-xl"
+                onClick={() => {
+                  setShowDuitNowModal(false);
+                  toast.success('🎉 Pesanan diterima! Warung J&J sedang memproses pesanan anda.');
+                  setCart([]);
+                }}
+              >
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mr-1.5" />
+                ✅ Saya Dah Selesai Bayar
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

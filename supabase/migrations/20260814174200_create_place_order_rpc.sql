@@ -59,8 +59,19 @@ begin
     end if;
   end if;
 
-  -- 2. Re-derive store_id on server
-  v_store_id := public.get_auth_store_id();
+  -- 2. Re-derive store_id on server safely
+  if p_order->>'store_id' is not null and (p_order->>'store_id') != '' then
+    v_store_id := (p_order->>'store_id')::uuid;
+  end if;
+
+  if v_store_id is null then
+    begin
+      v_store_id := public.get_auth_store_id();
+    exception when others then
+      v_store_id := null;
+    end;
+  end if;
+
   if v_store_id is null and v_table_id_text is not null then
     select store_id into v_store_id from public.tables where id = v_table_id_text::uuid;
   end if;
@@ -269,7 +280,10 @@ begin
       (v_item->>'menu_item_id')::uuid,
       (v_item->>'quantity')::int,
       v_menu_price + v_container,
-      coalesce(v_item->>'fulfillment_type', 'dine_in'),
+      case 
+        when v_item->>'fulfillment_type' = 'dine_in' then 'dine_in'::public.fulfillment_type_enum 
+        else 'takeaway'::public.fulfillment_type_enum 
+      end,
       v_item->>'notes'
     );
   end loop;
@@ -283,3 +297,5 @@ begin
   );
 end;
 $$;
+
+GRANT EXECUTE ON FUNCTION public.place_order(jsonb, jsonb, jsonb) TO anon, authenticated, service_role;
