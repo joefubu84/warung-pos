@@ -18,8 +18,16 @@ export default defineConfig({
         inlineDynamicImports: true,
       },
     },
+    replace: {
+      __dirname: '""',
+      __filename: '""',
+    },
   },
   vite: {
+    define: {
+      __dirname: '""',
+      __filename: '""',
+    },
     plugins: [
       {
         name: 'remove-csp-middleware',
