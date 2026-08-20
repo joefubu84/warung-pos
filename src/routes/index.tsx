@@ -363,7 +363,7 @@ function LandingPage() {
                 </div>
                 <div className="pt-1">
                   <h4 className="font-bold text-[17px] tracking-tight text-stone-200">Address</h4>
-                  <p className="text-stone-400 leading-relaxed mt-1 whitespace-pre-wrap">{storeInfo?.address || '123 Jalan Makan Sedap,\n50450 Kuala Lumpur, Malaysia'}</p>
+                  <p className="text-stone-400 leading-relaxed mt-1 whitespace-pre-wrap">{storeInfo?.address || 'Warung J&J,\nPenampang, Sabah, Malaysia'}</p>
                 </div>
               </div>
               
