@@ -2,6 +2,9 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { useState } from 'react';
 import { z } from 'zod';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Lock, Mail, Store, AlertCircle, ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 
 const authSearchSchema = z.object({
   redirect: z.string().optional(),
@@ -16,6 +19,7 @@ function AuthPage() {
   const { redirect: redirectPath } = Route.useSearch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -31,48 +35,128 @@ function AuthPage() {
     });
 
     if (signInError) {
-      setError(signInError.message);
+      setError(signInError.message || 'Log masuk gagal. Sila periksa emel dan kata laluan.');
       setLoading(false);
     } else {
-      // Navigate to the redirect path if present, otherwise fallback to /orders
-      const destination = redirectPath || '/orders';
+      const destination = redirectPath || '/counter';
       navigate({ to: destination });
     }
   };
 
   return (
-    <div className="p-8 font-sans">
-      <h1 className="text-2xl font-bold mb-4">Login</h1>
-      <form onSubmit={handleLogin} className="space-y-4">
-        <div>
-          <label className="block mb-1">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="border p-2 w-64 block"
-            required
-          />
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 relative overflow-hidden font-sans">
+      {/* Background Glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-10 right-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Main Login Card */}
+      <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative z-10 space-y-6">
+        
+        {/* Header Branding */}
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-2 shadow-inner">
+            <Store className="w-7 h-7" />
+          </div>
+          <div className="inline-block">
+            <span className="text-[10px] tracking-widest uppercase bg-emerald-500/20 text-emerald-300 font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+              Staff & Cashier Portal
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+            Warung J&J POS
+          </h1>
+          <p className="text-xs text-slate-400">
+            Penampang, Sabah • Log masuk untuk akses Counter & Kitchen
+          </p>
         </div>
-        <div>
-          <label className="block mb-1">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="border p-2 w-64 block"
-            required
-          />
+
+        {/* Error Notification Banner */}
+        {error && (
+          <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 p-3.5 rounded-2xl flex items-start gap-3 text-xs leading-relaxed animate-in fade-in slide-in-from-top-2">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        {/* Form */}
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-300">
+              Emel Staf / Admin
+            </label>
+            <div className="relative">
+              <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="nama@warungjnj.com"
+                className="bg-slate-950/80 border-slate-800 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-slate-600 focus:border-emerald-500"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-slate-300">
+              Kata Laluan (Password)
+            </label>
+            <div className="relative">
+              <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="bg-slate-950/80 border-slate-800 pl-10 pr-10 h-11 text-xs rounded-xl text-white placeholder:text-slate-600 focus:border-emerald-500"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Sedang Masuk...</span>
+              </>
+            ) : (
+              <span>Log Masuk POS 🚀</span>
+            )}
+          </Button>
+        </form>
+
+        {/* Footer Navigation */}
+        <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+          <button
+            type="button"
+            onClick={() => navigate({ to: '/' })}
+            className="inline-flex items-center gap-1.5 hover:text-emerald-400 transition-colors"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Kembali ke Utama</span>
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => navigate({ to: '/delivery' })}
+            className="text-emerald-400 hover:underline font-semibold"
+          >
+            Pesanan Delivery 🛵
+          </button>
         </div>
-        {error && <p className="text-red-500">{error}</p>}
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
-        >
-          {loading ? 'Logging in...' : 'Login'}
-        </button>
-      </form>
+      </div>
     </div>
   );
 }
