@@ -27,6 +27,7 @@ const ADDONS_STORAGE_KEY = 'warung_addons_config_v1';
 const PROMO_STORAGE_KEY = 'warung_promos_config_v1';
 
 export function getAddonsConfig(): CustomAddon[] {
+  if (typeof localStorage === 'undefined') return DEFAULT_ADDONS;
   try {
     const stored = localStorage.getItem(ADDONS_STORAGE_KEY);
     if (stored) {
@@ -39,15 +40,17 @@ export function getAddonsConfig(): CustomAddon[] {
 }
 
 export function saveAddonsConfig(addons: CustomAddon[]) {
+  if (typeof localStorage === 'undefined') return;
   try {
     localStorage.setItem(ADDONS_STORAGE_KEY, JSON.stringify(addons));
-    window.dispatchEvent(new Event('warung_addons_updated'));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('warung_addons_updated'));
   } catch (e) {
     console.error("Failed to save addons config:", e);
   }
 }
 
 export function getPromoConfig(): string[] {
+  if (typeof localStorage === 'undefined') return DEFAULT_PROMOS;
   try {
     const stored = localStorage.getItem(PROMO_STORAGE_KEY);
     if (stored) {
@@ -60,9 +63,10 @@ export function getPromoConfig(): string[] {
 }
 
 export function savePromoConfig(banners: string[]) {
+  if (typeof localStorage === 'undefined') return;
   try {
     localStorage.setItem(PROMO_STORAGE_KEY, JSON.stringify(banners));
-    window.dispatchEvent(new Event('warung_promos_updated'));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('warung_promos_updated'));
   } catch (e) {
     console.error("Failed to save promo config:", e);
   }
@@ -78,6 +82,7 @@ export interface DishBadgeConfig {
 const BADGES_STORAGE_KEY = 'warung_dish_badges_v1';
 
 export function getDishBadgesMap(): Record<string, DishBadgeConfig> {
+  if (typeof localStorage === 'undefined') return {};
   try {
     const stored = localStorage.getItem(BADGES_STORAGE_KEY);
     if (stored) {
@@ -90,11 +95,12 @@ export function getDishBadgesMap(): Record<string, DishBadgeConfig> {
 }
 
 export function saveDishBadge(dishId: string, badge: DishBadgeConfig) {
+  if (typeof localStorage === 'undefined') return;
   try {
     const map = getDishBadgesMap();
     map[dishId] = badge;
     localStorage.setItem(BADGES_STORAGE_KEY, JSON.stringify(map));
-    window.dispatchEvent(new Event('warung_dish_badges_updated'));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('warung_dish_badges_updated'));
   } catch (e) {
     console.error("Failed to save dish badge:", e);
   }
@@ -123,6 +129,7 @@ export const DEFAULT_NAV_ORDER: NavItemConfig[] = [
 const NAV_STORAGE_KEY = 'warung_nav_order_v1';
 
 export function getNavOrderConfig(): NavItemConfig[] {
+  if (typeof localStorage === 'undefined') return DEFAULT_NAV_ORDER;
   try {
     const stored = localStorage.getItem(NAV_STORAGE_KEY);
     if (stored) {
@@ -139,9 +146,10 @@ export function getNavOrderConfig(): NavItemConfig[] {
 }
 
 export function saveNavOrderConfig(items: NavItemConfig[]) {
+  if (typeof localStorage === 'undefined') return;
   try {
     localStorage.setItem(NAV_STORAGE_KEY, JSON.stringify(items));
-    window.dispatchEvent(new Event('warung_nav_order_updated'));
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('warung_nav_order_updated'));
   } catch (e) {
     console.error("Failed to save nav order:", e);
   }
