@@ -352,7 +352,7 @@ function LandingPage() {
             <div>
               <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-stone-100 mb-4">Come Visit Us</h2>
               <p className="text-lg text-stone-400 font-medium leading-relaxed">
-                We're located in the heart of the city, ready to serve you piping hot meals every day.
+                Nikmati hidangan panas dan lazat setiap hari di Warung J&J Penampang, Sabah.
               </p>
             </div>
             
@@ -363,7 +363,7 @@ function LandingPage() {
                 </div>
                 <div className="pt-1">
                   <h4 className="font-bold text-[17px] tracking-tight text-stone-200">Address</h4>
-                  <p className="text-stone-400 leading-relaxed mt-1 whitespace-pre-wrap">{storeInfo?.address || 'Warung J&J,\nPenampang, Sabah, Malaysia'}</p>
+                  <p className="text-stone-400 leading-relaxed mt-1 whitespace-pre-wrap">{storeInfo?.address || 'Warung J&J\nJalan Penampang, 89500 Penampang,\nSabah, Malaysia'}</p>
                 </div>
               </div>
               
@@ -373,7 +373,7 @@ function LandingPage() {
                 </div>
                 <div className="pt-1">
                   <h4 className="font-bold text-[17px] tracking-tight text-stone-200">Opening Hours</h4>
-                  <p className="text-stone-400 leading-relaxed mt-1">Everyday: 8:00 AM - 10:00 PM</p>
+                  <p className="text-stone-400 leading-relaxed mt-1">Setiap Hari: 10:00 AM - 10:00 PM</p>
                 </div>
               </div>
 
@@ -383,7 +383,7 @@ function LandingPage() {
                 </div>
                 <div className="pt-1">
                   <h4 className="font-bold text-[17px] tracking-tight text-stone-200">Contact</h4>
-                  <p className="text-stone-400 leading-relaxed mt-1">{storeInfo?.phone_number || '+60 12-345 6789'}</p>
+                  <p className="text-stone-400 leading-relaxed mt-1">{storeInfo?.phone_number || '017-222 1784'}</p>
                 </div>
               </div>
             </div>
