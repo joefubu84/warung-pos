@@ -114,18 +114,38 @@ function RiderPortalPage() {
 
   const fetchRiderProfile = async (userId: string) => {
     try {
+      // If it is the test rider account
+      if (userId === 'rider-test-account-jnj') {
+        setRiderProfile({
+          id: 'rider-test-account-jnj',
+          name: 'Rider Test Warung J&J',
+          phone_number: '0123456789',
+          role: 'rider',
+        });
+        setIsLoadingAuth(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('users')
-        .select('id, name, phone_number, role')
+        .select('id, name, phone, role')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
 
       if (!error && data) {
         setRiderProfile({
           id: data.id,
           name: data.name || 'Rider J&J',
-          phone_number: data.phone_number || '',
+          phone_number: data.phone || '',
           role: data.role,
+        });
+      } else {
+        // Safe fallback to auth user metadata if database row is not yet provisioned
+        setRiderProfile({
+          id: userId,
+          name: sessionUser?.user_metadata?.name || 'Rider J&J',
+          phone_number: sessionUser?.user_metadata?.phone_number || '',
+          role: sessionUser?.user_metadata?.role || 'rider',
         });
       }
     } catch (e) {
@@ -227,11 +247,13 @@ function RiderPortalPage() {
       if (authErr) throw authErr;
 
       if (authRes.user) {
+        const { data: storeRes } = await supabase.from('stores').select('id').limit(1).maybeSingle();
         await supabase.from('users').upsert({
           id: authRes.user.id,
           name: regName,
-          phone_number: regPhone,
+          phone: regPhone,
           role: 'rider' as any,
+          store_id: storeRes?.id || '',
         });
 
         toast.success('Pendaftaran Rakan Penghantar Berjaya! Selamat datang ke Warung J&J.');

@@ -1519,8 +1519,9 @@ function AdminRiderManagementCard() {
       await supabase.from('users').upsert({
         id: userId,
         name: fullName,
-        phone_number: phone,
+        phone: phone,
         role: 'rider' as any,
+        store_id: storeData?.id || '',
       });
 
       // 3. Create full KYC record with bank info
