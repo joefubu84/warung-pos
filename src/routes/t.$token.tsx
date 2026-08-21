@@ -848,7 +848,9 @@ export function TableQRPage() {
                   <p>Your cart is currently empty.</p>
                   <p className="text-[10px] text-slate-600">Select dishes from the menu to add to your order.</p>
                 </div>
-                    <div className="divide-y divide-slate-800 max-h-[420px] overflow-y-auto pr-1 space-y-2">
+              ) : (
+                <div className="space-y-4">
+                  <div className="divide-y divide-slate-800 max-h-[420px] overflow-y-auto pr-1 space-y-2">
                     {cart.map((item) => {
                       const qty = item.quantity;
                       const packNotes = item.packNotes || Array(qty).fill('');
