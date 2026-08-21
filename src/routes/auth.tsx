@@ -38,6 +38,21 @@ function AuthPage() {
       setError(signInError.message || 'Log masuk gagal. Sila periksa emel dan kata laluan.');
       setLoading(false);
     } else {
+      // Check user role for proper routing
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: userProfile } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (userProfile?.role === 'rider') {
+          navigate({ to: '/rider' });
+          return;
+        }
+      }
+
       const destination = redirectPath || '/counter';
       navigate({ to: destination });
     }
@@ -138,23 +153,35 @@ function AuthPage() {
         </form>
 
         {/* Footer Navigation */}
-        <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
-          <button
-            type="button"
-            onClick={() => navigate({ to: '/' })}
-            className="inline-flex items-center gap-1.5 hover:text-emerald-400 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Kembali ke Utama</span>
-          </button>
-          
-          <button
-            type="button"
-            onClick={() => navigate({ to: '/delivery' })}
-            className="text-emerald-400 hover:underline font-semibold"
-          >
-            Pesanan Delivery 🛵
-          </button>
+        <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-2.5 text-xs text-slate-400">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => navigate({ to: '/' })}
+              className="inline-flex items-center gap-1.5 hover:text-emerald-400 transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Kembali ke Utama</span>
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => navigate({ to: '/delivery' })}
+              className="text-emerald-400 hover:underline font-semibold"
+            >
+              Pesanan Delivery 🛵
+            </button>
+          </div>
+
+          <div className="pt-2 border-t border-slate-800/60 text-center">
+            <button
+              type="button"
+              onClick={() => navigate({ to: '/rider' })}
+              className="text-xs font-bold text-amber-400 hover:text-amber-300 hover:underline font-mono"
+            >
+              🛵 Anda Rider Delivery? Daftar & Log Masuk Portal Rider di Sini →
+            </button>
+          </div>
         </div>
       </div>
     </div>

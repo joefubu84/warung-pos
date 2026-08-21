@@ -26,6 +26,11 @@ export async function requireAuth(location: { pathname: string }, auth: AuthStat
   const { userProfile, error } = await getUserProfile(session);
 
   if (error || !userProfile || !allowedRoles.includes(userProfile.role)) {
+    if (userProfile?.role === 'rider') {
+      throw redirect({
+        to: '/rider',
+      });
+    }
     throw new Error(`Access Denied: Requires one of [${allowedRoles.join(', ')}]`);
   }
 

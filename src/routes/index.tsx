@@ -417,6 +417,18 @@ function LandingPage() {
             </div>
             <span className="text-lg font-bold tracking-tight text-stone-300">Warung J&J</span>
           </div>
+
+          {/* QUICK PORTAL LINKS */}
+          <div className="flex items-center gap-4 text-xs font-mono">
+            <Link to="/rider" className="text-amber-400 hover:text-amber-300 hover:underline flex items-center gap-1 font-bold">
+              🛵 Portal Rider (Daftar / Bertugas)
+            </Link>
+            <span className="text-stone-700">•</span>
+            <Link to="/auth" className="text-stone-400 hover:text-stone-200 hover:underline">
+              🔐 Staff Login
+            </Link>
+          </div>
+
           <p className="text-sm font-medium text-stone-500 tracking-tight">© {new Date().getFullYear()} Warung J&J. All rights reserved.</p>
         </div>
       </footer>
