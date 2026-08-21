@@ -342,6 +342,8 @@ function SettingsPage() {
     } catch (err: any) {
       toast.error(`Upload failed: ${err.message}`);
     }
+  };
+
   const [activeTab, setActiveTab] = useState<'riders' | 'payments' | 'kitchen' | 'store' | 'security'>('riders');
 
   return (
