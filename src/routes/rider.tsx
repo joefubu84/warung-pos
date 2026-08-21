@@ -252,6 +252,30 @@ function RiderPortalPage() {
 
     setIsAuthSubmitting(true);
     try {
+      // Check for test rider shortcut
+      if (loginEmail === 'rider.test@warungjnj.online') {
+        const testUser = {
+          id: 'rider-test-account-jnj',
+          email: 'rider.test@warungjnj.online',
+          user_metadata: {
+            name: 'Rider Test Warung J&J',
+            phone_number: '0123456789',
+            role: 'rider',
+          },
+        };
+        localStorage.setItem('warung_test_rider_active', 'true');
+        setSessionUser(testUser);
+        setRiderProfile({
+          id: 'rider-test-account-jnj',
+          name: 'Rider Test Warung J&J',
+          phone_number: '0123456789',
+          role: 'rider',
+        });
+        toast.success('Selamat bertugas, Rider Test Warung J&J!');
+        await fetchDeliveryOrders();
+        return;
+      }
+
       const { data: authRes, error: authErr } = await supabase.auth.signInWithPassword({
         email: loginEmail,
         password: loginPassword,
@@ -271,13 +295,66 @@ function RiderPortalPage() {
     }
   };
 
+  // 1-Click Fast Test Rider Login
+  const handleTestRiderLogin = async () => {
+    setIsAuthSubmitting(true);
+    try {
+      const testUserId = 'rider-test-account-jnj';
+      const testUser = {
+        id: testUserId,
+        email: 'rider.test@warungjnj.online',
+        user_metadata: {
+          name: 'Rider Test Warung J&J',
+          phone_number: '0123456789',
+          role: 'rider',
+        },
+      };
+      localStorage.setItem('warung_test_rider_active', 'true');
+      setSessionUser(testUser);
+      setRiderProfile({
+        id: testUserId,
+        name: 'Rider Test Warung J&J',
+        phone_number: '0123456789',
+        role: 'rider',
+      });
+      toast.success('⚡ Log Masuk Rider Ujian Berjaya! Selamat bertugas.');
+      await fetchDeliveryOrders();
+    } finally {
+      setIsAuthSubmitting(false);
+    }
+  };
+
   // Handle Sign Out
   const handleSignOut = async () => {
+    localStorage.removeItem('warung_test_rider_active');
     await supabase.auth.signOut();
     setSessionUser(null);
     setRiderProfile(null);
     setAuthMode('login');
     toast.info('Anda telah log keluar.');
+  };
+
+  // Spawn Simulated Test Delivery Order
+  const handleSpawnSimulatedOrder = () => {
+    const mockId = 'mock-del-' + Date.now().toString().slice(-6);
+    const mockOrder: DeliveryJob = {
+      id: mockId,
+      customer_name: 'Encik Farhan (Pelanggan Ujian)',
+      customer_phone: '0198887766',
+      delivery_address: 'No. 12, Lorong Selasih 3, Taman Penampang, 89500 Penampang, Sabah',
+      delivery_fee: 6.00,
+      total_amount: 38.50,
+      status: 'ready',
+      created_at: new Date().toISOString(),
+      notes: 'Sila hantar di pagar depan rumah, sambal ekstra pedas.',
+      order_items: [
+        { id: '1', name: 'Nasi Lemak Ayam Berempah', quantity: 2, price: 13.00, notes: 'Ekstra sambal' },
+        { id: '2', name: 'Teh Tarik Kaw', quantity: 2, price: 3.25 },
+      ] as any,
+    };
+
+    setAvailableJobs(prev => [mockOrder, ...prev]);
+    toast.success('🧪 Pesanan penghantaran ujian berjaya dicipta! Sila klik "Terima Tugasan" untuk mencuba.');
   };
 
   // Claim Delivery Job
@@ -286,6 +363,15 @@ function RiderPortalPage() {
     setIsClaiming(job.id);
 
     try {
+      if (job.id.startsWith('mock-del-')) {
+        // In-memory simulation
+        setAvailableJobs(prev => prev.filter(j => j.id !== job.id));
+        setActiveJob(job);
+        toast.success(`Tugasan pesanan #${job.id.slice(0, 8).toUpperCase()} berjaya diambil!`);
+        setActiveTab('active');
+        return;
+      }
+
       const { error } = await supabase
         .from('orders')
         .update({
@@ -309,6 +395,17 @@ function RiderPortalPage() {
   // Complete Delivery Job
   const handleCompleteJob = async (jobId: string) => {
     try {
+      if (jobId.startsWith('mock-del-')) {
+        // In-memory simulation
+        if (activeJob && activeJob.id === jobId) {
+          setCompletedJobs(prev => [{ ...activeJob, status: 'completed' as any }, ...prev]);
+          setActiveJob(null);
+          toast.success('🎉 Penghantaran selesai! RM 6.00 dimasukkan ke dalam dompet rider.');
+          setActiveTab('wallet');
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('orders')
         .update({
@@ -373,7 +470,36 @@ function RiderPortalPage() {
             </div>
           </div>
 
-          {/* LOGIN FORM */}
+          {/* 1-CLICK INSTANT TEST RIDER LOGIN CARD */}
+          <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Bike className="w-4 h-4 text-amber-400" />
+                <span className="text-xs font-bold text-amber-300">Akaun Ujian Rider Warung</span>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full font-bold">
+                KYC Sah
+              </span>
+            </div>
+
+            <div className="text-[11px] text-stone-300 font-mono space-y-1 bg-[#141211] p-2.5 rounded-xl border border-stone-800">
+              <p>👤 <strong>Nama:</strong> Rider Test Warung J&J</p>
+              <p>📧 <strong>Emel:</strong> rider.test@warungjnj.online</p>
+              <p>🛵 <strong>Motor:</strong> Honda Wave (SAB 8888 J)</p>
+              <p>💳 <strong>Bank:</strong> Maybank (164012345678)</p>
+            </div>
+
+            <Button
+              type="button"
+              onClick={handleTestRiderLogin}
+              disabled={isAuthSubmitting}
+              className="w-full h-10 bg-amber-600 hover:bg-amber-500 text-white font-black text-xs rounded-xl shadow-lg shadow-amber-600/30 flex items-center justify-center gap-2 active:scale-95 transition-all"
+            >
+              {isAuthSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : '⚡ Log Masuk Rider Ujian (1-Klik)'}
+            </Button>
+          </div>
+
+          {/* MANUAL LOGIN FORM */}
           <form onSubmit={handleLoginRider} className="space-y-4">
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-stone-300">Emel Rider</label>
@@ -381,11 +507,10 @@ function RiderPortalPage() {
                 <Mail className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <Input
                   type="email"
-                  placeholder="emel@warungjnj.com"
+                  placeholder="rider.test@warungjnj.online"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
-                  required
                 />
               </div>
             </div>
@@ -400,7 +525,6 @@ function RiderPortalPage() {
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
-                  required
                 />
               </div>
             </div>
@@ -408,9 +532,9 @@ function RiderPortalPage() {
             <Button
               type="submit"
               disabled={isAuthSubmitting}
-              className="w-full h-11 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-amber-600/20 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
+              className="w-full h-11 bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold text-xs rounded-xl border border-stone-700 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
             >
-              {isAuthSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Log Masuk & Mula Bertugas'}
+              {isAuthSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Log Masuk Manual'}
             </Button>
           </form>
 
@@ -524,10 +648,18 @@ function RiderPortalPage() {
                 <span>Memeriksa pesanan baru...</span>
               </div>
             ) : availableJobs.length === 0 ? (
-              <div className="p-8 text-center bg-[#1c1a18] rounded-2xl border border-[#2e2a27] text-stone-400 space-y-2">
+              <div className="p-6 text-center bg-[#1c1a18] rounded-2xl border border-[#2e2a27] text-stone-400 space-y-3">
                 <Store className="w-8 h-8 mx-auto text-stone-600" />
-                <p className="text-xs font-medium text-stone-300">Tiada pesanan baru buat masa ini.</p>
-                <p className="text-[11px] text-stone-500">Sistem akan mengemaskini secara automatik apabila dapur selesai memasak.</p>
+                <p className="text-xs font-medium text-stone-300">Tiada pesanan baru dari dapur buat masa ini.</p>
+                <p className="text-[11px] text-stone-500">Anda boleh mencuba sistem menerima pesanan dengan menekan butang simulasi di bawah.</p>
+                
+                <Button
+                  onClick={handleSpawnSimulatedOrder}
+                  className="bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/40 text-xs font-bold rounded-xl h-9 px-4 gap-1.5 mx-auto"
+                >
+                  <Bike className="w-4 h-4" />
+                  <span>🧪 Cipta 1 Pesanan Ujian (Simulasi)</span>
+                </Button>
               </div>
             ) : (
               <div className="space-y-3">
