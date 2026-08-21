@@ -414,17 +414,6 @@ function RiderPortalPage() {
             </Button>
           </form>
 
-          {/* IN-STORE REGISTRATION NOTICE */}
-          <div className="p-4 bg-[#141211] border border-[#2e2a27] rounded-2xl text-left space-y-1.5">
-            <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs">
-              <Store className="w-4 h-4 text-amber-500 shrink-0" />
-              <span>Pendaftaran Rakan Penghantar Baharu</span>
-            </div>
-            <p className="text-[11px] text-stone-400 leading-relaxed">
-              Bagi menjamin kualiti dan keselamatan perkhidmatan, pendaftaran rider hanya diproses secara bersemuka di premis <strong className="text-stone-200">Warung J&J (de Baxters Café, Penampang)</strong> oleh pihak pengurusan warung.
-            </p>
-          </div>
-
           <div className="pt-2 border-t border-[#2e2a27] text-center">
             <button
               onClick={() => navigate({ to: '/' })}
