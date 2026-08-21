@@ -73,20 +73,32 @@ const OrderCard = memo(({
   onAcknowledge, 
   onAdvanceStatus 
 }: any) => {
-  const hasNotes = order.order_items.some((item: any) => item.notes);
-  let cardClasses = "border-2 p-4 rounded shadow-sm flex flex-col justify-between transition-all duration-200 ease-in-out ";
+  const isModified = highlight?.type === 'updated';
+  let cardClasses = "border-2 p-4 rounded-2xl shadow-sm flex flex-col justify-between transition-all duration-300 ease-in-out relative overflow-hidden ";
   
   if (highlight?.type === 'new') {
-    cardClasses += "border-red-500 bg-red-950/40 shadow-[0_0_15px_rgba(239,68,68,0.2)] animate-pulse";
-  } else if (highlight?.type === 'updated') {
-    cardClasses += "border-yellow-500 bg-yellow-950/40 shadow-[0_0_15px_rgba(234,179,8,0.2)]";
+    cardClasses += "border-4 border-emerald-500 bg-emerald-950/40 shadow-[0_0_20px_rgba(16,185,129,0.4)] animate-pulse";
+  } else if (isModified) {
+    cardClasses += "border-4 border-rose-500 bg-rose-950/70 shadow-[0_0_30px_rgba(244,63,94,0.8)] animate-pulse ring-4 ring-rose-500/50";
   } else {
-    cardClasses += "border-slate-700 bg-slate-800";
+    cardClasses += "border-slate-800 bg-slate-900";
   }
 
   return (
     <div className={cardClasses}>
       <div>
+        {/* FLASHING RED & WHITE MODIFICATION ALERT BANNER */}
+        {isModified && (
+          <div className="bg-rose-600 border-2 border-white text-white font-black text-xs px-3 py-2 rounded-xl flex items-center justify-between shadow-xl animate-bounce mb-3">
+            <span className="flex items-center gap-1.5 uppercase tracking-wider">
+              🚨 PERUBAHAN PESANAN / MODIFIED!
+            </span>
+            <span className="bg-black/50 text-[10px] px-2 py-0.5 rounded text-white font-mono font-bold">
+              SEMAK ITEM BARU
+            </span>
+          </div>
+        )}
+
         <div className="flex flex-col gap-1 mb-2">
           <div className="flex justify-between items-start">
             <div className="flex flex-col gap-2">
@@ -112,49 +124,49 @@ const OrderCard = memo(({
                 )}
 
                 {highlight?.type === 'new' && (
-                  <span className="text-[10px] bg-red-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wider animate-bounce">
-                    🆕 NEW ORDER
+                  <span className="text-[10px] bg-emerald-600 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider font-black animate-bounce shadow">
+                    🆕 PESANAN BARU
                   </span>
                 )}
-                {highlight?.type === 'updated' && (
-                  <span className="text-[10px] bg-yellow-500 text-white px-2 py-0.5 rounded-full uppercase tracking-wider animate-bounce">
-                    🔔 ORDER UPDATED
+                {isModified && (
+                  <span className="text-[10px] bg-rose-600 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider font-black animate-pulse shadow-[0_0_10px_rgba(244,63,94,0.9)] border border-white">
+                    🚨 PERUBAHAN PESANAN
                   </span>
                 )}
-                {order.order_edit_logs && order.order_edit_logs.length > 0 && highlight?.type !== 'new' && (
-                  <span className="text-[10px] bg-orange-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wider font-bold shadow-[0_0_8px_rgba(234,88,12,0.6)]">
-                    ✏️ EDITED
+                {order.order_edit_logs && order.order_edit_logs.length > 0 && !highlight && (
+                  <span className="text-[10px] bg-amber-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wider font-bold shadow-[0_0_8px_rgba(234,88,12,0.6)]">
+                    ✏️ PERNAH DIUBAH
                   </span>
                 )}
               </div>
               
-              <h2 className="text-lg font-bold leading-tight flex items-center gap-2 text-white flex-wrap w-full">
+              <h2 className="text-lg font-black leading-tight flex items-center gap-2 text-white flex-wrap w-full">
                 {order.type === 'dine_in' 
-                  ? `Table ${order.tables?.table_number || '?'}` 
-                  : (order.customer_name || 'Anonymous Customer')}
+                  ? `Meja ${order.tables?.table_number || '?'}` 
+                  : (order.customer_name || 'Pelanggan Walk-In')}
                 
                 {order.paid ? (
-                  <span className="text-[10px] bg-green-500/20 text-green-300 px-2 py-0.5 rounded border border-green-500/30 whitespace-nowrap">
-                    ✓ PAID {order.payment_method === 'card' ? '💳' : '💵'}
+                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-md border border-emerald-500/30 whitespace-nowrap font-bold">
+                    ✓ DAH BAYAR {order.payment_method === 'card' ? '💳' : '📱/💵'}
                   </span>
                 ) : (
-                  <span className="text-[10px] bg-red-500/20 text-red-300 px-2 py-0.5 rounded border border-red-500/30 whitespace-nowrap">
-                    ❌ NOT PAID
+                  <span className="text-[10px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-md border border-rose-500/30 whitespace-nowrap font-bold">
+                    ❌ BELUM BAYAR
                   </span>
                 )}
                 <WaitTimer createdAt={order.created_at} />
               </h2>
               {order.type === 'delivery' && (order.customer_phone || order.delivery_address) && (
-                <div className="bg-slate-900/50 p-2 rounded text-xs text-slate-300 mt-1 border border-slate-700 w-full">
-                  {order.customer_phone && <p className="mb-1"><span className="opacity-70">📞</span> {order.customer_phone}</p>}
-                  {order.delivery_address && <p><span className="opacity-70">📍</span> {order.delivery_address}</p>}
+                <div className="bg-slate-950/80 p-2.5 rounded-xl text-xs text-slate-300 mt-1 border border-slate-800 w-full space-y-0.5 font-mono">
+                  {order.customer_phone && <p><span className="opacity-70">📞</span> {order.customer_phone}</p>}
+                  {order.delivery_address && <p className="text-emerald-300"><span className="opacity-70">📍</span> {order.delivery_address}</p>}
                 </div>
               )}
             </div>
             
             <div className="flex flex-col gap-2 items-end">
-              <span className={`px-2 py-1 text-[10px] font-bold rounded uppercase ${
-                order.status === 'pending' ? 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30' : 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+              <span className={`px-2.5 py-1 text-[10px] font-bold rounded-lg uppercase tracking-wider ${
+                order.status === 'pending' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
               }`}>
                 {order.status}
               </span>
@@ -162,55 +174,60 @@ const OrderCard = memo(({
               {highlight && (
                 <button 
                   onClick={() => onAcknowledge(order.id)}
-                  className="bg-white text-black text-[10px] font-bold px-3 py-1 rounded shadow hover:bg-gray-200 transition-colors"
+                  className={`${isModified ? 'bg-rose-500 hover:bg-rose-600 text-white animate-pulse border-2 border-white' : 'bg-white hover:bg-slate-200 text-black'} text-xs font-black px-3.5 py-1.5 rounded-xl shadow-lg transition-all active:scale-95 whitespace-nowrap`}
                 >
-                  ✅ ACKNOWLEDGE
+                  {isModified ? '🚨 SAHKAN PERUBAHAN' : '✅ TERIMA ORDER'}
                 </button>
               )}
             </div>
           </div>
         </div>
         
-        <div className="space-y-2 mb-4 mt-4">
-          {(() => {
-            if (highlight?.type === 'updated') {
-              const newCount = order.order_items.filter((i: any) => highlightedItems[i.id]).length;
-              if (newCount > 0) {
-                return (
-                  <div className="text-xs font-bold text-yellow-300 bg-yellow-500/20 border border-yellow-500/30 p-1.5 rounded text-center mb-2 shadow-sm">
-                    (+{newCount} new items added)
-                  </div>
-                );
-              }
-            }
-            return null;
-          })()}
+        {/* ORDER ITEMS LIST WITH MODIFICATION HIGHLIGHTING */}
+        <div className="space-y-2 mb-4 mt-3">
+          {isModified && (
+            <div className="text-xs font-black text-rose-200 bg-rose-600/30 border border-rose-500/50 p-2 rounded-xl text-center mb-2 shadow-inner flex items-center justify-center gap-1.5">
+              <span>⚠️ Perhatian Dapur: Semak hidangan yang dikemas kini di bawah:</span>
+            </div>
+          )}
 
           {order.order_items.map((item: any) => {
             const isNewItem = highlightedItems[item.id];
             return (
-              <div key={item.id} className={`flex flex-col p-1 rounded transition-colors duration-1000 ${isNewItem ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold' : ''}`}>
+              <div 
+                key={item.id} 
+                className={`flex flex-col p-2.5 rounded-xl border transition-all duration-300 ${
+                  isNewItem 
+                    ? 'bg-rose-500/20 text-rose-200 border-rose-500/60 font-black shadow-[0_0_12px_rgba(244,63,94,0.3)] scale-[1.02]' 
+                    : 'bg-slate-950/60 text-slate-200 border-slate-800/80'
+                }`}
+              >
                 <div className="flex justify-between items-center text-sm">
-                  <span className="flex items-center gap-2">
-                    {item.menu_items.name}
+                  <span className="flex items-center gap-2 flex-wrap font-semibold">
+                    <span className="text-white font-bold">{item.menu_items?.name || 'Menu Item'}</span>
+                    {isNewItem && (
+                      <span className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded-md font-black uppercase">
+                        BARU / DIUBAH ✨
+                      </span>
+                    )}
                     {item.fulfillment_type === 'dine_in' ? (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300 border border-slate-600">
-                        Eat here
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700 font-bold">
+                        Makan Sini (Dine-In)
                       </span>
                     ) : (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-400 border border-orange-500/30 font-bold uppercase">
-                        TAKEAWAY - PACK {item.container_size ? `(${item.container_size.charAt(0).toUpperCase() + item.container_size.slice(1)})` : ''}
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-black uppercase">
+                        BUNGKUS (TAKEAWAY) {item.container_size ? `[${item.container_size.toUpperCase()}]` : ''}
                       </span>
                     )}
                   </span>
-                  <span className="font-bold">x{item.quantity}</span>
+                  <span className="font-black text-base font-mono text-emerald-400">x{item.quantity}</span>
                 </div>
                 {item.notes && (
                   <div 
-                    className="text-xs text-black italic py-2 px-3 mt-2 rounded border border-yellow-400 ml-1" 
-                    style={{ backgroundColor: '#FEF08A' }}
+                    className="text-xs text-slate-900 font-bold py-1.5 px-2.5 mt-2 rounded-lg border border-amber-400 bg-amber-200 flex items-start gap-1"
                   >
-                    ✏️ {item.notes}
+                    <span>✏️</span>
+                    <span>{item.notes}</span>
                   </div>
                 )}
               </div>
@@ -219,16 +236,16 @@ const OrderCard = memo(({
         </div>
       </div>
 
-      <div className="border-t border-slate-700 pt-4 mt-4">
-        <p className="text-xs text-slate-400 mb-2">
-          Ordered: {new Date(order.created_at).toLocaleTimeString()}
+      <div className="border-t border-slate-800 pt-3 mt-3">
+        <p className="text-[11px] text-slate-400 mb-2 font-mono">
+          Masa Pesanan: {new Date(order.created_at).toLocaleTimeString()}
         </p>
         {order.status !== 'ready' && (
           <button
             onClick={() => onAdvanceStatus(order.id, order.status)}
-            className="w-full bg-green-600 text-white py-2 font-bold rounded hover:bg-green-700 transition-colors"
+            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 font-black text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition-all active:scale-98 uppercase tracking-wider"
           >
-            {order.status === 'pending' ? 'Start Preparing' : 'Mark as Ready'}
+            {order.status === 'pending' ? '🍳 MULA MASAK (START PREPARING)' : '🍽️ SIAP DIHIDANG (MARK AS READY)'}
           </button>
         )}
       </div>
