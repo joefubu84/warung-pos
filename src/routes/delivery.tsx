@@ -74,9 +74,9 @@ interface CartItem {
   spiceLevel?: string;
 }
 
-// Base Coordinates for Warung J&J (de Baxters Café, Penampang, Sabah)
-const WARUNG_LAT = 5.918;
-const WARUNG_LNG = 116.082;
+// Base Coordinates for Warung J&J (de Baxters Café, a17, Jln Datuk Panglima Banting, 89500 Penampang, Sabah)
+const WARUNG_LAT = 5.9284138;
+const WARUNG_LNG = 116.1145036;
 
 function calculateHaversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth radius in km
@@ -105,17 +105,20 @@ function CustomerDeliveryPage() {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
-  const [custLat, setCustLat] = useState<number>(5.919);
-  const [custLng, setCustLng] = useState<number>(116.085);
+  const [custLat, setCustLat] = useState<number>(5.9141659);
+  const [custLng, setCustLng] = useState<number>(116.085516);
+  const [isSearchingAddress, setIsSearchingAddress] = useState(false);
+  const [roadDistanceKm, setRoadDistanceKm] = useState<number>(6.6);
+  const [travelTimeMins, setTravelTimeMins] = useState<number>(12);
+  const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [showDuitNowModal, setShowDuitNowModal] = useState(false);
 
-  // Distance & Fee Calculations
-  const distanceKm = calculateHaversineKm(WARUNG_LAT, WARUNG_LNG, custLat, custLng);
-  const isOutOfZone = distanceKm > 15.0;
-  const deliveryFee = Math.max(Math.round(distanceKm * 1.00 * 100) / 100, 2.00);
+  // Distance & Fee Calculations (Based on actual road driving distance)
+  const isOutOfZone = roadDistanceKm > 15.0;
+  const deliveryFee = Math.max(Math.round(roadDistanceKm * 1.00 * 100) / 100, 2.00);
 
   const foodSubtotal = cart.reduce((sum, item) => sum + (item.price + (item.containerCharge || 0)) * item.quantity, 0);
   const grandTotal = foodSubtotal + (cart.length > 0 ? deliveryFee : 0);
@@ -127,9 +130,40 @@ function CustomerDeliveryPage() {
   const [copiedBankAcc, setCopiedBankAcc] = useState(false);
   const [isFPXLoading, setIsFPXLoading] = useState(false);
 
+  // Calculate actual road distance via OSRM Routing Engine
+  const fetchRoadRoute = async (destLat: number, destLng: number) => {
+    setIsCalculatingRoute(true);
+    try {
+      const url = `https://router.project-osrm.org/route/v1/driving/${WARUNG_LNG},${WARUNG_LAT};${destLng},${destLat}?overview=false`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data && data.code === 'Ok' && data.routes && data.routes.length > 0) {
+        const route = data.routes[0];
+        const distKm = Math.round((route.distance / 1000) * 10) / 10;
+        const durMins = Math.max(5, Math.ceil(route.duration / 60) + 3);
+        setRoadDistanceKm(distKm);
+        setTravelTimeMins(durMins);
+      } else {
+        // Fallback to Haversine * 1.35 (standard urban road detour multiplier)
+        const straightKm = calculateHaversineKm(WARUNG_LAT, WARUNG_LNG, destLat, destLng);
+        const estimatedRoadKm = Math.round(straightKm * 1.35 * 10) / 10;
+        setRoadDistanceKm(estimatedRoadKm);
+        setTravelTimeMins(Math.max(5, Math.ceil(estimatedRoadKm * 2)));
+      }
+    } catch (e) {
+      const straightKm = calculateHaversineKm(WARUNG_LAT, WARUNG_LNG, destLat, destLng);
+      const estimatedRoadKm = Math.round(straightKm * 1.35 * 10) / 10;
+      setRoadDistanceKm(estimatedRoadKm);
+      setTravelTimeMins(Math.max(5, Math.ceil(estimatedRoadKm * 2)));
+    } finally {
+      setIsCalculatingRoute(false);
+    }
+  };
+
   useEffect(() => {
     fetchMenuItems();
     fetchStore();
+    fetchRoadRoute(custLat, custLng);
 
     // Check for ToyyibPay FPX redirect return params
     if (typeof window !== 'undefined') {
@@ -337,24 +371,57 @@ function CustomerDeliveryPage() {
     toast.success('Bungkusan dipecahkan kepada pek individu untuk pengkhususan berasingan.');
   };
 
+  const handleSearchAddress = async (addrText?: string) => {
+    const textToSearch = addrText || deliveryAddress;
+    if (!textToSearch || textToSearch.trim().length < 3) return;
+
+    setIsSearchingAddress(true);
+    try {
+      // Search Nominatim within Sabah/Malaysia context
+      const query = encodeURIComponent(`${textToSearch}, Sabah, Malaysia`);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`);
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const lat = parseFloat(data[0].lat);
+        const lon = parseFloat(data[0].lon);
+        setCustLat(lat);
+        setCustLng(lon);
+        await fetchRoadRoute(lat, lon);
+        toast.success(`Lokasi dikesan: ${data[0].display_name.split(',')[0]} 📍`);
+      } else {
+        // Fallback: estimate route with current coordinates
+        await fetchRoadRoute(custLat, custLng);
+      }
+    } catch (e) {
+      await fetchRoadRoute(custLat, custLng);
+    } finally {
+      setIsSearchingAddress(false);
+    }
+  };
+
   const handleGetLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(async (pos) => {
-        setCustLat(pos.coords.latitude);
-        setCustLng(pos.coords.longitude);
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setCustLat(lat);
+        setCustLng(lng);
         
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
           const data = await res.json();
           if (data && data.display_name) {
             setDeliveryAddress(data.display_name);
             toast.success("Alamat lokasi GPS berjaya dikesan! 📍");
           } else {
-            toast.success(`Koordinat GPS dikesan: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+            toast.success(`Koordinat GPS dikesan: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
           }
         } catch (e) {
-          toast.success(`Koordinat GPS dikesan: ${pos.coords.latitude.toFixed(4)}, ${pos.coords.longitude.toFixed(4)}`);
+          toast.success(`Koordinat GPS dikesan: ${lat.toFixed(4)}, ${lng.toFixed(4)}`);
         }
+
+        // Calculate accurate road route distance from Warung J&J
+        await fetchRoadRoute(lat, lng);
       }, () => {
         toast.error("Tidak dapat mengesan lokasi GPS secara automatik. Sila taip alamat manual.");
       });
@@ -444,7 +511,7 @@ function CustomerDeliveryPage() {
       return;
     }
     if (isOutOfZone) {
-      toast.error(`Maaf, alamat anda (${distanceKm}km) berada di luar zon penghantaran 15km.`);
+      toast.error(`Maaf, alamat anda (${roadDistanceKm}km) berada di luar zon penghantaran 15km.`);
       return;
     }
 
@@ -563,7 +630,7 @@ function CustomerDeliveryPage() {
           <CardContent className="p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-black text-sm uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-emerald-400" /> 1. Alamat Penghantaran & Jarak
+                <MapPin className="w-4 h-4 text-emerald-400" /> 1. Alamat Penghantaran & Jarak Laluan
               </h2>
               <Button 
                 variant="outline" 
@@ -576,30 +643,63 @@ function CustomerDeliveryPage() {
               </Button>
             </div>
 
-            <Textarea
-              placeholder="Masukkan alamat lengkap (Nama Jalan, No. Rumah / Unit, Bandar, Poskod)..."
-              value={deliveryAddress}
-              onChange={(e) => setDeliveryAddress(e.target.value)}
-              className="bg-slate-950 border-slate-800 text-white placeholder-slate-600 rounded-2xl text-xs sm:text-sm min-h-[60px]"
-            />
+            <div className="space-y-2">
+              <Textarea
+                placeholder="Masukkan alamat lengkap (Nama Jalan, Bangunan / Pejabat, Bandar, Poskod)..."
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+                onBlur={() => handleSearchAddress()}
+                className="bg-slate-950 border-slate-800 text-white placeholder-slate-600 rounded-2xl text-xs sm:text-sm min-h-[60px]"
+              />
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              <div className="bg-slate-950 border border-slate-800 p-3 rounded-2xl flex justify-between items-center">
-                <span className="text-slate-400">Jarak dari Warung:</span>
-                <span className={`font-black ${isOutOfZone ? 'text-rose-400' : 'text-emerald-400'}`}>
-                  {distanceKm} km {isOutOfZone ? '⚠️ (Luar Zon)' : '✓'}
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={isSearchingAddress || isCalculatingRoute}
+                  onClick={() => handleSearchAddress()}
+                  className="text-[11px] text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/40 h-7 px-2.5 rounded-lg border border-emerald-500/20"
+                >
+                  {isSearchingAddress || isCalculatingRoute ? (
+                    <>
+                      <Loader2 className="w-3 h-3 animate-spin mr-1" /> Mengira Laluan...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-3 h-3 mr-1" /> Sahkan Lokasi & Kira Jarak
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+              <div className="bg-slate-950 border border-slate-800 p-3 rounded-2xl flex flex-col justify-center">
+                <span className="text-slate-400 text-[10px] block mb-0.5">Jarak Laluan Sebenar:</span>
+                <span className={`font-black text-sm ${isOutOfZone ? 'text-rose-400' : 'text-emerald-400'}`}>
+                  {roadDistanceKm} km {isOutOfZone ? '⚠️ (Luar Zon)' : '✓'}
                 </span>
               </div>
-              <div className="bg-slate-950 border border-slate-800 p-3 rounded-2xl flex justify-between items-center">
-                <span className="text-slate-400">Caj Penghantaran:</span>
-                <span className="font-black text-emerald-400">RM {deliveryFee.toFixed(2)}</span>
+
+              <div className="bg-slate-950 border border-slate-800 p-3 rounded-2xl flex flex-col justify-center">
+                <span className="text-slate-400 text-[10px] block mb-0.5">Anggaran Masa Rider:</span>
+                <span className="font-black text-sm text-sky-400 flex items-center gap-1">
+                  <Clock className="w-3.5 h-3.5" /> ~{travelTimeMins} minit
+                </span>
+              </div>
+
+              <div className="bg-slate-950 border border-slate-800 p-3 rounded-2xl flex flex-col justify-center">
+                <span className="text-slate-400 text-[10px] block mb-0.5">Caj Penghantaran:</span>
+                <span className="font-black text-sm text-amber-400">
+                  RM {deliveryFee.toFixed(2)}
+                </span>
               </div>
             </div>
 
             {isOutOfZone && (
               <div className="bg-rose-500/10 border border-rose-500/30 p-3 rounded-2xl text-xs text-rose-300 flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                <span>Maaf, kami hanya menghantar dalam zon 15km dari Warung J&J. Sila pilih alamat yang lebih hampir.</span>
+                <span>Maaf, kami hanya menghantar dalam zon 15km dari Warung J&J (de Baxters Café Penampang). Sila pilih alamat yang lebih hampir.</span>
               </div>
             )}
           </CardContent>
@@ -897,7 +997,7 @@ function CustomerDeliveryPage() {
                   <span className="font-bold text-white">RM {foodSubtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-slate-400">
-                  <span>Caj Penghantaran ({distanceKm}km @ RM1/km):</span>
+                  <span>Caj Penghantaran ({roadDistanceKm}km @ RM1/km):</span>
                   <span className="font-bold text-white">RM {deliveryFee.toFixed(2)}</span>
                 </div>
 
