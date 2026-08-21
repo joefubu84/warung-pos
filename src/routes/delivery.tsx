@@ -29,7 +29,8 @@ import {
   Receipt,
   Building2,
   CreditCard,
-  Globe
+  Globe,
+  Split
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createToyyibPayCheckout } from '@/lib/toyyibpay';
@@ -50,11 +51,13 @@ interface MenuItem {
 }
 
 interface CartItem {
+  id: string;
   menuItemId: string;
   name: string;
   price: number;
   quantity: number;
   notes?: string;
+  packNotes?: string[];
   containerCharge?: number;
 }
 
@@ -229,11 +232,29 @@ function CustomerDeliveryPage() {
     setCart(prev => {
       const existing = prev.find(i => i.menuItemId === item.id);
       if (existing) {
-        return prev.map(i => i.menuItemId === item.id ? { ...i, quantity: i.quantity + 1 } : i);
+        const nextQty = existing.quantity + 1;
+        const currentPackNotes = [...(existing.packNotes || [existing.notes || ''])];
+        while (currentPackNotes.length < nextQty) {
+          currentPackNotes.push('');
+        }
+        return prev.map(i => i.menuItemId === item.id ? { 
+          ...i, 
+          quantity: nextQty,
+          packNotes: currentPackNotes
+        } : i);
       }
-      return [...prev, { menuItemId: item.id, name: item.name, price: item.price, quantity: 1, containerCharge: 1.00 }];
+      return [...prev, { 
+        id: Math.random().toString(36).substring(2, 9),
+        menuItemId: item.id, 
+        name: item.name, 
+        price: item.price, 
+        quantity: 1, 
+        containerCharge: 1.00,
+        notes: '',
+        packNotes: ['']
+      }];
     });
-    toast.success(`Added ${item.name} to cart 🛒`);
+    toast.success(`Ditambah ${item.name} ke troli 🛒`);
   };
 
   const handleQuantityChange = (menuItemId: string, delta: number) => {
@@ -241,31 +262,80 @@ function CustomerDeliveryPage() {
       return prev.map(item => {
         if (item.menuItemId === menuItemId) {
           const newQty = item.quantity + delta;
-          return newQty > 0 ? { ...item, quantity: newQty } : null;
+          if (newQty <= 0) return null;
+          const currentPackNotes = [...(item.packNotes || [item.notes || ''])];
+          while (currentPackNotes.length < newQty) {
+            currentPackNotes.push('');
+          }
+          return { 
+            ...item, 
+            quantity: newQty,
+            packNotes: currentPackNotes.slice(0, newQty)
+          };
         }
         return item;
       }).filter(Boolean) as CartItem[];
     });
   };
 
-  const updateItemNotes = (menuItemId: string, notes: string) => {
-    setCart(prev => prev.map(item => item.menuItemId === menuItemId ? { ...item, notes } : item));
-  };
-
-  const toggleDeliveryQuickModifier = (menuItemId: string, tag: string) => {
+  const updatePackNote = (menuItemId: string, packIndex: number, note: string) => {
     setCart(prev => prev.map(item => {
       if (item.menuItemId === menuItemId) {
-        const currentNotes = (item.notes || '').trim();
-        let newNotes = currentNotes;
-        if (currentNotes.toLowerCase().includes(tag.toLowerCase())) {
-          newNotes = currentNotes.replace(new RegExp(tag, 'gi'), '').replace(/,\s*,/g, ',').trim();
-        } else {
-          newNotes = currentNotes ? `${currentNotes}, ${tag}` : tag;
-        }
-        return { ...item, notes: newNotes };
+        const currentPackNotes = [...(item.packNotes || Array(item.quantity).fill(''))];
+        currentPackNotes[packIndex] = note;
+        return {
+          ...item,
+          packNotes: currentPackNotes,
+          notes: currentPackNotes.filter(Boolean).join(' | ')
+        };
       }
       return item;
     }));
+  };
+
+  const togglePackQuickModifier = (menuItemId: string, packIndex: number, tag: string) => {
+    setCart(prev => prev.map(item => {
+      if (item.menuItemId === menuItemId) {
+        const currentPackNotes = [...(item.packNotes || Array(item.quantity).fill(''))];
+        const currentNote = currentPackNotes[packIndex] || '';
+        let nextNote = currentNote;
+        if (currentNote.toLowerCase().includes(tag.toLowerCase())) {
+          nextNote = currentNote.replace(new RegExp(tag, 'gi'), '').replace(/,\s*,/g, ',').trim();
+        } else {
+          nextNote = currentNote ? `${currentNote}, ${tag}` : tag;
+        }
+        currentPackNotes[packIndex] = nextNote;
+        return {
+          ...item,
+          packNotes: currentPackNotes,
+          notes: currentPackNotes.filter(Boolean).join(' | ')
+        };
+      }
+      return item;
+    }));
+  };
+
+  const splitDeliveryItem = (menuItemId: string) => {
+    setCart(prev => {
+      const target = prev.find(i => i.menuItemId === menuItemId);
+      if (!target || target.quantity <= 1) return prev;
+      const targetIndex = prev.findIndex(i => i.menuItemId === menuItemId);
+      const packNotes = target.packNotes || Array(target.quantity).fill('');
+      const individualItems: CartItem[] = Array.from({ length: target.quantity }).map((_, idx) => ({
+        id: Math.random().toString(36).substring(2, 9),
+        menuItemId: target.menuItemId,
+        name: target.name,
+        price: target.price,
+        quantity: 1,
+        containerCharge: target.containerCharge || 1.00,
+        notes: packNotes[idx] || '',
+        packNotes: [packNotes[idx] || '']
+      }));
+      const nextCart = [...prev];
+      nextCart.splice(targetIndex, 1, ...individualItems);
+      return nextCart;
+    });
+    toast.success('Bungkusan dipecahkan kepada pek individu untuk nota berasingan.');
   };
 
   const handleGetLocation = () => {
@@ -331,13 +401,24 @@ function CustomerDeliveryPage() {
           discount_value: 0,
           store_id: storeId
         },
-        p_items: cart.map(item => ({
-          menu_item_id: item.menuItemId,
-          quantity: item.quantity,
-          fulfillment_type: 'takeaway',
-          container_charge: item.containerCharge || 1.00,
-          notes: item.notes || ''
-        })),
+        p_items: cart.flatMap(item => {
+          if (item.quantity > 1 && item.packNotes && item.packNotes.length > 0) {
+            return item.packNotes.slice(0, item.quantity).map((pNote, pIdx) => ({
+              menu_item_id: item.menuItemId,
+              quantity: 1,
+              fulfillment_type: 'takeaway',
+              container_charge: item.containerCharge || 1.00,
+              notes: pNote ? pNote : (item.notes ? `${item.notes} (Pek #${pIdx + 1})` : '')
+            }));
+          }
+          return [{
+            menu_item_id: item.menuItemId,
+            quantity: item.quantity,
+            fulfillment_type: 'takeaway',
+            container_charge: item.containerCharge || 1.00,
+            notes: item.notes || ''
+          }];
+        }),
         p_payments: [] // Unpaid until ToyyibPay FPX webhook completes
       });
 
@@ -499,56 +580,105 @@ function CustomerDeliveryPage() {
         {cart.length > 0 && (
           <Card className="bg-slate-900 border-2 border-emerald-500/40 text-white rounded-3xl shadow-2xl">
             <CardContent className="p-5 space-y-4">
-              {/* CART ITEMS QUALITY & MODIFIER REVIEW */}
+              {/* CART ITEMS QUALITY & MODIFIER REVIEW WITH PER-PACK SPECIFICATION */}
               <div className="space-y-3 pb-3 border-b border-slate-800">
-                <h2 className="font-black text-base text-white flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4 text-emerald-400" /> Semakan Bungkusan Pesanan
+                <div className="flex items-center justify-between">
+                  <h2 className="font-black text-base text-white flex items-center gap-2">
+                    <ShoppingBag className="w-4 h-4 text-emerald-400" /> Semakan & Pengkhususan Setiap Bungkusan
+                  </h2>
+                  <span className="text-xs text-slate-400 font-mono">
+                    {cart.reduce((s, i) => s + i.quantity, 0)} Jumlah Bungkusan
                   </span>
-                  <span className="text-xs text-slate-400 font-mono">{cart.length} Jenis Menu</span>
-                </h2>
+                </div>
 
-                <div className="space-y-2.5">
-                  {cart.map((cItem, idx) => (
-                    <div key={cItem.menuItemId} className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
-                      <div className="flex justify-between items-center">
-                        <span className="font-black text-white text-sm">
-                          🥡 Pek #{idx + 1}: {cItem.name}
-                        </span>
-                        <span className="font-mono font-bold text-emerald-400 text-sm">
-                          x{cItem.quantity} (RM {(cItem.price * cItem.quantity).toFixed(2)})
-                        </span>
-                      </div>
+                <p className="text-[11px] text-slate-400">
+                  Sila spesifikasikan permintaan bagi setiap bungkusan (cth: Tak nak lada, ekstra pedas, kuah asing) supaya pihak dapur tidak silap bungkus:
+                </p>
 
-                      <Input
-                        placeholder="Nota bungkusan (cth: Tak nak lada, sambal asing...)"
-                        value={cItem.notes || ''}
-                        onChange={(e) => updateItemNotes(cItem.menuItemId, e.target.value)}
-                        className="bg-slate-900 border-slate-800 text-white text-xs h-8 rounded-xl font-medium"
-                      />
+                <div className="space-y-3">
+                  {cart.map((cItem) => {
+                    const qty = cItem.quantity;
+                    const packNotes = cItem.packNotes || Array(qty).fill('');
 
-                      {/* QUICK MODIFIER PILLS */}
-                      <div className="flex flex-wrap gap-1 pt-0.5">
-                        {COMMON_MODIFIERS.slice(0, 5).map(mod => {
-                          const isSelected = (cItem.notes || '').toLowerCase().includes(mod.tag);
-                          return (
+                    return (
+                      <div key={cItem.menuItemId} className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3 shadow-inner">
+                        {/* DISH HEADER */}
+                        <div className="flex justify-between items-center pb-2 border-b border-slate-800/80">
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-white text-sm">
+                              🍱 {cItem.name}
+                            </span>
+                            <span className="text-xs font-mono font-black text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-500/30">
+                              x{qty} (RM {(cItem.price * qty).toFixed(2)})
+                            </span>
+                          </div>
+
+                          {qty > 1 && (
                             <button
-                              key={mod.id}
                               type="button"
-                              onClick={() => toggleDeliveryQuickModifier(cItem.menuItemId, mod.tag)}
-                              className={`text-[10px] px-2 py-0.5 rounded-lg font-bold transition-all border ${
-                                isSelected
-                                  ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-sm'
-                                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
-                              }`}
+                              onClick={() => splitDeliveryItem(cItem.menuItemId)}
+                              className="px-2 py-1 bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 border border-sky-500/40 rounded-lg text-[10px] font-bold flex items-center gap-1 shadow-sm"
+                              title="Pecahkan kepada entri berasingan"
                             >
-                              {mod.icon} {mod.label.split('/')[0].trim()}
+                              <Split className="w-3 h-3" />
+                              <span>Pecah Bungkusan</span>
                             </button>
-                          );
-                        })}
+                          )}
+                        </div>
+
+                        {/* PER-PACK BREAKDOWN (PEK 1, PEK 2, PEK 3, PEK 4) */}
+                        <div className="space-y-2.5">
+                          {Array.from({ length: qty }).map((_, pIdx) => {
+                            const currentNote = packNotes[pIdx] || '';
+                            return (
+                              <div key={pIdx} className="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1.5">
+                                <div className="flex justify-between items-center text-xs">
+                                  <span className="font-black text-amber-400 font-mono flex items-center gap-1">
+                                    <span>🥡 Bungkusan #{pIdx + 1}</span>
+                                    {qty > 1 && <span className="text-[10px] text-slate-500 font-normal">({pIdx + 1} daripada {qty})</span>}
+                                  </span>
+                                  {currentNote && (
+                                    <span className="text-[10px] text-emerald-400 font-bold">
+                                      ✓ Nota Ditetapkan
+                                    </span>
+                                  )}
+                                </div>
+
+                                <Input
+                                  placeholder={`Permintaan khas Pek #${pIdx + 1} (cth: Tak nak lada, ekstra pedas, kuah asing)`}
+                                  value={currentNote}
+                                  onChange={(e) => updatePackNote(cItem.menuItemId, pIdx, e.target.value)}
+                                  className="bg-slate-950 border-slate-800 text-white text-xs h-8 rounded-xl font-medium focus:border-amber-400"
+                                />
+
+                                {/* QUICK MODIFIER PILLS FOR THIS SPECIFIC PACK */}
+                                <div className="flex flex-wrap gap-1 pt-0.5">
+                                  {COMMON_MODIFIERS.map(mod => {
+                                    const isSelected = currentNote.toLowerCase().includes(mod.tag);
+                                    return (
+                                      <button
+                                        key={mod.id}
+                                        type="button"
+                                        onClick={() => togglePackQuickModifier(cItem.menuItemId, pIdx, mod.tag)}
+                                        className={`text-[10px] px-2 py-0.5 rounded-lg font-bold transition-all border flex items-center gap-1 ${
+                                          isSelected
+                                            ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-sm scale-102'
+                                            : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-slate-200'
+                                        }`}
+                                      >
+                                        <span>{mod.icon}</span>
+                                        <span>{mod.label.split('/')[0].trim()}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
