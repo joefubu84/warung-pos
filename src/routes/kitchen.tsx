@@ -79,6 +79,7 @@ const OrderCard = memo(({
 }: any) => {
   const isModified = highlight?.type === 'updated';
   const [checkedComponents, setCheckedComponents] = useState<Record<string, boolean>>({});
+  const [showFinalCheckModal, setShowFinalCheckModal] = useState(false);
 
   const toggleComponentCheck = (itemId: string, compKey: string) => {
     const key = `${itemId}_${compKey}`;
@@ -370,37 +371,145 @@ const OrderCard = memo(({
         </div>
       </div>
 
+      {/* CARD FOOTER WITH HARD-LOCKED & GUIDED READY BUTTON */}
       <div className="border-t border-slate-800 pt-3 mt-2">
         <p className="text-[11px] text-slate-400 mb-2 font-mono flex justify-between items-center">
           <span>Masa Pesanan: {new Date(order.created_at).toLocaleTimeString()}</span>
-          {isAllComponentsChecked && <span className="text-emerald-400 font-bold">✓ Bungkusan Lengkap & Diperiksa</span>}
+          {isAllComponentsChecked ? (
+            <span className="text-emerald-400 font-bold">✓ 100% Lengkap Ditanda</span>
+          ) : (
+            <span className="text-amber-400 font-bold">🔒 {checkedComponentsCount}/{totalComponents} Diperiksa</span>
+          )}
         </p>
+        
         {order.status !== 'ready' && (
-          <button
-            onClick={() => {
-              if (order.status === 'preparing' && !isAllComponentsChecked) {
-                if (!confirm(`⚠️ Perhatian Dapur: Anda baru menanda ${checkedComponentsCount}/${totalComponents} komponen.\n\nAdakah anda pasti Nasi, Lauk, Sambal dan Kuah sudah dimasukkan ke dalam beg bungkusan?`)) {
-                  return;
-                }
-              }
-              onAdvanceStatus(order.id, order.status);
-            }}
-            className={`w-full py-2.5 font-black text-xs rounded-xl shadow-lg transition-all active:scale-98 uppercase tracking-wider flex items-center justify-center gap-2 ${
-              order.status === 'pending'
-                ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/30'
-                : isAllComponentsChecked
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/40 ring-2 ring-emerald-400 animate-pulse'
-                  : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40'
-            }`}
-          >
-            {order.status === 'pending' 
-              ? '🍳 MULA MASAK (START PREPARING)' 
-              : isAllComponentsChecked
-                ? '🍽️ SEMUA LENGKAP (NASI, LAUK, SAMBAL) — SERAH KEPADA RIDER ✓'
-                : `⚠️ TANDAKAN SIAP (${checkedComponentsCount}/${totalComponents} KOMPONEN)`}
-          </button>
+          <div>
+            {order.status === 'pending' ? (
+              <button
+                onClick={() => onAdvanceStatus(order.id, 'pending')}
+                className="w-full py-2.5 font-black text-xs rounded-xl shadow-lg bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/30 transition-all active:scale-98 uppercase tracking-wider flex items-center justify-center gap-2"
+              >
+                <span>🍳 MULA MASAK (START PREPARING)</span>
+              </button>
+            ) : (
+              /* PREPARING STATE: HARD-LOCKED UNTIL 100% COMPLETE */
+              <button
+                disabled={!isAllComponentsChecked}
+                onClick={() => {
+                  if (!isAllComponentsChecked) return;
+                  setShowFinalCheckModal(true);
+                }}
+                className={`w-full py-3 font-black text-xs rounded-xl shadow-lg transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${
+                  isAllComponentsChecked
+                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/50 ring-2 ring-emerald-400 animate-pulse active:scale-98 cursor-pointer'
+                    : 'bg-slate-800/80 text-slate-500 border border-slate-700/60 cursor-not-allowed select-none opacity-60'
+                }`}
+              >
+                {isAllComponentsChecked ? (
+                  <>
+                    <span>🔍 100% LENGKAP — SEMAK AKHIR & SERAH ✓</span>
+                  </>
+                ) : (
+                  <>
+                    <span>🔒 KUNCI: TANDA SEMUA KOMPONEN DAHULU ({checkedComponentsCount}/{totalComponents})</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {order.status === 'preparing' && !isAllComponentsChecked && (
+              <p className="text-[10px] text-center text-amber-400/80 font-mono mt-1.5">
+                ⚠️ Butang dikunci. Sila tekan semua butang Nasi, Lauk, Sambal & Sup di atas sebelum boleh disahkan siap.
+              </p>
+            )}
+          </div>
         )}
       </div>
+
+      {/* 🔍 FINAL QUALITY CHECK VERIFICATION MODAL (APPEARS AT 100%) */}
+      {showFinalCheckModal && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-slate-900 border-2 border-emerald-500 rounded-3xl p-6 max-w-lg w-full shadow-[0_0_40px_rgba(16,185,129,0.3)] text-white space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between border-b border-slate-800 pb-3">
+              <div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider">
+                  Kawalan Kualiti Makanan
+                </span>
+                <h3 className="text-xl font-black text-white mt-1 flex items-center gap-2">
+                  <span>🔍 Semakan Akhir Bungkusan</span>
+                </h3>
+                <p className="text-xs text-slate-400 font-mono">
+                  {order.type === 'dine_in' ? `Meja ${tableNumber || '?'}` : (order.customer_name || 'Pelanggan Walk-In')} | {order.type?.toUpperCase()}
+                </p>
+              </div>
+              <span className="text-2xl">🍱</span>
+            </div>
+
+            {/* SUMMARY CHECKLIST OF DISHES */}
+            <div className="space-y-2 bg-slate-950 p-4 rounded-2xl border border-slate-800 text-xs">
+              <p className="text-slate-300 font-bold mb-2">Pastikan semua komponen di bawah berada di dalam beg/dulang:</p>
+              {order.order_items.map((item: any) => {
+                const name = item.menu_items?.name || (item.menu_item_id && menuMap?.[item.menu_item_id]) || 'Menu';
+                const comps = itemComponentsMap[item.id] || [];
+                return (
+                  <div key={item.id} className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
+                    <div className="flex justify-between font-bold text-white">
+                      <span>• {name}</span>
+                      <span className="text-emerald-400 font-mono">x{item.quantity}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 text-[11px] text-emerald-300">
+                      {comps.map((c) => (
+                        <span key={c.key} className="bg-emerald-950/70 border border-emerald-500/30 px-2 py-0.5 rounded-md">
+                          ✓ {c.icon} {c.label}
+                        </span>
+                      ))}
+                    </div>
+                    {item.notes && (
+                      <p className="text-[11px] text-amber-300 font-black mt-1 bg-amber-950/60 p-1.5 rounded-lg border border-amber-500/40">
+                        ⚠️ Nota Khas: {item.notes}
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* IMPORTANT FINAL REMINDER BOX */}
+            <div className="bg-rose-950/60 border border-rose-500/50 p-3.5 rounded-2xl text-xs text-rose-200 space-y-1">
+              <p className="font-black flex items-center gap-1.5 text-rose-300">
+                <span>⚠️ PERINGATAN KESILAPAN SIFAR (0%):</span>
+              </p>
+              <ul className="list-disc list-inside space-y-0.5 text-[11px] text-slate-300 font-mono">
+                <li>Adakah beg bungkusan telah diikat kemas?</li>
+                <li>Adakah sambal belacan / kuah sup sudah dimasukkan?</li>
+                <li>Adakah minuman sejuk/panas dan straw sudah lengkap?</li>
+              </ul>
+            </div>
+
+            {/* ACTION BUTTONS */}
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowFinalCheckModal(false)}
+                className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl border border-slate-700 transition-all active:scale-95 uppercase tracking-wider"
+              >
+                🔙 Semak Semula
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowFinalCheckModal(false);
+                  onAdvanceStatus(order.id, 'preparing');
+                }}
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-lg shadow-emerald-600/40 transition-all active:scale-95 uppercase tracking-wider flex items-center justify-center gap-1.5"
+              >
+                <span>✅ Sahkan 100% Sempurna & Serah</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }, (prevProps: any, nextProps: any) => {
