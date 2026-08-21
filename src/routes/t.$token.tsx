@@ -41,7 +41,7 @@ import {
   LoyaltyMember 
 } from '@/lib/loyalty-config';
 import { sanitizePhone } from '@/lib/whatsapp-otp';
-import { Phone, UserCheck, ShieldCheck, ShieldAlert, Gift, History, Percent, LogOut, RefreshCw } from 'lucide-react';
+import { Phone, UserCheck, ShieldCheck, ShieldAlert, Gift, History, Percent, LogOut, RefreshCw, Split } from 'lucide-react';
 import { DishCustomizationModal, CustomizedCartItem } from '@/components/DishCustomizationModal';
 import { 
   validateAndStartTableSession, 
@@ -52,6 +52,7 @@ import {
 } from '@/lib/table-sessions';
 import { CustomerOrderTracker } from '@/components/CustomerOrderTracker';
 import { toast } from 'sonner';
+import { COMMON_MODIFIERS } from '@/lib/kitchen-checklist-config';
 
 export const Route = createFileRoute('/t/$token')({
   component: TableQRPage,
@@ -77,6 +78,7 @@ interface CartItem {
   containerSize?: 'small' | 'large' | null;
   containerCharge?: number;
   notes?: string;
+  packNotes?: string[];
   portionSize?: string;
   spiceLevel?: string;
   selectedAddons?: { name: string; price: number }[];
@@ -320,6 +322,7 @@ export function TableQRPage() {
       quantity: custItem.quantity,
       fulfillmentType: globalFulfillmentType,
       notes: custItem.notes,
+      packNotes: custItem.packNotes || Array(custItem.quantity).fill(''),
       portionSize: custItem.portionSize,
       spiceLevel: custItem.spiceLevel,
       selectedAddons: custItem.selectedAddons
@@ -327,6 +330,65 @@ export function TableQRPage() {
 
     setCart(prev => [...prev, newItem]);
     toast.success(`🛒 Added ${custItem.quantity}x ${custItem.name} to cart!`);
+  };
+
+  const updateTablePackNote = (cartItemId: string, packIdx: number, note: string) => {
+    setCart(prev => prev.map(item => {
+      if (item.id === cartItemId) {
+        const currentPackNotes = [...(item.packNotes || Array(item.quantity).fill(''))];
+        currentPackNotes[packIdx] = note;
+        const specified = currentPackNotes.map((n, i) => `Pinggan #${i+1}: ${n || 'Standard'}`).join(' | ');
+        return {
+          ...item,
+          packNotes: currentPackNotes,
+          notes: specified
+        };
+      }
+      return item;
+    }));
+  };
+
+  const toggleTablePackQuickModifier = (cartItemId: string, packIdx: number, tag: string) => {
+    setCart(prev => prev.map(item => {
+      if (item.id === cartItemId) {
+        const currentPackNotes = [...(item.packNotes || Array(item.quantity).fill(''))];
+        const cur = (currentPackNotes[packIdx] || '').trim();
+        let nextVal = cur;
+        if (cur.toLowerCase().includes(tag.toLowerCase())) {
+          nextVal = cur.replace(new RegExp(tag, 'gi'), '').replace(/,\s*,/g, ',').trim();
+        } else {
+          nextVal = cur ? `${cur}, ${tag}` : tag;
+        }
+        currentPackNotes[packIdx] = nextVal;
+        const specified = currentPackNotes.map((n, i) => `Pinggan #${i+1}: ${n || 'Standard'}`).join(' | ');
+        return {
+          ...item,
+          packNotes: currentPackNotes,
+          notes: specified
+        };
+      }
+      return item;
+    }));
+  };
+
+  const splitTableCartItem = (cartItemId: string) => {
+    setCart(prev => {
+      const target = prev.find(i => i.id === cartItemId);
+      if (!target || target.quantity <= 1) return prev;
+      const targetIdx = prev.findIndex(i => i.id === cartItemId);
+      const packNotes = target.packNotes || Array(target.quantity).fill('');
+      const individual: CartItem[] = Array.from({ length: target.quantity }).map((_, idx) => ({
+        ...target,
+        id: `${target.menuItemId}_${Date.now()}_${idx}`,
+        quantity: 1,
+        notes: packNotes[idx] ? `Pinggan #${idx+1}: ${packNotes[idx]}` : target.notes,
+        packNotes: [packNotes[idx] || '']
+      }));
+      const nextCart = [...prev];
+      nextCart.splice(targetIdx, 1, ...individual);
+      return nextCart;
+    });
+    toast.success('Hidangan dipecahkan kepada pinggan individu.');
   };
 
   const removeFromCart = (cartItemId: string) => {
@@ -419,17 +481,31 @@ export function TableQRPage() {
         toast.success(`💎 +${totalDishes} Member Point${totalDishes > 1 ? 's' : ''} Earned! Total: ${updatedMem.points} pts`);
       }
 
-      // 2. Insert order items
-      const orderItemsToInsert = cart.map(item => ({
-        order_id: orderData.id,
-        menu_item_id: item.menuItemId,
-        quantity: item.quantity,
-        price_at_order: item.price,
-        fulfillment_type: item.fulfillmentType,
-        container_size: item.containerSize || null,
-        container_charge: item.containerCharge || 0,
-        notes: item.notes || ''
-      }));
+      // 2. Insert order items (Flattened per plate so kitchen receives individual numbered plates)
+      const orderItemsToInsert = cart.flatMap(item => {
+        if (item.quantity > 1 && item.packNotes && item.packNotes.length > 0) {
+          return item.packNotes.slice(0, item.quantity).map((pNote, pIdx) => ({
+            order_id: orderData.id,
+            menu_item_id: item.menuItemId,
+            quantity: 1,
+            price_at_order: item.price,
+            fulfillment_type: item.fulfillmentType,
+            container_size: item.containerSize || null,
+            container_charge: item.containerCharge || 0,
+            notes: pNote ? `Pinggan #${pIdx + 1}: ${pNote}` : (item.notes ? `${item.notes} (Pinggan #${pIdx + 1})` : '')
+          }));
+        }
+        return [{
+          order_id: orderData.id,
+          menu_item_id: item.menuItemId,
+          quantity: item.quantity,
+          price_at_order: item.price,
+          fulfillment_type: item.fulfillmentType,
+          container_size: item.containerSize || null,
+          container_charge: item.containerCharge || 0,
+          notes: item.notes || ''
+        }];
+      });
 
       const { error: itemsError } = await supabase
         .from('order_items')
@@ -463,16 +539,30 @@ export function TableQRPage() {
     setError(null);
 
     try {
-      const orderItemsToInsert = cart.map(item => ({
-        order_id: existingOrder.id,
-        menu_item_id: item.menuItemId,
-        quantity: item.quantity,
-        price_at_order: item.price,
-        fulfillment_type: item.fulfillmentType,
-        container_size: item.containerSize || null,
-        container_charge: item.containerCharge || 0,
-        notes: item.notes || ''
-      }));
+      const orderItemsToInsert = cart.flatMap(item => {
+        if (item.quantity > 1 && item.packNotes && item.packNotes.length > 0) {
+          return item.packNotes.slice(0, item.quantity).map((pNote, pIdx) => ({
+            order_id: existingOrder.id,
+            menu_item_id: item.menuItemId,
+            quantity: 1,
+            price_at_order: item.price,
+            fulfillment_type: item.fulfillmentType,
+            container_size: item.containerSize || null,
+            container_charge: item.containerCharge || 0,
+            notes: pNote ? `Pinggan #${pIdx + 1}: ${pNote}` : (item.notes ? `${item.notes} (Pinggan #${pIdx + 1})` : '')
+          }));
+        }
+        return [{
+          order_id: existingOrder.id,
+          menu_item_id: item.menuItemId,
+          quantity: item.quantity,
+          price_at_order: item.price,
+          fulfillment_type: item.fulfillmentType,
+          container_size: item.containerSize || null,
+          container_charge: item.containerCharge || 0,
+          notes: item.notes || ''
+        }];
+      });
 
       const { error: itemsError } = await supabase
         .from('order_items')
@@ -758,40 +848,104 @@ export function TableQRPage() {
                   <p>Your cart is currently empty.</p>
                   <p className="text-[10px] text-slate-600">Select dishes from the menu to add to your order.</p>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="divide-y divide-slate-800 max-h-[350px] overflow-y-auto pr-1">
-                    {cart.map((item) => (
-                      <div key={item.id} className="py-3 space-y-1">
-                        <div className="flex justify-between items-start gap-2">
-                          <div>
-                            <span className="font-bold text-white text-xs">{item.quantity}x {item.name}</span>
-                            <button
-                              onClick={() => toggleCartFulfillment(item.id)}
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all inline-flex items-center gap-1 mt-1 block ${
-                                item.fulfillmentType === 'takeaway'
-                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30'
-                                  : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30'
-                              }`}
-                            >
-                              {item.fulfillmentType === 'takeaway' ? '🥡 Takeaway (Bungkus)' : '🍽️ Dine In'}
-                            </button>
-                            {item.notes && <p className="text-[10px] text-amber-400 mt-1">{item.notes}</p>}
+                    <div className="divide-y divide-slate-800 max-h-[420px] overflow-y-auto pr-1 space-y-2">
+                    {cart.map((item) => {
+                      const qty = item.quantity;
+                      const packNotes = item.packNotes || Array(qty).fill('');
+
+                      return (
+                        <div key={item.id} className="py-3 space-y-2">
+                          {/* DISH TITLE & PRICE BAR */}
+                          <div className="flex justify-between items-start gap-2">
+                            <div>
+                              <span className="font-bold text-white text-xs">🍱 {item.name}</span>
+                              <div className="flex items-center gap-2 mt-1">
+                                <button
+                                  onClick={() => toggleCartFulfillment(item.id)}
+                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all inline-flex items-center gap-1 ${
+                                    item.fulfillmentType === 'takeaway'
+                                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30'
+                                      : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30'
+                                  }`}
+                                >
+                                  {item.fulfillmentType === 'takeaway' ? '🥡 Takeaway' : '🍽️ Dine In'}
+                                </button>
+                                <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                                  x{qty}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <span className="font-bold text-emerald-400 text-xs">
+                                RM {(item.price * qty).toFixed(2)}
+                              </span>
+                              <div className="flex items-center gap-1.5 mt-1 justify-end">
+                                {qty > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => splitTableCartItem(item.id)}
+                                    className="text-[9px] text-sky-400 hover:text-sky-300 bg-sky-950/60 border border-sky-500/30 px-1.5 py-0.5 rounded flex items-center gap-0.5"
+                                    title="Pecahkan kepada pinggan individu"
+                                  >
+                                    <Split className="w-2.5 h-2.5" /> Pecah
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => removeFromCart(item.id)}
+                                  className="text-rose-400 hover:text-rose-300 text-[10px]"
+                                >
+                                  Padam
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-right shrink-0">
-                            <span className="font-bold text-emerald-400 text-xs">
-                              RM {(item.price * item.quantity).toFixed(2)}
-                            </span>
-                            <button
-                              onClick={() => removeFromCart(item.id)}
-                              className="text-rose-400 hover:text-rose-300 text-[10px] block mt-0.5 ml-auto"
-                            >
-                              Remove
-                            </button>
+
+                          {/* PER-PLATE SPECIFICATION ROWS */}
+                          <div className="space-y-1.5 pt-1">
+                            {Array.from({ length: qty }).map((_, pIdx) => {
+                              const curNote = packNotes[pIdx] || '';
+                              return (
+                                <div key={pIdx} className="p-2 rounded-xl bg-slate-950 border border-slate-800/90 space-y-1 text-[11px]">
+                                  <div className="flex justify-between items-center text-[10px]">
+                                    <span className="font-bold text-amber-400 flex items-center gap-1">
+                                      <span>{item.fulfillmentType === 'takeaway' ? '🥡 Pek' : '🍽️ Pinggan'} #{pIdx + 1}</span>
+                                      {qty > 1 && <span className="text-slate-500 font-normal">({pIdx + 1}/{qty})</span>}
+                                    </span>
+                                    {curNote && <span className="text-emerald-400 text-[9px]">✓ Ada Nota</span>}
+                                  </div>
+                                  <Input
+                                    value={curNote}
+                                    onChange={(e) => updateTablePackNote(item.id, pIdx, e.target.value)}
+                                    placeholder={`Nota Pinggan #${pIdx + 1} (cth: Tak nak lada, ekstra pedas...)`}
+                                    className="h-7 bg-slate-900 border-slate-800 text-white text-[11px] rounded-lg"
+                                  />
+                                  {/* QUICK CHIPS */}
+                                  <div className="flex flex-wrap gap-1 pt-0.5">
+                                    {COMMON_MODIFIERS.slice(0, 4).map(mod => {
+                                      const isSelected = curNote.toLowerCase().includes(mod.tag);
+                                      return (
+                                        <button
+                                          key={mod.id}
+                                          type="button"
+                                          onClick={() => toggleTablePackQuickModifier(item.id, pIdx, mod.tag)}
+                                          className={`text-[9px] px-1.5 py-0.5 rounded font-bold transition-all border ${
+                                            isSelected
+                                              ? 'bg-amber-500 text-slate-950 border-amber-400 font-black'
+                                              : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                                          }`}
+                                        >
+                                          {mod.icon} {mod.label.split('/')[0].trim()}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   <div className="pt-3 border-t border-slate-800 space-y-2 text-xs">
@@ -837,7 +991,7 @@ export function TableQRPage() {
       {cart.length > 0 && (
         <div className="md:hidden fixed bottom-0 inset-x-0 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 p-4 z-40 shadow-2xl flex items-center justify-between font-mono">
           <div>
-            <span className="text-[10px] text-slate-400 block uppercase">Total ({cart.length} items)</span>
+            <span className="text-[10px] text-slate-400 block uppercase">Total ({cart.reduce((s, i) => s + i.quantity, 0)} items)</span>
             <span className="text-lg font-black text-emerald-400">RM {cartSubtotal.toFixed(2)}</span>
           </div>
 
@@ -845,7 +999,7 @@ export function TableQRPage() {
             onClick={() => setIsMobileCartOpen(true)}
             className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 py-3 rounded-xl shadow-xl flex items-center gap-2 text-xs"
           >
-            <ShoppingBag className="w-4 h-4" /> View Cart ({cart.length})
+            <ShoppingBag className="w-4 h-4" /> View Cart ({cart.reduce((s, i) => s + i.quantity, 0)})
           </Button>
         </div>
       )}
@@ -864,37 +1018,102 @@ export function TableQRPage() {
 
           <div className="space-y-4 my-2">
             <div className="divide-y divide-slate-800">
-              {cart.map((item) => (
-                <div key={item.id} className="py-3 space-y-1">
-                  <div className="flex justify-between items-start gap-2">
-                    <div>
-                      <span className="font-bold text-white text-xs">{item.quantity}x {item.name}</span>
-                      <button
-                        onClick={() => toggleCartFulfillment(item.id)}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all inline-flex items-center gap-1 mt-1 block ${
-                          item.fulfillmentType === 'takeaway'
-                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30'
-                            : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30'
-                        }`}
-                      >
-                        {item.fulfillmentType === 'takeaway' ? '🥡 Takeaway (Bungkus)' : '🍽️ Dine In'}
-                      </button>
-                      {item.notes && <p className="text-[10px] text-amber-400 mt-1">{item.notes}</p>}
+              {cart.map((item) => {
+                const qty = item.quantity;
+                const packNotes = item.packNotes || Array(qty).fill('');
+
+                return (
+                  <div key={item.id} className="py-3 space-y-2">
+                    <div className="flex justify-between items-start gap-2">
+                      <div>
+                        <span className="font-bold text-white text-xs">🍱 {item.name}</span>
+                        <div className="flex items-center gap-2 mt-1">
+                          <button
+                            onClick={() => toggleCartFulfillment(item.id)}
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full border transition-all inline-flex items-center gap-1 ${
+                              item.fulfillmentType === 'takeaway'
+                                ? 'bg-amber-500/20 text-amber-300 border-amber-500/30 hover:bg-amber-500/30'
+                                : 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/30'
+                            }`}
+                          >
+                            {item.fulfillmentType === 'takeaway' ? '🥡 Takeaway' : '🍽️ Dine In'}
+                          </button>
+                          <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/60 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                            x{qty}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <span className="font-bold text-emerald-400 text-xs">
+                          RM {(item.price * qty).toFixed(2)}
+                        </span>
+                        <div className="flex items-center gap-1.5 mt-1 justify-end">
+                          {qty > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => splitTableCartItem(item.id)}
+                              className="text-[9px] text-sky-400 hover:text-sky-300 bg-sky-950/60 border border-sky-500/30 px-1.5 py-0.5 rounded flex items-center gap-0.5"
+                              title="Pecahkan kepada pinggan individu"
+                            >
+                              <Split className="w-2.5 h-2.5" /> Pecah
+                            </button>
+                          )}
+                          <button
+                            onClick={() => removeFromCart(item.id)}
+                            className="text-rose-400 hover:text-rose-300 text-[10px]"
+                          >
+                            Padam
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <span className="font-bold text-emerald-400 text-xs">
-                        RM {(item.price * item.quantity).toFixed(2)}
-                      </span>
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="text-rose-400 hover:text-rose-300 text-[10px] block mt-0.5 ml-auto"
-                      >
-                        Remove
-                      </button>
+
+                    {/* MOBILE PER-PLATE SPECIFICATION ROWS */}
+                    <div className="space-y-1.5 pt-1">
+                      {Array.from({ length: qty }).map((_, pIdx) => {
+                        const curNote = packNotes[pIdx] || '';
+                        return (
+                          <div key={pIdx} className="p-2 rounded-xl bg-slate-950 border border-slate-800/90 space-y-1 text-[11px]">
+                            <div className="flex justify-between items-center text-[10px]">
+                              <span className="font-bold text-amber-400 flex items-center gap-1">
+                                <span>{item.fulfillmentType === 'takeaway' ? '🥡 Pek' : '🍽️ Pinggan'} #{pIdx + 1}</span>
+                                {qty > 1 && <span className="text-slate-500 font-normal">({pIdx + 1}/{qty})</span>}
+                              </span>
+                              {curNote && <span className="text-emerald-400 text-[9px]">✓ Ada Nota</span>}
+                            </div>
+                            <Input
+                              value={curNote}
+                              onChange={(e) => updateTablePackNote(item.id, pIdx, e.target.value)}
+                              placeholder={`Nota Pinggan #${pIdx + 1} (cth: Tak nak lada, ekstra pedas...)`}
+                              className="h-7 bg-slate-900 border-slate-800 text-white text-[11px] rounded-lg"
+                            />
+                            {/* QUICK CHIPS */}
+                            <div className="flex flex-wrap gap-1 pt-0.5">
+                              {COMMON_MODIFIERS.slice(0, 4).map(mod => {
+                                const isSelected = curNote.toLowerCase().includes(mod.tag);
+                                return (
+                                  <button
+                                    key={mod.id}
+                                    type="button"
+                                    onClick={() => toggleTablePackQuickModifier(item.id, pIdx, mod.tag)}
+                                    className={`text-[9px] px-1.5 py-0.5 rounded font-bold transition-all border ${
+                                      isSelected
+                                        ? 'bg-amber-500 text-slate-950 border-amber-400 font-black'
+                                        : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                                    }`}
+                                  >
+                                    {mod.icon} {mod.label.split('/')[0].trim()}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <div className="pt-3 border-t border-slate-800 space-y-2 text-xs">

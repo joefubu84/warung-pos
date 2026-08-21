@@ -35,6 +35,7 @@ export interface CustomizedCartItem {
   spiceLevel: 'Mild' | 'Medium' | 'Hot';
   selectedAddons: { name: string; price: number }[];
   specialInstructions: string;
+  packNotes?: string[];
   notes: string;
 }
 
@@ -71,6 +72,7 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
   const [specialInstructions, setSpecialInstructions] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
+  const [plateNotes, setPlateNotes] = useState<string[]>(['']);
   const [availableAddons, setAvailableAddons] = useState<CustomAddon[]>(getAddonsConfig());
 
   useEffect(() => {
@@ -87,8 +89,42 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
       setSelectedAddonIds([]);
       setSpecialInstructions('');
       setQuantity(1);
+      setPlateNotes(['']);
     }
   }, [isOpen, menuItem]);
+
+  const updateQuantityClamped = (newQty: number) => {
+    const clamped = Math.max(1, newQty);
+    setQuantity(clamped);
+    setPlateNotes(prev => {
+      const next = [...prev];
+      while (next.length < clamped) next.push('');
+      return next.slice(0, clamped);
+    });
+  };
+
+  const updateSpecificPlateNote = (idx: number, text: string) => {
+    setPlateNotes(prev => {
+      const next = [...prev];
+      next[idx] = text;
+      return next;
+    });
+  };
+
+  const togglePlateQuickModifier = (idx: number, tag: string) => {
+    setPlateNotes(prev => {
+      const next = [...prev];
+      const cur = (next[idx] || '').trim();
+      let nextVal = cur;
+      if (cur.toLowerCase().includes(tag.toLowerCase())) {
+        nextVal = cur.replace(new RegExp(tag, 'gi'), '').replace(/,\s*,/g, ',').trim();
+      } else {
+        nextVal = cur ? `${cur}, ${tag}` : tag;
+      }
+      next[idx] = nextVal;
+      return next;
+    });
+  };
 
   if (!menuItem) return null;
 
@@ -129,8 +165,12 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
     if (selectedAddonsList.length > 0) {
       notesSummaryParts.push(`Add-ons: ${selectedAddonsList.map(a => a.name).join(', ')}`);
     }
-    if (specialInstructions.trim()) {
-      notesSummaryParts.push(`Note: "${specialInstructions.trim()}"`);
+
+    if (quantity > 1) {
+      const specifiedPlates = plateNotes.map((n, i) => `Pinggan #${i+1}: ${n || 'Standard'}`).join(' | ');
+      notesSummaryParts.push(specifiedPlates);
+    } else if (specialInstructions.trim()) {
+      notesSummaryParts.push(`Nota: "${specialInstructions.trim()}"`);
     }
 
     const customizedItem: CustomizedCartItem = {
@@ -144,7 +184,8 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
       portionSize,
       spiceLevel,
       selectedAddons: selectedAddonsList,
-      specialInstructions: specialInstructions.trim(),
+      specialInstructions: quantity > 1 ? plateNotes.join(' | ') : specialInstructions.trim(),
+      packNotes: quantity > 1 ? plateNotes : (specialInstructions.trim() ? [specialInstructions.trim()] : ['']),
       notes: notesSummaryParts.join(' | ')
     };
 
@@ -322,76 +363,136 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
             </div>
           </div>
 
-          {/* 4. SPECIAL INSTRUCTIONS */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center justify-between">
-              <span>4. Permintaan Khas Dapur (Optional)</span>
-              <span className="text-[10px] text-amber-400">Pilihan Pantas 👇</span>
-            </label>
-            
-            {/* QUICK MODIFIER CHIPS */}
-            <div className="flex flex-wrap gap-1.5 pb-1">
-              {COMMON_MODIFIERS.map(mod => {
-                const isSelected = specialInstructions.toLowerCase().includes(mod.tag);
-                return (
-                  <button
-                    key={mod.id}
-                    type="button"
-                    onClick={() => {
-                      if (isSelected) {
-                        setSpecialInstructions(prev => prev.replace(new RegExp(mod.tag, 'gi'), '').replace(/,\s*,/g, ',').trim());
-                      } else {
-                        setSpecialInstructions(prev => prev ? `${prev}, ${mod.tag}` : mod.tag);
-                      }
-                    }}
-                    className={`text-[10px] px-2.5 py-1 rounded-lg font-bold transition-all border flex items-center gap-1 ${
-                      isSelected
-                        ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-sm scale-105'
-                        : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
-                    }`}
-                  >
-                    <span>{mod.icon}</span>
-                    <span>{mod.label}</span>
-                  </button>
-                );
-              })}
+          {/* 4. QUANTITY SELECTOR */}
+          <div className="p-3 bg-slate-950 rounded-2xl border border-slate-800 flex justify-between items-center font-mono">
+            <div>
+              <span className="text-xs text-slate-300 font-bold uppercase block">4. Bilangan Pinggan (Kuantiti)</span>
+              <span className="text-[10px] text-slate-500">Pilih berapa pinggan untuk hidangan ini</span>
             </div>
-
-            <Textarea
-              value={specialInstructions}
-              onChange={(e) => setSpecialInstructions(e.target.value)}
-              placeholder="Contoh: Tak nak lada, sambal asing, kuah banjir..."
-              className="bg-slate-950 border-slate-800 text-white text-xs min-h-[50px] resize-none"
-            />
+            <div className="flex items-center gap-3 bg-slate-900 border border-slate-700 rounded-xl p-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => updateQuantityClamped(quantity - 1)}
+                className="h-8 w-8 text-slate-300 hover:bg-slate-800 active:scale-95"
+              >
+                <Minus className="w-4 h-4" />
+              </Button>
+              <span className="text-base font-black text-amber-400 w-8 text-center">{quantity}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => updateQuantityClamped(quantity + 1)}
+                className="h-8 w-8 text-slate-300 hover:bg-slate-800 active:scale-95"
+              >
+                <Plus className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
 
-          {/* QUANTITY COUNTER & ADD TO CART BUTTON */}
-          <div className="pt-2 border-t border-slate-800 flex flex-col gap-3 font-mono">
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-slate-400 font-bold uppercase">Quantity</span>
-              <div className="flex items-center gap-3 bg-slate-950 border border-slate-800 rounded-xl p-1">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="h-7 w-7 text-slate-300 hover:bg-slate-800"
-                >
-                  <Minus className="w-3.5 h-3.5" />
-                </Button>
-                <span className="text-sm font-bold text-white w-6 text-center">{quantity}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="h-7 w-7 text-slate-300 hover:bg-slate-800"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </Button>
-              </div>
+          {/* 5. SPECIAL INSTRUCTIONS (PER-PLATE IF QTY > 1) */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
+                {quantity > 1 ? `5. Permintaan Khas Setiap Pinggan (1 hingga ${quantity})` : '5. Permintaan Khas Dapur (Optional)'}
+              </label>
+              <span className="text-[10px] text-amber-400 font-mono">Pilihan Pantas 👇</span>
             </div>
 
+            {quantity > 1 ? (
+              <div className="space-y-3">
+                {Array.from({ length: quantity }).map((_, pIdx) => {
+                  const curNote = plateNotes[pIdx] || '';
+                  return (
+                    <div key={pIdx} className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5 shadow-inner">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-black text-amber-400 font-mono flex items-center gap-1">
+                          <span>{fulfillmentType === 'dine_in' ? '🍽️ Pinggan' : '🥡 Bungkusan'} #{pIdx + 1}</span>
+                          <span className="text-[10px] text-slate-500 font-normal">({pIdx + 1} daripada {quantity})</span>
+                        </span>
+                        {curNote && (
+                          <span className="text-[10px] text-emerald-400 font-bold">
+                            ✓ Nota Ditetapkan
+                          </span>
+                        )}
+                      </div>
+
+                      <Textarea
+                        value={curNote}
+                        onChange={(e) => updateSpecificPlateNote(pIdx, e.target.value)}
+                        placeholder={`Nota Pinggan #${pIdx + 1} (cth: Tak nak lada, ekstra pedas, kuah banjir...)`}
+                        className="bg-slate-900 border-slate-800 text-white text-xs min-h-[45px] resize-none"
+                      />
+
+                      {/* QUICK MODIFIER PILLS FOR THIS SPECIFIC PLATE */}
+                      <div className="flex flex-wrap gap-1 pt-0.5">
+                        {COMMON_MODIFIERS.map(mod => {
+                          const isSelected = curNote.toLowerCase().includes(mod.tag);
+                          return (
+                            <button
+                              key={mod.id}
+                              type="button"
+                              onClick={() => togglePlateQuickModifier(pIdx, mod.tag)}
+                              className={`text-[10px] px-2 py-0.5 rounded-lg font-bold transition-all border flex items-center gap-1 ${
+                                isSelected
+                                  ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-sm scale-102'
+                                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                              }`}
+                            >
+                              <span>{mod.icon}</span>
+                              <span>{mod.label.split('/')[0].trim()}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {/* QUICK MODIFIER CHIPS */}
+                <div className="flex flex-wrap gap-1.5 pb-1">
+                  {COMMON_MODIFIERS.map(mod => {
+                    const isSelected = specialInstructions.toLowerCase().includes(mod.tag);
+                    return (
+                      <button
+                        key={mod.id}
+                        type="button"
+                        onClick={() => {
+                          if (isSelected) {
+                            setSpecialInstructions(prev => prev.replace(new RegExp(mod.tag, 'gi'), '').replace(/,\s*,/g, ',').trim());
+                          } else {
+                            setSpecialInstructions(prev => prev ? `${prev}, ${mod.tag}` : mod.tag);
+                          }
+                        }}
+                        className={`text-[10px] px-2.5 py-1 rounded-lg font-bold transition-all border flex items-center gap-1 ${
+                          isSelected
+                            ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-sm scale-105'
+                            : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
+                        }`}
+                      >
+                        <span>{mod.icon}</span>
+                        <span>{mod.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <Textarea
+                  value={specialInstructions}
+                  onChange={(e) => setSpecialInstructions(e.target.value)}
+                  placeholder="Contoh: Tak nak lada, sambal asing, kuah banjir..."
+                  className="bg-slate-950 border-slate-800 text-white text-xs min-h-[50px] resize-none"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* ADD TO CART ACTION BUTTON */}
+          <div className="pt-2 border-t border-slate-800 flex flex-col gap-2 font-mono">
             <Button
               type="button"
               onClick={handleConfirmAddToCart}
@@ -399,7 +500,7 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
             >
               <div className="flex items-center gap-2">
                 <ShoppingBag className="w-4 h-4" />
-                <span>Add Custom Dish to Cart</span>
+                <span>Masukkan {quantity}x Hidangan ke Troli</span>
               </div>
               <span className="font-mono text-base font-black">RM {totalPrice.toFixed(2)}</span>
             </Button>
