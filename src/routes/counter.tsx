@@ -310,6 +310,7 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
 
       const { data: rpcRes, error: rpcError } = await supabase.rpc('place_order', {
         p_order: {
+          store_id: storeId,
           type: orderType,
           table_id: selectedTableId || null,
           customer_name: customerName || null,

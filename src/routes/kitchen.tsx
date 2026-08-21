@@ -470,10 +470,16 @@ function KitchenPage() {
         console.log('📡 Kitchen Realtime Status:', status, err);
       });
 
+    // 5-second high-reliability background synchronization
+    const intervalId = setInterval(() => {
+      fetchActiveOrders(true);
+    }, 5000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(intervalId);
     };
-  }, [fetchPrinterSettings, fetchActiveOrders]);
+  }, [fetchPrinterSettings, fetchActiveOrders, fetchLookupData]);
 
 
   const advanceStatus = useCallback(async (orderId: string, currentStatus: OrderStatus) => {
