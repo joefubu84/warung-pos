@@ -21,6 +21,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { getAddonsConfig, CustomAddon } from '@/lib/addons-config';
+import { COMMON_MODIFIERS } from '@/lib/kitchen-checklist-config';
 
 export interface CustomizedCartItem {
   id: string;
@@ -323,14 +324,44 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
 
           {/* 4. SPECIAL INSTRUCTIONS */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
-              4. Special Kitchen Request (Optional)
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center justify-between">
+              <span>4. Permintaan Khas Dapur (Optional)</span>
+              <span className="text-[10px] text-amber-400">Pilihan Pantas 👇</span>
             </label>
+            
+            {/* QUICK MODIFIER CHIPS */}
+            <div className="flex flex-wrap gap-1.5 pb-1">
+              {COMMON_MODIFIERS.map(mod => {
+                const isSelected = specialInstructions.toLowerCase().includes(mod.tag);
+                return (
+                  <button
+                    key={mod.id}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        setSpecialInstructions(prev => prev.replace(new RegExp(mod.tag, 'gi'), '').replace(/,\s*,/g, ',').trim());
+                      } else {
+                        setSpecialInstructions(prev => prev ? `${prev}, ${mod.tag}` : mod.tag);
+                      }
+                    }}
+                    className={`text-[10px] px-2.5 py-1 rounded-lg font-bold transition-all border flex items-center gap-1 ${
+                      isSelected
+                        ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-sm scale-105'
+                        : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
+                    }`}
+                  >
+                    <span>{mod.icon}</span>
+                    <span>{mod.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
             <Textarea
               value={specialInstructions}
               onChange={(e) => setSpecialInstructions(e.target.value)}
-              placeholder="e.g. Less oil, no bawang, sauce on the side"
-              className="bg-slate-950 border-slate-800 text-white text-xs min-h-[60px] resize-none"
+              placeholder="Contoh: Tak nak lada, sambal asing, kuah banjir..."
+              className="bg-slate-950 border-slate-800 text-white text-xs min-h-[50px] resize-none"
             />
           </div>
 

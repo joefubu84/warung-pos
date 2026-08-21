@@ -17,7 +17,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Minus, Search, Trash2, ShoppingCart, CheckCircle2, Lock, Unlock, AlertTriangle } from "lucide-react";
+import { Plus, Minus, Search, Trash2, ShoppingCart, CheckCircle2, Lock, Unlock, AlertTriangle, Split } from "lucide-react";
+import { COMMON_MODIFIERS, detectModifierBadges } from "@/lib/kitchen-checklist-config";
 
 export const Route = createFileRoute('/counter')({
   ssr: false,
@@ -227,6 +228,41 @@ const addSplitPayment = () => {
 
   const updateCartItemNotes = (cartItemId: string, notes: string) => {
     setCart(cart.map(item => item.id === cartItemId ? { ...item, notes: notes.slice(0, 100) } : item));
+  };
+
+  const toggleQuickModifier = (cartItemId: string, tag: string) => {
+    setCart(cart.map(item => {
+      if (item.id === cartItemId) {
+        const currentNotes = (item.notes || '').trim();
+        let newNotes = currentNotes;
+        if (currentNotes.toLowerCase().includes(tag.toLowerCase())) {
+          newNotes = currentNotes.replace(new RegExp(tag, 'gi'), '').replace(/,\s*,/g, ',').trim();
+        } else {
+          newNotes = currentNotes ? `${currentNotes}, ${tag}` : tag;
+        }
+        return { ...item, notes: newNotes.slice(0, 100) };
+      }
+      return item;
+    }));
+  };
+
+  const splitCartItem = (cartItemId: string) => {
+    const targetItem = cart.find(c => c.id === cartItemId);
+    if (!targetItem || targetItem.quantity <= 1) return;
+
+    const qty = targetItem.quantity;
+    const itemIndex = cart.findIndex(c => c.id === cartItemId);
+    
+    const individualItems: CartItem[] = Array.from({ length: qty }).map((_, idx) => ({
+      ...targetItem,
+      id: Math.random().toString(36).substr(2, 9),
+      quantity: 1,
+      notes: targetItem.notes ? `${targetItem.notes} (Pek #${idx + 1})` : ''
+    }));
+
+    const nextCart = [...cart];
+    nextCart.splice(itemIndex, 1, ...individualItems);
+    setCart(nextCart);
   };
 
 
@@ -614,19 +650,51 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
                         </button>
                       </div>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 items-center">
                       <input 
-                        placeholder="Add note (e.g., less spicy)"
+                        placeholder="Nota pinggan (cth: Tak nak lada, ekstra pedas)"
                         value={item.notes || ''}
                         onChange={(e) => updateCartItemNotes(item.id, e.target.value)}
-                        className="flex-1 bg-slate-900 border border-slate-800 rounded p-2 text-xs text-white placeholder-slate-500 outline-none focus:border-emerald-500"
+                        className="flex-1 bg-slate-900 border border-slate-800 rounded p-2 text-xs text-white placeholder-slate-500 outline-none focus:border-emerald-500 font-medium"
                       />
+                      {item.quantity > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => splitCartItem(item.id)}
+                          className="px-2 py-1.5 bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 border border-sky-500/40 rounded text-[10px] font-bold flex items-center gap-1 shrink-0"
+                          title="Pecahkan kepada pinggan berasingan untuk letak nota berbeza"
+                        >
+                          <Split className="w-3 h-3" />
+                          <span>Pecah Pinggan</span>
+                        </button>
+                      )}
                       <button 
                         onClick={() => removeFromCart(item.id)}
-                        className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-rose-400 hover:bg-rose-950/60 rounded transition-colors"
+                        className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-rose-400 hover:bg-rose-950/60 rounded transition-colors shrink-0"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
+                    </div>
+
+                    {/* QUICK MODIFIER CHIPS (TAK NAK LADA, PEDAS, TIMUN, KANGKUNG) */}
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {COMMON_MODIFIERS.slice(0, 5).map(mod => {
+                        const isSelected = (item.notes || '').toLowerCase().includes(mod.tag);
+                        return (
+                          <button
+                            key={mod.id}
+                            type="button"
+                            onClick={() => toggleQuickModifier(item.id, mod.tag)}
+                            className={`text-[10px] px-2 py-0.5 rounded-md font-bold transition-all border ${
+                              isSelected 
+                                ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-sm' 
+                                : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700'
+                            }`}
+                          >
+                            {mod.icon} {mod.label.split('/')[0].trim()}
+                          </button>
+                        );
+                      })}
                     </div>
                     {item.fulfillmentType === 'takeaway' && (
                       <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800">

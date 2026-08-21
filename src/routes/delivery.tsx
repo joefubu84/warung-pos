@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createToyyibPayCheckout } from '@/lib/toyyibpay';
+import { COMMON_MODIFIERS } from '@/lib/kitchen-checklist-config';
 
 export const Route = createFileRoute('/delivery')({
   component: CustomerDeliveryPage,
@@ -245,6 +246,26 @@ function CustomerDeliveryPage() {
         return item;
       }).filter(Boolean) as CartItem[];
     });
+  };
+
+  const updateItemNotes = (menuItemId: string, notes: string) => {
+    setCart(prev => prev.map(item => item.menuItemId === menuItemId ? { ...item, notes } : item));
+  };
+
+  const toggleDeliveryQuickModifier = (menuItemId: string, tag: string) => {
+    setCart(prev => prev.map(item => {
+      if (item.menuItemId === menuItemId) {
+        const currentNotes = (item.notes || '').trim();
+        let newNotes = currentNotes;
+        if (currentNotes.toLowerCase().includes(tag.toLowerCase())) {
+          newNotes = currentNotes.replace(new RegExp(tag, 'gi'), '').replace(/,\s*,/g, ',').trim();
+        } else {
+          newNotes = currentNotes ? `${currentNotes}, ${tag}` : tag;
+        }
+        return { ...item, notes: newNotes };
+      }
+      return item;
+    }));
   };
 
   const handleGetLocation = () => {
@@ -478,6 +499,59 @@ function CustomerDeliveryPage() {
         {cart.length > 0 && (
           <Card className="bg-slate-900 border-2 border-emerald-500/40 text-white rounded-3xl shadow-2xl">
             <CardContent className="p-5 space-y-4">
+              {/* CART ITEMS QUALITY & MODIFIER REVIEW */}
+              <div className="space-y-3 pb-3 border-b border-slate-800">
+                <h2 className="font-black text-base text-white flex items-center justify-between">
+                  <span className="flex items-center gap-2">
+                    <ShoppingBag className="w-4 h-4 text-emerald-400" /> Semakan Bungkusan Pesanan
+                  </span>
+                  <span className="text-xs text-slate-400 font-mono">{cart.length} Jenis Menu</span>
+                </h2>
+
+                <div className="space-y-2.5">
+                  {cart.map((cItem, idx) => (
+                    <div key={cItem.menuItemId} className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 text-xs">
+                      <div className="flex justify-between items-center">
+                        <span className="font-black text-white text-sm">
+                          🥡 Pek #{idx + 1}: {cItem.name}
+                        </span>
+                        <span className="font-mono font-bold text-emerald-400 text-sm">
+                          x{cItem.quantity} (RM {(cItem.price * cItem.quantity).toFixed(2)})
+                        </span>
+                      </div>
+
+                      <Input
+                        placeholder="Nota bungkusan (cth: Tak nak lada, sambal asing...)"
+                        value={cItem.notes || ''}
+                        onChange={(e) => updateItemNotes(cItem.menuItemId, e.target.value)}
+                        className="bg-slate-900 border-slate-800 text-white text-xs h-8 rounded-xl font-medium"
+                      />
+
+                      {/* QUICK MODIFIER PILLS */}
+                      <div className="flex flex-wrap gap-1 pt-0.5">
+                        {COMMON_MODIFIERS.slice(0, 5).map(mod => {
+                          const isSelected = (cItem.notes || '').toLowerCase().includes(mod.tag);
+                          return (
+                            <button
+                              key={mod.id}
+                              type="button"
+                              onClick={() => toggleDeliveryQuickModifier(cItem.menuItemId, mod.tag)}
+                              className={`text-[10px] px-2 py-0.5 rounded-lg font-bold transition-all border ${
+                                isSelected
+                                  ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-sm'
+                                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                              }`}
+                            >
+                              {mod.icon} {mod.label.split('/')[0].trim()}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               <h2 className="font-black text-base text-white flex items-center gap-2 border-b border-slate-800 pb-3">
                 <User className="w-4 h-4 text-emerald-400" /> Customer Details
               </h2>

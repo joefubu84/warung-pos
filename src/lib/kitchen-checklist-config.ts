@@ -11,6 +11,68 @@ export interface MenuItemChecklistConfig {
   components: KitchenComponent[];
 }
 
+export interface ModifierBadge {
+  id: string;
+  icon: string;
+  label: string;
+  colorClass: string;
+}
+
+export const COMMON_MODIFIERS = [
+  { id: 'no_chili', icon: '🚫🌶️', label: 'Tak Nak Lada / Kurang Pedas', tag: 'tak nak lada' },
+  { id: 'extra_spicy', icon: '🔥🌶️', label: 'Ekstra Pedas / Pedas Gila', tag: 'ekstra pedas' },
+  { id: 'no_vege', icon: '🥒🚫', label: 'Tak Nak Sayur / Tanpa Timun', tag: 'tak nak timun' },
+  { id: 'kangkung', icon: '🥬', label: 'Sayur Kangkung Sahaja', tag: 'kangkung sahaja' },
+  { id: 'sauce_aside', icon: '🥣', label: 'Sambal / Kuah Asing', tag: 'sambal asing' },
+  { id: 'extra_rice', icon: '🍚', label: 'Tambah Nasi', tag: 'tambah nasi' },
+  { id: 'less_sweet', icon: '🧊', label: 'Kurang Manis / Kurang Ais', tag: 'kurang manis' }
+];
+
+export function detectModifierBadges(notes?: string | null): ModifierBadge[] {
+  if (!notes) return [];
+  const n = notes.toLowerCase();
+  const badges: ModifierBadge[] = [];
+
+  // No chili / tak nak lada / kurang pedas
+  if (n.includes('tak nak lada') || n.includes('tak pedas') || n.includes('kurang pedas') || n.includes('no chili') || n.includes('no spicy') || n.includes('tanpa lada')) {
+    badges.push({ id: 'no_chili', icon: '🚫🌶️', label: 'TANPA LADA / TAK PEDAS', colorClass: 'bg-amber-400 text-slate-950 font-black border-2 border-amber-300 shadow-md' });
+  }
+
+  // Extra spicy / nak pedas / pedas gila
+  if (n.includes('nak pedas') || n.includes('ekstra pedas') || n.includes('extra pedas') || n.includes('pedas gila') || n.includes('tambah lada') || n.includes('pedas')) {
+    if (!badges.some(b => b.id === 'no_chili')) {
+      badges.push({ id: 'extra_spicy', icon: '🔥🌶️', label: 'EKSTRA PEDAS!', colorClass: 'bg-rose-600 text-white font-black border-2 border-white shadow-lg animate-pulse' });
+    }
+  }
+
+  // No vege / tak nak timun / sayur
+  if (n.includes('tak nak sayur') || n.includes('tanpa timun') || n.includes('tak nak timun') || n.includes('no sayur') || n.includes('no vege') || n.includes('tak mahu sayur')) {
+    badges.push({ id: 'no_vege', icon: '🥒🚫', label: 'TANPA TIMUN / SAYUR', colorClass: 'bg-sky-400 text-slate-950 font-black border-2 border-sky-300 shadow-md' });
+  }
+
+  // Kangkung sahaja / sayur khusus
+  if (n.includes('kangkung') || n.includes('sayur kangkung') || n.includes('kangkung sahaja')) {
+    badges.push({ id: 'kangkung', icon: '🥬', label: 'KANGKUNG SAHAJA', colorClass: 'bg-emerald-500 text-slate-950 font-black border-2 border-emerald-300 shadow-md' });
+  }
+
+  // Sambal / kuah asing
+  if (n.includes('sambal asing') || n.includes('kuah asing') || n.includes('asing') || n.includes('kuah banjir') || n.includes('banjir')) {
+    badges.push({ id: 'sauce_aside', icon: '🥣', label: n.includes('banjir') ? 'KUAH BANJIR' : 'SAMBAL/KUAH ASING', colorClass: 'bg-purple-600 text-white font-black border-2 border-purple-300 shadow-md' });
+  }
+
+  // Tambah nasi
+  if (n.includes('tambah nasi') || n.includes('extra nasi') || n.includes('nasi lebih')) {
+    badges.push({ id: 'extra_rice', icon: '🍚', label: 'TAMBAH NASI', colorClass: 'bg-orange-500 text-white font-black border-2 border-orange-300 shadow-md' });
+  }
+
+  // Kurang manis / ais
+  if (n.includes('kurang manis') || n.includes('kurang ais') || n.includes('tak nak manis') || n.includes('tanpa ais')) {
+    badges.push({ id: 'less_sweet', icon: '🧊', label: 'KURANG MANIS / AIS', colorClass: 'bg-cyan-500 text-slate-950 font-black border-2 border-cyan-300 shadow-md' });
+  }
+
+  return badges;
+}
+
 export const DEFAULT_GLOBAL_COMPONENTS: KitchenComponent[] = [
   { key: 'rice', icon: '🍚', label: 'Nasi / Mee' },
   { key: 'protein', icon: '🍗', label: 'Lauk Utama' },

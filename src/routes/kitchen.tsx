@@ -3,7 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { requireChefAuth } from '@/lib/auth-guard';
 import { playKitchenSound } from '@/lib/sounds';
-import { resolveDishComponents } from '@/lib/kitchen-checklist-config';
+import { resolveDishComponents, detectModifierBadges } from '@/lib/kitchen-checklist-config';
 
 export const Route = createFileRoute('/kitchen')({
   ssr: false,
@@ -264,29 +264,40 @@ const OrderCard = memo(({
             </div>
           )}
 
-          {order.order_items.map((item: any) => {
+          {order.order_items.map((item: any, itemIndex: number) => {
             const isNewItem = highlightedItems[item.id];
             const itemName = item.menu_items?.name || (item.menu_item_id && menuMap?.[item.menu_item_id]) || 'Hidangan Makanan';
             const components = itemComponentsMap[item.id] || [];
             const dishAllDone = components.length > 0 && components.every(c => checkedComponents[`${item.id}_${c.key}`]);
+            const modifierBadges = detectModifierBadges(item.notes);
+            const totalPlates = order.order_items.length;
             
             return (
               <div 
                 key={item.id}
-                className={`flex flex-col p-3 rounded-2xl border transition-all duration-200 ${
+                className={`flex flex-col p-3.5 rounded-2xl border transition-all duration-200 ${
                   dishAllDone 
                     ? 'bg-emerald-950/30 border-emerald-500/50 shadow-sm' 
-                    : isNewItem
-                      ? 'bg-rose-500/20 text-rose-200 border-rose-500/60 font-black shadow-[0_0_12px_rgba(244,63,94,0.3)] scale-[1.01]'
-                      : 'bg-slate-950/90 text-slate-200 border-slate-800'
+                    : modifierBadges.length > 0
+                      ? 'bg-slate-950 border-2 border-amber-500/80 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
+                      : isNewItem
+                        ? 'bg-rose-500/20 text-rose-200 border-rose-500/60 font-black shadow-[0_0_12px_rgba(244,63,94,0.3)] scale-[1.01]'
+                        : 'bg-slate-950/90 text-slate-200 border-slate-800'
                 }`}
               >
-                {/* DISH TITLE BAR */}
-                <div className="flex justify-between items-center text-sm gap-2 pb-2 border-b border-slate-800/80">
+                {/* DISH TITLE BAR WITH INDIVIDUAL PLATE/PACK INDEXING */}
+                <div className="flex justify-between items-center text-sm gap-2 pb-2.5 border-b border-slate-800/80">
                   <div className="flex items-center gap-2 flex-wrap">
+                    {/* PLATE NUMBER BADGE */}
+                    <span className="text-xs font-black px-2.5 py-1 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/40 uppercase tracking-wider font-mono">
+                      {order.type === 'dine_in' ? `🍽️ Pinggan #${itemIndex + 1}` : `🥡 Pek #${itemIndex + 1}`}
+                      {totalPlates > 1 && <span className="opacity-70 ml-1">({itemIndex + 1}/{totalPlates})</span>}
+                    </span>
+
                     <span className={`font-black text-base ${dishAllDone ? 'line-through text-slate-400' : 'text-white'}`}>
                       {itemName}
                     </span>
+
                     {isNewItem && (
                       <span className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded-md font-black uppercase tracking-wider">
                         BARU / DIUBAH ✨
@@ -327,8 +338,20 @@ const OrderCard = memo(({
                   </div>
                 </div>
 
+                {/* HIGH-CONTRAST MODIFIER BADGES (TAK NAK LADA, PEDAS, TANPA TIMUN, KANGKUNG) */}
+                {modifierBadges.length > 0 && (
+                  <div className="my-2.5 p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-2 flex-wrap">
+                    <span className="text-[11px] font-bold text-amber-400 uppercase font-mono">⚠️ PERHATIAN CHEF:</span>
+                    {modifierBadges.map((badge) => (
+                      <span key={badge.id} className={`text-xs px-2.5 py-1 rounded-lg tracking-wider ${badge.colorClass}`}>
+                        {badge.icon} {badge.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
                 {/* INDIVIDUAL CLICKABLE COMPONENT PILLS (NASI / LAUK / SAMBAL / KUAH / ULAM) */}
-                <div className="mt-2.5">
+                <div className="mt-2">
                   <p className="text-[10px] text-slate-400 font-mono mb-1.5">
                     Tekan setiap komponen semasa membungkus:
                   </p>
@@ -361,7 +384,7 @@ const OrderCard = memo(({
                   <div 
                     className="text-xs text-slate-950 font-black py-1.5 px-2.5 mt-2.5 rounded-lg border-2 border-amber-400 bg-amber-300 flex items-start gap-1 shadow-sm"
                   >
-                    <span>⚠️ PERMINTAAN PELANGGAN:</span>
+                    <span>⚠️ PERMINTAAN KHAS PELANGGAN:</span>
                     <span>{item.notes}</span>
                   </div>
                 )}
