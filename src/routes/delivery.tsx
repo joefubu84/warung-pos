@@ -517,12 +517,14 @@ function CustomerDeliveryPage() {
 
     setIsSubmitting(true);
     try {
+      const addressWithFeeTag = `${deliveryAddress.trim()} [TAMBANG:RM${deliveryFee.toFixed(2)}|JARAK:${roadDistanceKm.toFixed(1)}KM]`;
+
       const { data: rpcRes, error: rpcErr } = await supabase.rpc('place_order', {
         p_order: {
           type: 'delivery',
           customer_name: customerName,
           customer_phone: customerPhone,
-          delivery_address: deliveryAddress,
+          delivery_address: addressWithFeeTag,
           delivery_lat: custLat,
           delivery_lng: custLng,
           delivery_fee: deliveryFee,

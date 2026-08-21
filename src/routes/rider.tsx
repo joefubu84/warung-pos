@@ -453,12 +453,26 @@ function RiderPortalPage() {
     }
   };
 
+  // Helper to extract clean address without internal fee tags for maps and UI
+  const getCleanDeliveryAddress = (address: string | null): string => {
+    if (!address) return 'Penampang, Sabah';
+    return address.replace(/\s*\[(?:TAMBANG|FEE|UPAH|JARAK|DISTANCE):[^\]]+\]/gi, '').trim();
+  };
+
+  // Helper to extract distance badge
+  const getDistanceBadge = (address: string | null): string | null => {
+    if (!address) return null;
+    const match = address.match(/JARAK:\s*([0-9.]+\s*KM)/i);
+    return match ? match[1] : null;
+  };
+
   // Navigation
   const openNavigation = (address: string, lat?: number | null, lng?: number | null) => {
+    const cleanAddr = getCleanDeliveryAddress(address);
     if (lat && lng) {
       window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
     } else {
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address + ', Sabah, Malaysia')}`, '_blank');
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(cleanAddr + ', Sabah, Malaysia')}`, '_blank');
     }
   };
 
@@ -470,14 +484,23 @@ function RiderPortalPage() {
     window.open(`https://wa.me/${validPhone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  // Accurate Delivery Fee Resolver (From actual map road distance or DB)
+  // Accurate Delivery Fee Resolver (From actual map road distance tag or DB)
   const getJobDeliveryFee = (job: DeliveryJob): number => {
+    // 1. Check if delivery_address has encoded fee tag e.g. [TAMBANG:RM6.60|JARAK:6.6KM]
+    if (job.delivery_address) {
+      const feeMatch = job.delivery_address.match(/\[(?:TAMBANG|FEE|UPAH):RM\s*([0-9.]+)\]/i);
+      if (feeMatch && feeMatch[1]) {
+        return parseFloat(feeMatch[1]);
+      }
+    }
+    // 2. Check explicit database fee
     if (job.delivery_fee != null && Number(job.delivery_fee) > 0) {
       return Number(job.delivery_fee);
     }
+    // 3. Fallback coordinates calculation
     if (job.delivery_lat && job.delivery_lng) {
-      const WARUNG_LAT = 5.9189;
-      const WARUNG_LNG = 116.1018;
+      const WARUNG_LAT = 5.9284138;
+      const WARUNG_LNG = 116.1145036;
       const straightKm = calculateHaversineKm(WARUNG_LAT, WARUNG_LNG, job.delivery_lat, job.delivery_lng);
       const roadKm = Math.round(straightKm * 1.35 * 10) / 10;
       return Math.max(Math.round(roadKm * 1.00 * 100) / 100, 2.00);
@@ -733,7 +756,14 @@ function RiderPortalPage() {
                         </div>
                         <div className="flex items-start gap-2 text-stone-200 text-xs">
                           <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
-                          <span className="line-clamp-2">{job.delivery_address}</span>
+                          <div className="flex-1">
+                            <span className="line-clamp-2">{getCleanDeliveryAddress(job.delivery_address)}</span>
+                            {getDistanceBadge(job.delivery_address) && (
+                              <span className="inline-block mt-1 text-[10px] font-mono px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md font-semibold">
+                                📍 {getDistanceBadge(job.delivery_address)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -780,9 +810,16 @@ function RiderPortalPage() {
                     <p className="text-xs text-amber-400 font-mono">{activeJob.customer_phone}</p>
                   </div>
 
-                  <div className="bg-[#141211] border border-[#2e2a27] p-3 rounded-xl space-y-1 text-xs">
-                    <span className="text-[10px] text-stone-400 block uppercase">Alamat Penghantaran:</span>
-                    <p className="text-stone-200 leading-relaxed">{activeJob.delivery_address}</p>
+                  <div className="bg-[#141211] border border-[#2e2a27] p-3 rounded-xl space-y-1.5 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] text-stone-400 block uppercase">Alamat Penghantaran:</span>
+                      {getDistanceBadge(activeJob.delivery_address) && (
+                        <span className="text-[10px] font-mono px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md font-semibold">
+                          📍 {getDistanceBadge(activeJob.delivery_address)}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-stone-200 leading-relaxed">{getCleanDeliveryAddress(activeJob.delivery_address)}</p>
                   </div>
 
                   {/* QUICK 1-CLICK NAVIGATION / WHATSAPP */}
@@ -862,7 +899,7 @@ function RiderPortalPage() {
                         <span className="font-semibold text-stone-200 block">
                           #{job.id.slice(0, 8).toUpperCase()} • {job.customer_name}
                         </span>
-                        <span className="text-[11px] text-stone-400 line-clamp-1">{job.delivery_address}</span>
+                        <span className="text-[11px] text-stone-400 line-clamp-1">{getCleanDeliveryAddress(job.delivery_address)}</span>
                       </div>
                       <div className="text-right shrink-0 ml-3">
                         <span className="font-bold text-emerald-400 block font-mono">
