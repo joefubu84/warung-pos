@@ -470,8 +470,23 @@ function RiderPortalPage() {
     window.open(`https://wa.me/${validPhone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
+  // Accurate Delivery Fee Resolver (From actual map road distance or DB)
+  const getJobDeliveryFee = (job: DeliveryJob): number => {
+    if (job.delivery_fee != null && Number(job.delivery_fee) > 0) {
+      return Number(job.delivery_fee);
+    }
+    if (job.delivery_lat && job.delivery_lng) {
+      const WARUNG_LAT = 5.9189;
+      const WARUNG_LNG = 116.1018;
+      const straightKm = calculateHaversineKm(WARUNG_LAT, WARUNG_LNG, job.delivery_lat, job.delivery_lng);
+      const roadKm = Math.round(straightKm * 1.35 * 10) / 10;
+      return Math.max(Math.round(roadKm * 1.00 * 100) / 100, 2.00);
+    }
+    return 4.00;
+  };
+
   // Earnings
-  const totalEarningsToday = completedJobs.reduce((sum, j) => sum + (j.delivery_fee || 6.00), 0);
+  const totalEarningsToday = completedJobs.reduce((sum, j) => sum + getJobDeliveryFee(j), 0);
 
   // 1. AUTHENTICATION VIEW (CLEAN WARUNG BRANDING)
   if (!sessionUser) {
@@ -705,7 +720,7 @@ function RiderPortalPage() {
                         <div className="text-right">
                           <span className="text-[10px] text-stone-400 block">Upah Penghantaran</span>
                           <span className="text-base font-bold text-emerald-400 font-mono">
-                            RM {(job.delivery_fee || 6.00).toFixed(2)}
+                            RM {getJobDeliveryFee(job).toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -793,7 +808,7 @@ function RiderPortalPage() {
                     <div className="flex justify-between items-center text-xs mb-3 font-mono">
                       <span className="text-stone-400">Upah Pesanan:</span>
                       <span className="font-bold text-base text-emerald-400">
-                        RM {(activeJob.delivery_fee || 6.00).toFixed(2)}
+                        RM {getJobDeliveryFee(activeJob).toFixed(2)}
                       </span>
                     </div>
 
@@ -851,7 +866,7 @@ function RiderPortalPage() {
                       </div>
                       <div className="text-right shrink-0 ml-3">
                         <span className="font-bold text-emerald-400 block font-mono">
-                          +RM {(job.delivery_fee || 6.00).toFixed(2)}
+                          +RM {getJobDeliveryFee(job).toFixed(2)}
                         </span>
                         <span className="text-[10px] text-stone-400">Selesai</span>
                       </div>

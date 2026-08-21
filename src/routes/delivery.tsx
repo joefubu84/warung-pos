@@ -525,6 +525,7 @@ function CustomerDeliveryPage() {
           delivery_address: deliveryAddress,
           delivery_lat: custLat,
           delivery_lng: custLng,
+          delivery_fee: deliveryFee,
           discount_type: 'fixed',
           discount_value: 0,
           store_id: storeId
@@ -558,6 +559,21 @@ function CustomerDeliveryPage() {
       }
 
       const newOrderId = resObj.order_id;
+      if (newOrderId) {
+        // Guarantee delivery_fee, coords and delivery_service are saved accurately in database
+        await supabase
+          .from('orders')
+          .update({
+            delivery_fee: deliveryFee,
+            delivery_address: deliveryAddress,
+            customer_name: customerName,
+            customer_phone: customerPhone,
+            delivery_service: 'jnj',
+            total_amount: grandTotal,
+          })
+          .eq('id', newOrderId);
+      }
+
       setActiveOrderId(newOrderId);
       setIsCartDrawerOpen(false);
       setShowDuitNowModal(true);
