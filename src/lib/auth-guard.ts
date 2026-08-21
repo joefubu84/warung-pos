@@ -41,7 +41,7 @@ export async function requireCashierAuth(location: { pathname: string }, auth: A
 }
 
 export async function requireChefAuth(location: { pathname: string }, auth: AuthState) {
-  return requireAuth(location, auth, ['admin', 'chef']);
+  return requireAuth(location, auth, ['admin', 'chef', 'staff', 'cashier']);
 }
 
 export async function requireStaffAuth(location: { pathname: string }, auth: AuthState) {

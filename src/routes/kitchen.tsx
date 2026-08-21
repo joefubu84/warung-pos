@@ -12,7 +12,7 @@ export const Route = createFileRoute('/kitchen')({
   component: KitchenPage,
 });
 
-type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+type OrderStatus = 'pending' | 'confirmed' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 
 interface OrderItem {
   id: string;
@@ -32,7 +32,8 @@ interface Order {
   delivery_service?: 'jnj' | 'grabfood' | 'shopeefood' | 'custom' | null;
   customer_name: string | null;
   table_id: string | null;
-  paid: boolean;
+  paid?: boolean;
+  payment_status?: string | null;
   payment_method: string | null;
   tables: {
     table_number: string;
@@ -317,6 +318,7 @@ function KitchenPage() {
         customer_name,
         table_id,
         paid,
+        payment_status,
         payment_method,
         customer_phone,
         delivery_address,
@@ -332,7 +334,7 @@ function KitchenPage() {
           menu_items (name)
         )
       `)
-      .in('status', ['pending', 'preparing'])
+      .in('status', ['pending', 'confirmed', 'preparing'])
       .order('created_at', { ascending: true });
 
     if (storeId) {
@@ -437,7 +439,7 @@ function KitchenPage() {
 
   const advanceStatus = useCallback(async (orderId: string, currentStatus: OrderStatus) => {
     let nextStatus: OrderStatus;
-    if (currentStatus === 'pending') {
+    if (currentStatus === 'pending' || currentStatus === 'confirmed') {
       nextStatus = 'preparing';
     } else if (currentStatus === 'preparing') {
       nextStatus = 'ready';
