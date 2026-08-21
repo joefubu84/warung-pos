@@ -77,12 +77,27 @@ const OrderCard = memo(({
   onAdvanceStatus 
 }: any) => {
   const isModified = highlight?.type === 'updated';
+  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
+
+  const toggleCheck = (itemId: string) => {
+    setCheckedItems(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
+  };
+
+  const totalItems = order.order_items?.length || 0;
+  const checkedCount = order.order_items?.filter((item: any) => checkedItems[item.id]).length || 0;
+  const isAllChecked = totalItems > 0 && checkedCount === totalItems;
+
   let cardClasses = "border-2 p-4 rounded-2xl shadow-sm flex flex-col justify-between transition-all duration-300 ease-in-out relative overflow-hidden ";
   
   if (highlight?.type === 'new') {
     cardClasses += "border-4 border-emerald-500 bg-emerald-950/40 shadow-[0_0_20px_rgba(16,185,129,0.4)] animate-pulse";
   } else if (isModified) {
     cardClasses += "border-4 border-rose-500 bg-rose-950/70 shadow-[0_0_30px_rgba(244,63,94,0.8)] animate-pulse ring-4 ring-rose-500/50";
+  } else if (isAllChecked && order.status === 'preparing') {
+    cardClasses += "border-2 border-emerald-500/60 bg-slate-900 shadow-[0_0_15px_rgba(16,185,129,0.2)]";
   } else {
     cardClasses += "border-slate-800 bg-slate-900";
   }
@@ -187,9 +202,25 @@ const OrderCard = memo(({
             </div>
           </div>
         </div>
+
+        {/* PACKING QUALITY CONTROL PROGRESS BAR */}
+        <div className="my-2.5 p-2 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col gap-1.5">
+          <div className="flex justify-between items-center text-[11px] font-mono">
+            <span className="text-slate-400 font-medium">Semakan Bungkusan & Lauk:</span>
+            <span className={`font-bold ${isAllChecked ? 'text-emerald-400' : 'text-amber-400'}`}>
+              {checkedCount}/{totalItems} Item Ditanda {isAllChecked && '✓ Lengkap'}
+            </span>
+          </div>
+          <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div 
+              className={`h-full transition-all duration-300 ${isAllChecked ? 'bg-emerald-500' : 'bg-amber-400'}`}
+              style={{ width: `${totalItems > 0 ? (checkedCount / totalItems) * 100 : 0}%` }}
+            />
+          </div>
+        </div>
         
-        {/* ORDER ITEMS LIST WITH MODIFICATION HIGHLIGHTING */}
-        <div className="space-y-2 mb-4 mt-3">
+        {/* ORDER ITEMS LIST WITH INTERACTIVE CHECKLIST */}
+        <div className="space-y-2 mb-4 mt-2">
           {isModified && (
             <div className="text-xs font-black text-rose-200 bg-rose-600/30 border border-rose-500/50 p-2 rounded-xl text-center mb-2 shadow-inner flex items-center justify-center gap-1.5">
               <span>⚠️ Perhatian Dapur: Semak hidangan yang dikemas kini di bawah:</span>
@@ -198,41 +229,70 @@ const OrderCard = memo(({
 
           {order.order_items.map((item: any) => {
             const isNewItem = highlightedItems[item.id];
+            const isChecked = !!checkedItems[item.id];
             const itemName = item.menu_items?.name || (item.menu_item_id && menuMap?.[item.menu_item_id]) || 'Hidangan Makanan';
+            
             return (
               <div 
-                key={item.id} 
-                className={`flex flex-col p-2.5 rounded-xl border transition-all duration-300 ${
-                  isNewItem 
-                    ? 'bg-rose-500/20 text-rose-200 border-rose-500/60 font-black shadow-[0_0_12px_rgba(244,63,94,0.3)] scale-[1.02]' 
-                    : 'bg-slate-950/60 text-slate-200 border-slate-800/80'
+                key={item.id}
+                onClick={() => toggleCheck(item.id)}
+                className={`flex flex-col p-2.5 rounded-xl border cursor-pointer select-none transition-all duration-200 active:scale-[0.99] ${
+                  isChecked 
+                    ? 'bg-emerald-950/40 border-emerald-500/60 shadow-inner' 
+                    : isNewItem
+                      ? 'bg-rose-500/20 text-rose-200 border-rose-500/60 font-black shadow-[0_0_12px_rgba(244,63,94,0.3)] scale-[1.01]'
+                      : 'bg-slate-950/80 hover:bg-slate-950 text-slate-200 border-slate-800'
                 }`}
               >
-                <div className="flex justify-between items-center text-sm">
-                  <span className="flex items-center gap-2 flex-wrap font-semibold">
-                    <span className="text-white font-bold">{itemName}</span>
-                    {isNewItem && (
-                      <span className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded-md font-black uppercase">
-                        BARU / DIUBAH ✨
-                      </span>
-                    )}
-                    {item.fulfillment_type === 'dine_in' ? (
-                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700 font-bold">
-                        Makan Sini (Dine-In)
-                      </span>
-                    ) : (
-                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-black uppercase">
-                        BUNGKUS (TAKEAWAY) {item.container_size ? `[${item.container_size.toUpperCase()}]` : ''}
-                      </span>
-                    )}
+                <div className="flex justify-between items-center text-sm gap-2">
+                  <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                    {/* INTERACTIVE CHECKBOX ICON */}
+                    <div className={`w-5 h-5 rounded-md flex items-center justify-center font-bold text-xs transition-all shrink-0 ${
+                      isChecked 
+                        ? 'bg-emerald-500 text-white shadow-sm' 
+                        : 'border-2 border-slate-600 hover:border-amber-400 bg-slate-900 text-transparent'
+                    }`}>
+                      ✓
+                    </div>
+
+                    <span className={`flex items-center gap-2 flex-wrap font-semibold ${isChecked ? 'line-through text-slate-400' : 'text-white'}`}>
+                      <span className="font-bold">{itemName}</span>
+                      {isNewItem && (
+                        <span className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded-md font-black uppercase tracking-wider">
+                          BARU / DIUBAH ✨
+                        </span>
+                      )}
+                      {item.fulfillment_type === 'dine_in' ? (
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700 font-bold">
+                          Makan Sini
+                        </span>
+                      ) : (
+                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-black uppercase">
+                          BUNGKUS {item.container_size ? `[${item.container_size.toUpperCase()}]` : ''}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+
+                  <span className={`font-black text-base font-mono shrink-0 ${isChecked ? 'text-emerald-400' : 'text-slate-300'}`}>
+                    x{item.quantity}
                   </span>
-                  <span className="font-black text-base font-mono text-emerald-400">x{item.quantity}</span>
                 </div>
+
+                {/* COMPONENT QUALITY CHECK TAGS (NASI / LAUK / SAMBAL) */}
+                <div className="flex items-center gap-1.5 mt-2 pt-1.5 border-t border-slate-800/60 flex-wrap text-[10px] text-slate-400 font-mono">
+                  <span className="opacity-60">Semak Bungkusan:</span>
+                  <span className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700/80">🍚 Nasi</span>
+                  <span className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700/80">🍗 Lauk</span>
+                  <span className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700/80">🌶️ Sambal J&J</span>
+                  <span className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700/80">🥢 Kutleri</span>
+                </div>
+
                 {item.notes && (
                   <div 
-                    className="text-xs text-slate-900 font-bold py-1.5 px-2.5 mt-2 rounded-lg border border-amber-400 bg-amber-200 flex items-start gap-1"
+                    className="text-xs text-slate-950 font-black py-1.5 px-2.5 mt-2 rounded-lg border-2 border-amber-400 bg-amber-300 flex items-start gap-1 shadow-sm"
                   >
-                    <span>✏️</span>
+                    <span>⚠️ NOTA:</span>
                     <span>{item.notes}</span>
                   </div>
                 )}
@@ -242,16 +302,34 @@ const OrderCard = memo(({
         </div>
       </div>
 
-      <div className="border-t border-slate-800 pt-3 mt-3">
-        <p className="text-[11px] text-slate-400 mb-2 font-mono">
-          Masa Pesanan: {new Date(order.created_at).toLocaleTimeString()}
+      <div className="border-t border-slate-800 pt-3 mt-2">
+        <p className="text-[11px] text-slate-400 mb-2 font-mono flex justify-between items-center">
+          <span>Masa Pesanan: {new Date(order.created_at).toLocaleTimeString()}</span>
+          {isAllChecked && <span className="text-emerald-400 font-bold">✓ Siap Dibungkus</span>}
         </p>
         {order.status !== 'ready' && (
           <button
-            onClick={() => onAdvanceStatus(order.id, order.status)}
-            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 font-black text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition-all active:scale-98 uppercase tracking-wider"
+            onClick={() => {
+              if (order.status === 'preparing' && !isAllChecked) {
+                if (!confirm(`⚠️ Perhatian: Anda baru menanda ${checkedCount}/${totalItems} hidangan. Pastikan lauk, nasi, sambal dan air tidak tertinggal. Teruskan?`)) {
+                  return;
+                }
+              }
+              onAdvanceStatus(order.id, order.status);
+            }}
+            className={`w-full py-2.5 font-black text-xs rounded-xl shadow-lg transition-all active:scale-98 uppercase tracking-wider flex items-center justify-center gap-2 ${
+              order.status === 'pending'
+                ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/30'
+                : isAllChecked
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/40 ring-2 ring-emerald-400 animate-pulse'
+                  : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40'
+            }`}
           >
-            {order.status === 'pending' ? '🍳 MULA MASAK (START PREPARING)' : '🍽️ SIAP DIHIDANG (MARK AS READY)'}
+            {order.status === 'pending' 
+              ? '🍳 MULA MASAK (START PREPARING)' 
+              : isAllChecked
+                ? '🍽️ SEMUA LENGKAP — SIAP DIHIDANG / RIDER PICKUP ✓'
+                : `⚠️ TANDAKAN SIAP (${checkedCount}/${totalItems} ITEM)`}
           </button>
         )}
       </div>
