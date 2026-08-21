@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
@@ -15,24 +14,21 @@ import {
   User, 
   Clock, 
   CheckCircle2, 
-  AlertCircle, 
   Loader2, 
-  Sparkles, 
   Navigation, 
   MessageCircle, 
   Wallet, 
   LogOut, 
   Lock, 
   Mail, 
-  ShieldCheck, 
   RefreshCw, 
   ChevronRight, 
-  ExternalLink,
-  Receipt,
+  Store,
+  ArrowRight,
+  Shield,
   Bike
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { claimDeliveryJob } from '@/lib/riders';
 
 export const Route = createFileRoute('/rider')({
   component: RiderPortalPage,
@@ -61,7 +57,6 @@ function RiderPortalPage() {
     id: string;
     name: string;
     phone_number?: string;
-    vehicle_plate?: string;
     role: string;
   } | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
@@ -128,9 +123,8 @@ function RiderPortalPage() {
       if (!error && data) {
         setRiderProfile({
           id: data.id,
-          name: data.name || 'Rider Warung',
+          name: data.name || 'Rider J&J',
           phone_number: data.phone_number || '',
-          vehicle_plate: 'Motosikal Delivery',
           role: data.role,
         });
       }
@@ -147,7 +141,6 @@ function RiderPortalPage() {
     setLoadingJobs(true);
 
     try {
-      // 1. Fetch available / unassigned delivery orders
       const { data: orders, error } = await supabase
         .from('orders')
         .select('*')
@@ -189,7 +182,6 @@ function RiderPortalPage() {
     if (sessionUser) {
       fetchDeliveryOrders();
 
-      // Realtime subscription for delivery orders
       const channel = supabase
         .channel('rider_delivery_channel')
         .on(
@@ -232,7 +224,6 @@ function RiderPortalPage() {
       if (authErr) throw authErr;
 
       if (authRes.user) {
-        // Upsert user profile as 'rider'
         await supabase.from('users').upsert({
           id: authRes.user.id,
           name: regName,
@@ -240,7 +231,7 @@ function RiderPortalPage() {
           role: 'rider' as any,
         });
 
-        toast.success('🎉 Pendaftaran Rider Berjaya! Selamat datang ke Pasukan Rider Warung J&J.');
+        toast.success('Pendaftaran Rakan Penghantar Berjaya! Selamat datang ke Warung J&J.');
         setSessionUser(authRes.user);
         await fetchRiderProfile(authRes.user.id);
       }
@@ -269,7 +260,7 @@ function RiderPortalPage() {
       if (authErr) throw authErr;
 
       if (authRes.user) {
-        toast.success('Log masuk berjaya! Selamat bertugas 🛵');
+        toast.success('Selamat bertugas!');
         setSessionUser(authRes.user);
         await fetchRiderProfile(authRes.user.id);
       }
@@ -285,7 +276,8 @@ function RiderPortalPage() {
     await supabase.auth.signOut();
     setSessionUser(null);
     setRiderProfile(null);
-    toast.info('Anda telah log keluar dari Portal Rider.');
+    setAuthMode('login');
+    toast.info('Anda telah log keluar.');
   };
 
   // Claim Delivery Job
@@ -294,7 +286,6 @@ function RiderPortalPage() {
     setIsClaiming(job.id);
 
     try {
-      // Direct update to order with assigned rider
       const { error } = await supabase
         .from('orders')
         .update({
@@ -305,7 +296,7 @@ function RiderPortalPage() {
 
       if (error) throw error;
 
-      toast.success(`⚡ Tugasan #${job.id.slice(0, 8)} berjaya diambil! Sila bergerak ke kedai / alamat pelanggan.`);
+      toast.success(`Tugasan pesanan berjaya diambil.`);
       await fetchDeliveryOrders();
       setActiveTab('active');
     } catch (err: any) {
@@ -328,7 +319,7 @@ function RiderPortalPage() {
 
       if (error) throw error;
 
-      toast.success('🎉 Penghantaran Selesai! Upah telah dimasukkan ke dalam rekod dompet anda.');
+      toast.success('Penghantaran selesai.');
       await fetchDeliveryOrders();
       setActiveTab('wallet');
     } catch (err: any) {
@@ -336,7 +327,7 @@ function RiderPortalPage() {
     }
   };
 
-  // Open Google Maps / Waze Navigation
+  // Navigation
   const openNavigation = (address: string, lat?: number | null, lng?: number | null) => {
     if (lat && lng) {
       window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
@@ -345,82 +336,88 @@ function RiderPortalPage() {
     }
   };
 
-  // WhatsApp Customer
+  // WhatsApp
   const contactWhatsApp = (phone: string, customerName: string, orderId: string) => {
     const cleanPhone = phone.replace(/\D/g, '');
     const validPhone = cleanPhone.startsWith('60') ? cleanPhone : cleanPhone.startsWith('0') ? '6' + cleanPhone : '60' + cleanPhone;
-    const msg = `*HALO ${customerName.toUpperCase()}, SAYA RIDER WARUNG J&J 🛵*
-
-Saya sedang dalam perjalanan menghantar pesanan makanan anda (*#${orderId.slice(0, 8).toUpperCase()}*). Sila bersedia di lokasi ya! Terima kasih 🙏`;
+    const msg = `Salam ${customerName}, saya penghantar makanan dari Warung J&J (#${orderId.slice(0, 8).toUpperCase()}). Saya sedang menuju ke lokasi anda ya. Terima kasih!`;
     window.open(`https://wa.me/${validPhone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  // Calculate Total Earnings Today
+  // Earnings
   const totalEarningsToday = completedJobs.reduce((sum, j) => sum + (j.delivery_fee || 6.00), 0);
 
-  // 1. RENDER AUTHENTICATION VIEW IF NOT LOGGED IN
+  // 1. AUTHENTICATION VIEW (CLEAN WARUNG BRANDING)
   if (!sessionUser) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white font-sans flex flex-col justify-center items-center p-4 relative overflow-hidden">
-        <div className="absolute top-10 left-1/2 -translate-x-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-10 right-10 w-80 h-80 bg-sky-500/10 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative z-10 space-y-6">
-          <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-gradient-to-tr from-emerald-600 to-teal-400 text-slate-950 mb-1 shadow-lg shadow-emerald-500/20">
-              <Bike className="w-8 h-8 stroke-[2.5]" />
+      <div className="min-h-screen bg-[#121110] text-[#f5f5f4] flex flex-col justify-center items-center p-4 sm:p-6 font-sans selection:bg-amber-500/30">
+        <div className="w-full max-w-md bg-[#1c1a18] border border-[#2e2a27] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+          
+          {/* WARUNG J&J OFFICIAL LOGO HEADER */}
+          <div className="text-center space-y-3">
+            <div className="inline-block p-1 bg-gradient-to-b from-amber-500/40 to-transparent rounded-full shadow-lg">
+              <img 
+                src="/warung-logo.png" 
+                alt="Warung J&J" 
+                className="w-20 h-20 rounded-full object-cover border-2 border-amber-500/60 shadow-inner mx-auto"
+              />
             </div>
-            <div className="inline-block">
-              <span className="text-[10px] tracking-widest uppercase bg-emerald-500/20 text-emerald-300 font-bold px-3 py-0.5 rounded-full border border-emerald-500/30">
-                Portal Rasmi Rider Delivery
-              </span>
+            
+            <div>
+              <h1 className="text-2xl font-bold text-[#fafaf9] tracking-tight">
+                Rakan Penghantar J&J
+              </h1>
+              <p className="text-xs text-stone-400 mt-0.5">
+                Warung J&J • Penampang, Sabah
+              </p>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Warung J&J Rider 🛵
-            </h1>
-            <p className="text-xs text-slate-400">
-              Penampang, Sabah • Jana pendapatan harian dengan menghantar pesanan
-            </p>
           </div>
 
+          {/* TAB SWITCHER */}
           <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as any)} className="w-full">
-            <TabsList className="grid grid-cols-2 bg-slate-950 p-1 rounded-2xl border border-slate-800 h-11 w-full">
-              <TabsTrigger value="login" className="text-xs font-bold rounded-xl data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-                Log Masuk Rider
+            <TabsList className="grid grid-cols-2 bg-[#141211] p-1 rounded-2xl border border-[#2b2724] h-11 w-full">
+              <TabsTrigger 
+                value="login" 
+                className="text-xs font-semibold rounded-xl text-stone-300 data-[state=active]:bg-amber-600 data-[state=active]:text-white transition-all"
+              >
+                Log Masuk
               </TabsTrigger>
-              <TabsTrigger value="register" className="text-xs font-bold rounded-xl data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
-                Daftar Rider Baru
+              <TabsTrigger 
+                value="register" 
+                className="text-xs font-semibold rounded-xl text-stone-300 data-[state=active]:bg-amber-600 data-[state=active]:text-white transition-all"
+              >
+                Daftar Baru
               </TabsTrigger>
             </TabsList>
 
             {/* TAB: LOGIN */}
             <TabsContent value="login" className="space-y-4 pt-4">
-              <form onSubmit={handleLoginRider} className="space-y-3 font-mono">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-300">Emel Rider</label>
+              <form onSubmit={handleLoginRider} className="space-y-3.5">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-stone-300">Emel</label>
                   <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Mail className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <Input
                       type="email"
-                      placeholder="rider@warungjnj.com"
+                      placeholder="emel@anda.com"
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
-                      className="bg-slate-950 border-slate-800 pl-10 h-11 text-xs rounded-xl text-white"
+                      className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-300">Kata Laluan</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-stone-300">Kata Laluan</label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <Input
                       type="password"
                       placeholder="••••••••"
                       value={loginPassword}
                       onChange={(e) => setLoginPassword(e.target.value)}
-                      className="bg-slate-950 border-slate-800 pl-10 h-11 text-xs rounded-xl text-white"
+                      className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
                       required
                     />
                   </div>
@@ -429,82 +426,82 @@ Saya sedang dalam perjalanan menghantar pesanan makanan anda (*#${orderId.slice(
                 <Button
                   type="submit"
                   disabled={isAuthSubmitting}
-                  className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 mt-4"
+                  className="w-full h-11 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-amber-600/20 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
                 >
-                  {isAuthSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Log Masuk & Mula Bertugas 🛵'}
+                  {isAuthSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Log Masuk & Mula Bertugas'}
                 </Button>
               </form>
             </TabsContent>
 
             {/* TAB: REGISTER */}
             <TabsContent value="register" className="space-y-4 pt-4">
-              <form onSubmit={handleRegisterRider} className="space-y-3 font-mono">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-300">Nama Penuh Rider</label>
+              <form onSubmit={handleRegisterRider} className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-stone-300">Nama Penuh</label>
                   <div className="relative">
-                    <User className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <User className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <Input
-                      placeholder="Contoh: Mohd Azlan Bin Ramli"
+                      placeholder="cth: Mohd Azlan"
                       value={regName}
                       onChange={(e) => setRegName(e.target.value)}
-                      className="bg-slate-950 border-slate-800 pl-10 h-11 text-xs rounded-xl text-white"
+                      className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-300">No. Telefon WhatsApp</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-stone-300">No. Telefon (WhatsApp)</label>
                   <div className="relative">
-                    <Phone className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Phone className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <Input
-                      placeholder="Contoh: 0198887766"
+                      placeholder="cth: 0198887766"
                       value={regPhone}
                       onChange={(e) => setRegPhone(e.target.value)}
-                      className="bg-slate-950 border-slate-800 pl-10 h-11 text-xs rounded-xl text-white"
+                      className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-300">No. Plat Motosikal</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-stone-300">No. Plat Kenderaan</label>
                   <div className="relative">
-                    <Bike className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Bike className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <Input
-                      placeholder="Contoh: SAB 1234 A"
+                      placeholder="cth: SAB 1234 A"
                       value={regPlate}
                       onChange={(e) => setRegPlate(e.target.value)}
-                      className="bg-slate-950 border-slate-800 pl-10 h-11 text-xs rounded-xl text-white"
+                      className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-300">Emel</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-stone-300">Emel</label>
                   <div className="relative">
-                    <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Mail className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <Input
                       type="email"
                       placeholder="nama@gmail.com"
                       value={regEmail}
                       onChange={(e) => setRegEmail(e.target.value)}
-                      className="bg-slate-950 border-slate-800 pl-10 h-11 text-xs rounded-xl text-white"
+                      className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
                       required
                     />
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-300">Cipta Kata Laluan</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-stone-300">Kata Laluan</label>
                   <div className="relative">
-                    <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <Input
                       type="password"
                       placeholder="Minimum 6 aksara"
                       value={regPassword}
                       onChange={(e) => setRegPassword(e.target.value)}
-                      className="bg-slate-950 border-slate-800 pl-10 h-11 text-xs rounded-xl text-white"
+                      className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
                       required
                     />
                   </div>
@@ -513,43 +510,55 @@ Saya sedang dalam perjalanan menghantar pesanan makanan anda (*#${orderId.slice(
                 <Button
                   type="submit"
                   disabled={isAuthSubmitting}
-                  className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 mt-4"
+                  className="w-full h-11 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-amber-600/20 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
                 >
-                  {isAuthSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Hantar Pendaftaran Rider ✨'}
+                  {isAuthSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Hantar Pendaftaran'}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
+
+          <div className="pt-3 border-t border-[#2e2a27] text-center">
+            <button
+              onClick={() => navigate({ to: '/' })}
+              className="text-xs text-stone-400 hover:text-stone-200 transition-colors"
+            >
+              ← Kembali ke Laman Utama
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  // 2. RENDER RIDER PORTAL VIEW (AUTHENTICATED RIDER)
+  // 2. AUTHENTICATED RIDER DASHBOARD (CLEAN & PROFESSIONAL)
   return (
-    <div className="min-h-screen bg-slate-950 text-white font-sans pb-24">
-      {/* HEADER BANNER */}
-      <header className="bg-slate-900/95 backdrop-blur-md border-b border-slate-800 sticky top-0 z-30 shadow-xl">
+    <div className="min-h-screen bg-[#121110] text-[#f5f5f4] font-sans pb-24 selection:bg-amber-500/30">
+      
+      {/* BRANDED HEADER */}
+      <header className="bg-[#1c1a18] border-b border-[#2e2a27] sticky top-0 z-30 shadow-md">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="bg-emerald-500/20 p-2.5 rounded-2xl border border-emerald-500/30 text-emerald-400">
-              <Bike className="w-6 h-6" />
-            </div>
+            <img 
+              src="/warung-logo.png" 
+              alt="Warung J&J Logo" 
+              className="w-10 h-10 rounded-full object-cover border border-amber-500/40 shadow-sm"
+            />
             <div>
-              <h1 className="font-black text-base tracking-tight text-white flex items-center gap-1.5">
-                Warung J&J Rider 🛵
+              <h1 className="font-bold text-sm text-stone-100 leading-tight">
+                Warung J&J Delivery
               </h1>
-              <p className="text-[11px] text-emerald-400 font-mono flex items-center gap-1.5">
-                <span>{riderProfile?.name || sessionUser.email}</span>
+              <p className="text-[11px] text-amber-400">
+                {riderProfile?.name || sessionUser.email}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             {/* ONLINE / OFFLINE TOGGLE */}
-            <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 px-2.5 py-1 rounded-xl">
-              <span className={`text-[10px] font-mono font-bold ${isOnline ? 'text-emerald-400' : 'text-slate-500'}`}>
-                {isOnline ? '🟢 ON' : '⚪ REHAT'}
+            <div className="flex items-center gap-1.5 bg-[#141211] border border-[#2e2a27] px-2.5 py-1 rounded-xl">
+              <span className={`text-[10px] font-bold ${isOnline ? 'text-emerald-400' : 'text-stone-500'}`}>
+                {isOnline ? 'ONLINE' : 'REHAT'}
               </span>
               <Switch
                 checked={isOnline}
@@ -562,7 +571,7 @@ Saya sedang dalam perjalanan menghantar pesanan makanan anda (*#${orderId.slice(
               size="icon"
               variant="ghost"
               onClick={handleSignOut}
-              className="text-slate-400 hover:text-rose-400 hover:bg-slate-800 w-8 h-8 rounded-xl"
+              className="text-stone-400 hover:text-rose-400 hover:bg-[#2b2724] w-8 h-8 rounded-xl"
               title="Log Keluar"
             >
               <LogOut className="w-4 h-4" />
@@ -572,97 +581,101 @@ Saya sedang dalam perjalanan menghantar pesanan makanan anda (*#${orderId.slice(
       </header>
 
       <main className="max-w-md mx-auto px-4 py-4 space-y-4">
-        {/* ACTIVE DUTY STATUS CARD */}
-        <div className="bg-gradient-to-r from-emerald-950/60 via-slate-900 to-slate-900 border border-emerald-500/30 p-4 rounded-3xl shadow-xl flex items-center justify-between font-mono">
-          <div>
-            <span className="text-[10px] text-slate-400 block uppercase">Status Rider Semasa</span>
-            <span className="text-sm font-bold text-white flex items-center gap-1.5">
-              {isOnline ? '🟢 Sedia Menerima Pesanan' : '⚪ Sedang Rehat'}
+        
+        {/* STATUS CARD */}
+        <div className="bg-[#1c1a18] border border-[#2e2a27] p-3.5 rounded-2xl flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-stone-500'}`} />
+            <span className="text-stone-300 font-medium">
+              {isOnline ? 'Sedia menerima tugasan penghantaran' : 'Status: Sedang Berehat'}
             </span>
           </div>
           <Button
             size="sm"
             onClick={fetchDeliveryOrders}
             disabled={loadingJobs}
-            className="bg-slate-950 border border-slate-800 hover:bg-slate-800 text-emerald-400 text-xs rounded-xl h-8 gap-1"
+            className="bg-[#141211] border border-[#2e2a27] hover:bg-[#2b2724] text-stone-300 text-xs rounded-xl h-7 px-2.5 gap-1"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loadingJobs ? 'animate-spin' : ''}`} />
-            <span>Muat Semula</span>
+            <RefreshCw className={`w-3 h-3 ${loadingJobs ? 'animate-spin' : ''}`} />
+            <span>Kemas Kini</span>
           </Button>
         </div>
 
-        {/* TABS NAVIGATION */}
+        {/* NAVIGATION TABS */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-          <TabsList className="grid grid-cols-3 bg-slate-900 p-1 rounded-2xl border border-slate-800 h-11 w-full font-mono">
-            <TabsTrigger value="jobs" className="text-xs font-bold rounded-xl data-[state=active]:bg-emerald-600 data-[state=active]:text-white relative">
-              <span>🛵 Sedia ({availableJobs.length})</span>
+          <TabsList className="grid grid-cols-3 bg-[#141211] p-1 rounded-2xl border border-[#2e2a27] h-11 w-full">
+            <TabsTrigger value="jobs" className="text-xs font-semibold rounded-xl data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+              Tugasan ({availableJobs.length})
             </TabsTrigger>
-            <TabsTrigger value="active" className="text-xs font-bold rounded-xl data-[state=active]:bg-sky-600 data-[state=active]:text-white">
-              <span>📦 Aktif {activeJob ? '🔴' : ''}</span>
+            <TabsTrigger value="active" className="text-xs font-semibold rounded-xl data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+              Aktif {activeJob ? '•' : ''}
             </TabsTrigger>
-            <TabsTrigger value="wallet" className="text-xs font-bold rounded-xl data-[state=active]:bg-amber-600 data-[state=active]:text-white">
-              <span>💰 Dompet</span>
+            <TabsTrigger value="wallet" className="text-xs font-semibold rounded-xl data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+              Pendapatan
             </TabsTrigger>
           </TabsList>
 
           {/* TAB 1: AVAILABLE JOBS */}
           <TabsContent value="jobs" className="space-y-3 pt-3">
-            <div className="flex justify-between items-center text-xs font-mono text-slate-400">
-              <span>Pesanan Delivery Siap Masak</span>
-              <span>{availableJobs.length} Tersedia</span>
+            <div className="flex justify-between items-center text-xs text-stone-400">
+              <span>Pesanan Sedia Untuk Dihantar</span>
+              <span>{availableJobs.length} pesanan</span>
             </div>
 
             {loadingJobs ? (
-              <div className="py-12 text-center text-slate-500 font-mono text-xs flex flex-col items-center gap-2">
-                <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
-                <span>Mencari pesanan terkini...</span>
+              <div className="py-12 text-center text-stone-500 text-xs flex flex-col items-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
+                <span>Memeriksa pesanan baru...</span>
               </div>
             ) : availableJobs.length === 0 ? (
-              <div className="p-8 text-center bg-slate-900/80 rounded-3xl border border-slate-800 text-slate-400 font-mono space-y-2">
-                <Bike className="w-10 h-10 mx-auto text-slate-600 stroke-[1.5]" />
-                <p className="text-xs font-bold text-slate-300">Tiada pesanan delivery baru buat masa ini.</p>
-                <p className="text-[10px] text-slate-500">Sistem akan automatik berbunyi & mengemaskini apabila pelanggan membuat pesanan baru.</p>
+              <div className="p-8 text-center bg-[#1c1a18] rounded-2xl border border-[#2e2a27] text-stone-400 space-y-2">
+                <Store className="w-8 h-8 mx-auto text-stone-600" />
+                <p className="text-xs font-medium text-stone-300">Tiada pesanan baru buat masa ini.</p>
+                <p className="text-[11px] text-stone-500">Sistem akan mengemaskini secara automatik apabila dapur selesai memasak.</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {availableJobs.map((job) => (
-                  <Card key={job.id} className="bg-slate-900 border-2 border-emerald-500/30 text-white rounded-3xl shadow-xl overflow-hidden font-mono">
+                  <Card key={job.id} className="bg-[#1c1a18] border border-[#2e2a27] text-white rounded-2xl shadow-lg overflow-hidden">
                     <CardContent className="p-4 space-y-3">
-                      <div className="flex justify-between items-start border-b border-slate-800 pb-2.5">
+                      <div className="flex justify-between items-start border-b border-[#2e2a27] pb-2.5">
                         <div>
-                          <span className="text-[10px] text-emerald-400 font-bold block">ORDER #{job.id.slice(0, 8).toUpperCase()}</span>
-                          <h3 className="font-bold text-white text-sm">👤 {job.customer_name || 'Pelanggan'}</h3>
+                          <span className="text-[10px] text-amber-400 font-mono font-bold block">
+                            #{job.id.slice(0, 8).toUpperCase()}
+                          </span>
+                          <h3 className="font-bold text-stone-100 text-sm">{job.customer_name || 'Pelanggan'}</h3>
                         </div>
                         <div className="text-right">
-                          <span className="text-[10px] text-slate-400 block">Upah Delivery</span>
-                          <span className="text-base font-black text-emerald-400">
+                          <span className="text-[10px] text-stone-400 block">Upah Penghantaran</span>
+                          <span className="text-base font-bold text-emerald-400 font-mono">
                             RM {(job.delivery_fee || 6.00).toFixed(2)}
                           </span>
                         </div>
                       </div>
 
-                      <div className="space-y-1.5 text-xs text-slate-300">
-                        <div className="flex items-start gap-2">
-                          <MapPin className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                          <span className="line-clamp-2 text-slate-200">{job.delivery_address}</span>
+                      {/* ROUTE INFO */}
+                      <div className="space-y-2 text-xs text-stone-300">
+                        <div className="flex items-center gap-2 text-stone-400 text-[11px]">
+                          <Store className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                          <span>Ambil: <strong>Warung J&J (Penampang)</strong></span>
                         </div>
-                        <div className="flex items-center gap-2 text-slate-400 text-[11px]">
-                          <Clock className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                          <span>Dipesan pada {new Date(job.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <div className="flex items-start gap-2 text-stone-200 text-xs">
+                          <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
+                          <span className="line-clamp-2">{job.delivery_address}</span>
                         </div>
                       </div>
 
                       <Button
                         disabled={isClaiming === job.id || !isOnline}
                         onClick={() => handleClaimJob(job)}
-                        className="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/30 flex items-center justify-center gap-2 active:scale-98 transition-all"
+                        className="w-full h-10 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
                       >
                         {isClaiming === job.id ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
                           <>
-                            <span>⚡ AMBIL TUGASAN INI (CLAIM)</span>
-                            <ChevronRight className="w-4 h-4" />
+                            <span>Ambil Tugasan Ini</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
                           </>
                         )}
                       </Button>
@@ -676,63 +689,63 @@ Saya sedang dalam perjalanan menghantar pesanan makanan anda (*#${orderId.slice(
           {/* TAB 2: ACTIVE JOB */}
           <TabsContent value="active" className="space-y-3 pt-3">
             {!activeJob ? (
-              <div className="p-8 text-center bg-slate-900/80 rounded-3xl border border-slate-800 text-slate-400 font-mono space-y-2">
-                <Truck className="w-10 h-10 mx-auto text-slate-600 stroke-[1.5]" />
-                <p className="text-xs font-bold text-slate-300">Anda tiada pesanan aktif yang sedang dihantar.</p>
-                <p className="text-[10px] text-slate-500">Sila pilih pesanan dari tab "Sedia" untuk mula menghantar.</p>
+              <div className="p-8 text-center bg-[#1c1a18] rounded-2xl border border-[#2e2a27] text-stone-400 space-y-2">
+                <Truck className="w-8 h-8 mx-auto text-stone-600" />
+                <p className="text-xs font-medium text-stone-300">Tiada tugasan aktif pada masa ini.</p>
+                <p className="text-[11px] text-stone-500">Pilih mana-mana pesanan dari senarai "Tugasan" untuk mula menghantar.</p>
               </div>
             ) : (
-              <Card className="bg-slate-900 border-2 border-sky-500 text-white rounded-3xl shadow-2xl overflow-hidden font-mono">
-                <div className="bg-sky-500 text-slate-950 font-black text-xs px-4 py-2 flex justify-between items-center">
-                  <span>SEDANG DIHANTAR 🛵</span>
-                  <span>#{activeJob.id.slice(0, 8).toUpperCase()}</span>
+              <Card className="bg-[#1c1a18] border-2 border-amber-500/60 text-white rounded-2xl shadow-xl overflow-hidden">
+                <div className="bg-amber-600 text-white font-bold text-xs px-4 py-2 flex justify-between items-center">
+                  <span>DALAM PENGHANTARAN</span>
+                  <span className="font-mono">#{activeJob.id.slice(0, 8).toUpperCase()}</span>
                 </div>
 
                 <CardContent className="p-4 sm:p-5 space-y-4">
                   <div>
-                    <span className="text-[10px] text-slate-400 block uppercase">Penerima Pesanan</span>
-                    <h3 className="text-lg font-black text-white">{activeJob.customer_name}</h3>
-                    <p className="text-xs text-sky-400 font-bold">{activeJob.customer_phone}</p>
+                    <span className="text-[10px] text-stone-400 block uppercase">Penerima</span>
+                    <h3 className="text-base font-bold text-stone-100">{activeJob.customer_name}</h3>
+                    <p className="text-xs text-amber-400 font-mono">{activeJob.customer_phone}</p>
                   </div>
 
-                  <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-2xl space-y-2 text-xs">
-                    <span className="text-[10px] text-slate-400 block uppercase">Alamat Penghantaran:</span>
-                    <p className="text-slate-200 font-medium leading-relaxed">{activeJob.delivery_address}</p>
+                  <div className="bg-[#141211] border border-[#2e2a27] p-3 rounded-xl space-y-1 text-xs">
+                    <span className="text-[10px] text-stone-400 block uppercase">Alamat Penghantaran:</span>
+                    <p className="text-stone-200 leading-relaxed">{activeJob.delivery_address}</p>
                   </div>
 
-                  {/* QUICK 1-CLICK ACTION BUTTONS */}
+                  {/* QUICK 1-CLICK NAVIGATION / WHATSAPP */}
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       onClick={() => openNavigation(activeJob.delivery_address || '', activeJob.delivery_lat, activeJob.delivery_lng)}
-                      className="bg-sky-600 hover:bg-sky-500 text-white font-bold h-11 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md"
+                      className="bg-stone-800 hover:bg-stone-700 text-stone-100 font-semibold h-10 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-stone-700"
                     >
-                      <Navigation className="w-4 h-4" />
-                      <span>Buka Maps / Waze</span>
+                      <Navigation className="w-3.5 h-3.5 text-sky-400" />
+                      <span>Buka GPS Maps</span>
                     </Button>
 
                     <Button
                       onClick={() => contactWhatsApp(activeJob.customer_phone || '', activeJob.customer_name || '', activeJob.id)}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-11 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md"
+                      className="bg-stone-800 hover:bg-stone-700 text-stone-100 font-semibold h-10 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-stone-700"
                     >
-                      <MessageCircle className="w-4 h-4" />
-                      <span>WhatsApp Pelanggan</span>
+                      <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>WhatsApp</span>
                     </Button>
                   </div>
 
-                  <div className="border-t border-slate-800 pt-3">
-                    <div className="flex justify-between items-center text-xs mb-3">
-                      <span className="text-slate-400">Upah Trip Ini:</span>
-                      <span className="font-black text-base text-emerald-400">
+                  <div className="border-t border-[#2e2a27] pt-3">
+                    <div className="flex justify-between items-center text-xs mb-3 font-mono">
+                      <span className="text-stone-400">Upah Pesanan:</span>
+                      <span className="font-bold text-base text-emerald-400">
                         RM {(activeJob.delivery_fee || 6.00).toFixed(2)}
                       </span>
                     </div>
 
                     <Button
                       onClick={() => handleCompleteJob(activeJob.id)}
-                      className="w-full h-12 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-sm rounded-xl shadow-xl flex items-center justify-center gap-2 active:scale-98 transition-all"
+                      className="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
                     >
-                      <CheckCircle2 className="w-5 h-5 text-slate-950" />
-                      <span>SAHKAN PESANAN TELAH DIHANTAR ✅</span>
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span>Sahkan Pesanan Selesai Dihantar</span>
                     </Button>
                   </div>
                 </CardContent>
@@ -741,54 +754,49 @@ Saya sedang dalam perjalanan menghantar pesanan makanan anda (*#${orderId.slice(
           </TabsContent>
 
           {/* TAB 3: WALLET & EARNINGS */}
-          <TabsContent value="wallet" className="space-y-4 pt-3 font-mono">
-            {/* EARNINGS SUMMARY CARD */}
-            <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 p-5 rounded-3xl space-y-3 shadow-2xl">
-              <div className="flex items-center gap-2 text-amber-400 text-xs font-bold">
+          <TabsContent value="wallet" className="space-y-4 pt-3">
+            {/* EARNINGS SUMMARY */}
+            <div className="bg-[#1c1a18] border border-[#2e2a27] p-5 rounded-2xl space-y-3 shadow-lg">
+              <div className="flex items-center gap-2 text-amber-400 text-xs font-semibold">
                 <Wallet className="w-4 h-4" />
-                <span>Dompet Pendapatan Rider</span>
+                <span>Ringkasan Pendapatan Hari Ini</span>
               </div>
 
               <div>
-                <span className="text-[11px] text-slate-400 block">Jumlah Upah Terkumpul Hari Ini</span>
-                <span className="text-3xl font-black text-emerald-400">
+                <span className="text-3xl font-bold text-emerald-400 font-mono">
                   RM {totalEarningsToday.toFixed(2)}
                 </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800 text-xs">
-                <div>
-                  <span className="text-slate-500 block text-[10px]">Trip Selesai:</span>
-                  <span className="text-white font-bold">{completedJobs.length} Trip</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[10px]">Kadar Purata:</span>
-                  <span className="text-white font-bold">RM 6.00 / Trip</span>
-                </div>
+                <span className="text-xs text-stone-400 block mt-0.5">
+                  {completedJobs.length} trip selesai hari ini
+                </span>
               </div>
             </div>
 
-            {/* COMPLETED TRIPS LIST */}
+            {/* COMPLETED TRIPS */}
             <div className="space-y-2">
-              <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">
-                Rekod Penghantaran Selesai
+              <h3 className="font-semibold text-xs text-stone-400 uppercase tracking-wider">
+                Sejarah Penghantaran Selesai
               </h3>
 
               {completedJobs.length === 0 ? (
-                <div className="p-6 text-center bg-slate-900/60 rounded-2xl border border-slate-800 text-xs text-slate-500">
-                  Belum ada rekod trip yang selesai hari ini.
+                <div className="p-6 text-center bg-[#1c1a18] rounded-xl border border-[#2e2a27] text-xs text-stone-500">
+                  Belum ada rekod penghantaran yang selesai hari ini.
                 </div>
               ) : (
                 <div className="space-y-2">
                   {completedJobs.map((job) => (
-                    <div key={job.id} className="p-3 bg-slate-900 border border-slate-800 rounded-2xl flex justify-between items-center text-xs">
+                    <div key={job.id} className="p-3 bg-[#1c1a18] border border-[#2e2a27] rounded-xl flex justify-between items-center text-xs">
                       <div>
-                        <span className="font-bold text-white block">#{job.id.slice(0, 8).toUpperCase()} - {job.customer_name}</span>
-                        <span className="text-[10px] text-slate-500 line-clamp-1">{job.delivery_address}</span>
+                        <span className="font-semibold text-stone-200 block">
+                          #{job.id.slice(0, 8).toUpperCase()} • {job.customer_name}
+                        </span>
+                        <span className="text-[11px] text-stone-400 line-clamp-1">{job.delivery_address}</span>
                       </div>
-                      <div className="text-right shrink-0 ml-2">
-                        <span className="font-black text-emerald-400 block">+RM {(job.delivery_fee || 6.00).toFixed(2)}</span>
-                        <span className="text-[9px] text-emerald-500/80">✓ Selesai</span>
+                      <div className="text-right shrink-0 ml-3">
+                        <span className="font-bold text-emerald-400 block font-mono">
+                          +RM {(job.delivery_fee || 6.00).toFixed(2)}
+                        </span>
+                        <span className="text-[10px] text-stone-400">Selesai</span>
                       </div>
                     </div>
                   ))}
