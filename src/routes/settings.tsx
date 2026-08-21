@@ -21,6 +21,7 @@ import {
 } from '@/lib/addons-config';
 import { MessageSquare, ShieldCheck, QrCode, Phone, AlertTriangle, RefreshCw, Globe, Key, ExternalLink, Lock, Store } from 'lucide-react';
 import { markManualRefundComplete } from '@/lib/riders';
+import { getToyyibPayConfig, saveToyyibPayConfig, type ToyyibPayConfig } from '@/lib/toyyibpay';
 import { KitchenChecklistCustomizer } from '@/components/KitchenChecklistCustomizer';
 import { DishAddonsCustomizer } from '@/components/DishAddonsCustomizer';
 
