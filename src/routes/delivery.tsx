@@ -689,14 +689,72 @@ function CustomerDeliveryPage() {
                   )}
                 </Button>
               </div>
+
+              {/* QUICK SABAH LOCAL AREA SELECTOR */}
+              <div className="space-y-1.5 pt-1">
+                <span className="text-[11px] font-bold text-slate-400 block">Pilihan Pantas Kawasan (Penampang / KK):</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { name: 'Donggongon / Megalong', distanceKm: 1.5, lat: 5.9080, lng: 116.1030, label: 'Donggongon (1.5km)' },
+                    { name: 'ITCC Penampang / Cyber City', distanceKm: 2.8, lat: 5.9220, lng: 116.0910, label: 'ITCC / Cyber City (2.8km)' },
+                    { name: 'Kobusak / Grand Millennium', distanceKm: 3.2, lat: 5.9320, lng: 116.0880, label: 'Kobusak (3.2km)' },
+                    { name: 'Kepayan / Austral Park', distanceKm: 4.5, lat: 5.9380, lng: 116.0720, label: 'Kepayan (4.5km)' },
+                    { name: 'Bundusan / Beverly Hills', distanceKm: 4.8, lat: 5.9450, lng: 116.1080, label: 'Bundusan (4.8km)' },
+                    { name: 'Putatan / Petagas', distanceKm: 6.0, lat: 5.8920, lng: 116.0520, label: 'Putatan (6.0km)' },
+                    { name: 'Luyang / Lido / Foh Sang', distanceKm: 6.5, lat: 5.9520, lng: 116.0850, label: 'Luyang / Lido (6.5km)' },
+                    { name: 'KK Bandar / Api-Api', distanceKm: 8.8, lat: 5.9800, lng: 116.0750, label: 'KK Bandar (8.8km)' },
+                    { name: 'Inanam / Kolombong', distanceKm: 11.5, lat: 5.9920, lng: 116.1320, label: 'Inanam (11.5km)' },
+                  ].map((zone) => (
+                    <button
+                      key={zone.name}
+                      type="button"
+                      onClick={() => {
+                        setDeliveryAddress(prev => prev ? `${prev}, ${zone.name}` : zone.name);
+                        setCustLat(zone.lat);
+                        setCustLng(zone.lng);
+                        setRoadDistanceKm(zone.distanceKm);
+                        setTravelTimeMins(Math.max(5, Math.ceil(zone.distanceKm * 2)));
+                        toast.success(`Kawasan dipilih: ${zone.name} (${zone.distanceKm} km) 📍`);
+                      }}
+                      className={`px-2.5 py-1 text-[10px] rounded-lg border font-semibold transition-all ${
+                        Math.abs(roadDistanceKm - zone.distanceKm) < 0.2
+                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                          : 'bg-slate-950 hover:bg-slate-800 text-slate-300 border-slate-800'
+                      }`}
+                    >
+                      {zone.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
-              <div className="bg-slate-950 border border-slate-800 p-3 rounded-2xl flex flex-col justify-center">
-                <span className="text-slate-400 text-[10px] block mb-0.5">Jarak Laluan Sebenar:</span>
-                <span className={`font-black text-sm ${isOutOfZone ? 'text-rose-400' : 'text-emerald-400'}`}>
-                  {roadDistanceKm} km {isOutOfZone ? '⚠️ (Luar Zon)' : '✓'}
-                </span>
+              <div className="bg-slate-950 border border-slate-800 p-3 rounded-2xl flex flex-col justify-between">
+                <span className="text-slate-400 text-[10px] block mb-0.5">Jarak Laluan:</span>
+                <div className="flex items-center justify-between">
+                  <span className={`font-black text-sm ${isOutOfZone ? 'text-rose-400' : 'text-emerald-400'}`}>
+                    {roadDistanceKm} km {isOutOfZone ? '⚠️' : '✓'}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      title="Kurangkan jarak 0.5km"
+                      onClick={() => setRoadDistanceKm(prev => Math.max(1.0, Math.round((prev - 0.5) * 10) / 10))}
+                      className="w-5 h-5 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs flex items-center justify-center font-bold active:scale-95"
+                    >
+                      -
+                    </button>
+                    <button
+                      type="button"
+                      title="Tambah jarak 0.5km"
+                      onClick={() => setRoadDistanceKm(prev => Math.min(15.0, Math.round((prev + 0.5) * 10) / 10))}
+                      className="w-5 h-5 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs flex items-center justify-center font-bold active:scale-95"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="bg-slate-950 border border-slate-800 p-3 rounded-2xl flex flex-col justify-center">
