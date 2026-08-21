@@ -207,10 +207,18 @@ export function DishAddonsCustomizer() {
               {addons.map((addon) => (
                 <div
                   key={addon.id}
-                  className={p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 }
+                  className={`p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                    addon.available
+                      ? 'bg-slate-950/90 border-slate-800 hover:border-slate-700 shadow-md'
+                      : 'bg-slate-950/30 border-slate-900 opacity-60'
+                  }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className={p-2 rounded-lg border }>
+                    <div className={`p-2 rounded-lg border ${
+                      addon.available 
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
+                        : 'bg-slate-900 border-slate-800 text-slate-600'
+                    }`}>
                       <Utensils className="w-4 h-4" />
                     </div>
 
@@ -220,7 +228,9 @@ export function DishAddonsCustomizer() {
                         <span className="text-[11px] font-black text-emerald-400">
                           +RM {addon.price.toFixed(2)}
                         </span>
-                        <span className={	ext-[9px] px-1.5 py-0.2 rounded font-bold uppercase }>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                          addon.available ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/20' : 'bg-rose-950 text-rose-300 border border-rose-500/20'
+                        }`}>
                           {addon.available ? 'Aktif' : 'Nyahaktif'}
                         </span>
                       </div>
