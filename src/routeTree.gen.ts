@@ -20,6 +20,7 @@ import { Route as KitchenRouteImport } from './routes/kitchen'
 import { Route as LoyaltyRouteImport } from './routes/loyalty'
 import { Route as MenuRouteImport } from './routes/menu'
 import { Route as OrdersRouteImport } from './routes/orders'
+import { Route as RiderRouteImport } from './routes/rider'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TablesRouteImport } from './routes/tables'
 import { Route as SettingsAuditLogRouteImport } from './routes/settings_.audit-log'
@@ -81,6 +82,11 @@ const OrdersRoute = OrdersRouteImport.update({
   path: '/orders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RiderRoute = RiderRouteImport.update({
+  id: '/rider',
+  path: '/rider',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/loyalty': typeof LoyaltyRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
+  '/rider': typeof RiderRoute
   '/settings': typeof SettingsRoute
   '/tables': typeof TablesRoute
   '/settings/audit-log': typeof SettingsAuditLogRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/loyalty': typeof LoyaltyRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
+  '/rider': typeof RiderRoute
   '/settings': typeof SettingsRoute
   '/tables': typeof TablesRoute
   '/settings/audit-log': typeof SettingsAuditLogRoute
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/loyalty': typeof LoyaltyRoute
   '/menu': typeof MenuRoute
   '/orders': typeof OrdersRoute
+  '/rider': typeof RiderRoute
   '/settings': typeof SettingsRoute
   '/tables': typeof TablesRoute
   '/settings_/audit-log': typeof SettingsAuditLogRoute
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/loyalty'
     | '/menu'
     | '/orders'
+    | '/rider'
     | '/settings'
     | '/tables'
     | '/settings/audit-log'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/loyalty'
     | '/menu'
     | '/orders'
+    | '/rider'
     | '/settings'
     | '/tables'
     | '/settings/audit-log'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/loyalty'
     | '/menu'
     | '/orders'
+    | '/rider'
     | '/settings'
     | '/tables'
     | '/settings_/audit-log'
@@ -231,6 +243,7 @@ export interface RootRouteChildren {
   LoyaltyRoute: typeof LoyaltyRoute
   MenuRoute: typeof MenuRoute
   OrdersRoute: typeof OrdersRoute
+  RiderRoute: typeof RiderRoute
   SettingsRoute: typeof SettingsRoute
   TablesRoute: typeof TablesRoute
   SettingsAuditLogRoute: typeof SettingsAuditLogRoute
@@ -317,6 +330,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rider': {
+      id: '/rider'
+      path: '/rider'
+      fullPath: '/rider'
+      preLoaderRoute: typeof RiderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -367,6 +387,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoyaltyRoute: LoyaltyRoute,
   MenuRoute: MenuRoute,
   OrdersRoute: OrdersRoute,
+  RiderRoute: RiderRoute,
   SettingsRoute: SettingsRoute,
   TablesRoute: TablesRoute,
   SettingsAuditLogRoute: SettingsAuditLogRoute,
