@@ -129,11 +129,12 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const location = useLocation();
   
-  // Hide the POS admin header on customer-facing pages
+  // Hide the POS admin header on customer and rider portal pages
   const isCustomerFacing = 
     location.pathname === '/' || 
     location.pathname === '/delivery' || 
-    location.pathname.startsWith('/t/');
+    location.pathname.startsWith('/t/') ||
+    location.pathname.startsWith('/rider');
 
   return (
     <QueryClientProvider client={queryClient}>

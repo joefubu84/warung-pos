@@ -16,8 +16,8 @@ export function NavigationHeader() {
     return () => window.removeEventListener('warung_nav_order_updated', handleUpdate);
   }, []);
 
-  // Hide navigation on auth and customer digital menu pages
-  if (location.pathname.startsWith('/auth') || location.pathname.startsWith('/t/')) {
+  // Hide navigation on auth, customer digital menu, and rider portal pages
+  if (location.pathname.startsWith('/auth') || location.pathname.startsWith('/t/') || location.pathname.startsWith('/rider')) {
     return null;
   }
 
