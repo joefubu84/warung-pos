@@ -3,6 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { requireChefAuth } from '@/lib/auth-guard';
 import { playKitchenSound } from '@/lib/sounds';
+import { resolveDishComponents } from '@/lib/kitchen-checklist-config';
 
 export const Route = createFileRoute('/kitchen')({
   ssr: false,
@@ -62,52 +63,7 @@ const WaitTimer = ({ createdAt }: { createdAt: string }) => {
   }, [createdAt]);
 
   return <span className="text-yellow-300 ml-auto tabular-nums font-mono">⏱️ {elapsed}</span>;
-};function getDishComponents(itemName: string, notes?: string | null) {
-  const nameLower = (itemName || '').toLowerCase();
-  
-  // Drinks
-  if (nameLower.includes('teh') || nameLower.includes('kopi') || nameLower.includes('milo') || nameLower.includes('sirap') || nameLower.includes('jus') || nameLower.includes('air') || nameLower.includes('tea') || nameLower.includes('nescafe') || nameLower.includes('horlicks') || nameLower.includes('lemon')) {
-    const list = [
-      { key: 'drink', icon: '🥤', label: 'Air / Minuman' },
-      { key: 'straw', icon: '🧊', label: 'Ais & Straw' }
-    ];
-    if (notes) list.push({ key: 'notes', icon: '⚠️', label: `Nota: ${notes}` });
-    return list;
-  }
-  
-  // Snacks / Sides
-  if (nameLower.includes('popcorn') || nameLower.includes('fries') || nameLower.includes('kentang') || nameLower.includes('nugget') || nameLower.includes('pisang') || nameLower.includes('keropok') || nameLower.includes('burger') || nameLower.includes('sosej')) {
-    const list = [
-      { key: 'main', icon: '🍟', label: 'Makanan Panas' },
-      { key: 'sauce', icon: '🥫', label: 'Sos / Mayonis' }
-    ];
-    if (notes) list.push({ key: 'notes', icon: '⚠️', label: `Nota: ${notes}` });
-    return list;
-  }
-  
-  // Soups & Bakso
-  if (nameLower.includes('sup') || nameLower.includes('soup') || nameLower.includes('soto') || nameLower.includes('bakso')) {
-    const list = [
-      { key: 'soup_bowl', icon: '🥣', label: 'Mangkuk Sup' },
-      { key: 'protein', icon: '🥩', label: 'Daging / Lauk' },
-      { key: 'sambal', icon: '🌶️', label: 'Sambal Kicap' },
-      { key: 'nasi_mee', icon: '🍚', label: 'Nasi / Mee' }
-    ];
-    if (notes) list.push({ key: 'notes', icon: '⚠️', label: `Nota: ${notes}` });
-    return list;
-  }
-
-  // Default Warung Rice & Noodle Sets (Nasi Lalapan, Nasi Ayam, Nasi Goreng, Nasi Lemak dsb.)
-  const list = [
-    { key: 'rice', icon: '🍚', label: 'Nasi / Mee' },
-    { key: 'protein', icon: '🍗', label: 'Lauk Utama' },
-    { key: 'sambal', icon: '🌶️', label: 'Sambal J&J' },
-    { key: 'soup', icon: '🥣', label: 'Kuah / Sup' },
-    { key: 'ulam', icon: '🥒', label: 'Ulam / Sayur' }
-  ];
-  if (notes) list.push({ key: 'notes', icon: '⚠️', label: `Nota: ${notes}` });
-  return list;
-}
+};
 
 const OrderCard = memo(({ 
   order, 
@@ -143,12 +99,12 @@ const OrderCard = memo(({
     });
   };
 
-  // Calculate granular components across all items
+  // Calculate granular components across all items dynamically using user settings
   const itemComponentsMap = React.useMemo(() => {
-    const map: Record<string, ReturnType<typeof getDishComponents>> = {};
+    const map: Record<string, ReturnType<typeof resolveDishComponents>> = {};
     (order.order_items || []).forEach((item: any) => {
       const name = item.menu_items?.name || (item.menu_item_id && menuMap?.[item.menu_item_id]) || 'Menu';
-      map[item.id] = getDishComponents(name, item.notes);
+      map[item.id] = resolveDishComponents(item.menu_item_id, name, item.notes);
     });
     return map;
   }, [order.order_items, menuMap]);

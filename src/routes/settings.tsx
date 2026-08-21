@@ -22,6 +22,7 @@ import {
 import { MessageSquare, ShieldCheck, QrCode, Phone, AlertTriangle, RefreshCw, Globe, Key, ExternalLink, Lock } from 'lucide-react';
 import { markManualRefundComplete } from '@/lib/riders';
 import { getToyyibPayConfig, saveToyyibPayConfig, ToyyibPayConfig } from '@/lib/toyyibpay';
+import { KitchenChecklistCustomizer } from '@/components/KitchenChecklistCustomizer';
 
 export const Route = createFileRoute('/settings')({
   ssr: false,
@@ -611,6 +612,9 @@ function SettingsPage() {
             {updatePrinterMutation.isPending ? 'Saving Printer Settings...' : 'Save Printer & Kitchen Settings'}
           </Button>
         </div>
+
+        {/* KITCHEN PACKING QC CHECKLIST CUSTOMIZER */}
+        <KitchenChecklistCustomizer menuItems={menuItems || []} />
 
         {/* DUITNOW MERCHANT QR & HYBRID PAYMENT CARD */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
