@@ -31,7 +31,6 @@ export interface CustomizedCartItem {
   finalPrice: number;
   quantity: number;
   fulfillmentType: 'dine_in' | 'takeaway';
-  portionSize: 'Small' | 'Medium' | 'Large';
   spiceLevel: 'Mild' | 'Medium' | 'Hot';
   selectedAddons: { name: string; price: number }[];
   specialInstructions: string;
@@ -53,12 +52,6 @@ interface DishCustomizationModalProps {
   } | null;
 }
 
-export const PORTION_SIZES = [
-  { id: 'Small', label: 'Regular / Small', priceAdd: 0 },
-  { id: 'Medium', label: 'Medium (+RM 2.00)', priceAdd: 2.00 },
-  { id: 'Large', label: 'Large / Feast (+RM 4.00)', priceAdd: 4.00 },
-];
-
 export const SPICE_LEVELS = [
   { id: 'Mild', label: 'Mild 🌿', icon: '🌿' },
   { id: 'Medium', label: 'Medium 🌶️', icon: '🌶️' },
@@ -66,7 +59,6 @@ export const SPICE_LEVELS = [
 ];
 
 export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem }: DishCustomizationModalProps) {
-  const [portionSize, setPortionSize] = useState<'Small' | 'Medium' | 'Large'>('Small');
   const [spiceLevel, setSpiceLevel] = useState<'Mild' | 'Medium' | 'Hot'>('Medium');
   const [fulfillmentType, setFulfillmentType] = useState<'dine_in' | 'takeaway'>('dine_in');
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
@@ -129,15 +121,13 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
   if (!menuItem) return null;
 
   const basePrice = Number(menuItem.price || 0);
-  const sizeOption = PORTION_SIZES.find(s => s.id === portionSize);
-  const sizeAddonPrice = sizeOption ? sizeOption.priceAdd : 0;
 
   const addonsTotal = selectedAddonIds.reduce((sum, id) => {
     const addon = availableAddons.find(a => a.id === id);
     return sum + (addon ? addon.price : 0);
   }, 0);
 
-  const unitPrice = basePrice + sizeAddonPrice + addonsTotal;
+  const unitPrice = basePrice + addonsTotal;
   const totalPrice = unitPrice * quantity;
 
   const toggleAddon = (id: string) => {
@@ -160,7 +150,6 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
     } else {
       notesSummaryParts.push('DINE IN (Makan Sini 🍽️)');
     }
-    if (portionSize !== 'Small') notesSummaryParts.push(`Size: ${portionSize}`);
     notesSummaryParts.push(`Spice: ${spiceLevel}`);
     if (selectedAddonsList.length > 0) {
       notesSummaryParts.push(`Add-ons: ${selectedAddonsList.map(a => a.name).join(', ')}`);
@@ -181,7 +170,6 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
       finalPrice: totalPrice,
       quantity,
       fulfillmentType,
-      portionSize,
       spiceLevel,
       selectedAddons: selectedAddonsList,
       specialInstructions: quantity > 1 ? plateNotes.join(' | ') : specialInstructions.trim(),
@@ -237,11 +225,11 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
             )}
           </div>
 
-          {/* 0. FULFILLMENT TYPE SELECTOR (Dine In vs Takeaway) */}
+          {/* 1. FULFILLMENT TYPE SELECTOR (Dine In vs Takeaway) */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center justify-between">
-              <span>0. Order Type for this Dish</span>
-              <span className="text-[10px] text-emerald-400 font-normal">Select One</span>
+              <span>1. Jenis Pesanan</span>
+              <span className="text-[10px] text-emerald-400 font-normal">Pilih Satu</span>
             </label>
             <div className="grid grid-cols-2 gap-2 font-mono">
               <button
@@ -271,41 +259,11 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
             </div>
           </div>
 
-          {/* 1. PORTION SIZE SELECTOR */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center justify-between">
-              <span>1. Choose Portion Size</span>
-              <span className="text-[10px] text-emerald-400 font-normal">Required</span>
-            </label>
-            <div className="grid grid-cols-3 gap-2 font-mono">
-              {PORTION_SIZES.map(size => {
-                const isSelected = portionSize === size.id;
-                return (
-                  <button
-                    key={size.id}
-                    type="button"
-                    onClick={() => setPortionSize(size.id as any)}
-                    className={`p-2.5 rounded-xl border text-xs font-bold transition-all text-center flex flex-col items-center justify-center gap-1 ${
-                      isSelected
-                        ? 'bg-emerald-600/20 border-emerald-500 text-emerald-300 shadow-md scale-[1.02]'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
-                    }`}
-                  >
-                    <span>{size.id}</span>
-                    <span className="text-[10px] font-normal opacity-80">
-                      {size.priceAdd > 0 ? `+RM ${size.priceAdd.toFixed(2)}` : 'Base'}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {/* 2. SPICE LEVEL SELECTOR */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center justify-between">
-              <span>2. Choose Spice Level</span>
-              <span className="text-[10px] text-amber-400 font-normal">Required</span>
+              <span>2. Pilih Tahap Kepedasan</span>
+              <span className="text-[10px] text-amber-400 font-normal">Wajib</span>
             </label>
             <div className="grid grid-cols-3 gap-2 font-mono">
               {SPICE_LEVELS.map(spice => {
@@ -331,8 +289,8 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
           {/* 3. OPTIONAL ADD-ONS CHECKBOXES */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center justify-between">
-              <span>3. Extra Add-ons (Optional)</span>
-              <span className="text-[10px] text-slate-500 font-normal">Multi-select</span>
+              <span>3. Tambahan Pilihan (Optional)</span>
+              <span className="text-[10px] text-slate-500 font-normal">Boleh Pilih Banyak</span>
             </label>
             <div className="space-y-1.5 font-mono">
               {availableAddons.filter(a => a.available).map(addon => {
