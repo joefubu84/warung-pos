@@ -342,407 +342,457 @@ function SettingsPage() {
     } catch (err: any) {
       toast.error(`Upload failed: ${err.message}`);
     }
-  };
+  const [activeTab, setActiveTab] = useState<'riders' | 'payments' | 'kitchen' | 'store' | 'security'>('riders');
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 pb-24 overflow-y-auto font-sans">
       <div className="max-w-4xl mx-auto space-y-6">
         
         {/* SETTINGS HEADER CARD */}
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">System & Store Settings</h1>
-          <p className="text-xs text-slate-400 font-mono mt-1">Configure store branding, kitchen printer triggers, alert audio & audit logs</p>
-        </div>
+        <div className="bg-slate-900 border border-slate-800 p-5 md:p-6 rounded-2xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2.5">
+              <span>⚙️</span>
+              <span>Pusat Tetapan & Kawalan Warung</span>
+            </h1>
+            <p className="text-xs text-slate-400 font-mono mt-1">
+              Pengurusan berpusat: Rider KYC, Kaedah Bayaran FPX & QR, Dapur, Cetakan, dan Keselamatan POS.
+            </p>
+          </div>
 
-        {/* STORE INFO & LICENSE CARD (LOCKED TO BACKEND ONLY) */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5 relative overflow-hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
-            <div>
-              <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
-                🔒 Maklumat Premis & Pelesenan Sistem
-              </h2>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">Sistem Eksklusif Warung J&J Penampang, Sabah</p>
-            </div>
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 w-fit">
-              <Lock className="w-3.5 h-3.5" /> Terkunci (Backend Sahaja)
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-mono px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full font-bold">
+              Warung J&J Penampang
             </span>
           </div>
-
-          <div className="bg-slate-950/80 border border-slate-800/80 p-4 rounded-xl space-y-3 text-xs leading-relaxed text-slate-300">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
-              <div>
-                <strong className="text-white block font-bold">Perlindungan Pelesenan Proprietary:</strong>
-                Maklumat kedai, nama restoran, dan lokasi dikunci secara kekal pada antaramuka ini untuk mengelakkan sebarang pengubahsuaian tidak sah. Sebarang pengemaskinian rasmi hanya boleh dilakukan melalui pangkalan data backend.
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/60 space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Nama Restoran / Premis</span>
-              <p className="text-base font-black text-white">{storeForm.name || 'Warung J&J (Penampang)'}</p>
-              <span className="text-[10px] text-emerald-400 font-mono font-semibold">Status: Aktif & Berlesen</span>
-            </div>
-
-            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/60 space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Alamat / Lokasi Operasi</span>
-              <p className="text-sm font-semibold text-slate-200">{storeForm.address || 'Jalan Penampang, 89500 Penampang, Sabah'}</p>
-              <span className="text-[10px] text-slate-400 font-mono">Koordinat: 5.918° N, 116.082° E</span>
-            </div>
-
-            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/60 space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">No. Telefon Utama</span>
-              <p className="text-sm font-mono font-bold text-white">{storeForm.phone_number || '017-222 1784'}</p>
-            </div>
-
-            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/60 space-y-1">
-              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Kategori Pelesenan</span>
-              <p className="text-sm font-bold text-emerald-400">POS Single-Tenant Proprietary License</p>
-              <span className="text-[10px] text-slate-400 font-mono">ID: {storeId || '1094d737-8104-4a55-b678-0fe9097beba0'}</span>
-            </div>
-          </div>
         </div>
 
-        {/* HOMEPAGE CUSTOMIZATION CARD */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
-          <h2 className="text-xl font-black text-white tracking-tight border-b border-slate-800 pb-3">Homepage Customization</h2>
-          <div className="space-y-6">
-            
-            {/* HERO SECTION */}
-            <div className="space-y-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800/50">
-              <h3 className="font-bold text-slate-200">Main Hero Section</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="heroTitle" className="text-slate-400 text-xs">Hero Title</Label>
-                  <Input
-                    id="heroTitle"
-                    value={homepageForm.hero_title}
-                    onChange={(e) => setHomepageForm(prev => ({ ...prev, hero_title: e.target.value }))}
-                    className="bg-slate-950 border-slate-800 text-white rounded-xl text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="heroImage" className="text-slate-400 text-xs">Hero Image (Menu Item)</Label>
-                  <select
-                    id="heroImage"
-                    value={homepageForm.hero_item_id}
-                    onChange={(e) => setHomepageForm(prev => ({ ...prev, hero_item_id: e.target.value }))}
-                    className="flex h-10 w-full items-center justify-between rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:outline-none"
-                  >
-                    <option value="">-- Use Default (1st Featured Item) --</option>
-                    {menuItems?.filter(i => i.image_url).map(item => (
-                      <option key={item.id} value={item.id}>{item.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
+        {/* MODERN STICKY CATEGORY TABS BAR */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 p-1.5 bg-slate-900/90 border border-slate-800 rounded-2xl shadow-2xl sticky top-2 z-20 backdrop-blur-md">
+          <button
+            type="button"
+            onClick={() => setActiveTab('riders')}
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs transition-all ${
+              activeTab === 'riders'
+                ? 'bg-amber-600 text-white shadow-lg shadow-amber-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
+            }`}
+          >
+            <Bike className="w-4 h-4 text-amber-300 shrink-0" />
+            <span>🛵 Rider & KYC</span>
+          </button>
 
-            {/* TOP BENTO SECTION */}
-            <div className="space-y-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800/50">
-              <h3 className="font-bold text-slate-200">Top Bento Grid</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bento1Title" className="text-slate-400 text-xs">Title</Label>
-                  <Input
-                    id="bento1Title"
-                    value={homepageForm.bento_1_title}
-                    onChange={(e) => setHomepageForm(prev => ({ ...prev, bento_1_title: e.target.value }))}
-                    className="bg-slate-950 border-slate-800 text-white rounded-xl text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bento1Image" className="text-slate-400 text-xs">Image (Menu Item)</Label>
-                  <select
-                    id="bento1Image"
-                    value={homepageForm.bento_1_item_id}
-                    onChange={(e) => setHomepageForm(prev => ({ ...prev, bento_1_item_id: e.target.value }))}
-                    className="flex h-10 w-full items-center justify-between rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:outline-none"
-                  >
-                    <option value="">-- Use Default (2nd Featured Item) --</option>
-                    {menuItems?.filter(i => i.image_url).map(item => (
-                      <option key={item.id} value={item.id}>{item.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('payments')}
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs transition-all ${
+              activeTab === 'payments'
+                ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
+            }`}
+          >
+            <CreditCard className="w-4 h-4 text-emerald-300 shrink-0" />
+            <span>💳 Bayaran & QR</span>
+          </button>
 
-            {/* BOTTOM BENTO SECTION */}
-            <div className="space-y-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800/50">
-              <h3 className="font-bold text-slate-200">Bottom Bento Grid</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bento2Title" className="text-slate-400 text-xs">Title</Label>
-                  <Input
-                    id="bento2Title"
-                    value={homepageForm.bento_2_title}
-                    onChange={(e) => setHomepageForm(prev => ({ ...prev, bento_2_title: e.target.value }))}
-                    className="bg-slate-950 border-slate-800 text-white rounded-xl text-sm"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bento2Image" className="text-slate-400 text-xs">Image (Menu Item)</Label>
-                  <select
-                    id="bento2Image"
-                    value={homepageForm.bento_2_item_id}
-                    onChange={(e) => setHomepageForm(prev => ({ ...prev, bento_2_item_id: e.target.value }))}
-                    className="flex h-10 w-full items-center justify-between rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:outline-none"
-                  >
-                    <option value="">-- Use Default (3rd Featured Item) --</option>
-                    {menuItems?.filter(i => i.image_url).map(item => (
-                      <option key={item.id} value={item.id}>{item.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('kitchen')}
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs transition-all ${
+              activeTab === 'kitchen'
+                ? 'bg-sky-600 text-white shadow-lg shadow-sky-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
+            }`}
+          >
+            <Store className="w-4 h-4 text-sky-300 shrink-0" />
+            <span>🍳 Dapur & QC</span>
+          </button>
 
-            <Button 
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl py-3 shadow-md active:scale-95 transition-all" 
-              onClick={() => updateHomepageMutation.mutate(homepageForm)}
-              disabled={updateHomepageMutation.isPending}
-            >
-              {updateHomepageMutation.isPending ? 'Saving Homepage...' : 'Save Homepage Settings'}
-            </Button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('store')}
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs transition-all ${
+              activeTab === 'store'
+                ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
+            }`}
+          >
+            <Globe className="w-4 h-4 text-indigo-300 shrink-0" />
+            <span>🏪 Premis & Menu Bar</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('security')}
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs col-span-2 sm:col-span-1 transition-all ${
+              activeTab === 'security'
+                ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/80'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4 text-rose-300 shrink-0" />
+            <span>🛡️ Keselamatan</span>
+          </button>
         </div>
 
+        {/* TAB 1: RAKAN PENGHANTAR (KYC & GAJI) */}
+        {activeTab === 'riders' && (
+          <div className="space-y-6 transition-all duration-300 animate-in fade-in">
+            <AdminRiderManagementCard />
+          </div>
+        )}
 
-        {/* KITCHEN DISPLAY & PRINTER SETTINGS CARD */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-          <h2 className="text-xl font-black text-white tracking-tight border-b border-slate-800 pb-3">Kitchen Display & Printer Settings</h2>
-          
-          <div className="space-y-2">
-            <Label htmlFor="printer_name" className="text-slate-300 font-bold">Thermal Printer Name</Label>
-            <Input
-              id="printer_name"
-              placeholder='e.g. "POS-5810dd Counter"'
-              value={printerForm.printer_name}
-              onChange={(e) => setPrinterForm(prev => ({ ...prev, printer_name: e.target.value }))}
-              className="bg-slate-950 border-slate-800 text-white placeholder-slate-600 rounded-xl font-mono text-sm"
-            />
-          </div>
-          
-          <div className="space-y-3">
-            <Label className="text-slate-300 font-bold">Auto-Print Triggers</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[
-                { id: 'payment_confirmed', label: 'On Payment Confirmed' },
-                { id: 'ready', label: 'On Order Ready' },
-                { id: 'completed', label: 'On Order Completed' },
-              ].map((trigger) => (
-                <div key={trigger.id} className="flex items-center space-x-2 bg-slate-950 border border-slate-800 p-3 rounded-xl">
-                  <Checkbox
-                    id={trigger.id}
-                    checked={printerForm.print_on_status.includes(trigger.id)}
-                    onCheckedChange={() => handleToggleStatus(trigger.id)}
-                    className="border-slate-700 data-[state=checked]:bg-emerald-600"
-                  />
-                  <Label htmlFor={trigger.id} className="font-bold text-xs text-slate-200 cursor-pointer">{trigger.label}</Label>
+        {/* TAB 2: PEMBAYARAN & DUITNOW QR / FPX */}
+        {activeTab === 'payments' && (
+          <div className="space-y-6 transition-all duration-300 animate-in fade-in">
+            {/* DUITNOW MERCHANT QR & HYBRID PAYMENT CARD */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                  <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                    💳 DuitNow Merchant QR & Strategi Pembayaran
+                  </h2>
+                  <p className="text-xs text-slate-400 font-mono mt-0.5">
+                    Alliance Bank DuitNow QR (Dine-In & Kaunter POS) | ToyyibPay FPX Webhook (Penghantaran Delivery)
+                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className="space-y-4 pt-4 border-t border-slate-800">
-            <h3 className="font-bold text-base text-white flex items-center gap-2">🔊 Kitchen Alert Sounds</h3>
-            
-            <div className="space-y-2">
-              <Label className="text-slate-300">Select Alert Sound</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {['kitchen_bell', 'beep_alert', 'ding_dong', 'whistle', 'buzzer', 'custom'].map(choice => (
-                  <div key={choice} className="flex items-center space-x-2 bg-slate-950 border border-slate-800 p-2.5 rounded-xl">
-                    <input 
-                      type="radio" 
-                      id={`sound-${choice}`} 
-                      name="sound_choice" 
-                      value={choice}
-                      checked={printerForm.sound_choice === choice}
-                      onChange={(e) => setPrinterForm(prev => ({ ...prev, sound_choice: e.target.value }))}
-                      className="cursor-pointer accent-emerald-500"
-                    />
-                    <Label htmlFor={`sound-${choice}`} className="cursor-pointer capitalize text-xs font-bold text-slate-200">
-                      {choice.replace('_', ' ')}
-                    </Label>
+                <span className="bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs px-3 py-1 rounded-full font-bold">
+                  Alliance Bank
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div className="relative inline-block bg-white p-4 rounded-3xl border-4 border-[#a6192e] shadow-2xl text-center">
+                  <div className="bg-[#a6192e] text-white text-xs font-black py-1.5 px-4 rounded-t-xl tracking-wider uppercase flex items-center justify-between mb-3">
+                    <span className="flex items-center gap-1.5 font-sans">💳 DuitNow QR</span>
+                    <span className="text-[10px] font-mono bg-white/20 px-2 py-0.5 rounded-full">Alliance Bank</span>
                   </div>
-                ))}
+
+                  <div className="relative inline-block">
+                    <img src="/duitnow-qr.png" alt="Alliance Bank DuitNow QR" className="w-52 h-auto mx-auto rounded-lg" />
+                    
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="bg-white p-1 rounded-xl shadow-md border-2 border-[#a6192e]">
+                        <img src="/warung-logo.png" alt="Warung J&J Logo" className="w-9 h-9 object-contain rounded-lg" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 pt-2 border-t border-gray-100 font-mono text-center">
+                    <p className="text-xs font-black text-[#a6192e] uppercase tracking-wide">J&J CAFE & CATERING</p>
+                    <p className="text-[10px] text-gray-500 font-bold">Alliance Bank Malaysia Berhad</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-2">
+                    <h4 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
+                      🍽️ Dine-In & Kaunter: DuitNow QR Statik (0% Caj)
+                    </h4>
+                    <p className="text-xs text-slate-300">
+                      Pelanggan imbas DuitNow QR Alliance Bank di kaunter atau meja. Kakitangan mengesahkan bayaran masuk pada aplikasi perbankan sebelum sahkan di POS.
+                    </p>
+                  </div>
+
+                  <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-2">
+                    <h4 className="text-sm font-bold text-sky-400 flex items-center gap-2">
+                      🛵 Online Delivery: ToyyibPay / FPX Gateway
+                    </h4>
+                    <p className="text-xs text-slate-300">
+                      Pesanan penghantaran diproses secara automatik dengan pengesahan tandatangan webhook pelayan ToyyibPay.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={handleTestSound} className="bg-slate-950 border-slate-800 text-slate-200 hover:text-white hover:bg-slate-800">
-                Test Current Sound
+            {/* TOYYIBPAY FPX GATEWAY CONFIGURATION CARD */}
+            <ToyyibPaySettingsCard />
+
+            {/* MANUAL STAFF REFUND QUEUE CARD */}
+            <RefundQueueCard />
+          </div>
+        )}
+
+        {/* TAB 3: DAPUR & CETAKAN */}
+        {activeTab === 'kitchen' && (
+          <div className="space-y-6 transition-all duration-300 animate-in fade-in">
+            {/* KITCHEN DISPLAY & PRINTER SETTINGS CARD */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+              <h2 className="text-xl font-black text-white tracking-tight border-b border-slate-800 pb-3">
+                🖨️ Tetapan Pencetak & Penggera Dapur
+              </h2>
+              
+              <div className="space-y-2">
+                <Label htmlFor="printer_name" className="text-slate-300 font-bold">Nama Thermal Printer</Label>
+                <Input
+                  id="printer_name"
+                  placeholder='cth: "POS-5810dd Counter"'
+                  value={printerForm.printer_name}
+                  onChange={(e) => setPrinterForm(prev => ({ ...prev, printer_name: e.target.value }))}
+                  className="bg-slate-950 border-slate-800 text-white placeholder-slate-600 rounded-xl font-mono text-sm"
+                />
+              </div>
+              
+              <div className="space-y-3">
+                <Label className="text-slate-300 font-bold">Cetus Cetakan Automatik</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { id: 'payment_confirmed', label: 'Bila Bayaran Disahkan' },
+                    { id: 'ready', label: 'Bila Pesanan Siap' },
+                    { id: 'completed', label: 'Bila Pesanan Selesai' },
+                  ].map((trigger) => (
+                    <div key={trigger.id} className="flex items-center space-x-2 bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                      <Checkbox
+                        id={trigger.id}
+                        checked={printerForm.print_on_status.includes(trigger.id)}
+                        onCheckedChange={() => handleToggleStatus(trigger.id)}
+                        className="border-slate-700 data-[state=checked]:bg-emerald-600"
+                      />
+                      <Label htmlFor={trigger.id} className="font-bold text-xs text-slate-200 cursor-pointer">{trigger.label}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="space-y-4 pt-4 border-t border-slate-800">
+                <h3 className="font-bold text-base text-white flex items-center gap-2">🔊 Bunyi Penggera Dapur (Audio Alerts)</h3>
+                
+                <div className="space-y-2">
+                  <Label className="text-slate-300">Pilih Bunyi Penggera</Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {['kitchen_bell', 'beep_alert', 'ding_dong', 'whistle', 'buzzer', 'custom'].map(choice => (
+                      <div key={choice} className="flex items-center space-x-2 bg-slate-950 border border-slate-800 p-2.5 rounded-xl">
+                        <input 
+                          type="radio" 
+                          id={`sound-${choice}`} 
+                          name="sound_choice" 
+                          value={choice}
+                          checked={printerForm.sound_choice === choice}
+                          onChange={(e) => setPrinterForm(prev => ({ ...prev, sound_choice: e.target.value }))}
+                          className="cursor-pointer accent-emerald-500"
+                        />
+                        <Label htmlFor={`sound-${choice}`} className="cursor-pointer capitalize text-xs font-bold text-slate-200">
+                          {choice.replace('_', ' ')}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button type="button" variant="outline" onClick={handleTestSound} className="bg-slate-950 border-slate-800 text-slate-200 hover:text-white hover:bg-slate-800">
+                    Uji Bunyi Semasa 🔔
+                  </Button>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-slate-300">Muat Naik Bunyi Tersuai (MP3/WAV/WebM maks 5MB)</Label>
+                  <Input
+                    type="file"
+                    accept="audio/*"
+                    className="bg-slate-950 border-slate-800 text-slate-300 rounded-xl"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleSoundUpload(file);
+                    }}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-slate-300">Atau Rakam Mesej Suara</Label>
+                  <div>
+                    {!isRecording ? (
+                      <Button type="button" variant="outline" onClick={handleStartRecording} className="bg-rose-950/40 text-rose-400 border-rose-800 hover:bg-rose-900">
+                        🔴 Rakam Suara
+                      </Button>
+                    ) : (
+                      <Button type="button" variant="destructive" onClick={handleStopRecording} className="animate-pulse bg-rose-600 text-white font-bold">
+                        ⏹ Henti Rakaman
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                {printerForm.sound_file_url && printerForm.sound_choice === 'custom' && (
+                  <p className="text-xs text-emerald-400 font-bold">✓ Bunyi tersuai siap digunakan</p>
+                )}
+              </div>
+
+              <div className="space-y-4 pt-4 border-t border-slate-800">
+                <h3 className="font-bold text-base text-white">🎨 Warna Lencana Jenis Pesanan</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {['dineIn', 'takeaway', 'delivery', 'specialRequests'].map(key => (
+                    <div key={key} className="space-y-1">
+                      <Label className="capitalize text-xs font-bold text-slate-300">{key.replace(/([A-Z])/g, ' $1').trim()}</Label>
+                      <div className="flex gap-2">
+                        <input
+                          type="color"
+                          value={printerForm.badge_colors[key]}
+                          onChange={(e) => setPrinterForm(prev => ({
+                            ...prev,
+                            badge_colors: { ...prev.badge_colors, [key]: e.target.value }
+                          }))}
+                          className="h-10 w-12 p-1 rounded-lg border border-slate-800 bg-slate-950 cursor-pointer"
+                        />
+                        <Input
+                          value={printerForm.badge_colors[key]}
+                          onChange={(e) => setPrinterForm(prev => ({
+                            ...prev,
+                            badge_colors: { ...prev.badge_colors, [key]: e.target.value }
+                          }))}
+                          className="flex-1 font-mono text-sm bg-slate-950 border-slate-800 text-white rounded-xl"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Button 
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl py-3 shadow-md active:scale-95 transition-all" 
+                onClick={() => updatePrinterMutation.mutate(printerForm)}
+                disabled={updatePrinterMutation.isPending}
+              >
+                {updatePrinterMutation.isPending ? 'Menyimpan...' : 'Simpan Tetapan Pencetak & Dapur 💾'}
               </Button>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-slate-300">Upload Custom Sound (MP3/WAV/WebM max 5MB)</Label>
-              <Input
-                type="file"
-                accept="audio/*"
-                className="bg-slate-950 border-slate-800 text-slate-300 rounded-xl"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleSoundUpload(file);
-                }}
-              />
-            </div>
+            {/* KITCHEN PACKING QC CHECKLIST CUSTOMIZER */}
+            <KitchenChecklistCustomizer menuItems={menuItems || []} />
 
-            <div className="space-y-2">
-              <Label className="text-slate-300">Or Record Voice Message</Label>
-              <div>
-                {!isRecording ? (
-                  <Button type="button" variant="outline" onClick={handleStartRecording} className="bg-rose-950/40 text-rose-400 border-rose-800 hover:bg-rose-900">
-                    🔴 Record Voice
-                  </Button>
-                ) : (
-                  <Button type="button" variant="destructive" onClick={handleStopRecording} className="animate-pulse bg-rose-600 text-white font-bold">
-                    ⏹ Stop Recording
-                  </Button>
-                )}
-              </div>
-            </div>
-            {printerForm.sound_file_url && printerForm.sound_choice === 'custom' && (
-              <p className="text-xs text-emerald-400 font-bold">✓ Custom sound ready</p>
-            )}
+            {/* DISH ADD-ONS (TAMBAHAN PILIHAN) CUSTOMIZER */}
+            <DishAddonsCustomizer />
           </div>
+        )}
 
-          <div className="space-y-4 pt-4 border-t border-slate-800">
-            <h3 className="font-bold text-base text-white">🎨 Badge Colors</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {['dineIn', 'takeaway', 'delivery', 'specialRequests'].map(key => (
-                <div key={key} className="space-y-1">
-                  <Label className="capitalize text-xs font-bold text-slate-300">{key.replace(/([A-Z])/g, ' $1').trim()}</Label>
-                  <div className="flex gap-2">
-                    <input
-                      type="color"
-                      value={printerForm.badge_colors[key]}
-                      onChange={(e) => setPrinterForm(prev => ({
-                        ...prev,
-                        badge_colors: { ...prev.badge_colors, [key]: e.target.value }
-                      }))}
-                      className="h-10 w-12 p-1 rounded-lg border border-slate-800 bg-slate-950 cursor-pointer"
-                    />
-                    <Input
-                      value={printerForm.badge_colors[key]}
-                      onChange={(e) => setPrinterForm(prev => ({
-                        ...prev,
-                        badge_colors: { ...prev.badge_colors, [key]: e.target.value }
-                      }))}
-                      className="flex-1 font-mono text-sm bg-slate-950 border-slate-800 text-white rounded-xl"
-                    />
+        {/* TAB 4: PREMIS & TAMPILAN */}
+        {activeTab === 'store' && (
+          <div className="space-y-6 transition-all duration-300 animate-in fade-in">
+            {/* STORE INFO & LICENSE CARD */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5 relative overflow-hidden">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                <div>
+                  <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                    🔒 Maklumat Premis & Pelesenan Sistem
+                  </h2>
+                  <p className="text-xs text-slate-400 font-mono mt-0.5">Sistem Eksklusif Warung J&J Penampang, Sabah</p>
+                </div>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 w-fit">
+                  <Lock className="w-3.5 h-3.5" /> Terkunci (Backend Sahaja)
+                </span>
+              </div>
+
+              <div className="bg-slate-950/80 border border-slate-800/80 p-4 rounded-xl space-y-3 text-xs leading-relaxed text-slate-300">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                  <div>
+                    <strong className="text-white block font-bold">Perlindungan Pelesenan Proprietary:</strong>
+                    Maklumat kedai, nama restoran, dan lokasi dikunci secara kekal pada antaramuka ini untuk mengelakkan sebarang pengubahsuaian tidak sah.
                   </div>
                 </div>
-              ))}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/60 space-y-1">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Nama Restoran / Premis</span>
+                  <p className="text-base font-black text-white">{storeForm.name || 'Warung J&J (Penampang)'}</p>
+                  <span className="text-[10px] text-emerald-400 font-mono font-semibold">Status: Aktif & Berlesen</span>
+                </div>
+
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/60 space-y-1">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Alamat / Lokasi Operasi</span>
+                  <p className="text-sm font-semibold text-slate-200">{storeForm.address || 'Jalan Penampang, 89500 Penampang, Sabah'}</p>
+                  <span className="text-[10px] text-slate-400 font-mono">Koordinat: 5.918° N, 116.082° E</span>
+                </div>
+
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/60 space-y-1">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">No. Telefon Utama</span>
+                  <p className="text-sm font-mono font-bold text-white">{storeForm.phone_number || '017-222 1784'}</p>
+                </div>
+
+                <div className="bg-slate-950 p-4 rounded-xl border border-slate-800/60 space-y-1">
+                  <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Kategori Pelesenan</span>
+                  <p className="text-sm font-bold text-emerald-400">POS Single-Tenant Proprietary License</p>
+                  <span className="text-[10px] text-slate-400 font-mono">ID: {storeId || '1094d737-8104-4a55-b678-0fe9097beba0'}</span>
+                </div>
+              </div>
             </div>
+
+            {/* HOMEPAGE CUSTOMIZATION CARD */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+              <h2 className="text-xl font-black text-white tracking-tight border-b border-slate-800 pb-3">Tampilan Laman Utama (Homepage)</h2>
+              <div className="space-y-6">
+                <div className="space-y-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800/50">
+                  <h3 className="font-bold text-slate-200">Seksyen Hero Utama</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="heroTitle" className="text-slate-400 text-xs">Tajuk Hero</Label>
+                      <Input
+                        id="heroTitle"
+                        value={homepageForm.hero_title}
+                        onChange={(e) => setHomepageForm(prev => ({ ...prev, hero_title: e.target.value }))}
+                        className="bg-slate-950 border-slate-800 text-white rounded-xl text-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="heroImage" className="text-slate-400 text-xs">Gambar Hero (Pilihan Menu)</Label>
+                      <select
+                        id="heroImage"
+                        value={homepageForm.hero_item_id}
+                        onChange={(e) => setHomepageForm(prev => ({ ...prev, hero_item_id: e.target.value }))}
+                        className="flex h-10 w-full items-center justify-between rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:outline-none"
+                      >
+                        <option value="">-- Gunakan Default (Item Pilihan #1) --</option>
+                        {menuItems?.filter(i => i.image_url).map(item => (
+                          <option key={item.id} value={item.id}>{item.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <Button 
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl py-3 shadow-md active:scale-95 transition-all" 
+                  onClick={() => updateHomepageMutation.mutate(homepageForm)}
+                  disabled={updateHomepageMutation.isPending}
+                >
+                  {updateHomepageMutation.isPending ? 'Menyimpan...' : 'Simpan Tampilan Homepage 💾'}
+                </Button>
+              </div>
+            </div>
+
+            {/* TOP NAVIGATION HEADER CUSTOMIZER */}
+            <NavbarCustomizerCard />
           </div>
+        )}
 
-          <Button 
-            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black rounded-xl py-3 shadow-md active:scale-95 transition-all" 
-            onClick={() => updatePrinterMutation.mutate(printerForm)}
-            disabled={updatePrinterMutation.isPending}
-          >
-            {updatePrinterMutation.isPending ? 'Saving Printer Settings...' : 'Save Printer & Kitchen Settings'}
-          </Button>
-        </div>
-
-        {/* KITCHEN PACKING QC CHECKLIST CUSTOMIZER */}
-        <KitchenChecklistCustomizer menuItems={menuItems || []} />
-
-        {/* DISH ADD-ONS (TAMBAHAN PILIHAN) CUSTOMIZER */}
-        <DishAddonsCustomizer />
-
-        {/* DUITNOW MERCHANT QR & HYBRID PAYMENT CARD */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div>
-              <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
-                💳 DuitNow Merchant QR & Hybrid Payment Strategy
-              </h2>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">
-                Alliance Bank DuitNow QR for Dine-In & POS Counter | ToyyibPay FPX Webhook for Online Delivery
+        {/* TAB 5: KESELAMATAN & AUDIT */}
+        {activeTab === 'security' && (
+          <div className="space-y-6 transition-all duration-300 animate-in fade-in">
+            {/* AUDIT LOG CARD */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                  <ShieldCheck className="w-5 h-5 text-rose-400" />
+                  <span>Audit & Keselamatan Operasi POS</span>
+                </h2>
+                <Badge className="bg-rose-500/20 text-rose-300 border-rose-500/30 text-xs">
+                  RLS-Protected
+                </Badge>
+              </div>
+              <p className="text-xs text-slate-400 font-mono leading-relaxed">
+                Pantau rekod pengubahan pesanan, pembukaan laci tunai, pembatalan resit, dan aktiviti juruwang untuk kawalan integriti premis.
               </p>
-            </div>
-            <span className="bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs px-3 py-1 rounded-full font-bold">
-              Alliance Bank
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            <div className="relative inline-block bg-white p-4 rounded-3xl border-4 border-[#a6192e] shadow-2xl text-center">
-              {/* DuitNow Header */}
-              <div className="bg-[#a6192e] text-white text-xs font-black py-1.5 px-4 rounded-t-xl tracking-wider uppercase flex items-center justify-between mb-3">
-                <span className="flex items-center gap-1.5 font-sans">💳 DuitNow QR</span>
-                <span className="text-[10px] font-mono bg-white/20 px-2 py-0.5 rounded-full">Alliance Bank</span>
-              </div>
-
-              {/* QR Code Container with Centered Warung J&J Logo */}
-              <div className="relative inline-block">
-                <img src="/duitnow-qr.png" alt="Alliance Bank DuitNow QR" className="w-52 h-auto mx-auto rounded-lg" />
-                
-                {/* Centered Warung J&J Logo */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-white p-1 rounded-xl shadow-md border-2 border-[#a6192e]">
-                    <img src="/warung-logo.png" alt="Warung J&J Logo" className="w-9 h-9 object-contain rounded-lg" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Merchant Details Footer */}
-              <div className="mt-3 pt-2 border-t border-gray-100 font-mono text-center">
-                <p className="text-xs font-black text-[#a6192e] uppercase tracking-wide">J&J CAFE & CATERING</p>
-                <p className="text-[10px] text-gray-500 font-bold">Alliance Bank Malaysia Berhad</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-2">
-                <h4 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
-                  🍽️ Dine-In & Counter: Static DuitNow QR (0% Fees)
-                </h4>
-                <p className="text-xs text-slate-300">
-                  Customers scan this Alliance Bank QR at the register or table. Staff visually verifies payment on the Alliance Bank app and confirms in POS.
-                </p>
-              </div>
-
-              <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-2">
-                <h4 className="text-sm font-bold text-sky-400 flex items-center gap-2">
-                  🛵 Online Delivery: ToyyibPay / FPX Signature Webhook
-                </h4>
-                <p className="text-xs text-slate-300">
-                  Online prepaid delivery automatically routes through ToyyibPay signature-verified webhooks. Kitchen only starts when payment is 100% server-confirmed!
-                </p>
-              </div>
+              <Link to="/settings/audit-log" className="block pt-2">
+                <Button className="w-full bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold rounded-xl py-3 gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                  <span>Buka Log Audit Staf & Keselamatan POS</span>
+                </Button>
+              </Link>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* TOYYIBPAY FPX GATEWAY CONFIGURATION CARD */}
-        <ToyyibPaySettingsCard />
-
-        {/* IN-STORE RIDER MANAGEMENT & ADMIN REGISTRATION */}
-        <AdminRiderManagementCard />
-
-        {/* MANUAL STAFF REFUND QUEUE CARD */}
-        <RefundQueueCard />
-
-        {/* AUDIT LOG CARD */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-          <h2 className="text-xl font-black text-white tracking-tight">Audit & Security</h2>
-          <p className="text-xs text-slate-400 font-mono">
-            View detailed logs of all order edits, status overrides, and register operations to monitor staff activity.
-          </p>
-          <Link to="/settings/audit-log" className="block">
-            <Button className="w-full bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold rounded-xl py-3">
-              View Staff Audit Log
-            </Button>
-          </Link>
-        </div>
-
-        {/* TOP NAVIGATION HEADER CUSTOMIZER */}
-        <NavbarCustomizerCard />
       </div>
     </div>
   );
