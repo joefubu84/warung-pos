@@ -323,7 +323,6 @@ export function TableQRPage() {
       fulfillmentType: globalFulfillmentType,
       notes: custItem.notes,
       packNotes: custItem.packNotes || Array(custItem.quantity).fill(''),
-      portionSize: custItem.portionSize,
       spiceLevel: custItem.spiceLevel,
       selectedAddons: custItem.selectedAddons
     };

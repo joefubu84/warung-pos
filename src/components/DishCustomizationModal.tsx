@@ -75,7 +75,6 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
 
   useEffect(() => {
     if (isOpen) {
-      setPortionSize('Small');
       setSpiceLevel('Medium');
       setFulfillmentType('dine_in');
       setSelectedAddonIds([]);
