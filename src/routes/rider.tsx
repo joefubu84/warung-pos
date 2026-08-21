@@ -520,10 +520,6 @@ Saya sedang dalam perjalanan menghantar pesanan makanan anda (*#${orderId.slice(
               </form>
             </TabsContent>
           </Tabs>
-
-          <div className="p-3 bg-slate-950/60 rounded-2xl border border-slate-800 text-[11px] text-slate-400 text-center font-mono">
-            🛡️ Akaun Rider disahkan secara automatik & diasingkan sepenuhnya daripada sistem POS juruwang warung.
-          </div>
         </div>
       </div>
     );
