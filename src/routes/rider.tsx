@@ -141,12 +141,14 @@ function RiderPortalPage() {
     setLoadingJobs(true);
 
     try {
+      const claimedLocalId = localStorage.getItem('warung_rider_claimed_order_id');
+
       const { data: orders, error } = await supabase
         .from('orders')
         .select('*')
         .eq('type', 'delivery')
         .order('created_at', { ascending: false })
-        .limit(30);
+        .limit(50);
 
       if (!error && orders) {
         const available: DeliveryJob[] = [];
@@ -154,14 +156,15 @@ function RiderPortalPage() {
         let active: DeliveryJob | null = null;
 
         orders.forEach((ord: any) => {
-          const isClaimedByMe = ord.delivery_service === sessionUser.id || ord.delivery_service === 'warung_rider';
+          const isClaimedByMe = ord.id === claimedLocalId;
           
           if (ord.status === 'completed') {
-            if (isClaimedByMe) completed.push(ord);
+            completed.push(ord);
           } else if (ord.status === 'preparing' || ord.status === 'ready' || ord.status === 'confirmed' || ord.status === 'pending') {
-            if (ord.delivery_service === sessionUser.id) {
+            if (isClaimedByMe) {
               active = ord;
-            } else if (!ord.delivery_service || ord.delivery_service === 'warung_rider') {
+            } else {
+              // All active delivery orders from Warung J&J are available for riders to pick up
               available.push(ord);
             }
           }
@@ -363,6 +366,8 @@ function RiderPortalPage() {
     setIsClaiming(job.id);
 
     try {
+      localStorage.setItem('warung_rider_claimed_order_id', job.id);
+
       if (job.id.startsWith('mock-del-')) {
         // In-memory simulation
         setAvailableJobs(prev => prev.filter(j => j.id !== job.id));
@@ -375,7 +380,7 @@ function RiderPortalPage() {
       const { error } = await supabase
         .from('orders')
         .update({
-          delivery_service: sessionUser.id as any,
+          delivery_service: 'jnj',
           status: 'preparing',
         })
         .eq('id', job.id);
@@ -395,6 +400,8 @@ function RiderPortalPage() {
   // Complete Delivery Job
   const handleCompleteJob = async (jobId: string) => {
     try {
+      localStorage.removeItem('warung_rider_claimed_order_id');
+
       if (jobId.startsWith('mock-del-')) {
         // In-memory simulation
         if (activeJob && activeJob.id === jobId) {
@@ -416,7 +423,7 @@ function RiderPortalPage() {
 
       if (error) throw error;
 
-      toast.success('Penghantaran selesai.');
+      toast.success('🎉 Penghantaran selesai! Upah dimasukkan ke dalam dompet pendapatan.');
       await fetchDeliveryOrders();
       setActiveTab('wallet');
     } catch (err: any) {
