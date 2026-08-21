@@ -62,7 +62,52 @@ const WaitTimer = ({ createdAt }: { createdAt: string }) => {
   }, [createdAt]);
 
   return <span className="text-yellow-300 ml-auto tabular-nums font-mono">⏱️ {elapsed}</span>;
-};
+};function getDishComponents(itemName: string, notes?: string | null) {
+  const nameLower = (itemName || '').toLowerCase();
+  
+  // Drinks
+  if (nameLower.includes('teh') || nameLower.includes('kopi') || nameLower.includes('milo') || nameLower.includes('sirap') || nameLower.includes('jus') || nameLower.includes('air') || nameLower.includes('tea') || nameLower.includes('nescafe') || nameLower.includes('horlicks') || nameLower.includes('lemon')) {
+    const list = [
+      { key: 'drink', icon: '🥤', label: 'Air / Minuman' },
+      { key: 'straw', icon: '🧊', label: 'Ais & Straw' }
+    ];
+    if (notes) list.push({ key: 'notes', icon: '⚠️', label: `Nota: ${notes}` });
+    return list;
+  }
+  
+  // Snacks / Sides
+  if (nameLower.includes('popcorn') || nameLower.includes('fries') || nameLower.includes('kentang') || nameLower.includes('nugget') || nameLower.includes('pisang') || nameLower.includes('keropok') || nameLower.includes('burger') || nameLower.includes('sosej')) {
+    const list = [
+      { key: 'main', icon: '🍟', label: 'Makanan Panas' },
+      { key: 'sauce', icon: '🥫', label: 'Sos / Mayonis' }
+    ];
+    if (notes) list.push({ key: 'notes', icon: '⚠️', label: `Nota: ${notes}` });
+    return list;
+  }
+  
+  // Soups & Bakso
+  if (nameLower.includes('sup') || nameLower.includes('soup') || nameLower.includes('soto') || nameLower.includes('bakso')) {
+    const list = [
+      { key: 'soup_bowl', icon: '🥣', label: 'Mangkuk Sup' },
+      { key: 'protein', icon: '🥩', label: 'Daging / Lauk' },
+      { key: 'sambal', icon: '🌶️', label: 'Sambal Kicap' },
+      { key: 'nasi_mee', icon: '🍚', label: 'Nasi / Mee' }
+    ];
+    if (notes) list.push({ key: 'notes', icon: '⚠️', label: `Nota: ${notes}` });
+    return list;
+  }
+
+  // Default Warung Rice & Noodle Sets (Nasi Lalapan, Nasi Ayam, Nasi Goreng, Nasi Lemak dsb.)
+  const list = [
+    { key: 'rice', icon: '🍚', label: 'Nasi / Mee' },
+    { key: 'protein', icon: '🍗', label: 'Lauk Utama' },
+    { key: 'sambal', icon: '🌶️', label: 'Sambal J&J' },
+    { key: 'soup', icon: '🥣', label: 'Kuah / Sup' },
+    { key: 'ulam', icon: '🥒', label: 'Ulam / Sayur' }
+  ];
+  if (notes) list.push({ key: 'notes', icon: '⚠️', label: `Nota: ${notes}` });
+  return list;
+}
 
 const OrderCard = memo(({ 
   order, 
@@ -77,18 +122,50 @@ const OrderCard = memo(({
   onAdvanceStatus 
 }: any) => {
   const isModified = highlight?.type === 'updated';
-  const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
+  const [checkedComponents, setCheckedComponents] = useState<Record<string, boolean>>({});
 
-  const toggleCheck = (itemId: string) => {
-    setCheckedItems(prev => ({
+  const toggleComponentCheck = (itemId: string, compKey: string) => {
+    const key = `${itemId}_${compKey}`;
+    setCheckedComponents(prev => ({
       ...prev,
-      [itemId]: !prev[itemId]
+      [key]: !prev[key]
     }));
   };
 
-  const totalItems = order.order_items?.length || 0;
-  const checkedCount = order.order_items?.filter((item: any) => checkedItems[item.id]).length || 0;
-  const isAllChecked = totalItems > 0 && checkedCount === totalItems;
+  const toggleAllForDish = (itemId: string, components: { key: string }[]) => {
+    const allChecked = components.every(c => checkedComponents[`${itemId}_${c.key}`]);
+    setCheckedComponents(prev => {
+      const next = { ...prev };
+      components.forEach(c => {
+        next[`${itemId}_${c.key}`] = !allChecked;
+      });
+      return next;
+    });
+  };
+
+  // Calculate granular components across all items
+  const itemComponentsMap = React.useMemo(() => {
+    const map: Record<string, ReturnType<typeof getDishComponents>> = {};
+    (order.order_items || []).forEach((item: any) => {
+      const name = item.menu_items?.name || (item.menu_item_id && menuMap?.[item.menu_item_id]) || 'Menu';
+      map[item.id] = getDishComponents(name, item.notes);
+    });
+    return map;
+  }, [order.order_items, menuMap]);
+
+  let totalComponents = 0;
+  let checkedComponentsCount = 0;
+  (order.order_items || []).forEach((item: any) => {
+    const comps = itemComponentsMap[item.id] || [];
+    totalComponents += comps.length;
+    comps.forEach(c => {
+      if (checkedComponents[`${item.id}_${c.key}`]) {
+        checkedComponentsCount++;
+      }
+    });
+  });
+
+  const isAllComponentsChecked = totalComponents > 0 && checkedComponentsCount === totalComponents;
 
   let cardClasses = "border-2 p-4 rounded-2xl shadow-sm flex flex-col justify-between transition-all duration-300 ease-in-out relative overflow-hidden ";
   
@@ -96,8 +173,8 @@ const OrderCard = memo(({
     cardClasses += "border-4 border-emerald-500 bg-emerald-950/40 shadow-[0_0_20px_rgba(16,185,129,0.4)] animate-pulse";
   } else if (isModified) {
     cardClasses += "border-4 border-rose-500 bg-rose-950/70 shadow-[0_0_30px_rgba(244,63,94,0.8)] animate-pulse ring-4 ring-rose-500/50";
-  } else if (isAllChecked && order.status === 'preparing') {
-    cardClasses += "border-2 border-emerald-500/60 bg-slate-900 shadow-[0_0_15px_rgba(16,185,129,0.2)]";
+  } else if (isAllComponentsChecked && order.status === 'preparing') {
+    cardClasses += "border-2 border-emerald-500/70 bg-slate-900 shadow-[0_0_15px_rgba(16,185,129,0.25)]";
   } else {
     cardClasses += "border-slate-800 bg-slate-900";
   }
@@ -203,24 +280,27 @@ const OrderCard = memo(({
           </div>
         </div>
 
-        {/* PACKING QUALITY CONTROL PROGRESS BAR */}
-        <div className="my-2.5 p-2 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col gap-1.5">
+        {/* GRANULAR PACKING & COMPONENT PROGRESS BAR */}
+        <div className="my-2.5 p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col gap-1.5 shadow-inner">
           <div className="flex justify-between items-center text-[11px] font-mono">
-            <span className="text-slate-400 font-medium">Semakan Bungkusan & Lauk:</span>
-            <span className={`font-bold ${isAllChecked ? 'text-emerald-400' : 'text-amber-400'}`}>
-              {checkedCount}/{totalItems} Item Ditanda {isAllChecked && '✓ Lengkap'}
+            <span className="text-slate-300 font-bold flex items-center gap-1.5">
+              <span>🍱</span>
+              <span>Semakan Lauk, Nasi & Sambal:</span>
+            </span>
+            <span className={`font-bold ${isAllComponentsChecked ? 'text-emerald-400' : 'text-amber-400'}`}>
+              {checkedComponentsCount}/{totalComponents} Komponen {isAllComponentsChecked && '✓ Lengkap'}
             </span>
           </div>
-          <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
             <div 
-              className={`h-full transition-all duration-300 ${isAllChecked ? 'bg-emerald-500' : 'bg-amber-400'}`}
-              style={{ width: `${totalItems > 0 ? (checkedCount / totalItems) * 100 : 0}%` }}
+              className={`h-full transition-all duration-300 ${isAllComponentsChecked ? 'bg-emerald-500' : 'bg-amber-400'}`}
+              style={{ width: `${totalComponents > 0 ? (checkedComponentsCount / totalComponents) * 100 : 0}%` }}
             />
           </div>
         </div>
         
-        {/* ORDER ITEMS LIST WITH INTERACTIVE CHECKLIST */}
-        <div className="space-y-2 mb-4 mt-2">
+        {/* ORDER ITEMS LIST WITH GRANULAR COMPONENT CHECKLIST */}
+        <div className="space-y-3 mb-4 mt-2">
           {isModified && (
             <div className="text-xs font-black text-rose-200 bg-rose-600/30 border border-rose-500/50 p-2 rounded-xl text-center mb-2 shadow-inner flex items-center justify-center gap-1.5">
               <span>⚠️ Perhatian Dapur: Semak hidangan yang dikemas kini di bawah:</span>
@@ -229,70 +309,102 @@ const OrderCard = memo(({
 
           {order.order_items.map((item: any) => {
             const isNewItem = highlightedItems[item.id];
-            const isChecked = !!checkedItems[item.id];
             const itemName = item.menu_items?.name || (item.menu_item_id && menuMap?.[item.menu_item_id]) || 'Hidangan Makanan';
+            const components = itemComponentsMap[item.id] || [];
+            const dishAllDone = components.length > 0 && components.every(c => checkedComponents[`${item.id}_${c.key}`]);
             
             return (
               <div 
                 key={item.id}
-                onClick={() => toggleCheck(item.id)}
-                className={`flex flex-col p-2.5 rounded-xl border cursor-pointer select-none transition-all duration-200 active:scale-[0.99] ${
-                  isChecked 
-                    ? 'bg-emerald-950/40 border-emerald-500/60 shadow-inner' 
+                className={`flex flex-col p-3 rounded-2xl border transition-all duration-200 ${
+                  dishAllDone 
+                    ? 'bg-emerald-950/30 border-emerald-500/50 shadow-sm' 
                     : isNewItem
                       ? 'bg-rose-500/20 text-rose-200 border-rose-500/60 font-black shadow-[0_0_12px_rgba(244,63,94,0.3)] scale-[1.01]'
-                      : 'bg-slate-950/80 hover:bg-slate-950 text-slate-200 border-slate-800'
+                      : 'bg-slate-950/90 text-slate-200 border-slate-800'
                 }`}
               >
-                <div className="flex justify-between items-center text-sm gap-2">
-                  <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                    {/* INTERACTIVE CHECKBOX ICON */}
-                    <div className={`w-5 h-5 rounded-md flex items-center justify-center font-bold text-xs transition-all shrink-0 ${
-                      isChecked 
-                        ? 'bg-emerald-500 text-white shadow-sm' 
-                        : 'border-2 border-slate-600 hover:border-amber-400 bg-slate-900 text-transparent'
-                    }`}>
-                      ✓
-                    </div>
-
-                    <span className={`flex items-center gap-2 flex-wrap font-semibold ${isChecked ? 'line-through text-slate-400' : 'text-white'}`}>
-                      <span className="font-bold">{itemName}</span>
-                      {isNewItem && (
-                        <span className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded-md font-black uppercase tracking-wider">
-                          BARU / DIUBAH ✨
-                        </span>
-                      )}
-                      {item.fulfillment_type === 'dine_in' ? (
-                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700 font-bold">
-                          Makan Sini
-                        </span>
-                      ) : (
-                        <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-black uppercase">
-                          BUNGKUS {item.container_size ? `[${item.container_size.toUpperCase()}]` : ''}
-                        </span>
-                      )}
+                {/* DISH TITLE BAR */}
+                <div className="flex justify-between items-center text-sm gap-2 pb-2 border-b border-slate-800/80">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className={`font-black text-base ${dishAllDone ? 'line-through text-slate-400' : 'text-white'}`}>
+                      {itemName}
                     </span>
+                    {isNewItem && (
+                      <span className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded-md font-black uppercase tracking-wider">
+                        BARU / DIUBAH ✨
+                      </span>
+                    )}
+                    {dishAllDone && (
+                      <span className="text-[10px] bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-md font-bold">
+                        ✓ Siap Dibungkus
+                      </span>
+                    )}
+                    {item.fulfillment_type === 'dine_in' ? (
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700 font-bold">
+                        Makan Sini
+                      </span>
+                    ) : (
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-black uppercase">
+                        BUNGKUS {item.container_size ? `[${item.container_size.toUpperCase()}]` : ''}
+                      </span>
+                    )}
                   </div>
 
-                  <span className={`font-black text-base font-mono shrink-0 ${isChecked ? 'text-emerald-400' : 'text-slate-300'}`}>
-                    x{item.quantity}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`font-black text-lg font-mono ${dishAllDone ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      x{item.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => toggleAllForDish(item.id, components)}
+                      className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-all ${
+                        dishAllDone 
+                          ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white' 
+                          : 'bg-amber-500/20 border-amber-500/40 text-amber-300 hover:bg-amber-500/30'
+                      }`}
+                      title="Tandakan semua komponen hidangan ini"
+                    >
+                      {dishAllDone ? 'Batal Semua' : '⚡ Siap Semua'}
+                    </button>
+                  </div>
                 </div>
 
-                {/* COMPONENT QUALITY CHECK TAGS (NASI / LAUK / SAMBAL) */}
-                <div className="flex items-center gap-1.5 mt-2 pt-1.5 border-t border-slate-800/60 flex-wrap text-[10px] text-slate-400 font-mono">
-                  <span className="opacity-60">Semak Bungkusan:</span>
-                  <span className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700/80">🍚 Nasi</span>
-                  <span className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700/80">🍗 Lauk</span>
-                  <span className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700/80">🌶️ Sambal J&J</span>
-                  <span className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700/80">🥢 Kutleri</span>
+                {/* INDIVIDUAL CLICKABLE COMPONENT PILLS (NASI / LAUK / SAMBAL / KUAH / ULAM) */}
+                <div className="mt-2.5">
+                  <p className="text-[10px] text-slate-400 font-mono mb-1.5">
+                    Tekan setiap komponen semasa membungkus:
+                  </p>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {components.map((comp) => {
+                      const isCompChecked = !!checkedComponents[`${item.id}_${comp.key}`];
+                      return (
+                        <button
+                          key={comp.key}
+                          type="button"
+                          onClick={() => toggleComponentCheck(item.id, comp.key)}
+                          className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 border cursor-pointer ${
+                            isCompChecked
+                              ? 'bg-emerald-600 border-emerald-400 text-white shadow-md'
+                              : 'bg-slate-900 border-slate-700 hover:border-amber-400 text-slate-300 shadow-sm'
+                          }`}
+                        >
+                          <span className={`text-xs ${isCompChecked ? 'font-black' : 'opacity-60'}`}>
+                            {isCompChecked ? '✓' : '○'}
+                          </span>
+                          <span>{comp.icon}</span>
+                          <span>{comp.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {item.notes && (
                   <div 
-                    className="text-xs text-slate-950 font-black py-1.5 px-2.5 mt-2 rounded-lg border-2 border-amber-400 bg-amber-300 flex items-start gap-1 shadow-sm"
+                    className="text-xs text-slate-950 font-black py-1.5 px-2.5 mt-2.5 rounded-lg border-2 border-amber-400 bg-amber-300 flex items-start gap-1 shadow-sm"
                   >
-                    <span>⚠️ NOTA:</span>
+                    <span>⚠️ PERMINTAAN PELANGGAN:</span>
                     <span>{item.notes}</span>
                   </div>
                 )}
@@ -305,13 +417,13 @@ const OrderCard = memo(({
       <div className="border-t border-slate-800 pt-3 mt-2">
         <p className="text-[11px] text-slate-400 mb-2 font-mono flex justify-between items-center">
           <span>Masa Pesanan: {new Date(order.created_at).toLocaleTimeString()}</span>
-          {isAllChecked && <span className="text-emerald-400 font-bold">✓ Siap Dibungkus</span>}
+          {isAllComponentsChecked && <span className="text-emerald-400 font-bold">✓ Bungkusan Lengkap & Diperiksa</span>}
         </p>
         {order.status !== 'ready' && (
           <button
             onClick={() => {
-              if (order.status === 'preparing' && !isAllChecked) {
-                if (!confirm(`⚠️ Perhatian: Anda baru menanda ${checkedCount}/${totalItems} hidangan. Pastikan lauk, nasi, sambal dan air tidak tertinggal. Teruskan?`)) {
+              if (order.status === 'preparing' && !isAllComponentsChecked) {
+                if (!confirm(`⚠️ Perhatian Dapur: Anda baru menanda ${checkedComponentsCount}/${totalComponents} komponen.\n\nAdakah anda pasti Nasi, Lauk, Sambal dan Kuah sudah dimasukkan ke dalam beg bungkusan?`)) {
                   return;
                 }
               }
@@ -320,16 +432,16 @@ const OrderCard = memo(({
             className={`w-full py-2.5 font-black text-xs rounded-xl shadow-lg transition-all active:scale-98 uppercase tracking-wider flex items-center justify-center gap-2 ${
               order.status === 'pending'
                 ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/30'
-                : isAllChecked
+                : isAllComponentsChecked
                   ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/40 ring-2 ring-emerald-400 animate-pulse'
                   : 'bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/40'
             }`}
           >
             {order.status === 'pending' 
               ? '🍳 MULA MASAK (START PREPARING)' 
-              : isAllChecked
-                ? '🍽️ SEMUA LENGKAP — SIAP DIHIDANG / RIDER PICKUP ✓'
-                : `⚠️ TANDAKAN SIAP (${checkedCount}/${totalItems} ITEM)`}
+              : isAllComponentsChecked
+                ? '🍽️ SEMUA LENGKAP (NASI, LAUK, SAMBAL) — SERAH KEPADA RIDER ✓'
+                : `⚠️ TANDAKAN SIAP (${checkedComponentsCount}/${totalComponents} KOMPONEN)`}
           </button>
         )}
       </div>
