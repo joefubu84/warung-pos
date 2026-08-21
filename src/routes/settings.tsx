@@ -687,6 +687,9 @@ function SettingsPage() {
         {/* TOYYIBPAY FPX GATEWAY CONFIGURATION CARD */}
         <ToyyibPaySettingsCard />
 
+        {/* IN-STORE RIDER MANAGEMENT & ADMIN REGISTRATION */}
+        <AdminRiderManagementCard />
+
         {/* MANUAL STAFF REFUND QUEUE CARD */}
         <RefundQueueCard />
 
@@ -1145,6 +1148,218 @@ function ToyyibPaySettingsCard() {
         >
           Simpan Tetapan ToyyibPay 💾
         </Button>
+      </div>
+    </div>
+  );
+}
+
+function AdminRiderManagementCard() {
+  const queryClient = useQueryClient();
+  const [riderName, setRiderName] = useState('');
+  const [riderPhone, setRiderPhone] = useState('');
+  const [riderEmail, setRiderEmail] = useState('');
+  const [riderPassword, setRiderPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Fetch all riders
+  const { data: riders, isLoading, refetch } = useQuery({
+    queryKey: ['admin-riders-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('role', 'rider')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const handleRegisterRiderByAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!riderName.trim() || !riderPhone.trim() || !riderEmail.trim() || !riderPassword.trim()) {
+      toast.error('Sila lengkapkan semua butiran pendaftaran rider.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // 1. Sign up user account in Supabase
+      const { data: authRes, error: authErr } = await supabase.auth.signUp({
+        email: riderEmail,
+        password: riderPassword,
+        options: {
+          data: {
+            name: riderName,
+            phone_number: riderPhone,
+            role: 'rider',
+          },
+        },
+      });
+
+      if (authErr) throw authErr;
+
+      if (authRes.user) {
+        // 2. Upsert into users table with role 'rider'
+        const { error: upsertErr } = await supabase.from('users').upsert({
+          id: authRes.user.id,
+          name: riderName,
+          phone_number: riderPhone,
+          role: 'rider' as any,
+        });
+
+        if (upsertErr) console.warn('User upsert note:', upsertErr);
+
+        toast.success(`🎉 Rider ${riderName} berjaya didaftarkan! Mereka kini boleh log masuk di /rider.`);
+        setRiderName('');
+        setRiderPhone('');
+        setRiderEmail('');
+        setRiderPassword('');
+        refetch();
+      }
+    } catch (err: any) {
+      toast.error(`Ralat pendaftaran rider: ${err.message}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+        <div>
+          <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+            <span>🛵</span>
+            <span>Pengurusan Rakan Penghantar (Rider Warung J&J)</span>
+          </h2>
+          <p className="text-xs text-slate-400 font-mono mt-0.5">
+            Pendaftaran berpusat oleh Admin sahaja. Rider mendaftar secara bersemuka di premis untuk keselamatan kedai.
+          </p>
+        </div>
+        <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs px-2.5 py-1 font-mono font-bold">
+          {riders?.length || 0} Rider Berdaftar
+        </Badge>
+      </div>
+
+      {/* ADMIN IN-STORE RIDER REGISTRATION FORM */}
+      <form onSubmit={handleRegisterRiderByAdmin} className="bg-slate-950 border border-slate-800 p-5 rounded-2xl space-y-4">
+        <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
+          <Store className="w-4 h-4" />
+          <span>Borang Pendaftaran Rider Baharu (Di Kaunter Warung)</span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
+          <div className="space-y-1">
+            <Label className="text-slate-300 font-bold">Nama Penuh Rider</Label>
+            <Input
+              placeholder="cth: Mohd Azlan"
+              value={riderName}
+              onChange={(e) => setRiderName(e.target.value)}
+              className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-slate-300 font-bold">No. Telefon WhatsApp</Label>
+            <Input
+              placeholder="cth: 0198887766"
+              value={riderPhone}
+              onChange={(e) => setRiderPhone(e.target.value)}
+              className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-slate-300 font-bold">Emel Log Masuk Rider</Label>
+            <Input
+              type="email"
+              placeholder="azlan.rider@warungjnj.com"
+              value={riderEmail}
+              onChange={(e) => setRiderEmail(e.target.value)}
+              className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+              required
+            />
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-slate-300 font-bold">Kata Laluan Sementara</Label>
+            <Input
+              type="text"
+              placeholder="cth: jnj123456"
+              value={riderPassword}
+              onChange={(e) => setRiderPassword(e.target.value)}
+              className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end pt-1">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full sm:w-auto bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs h-10 px-6 rounded-xl shadow-lg shadow-amber-600/20"
+          >
+            {isSubmitting ? 'Mendaftarkan Rider...' : '➕ Daftarkan Rider Sekarang'}
+          </Button>
+        </div>
+      </form>
+
+      {/* REGISTERED RIDERS DIRECTORY */}
+      <div className="space-y-3 font-mono">
+        <div className="flex items-center justify-between text-xs text-slate-400">
+          <span className="font-bold text-slate-300">Senarai Rakan Penghantar Sah Warung J&J</span>
+          <button
+            type="button"
+            onClick={() => refetch()}
+            className="text-amber-400 hover:underline inline-flex items-center gap-1"
+          >
+            <RefreshCw className="w-3 h-3" /> Kemaskini Senarai
+          </button>
+        </div>
+
+        {isLoading ? (
+          <div className="p-6 text-center text-slate-500 text-xs">Memuat senarai rider...</div>
+        ) : riders?.length === 0 ? (
+          <div className="p-6 text-center bg-slate-950 rounded-xl border border-slate-800 text-slate-500 text-xs">
+            Belum ada rider yang didaftarkan. Gunakan borang di atas untuk mendaftarkan rakan penghantar pertama anda.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {riders?.map((rider) => (
+              <div
+                key={rider.id}
+                className="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between gap-3"
+              >
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-white text-sm">🛵 {rider.name || 'Rider J&J'}</span>
+                    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[9px] px-1.5 py-0">
+                      Rider Aktif
+                    </Badge>
+                  </div>
+                  <p className="text-slate-400 text-xs">📞 {rider.phone_number || 'Tiada No Telefon'}</p>
+                  <p className="text-slate-500 text-[10px]">ID: {rider.id.slice(0, 8)}</p>
+                </div>
+
+                {rider.phone_number && (
+                  <a
+                    href={`https://wa.me/${rider.phone_number.replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="p-2 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-xl transition-all"
+                    title="Hubungi Rider via WhatsApp"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

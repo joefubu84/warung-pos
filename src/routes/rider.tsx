@@ -373,152 +373,59 @@ function RiderPortalPage() {
             </div>
           </div>
 
-          {/* TAB SWITCHER */}
-          <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as any)} className="w-full">
-            <TabsList className="grid grid-cols-2 bg-[#141211] p-1 rounded-2xl border border-[#2b2724] h-11 w-full">
-              <TabsTrigger 
-                value="login" 
-                className="text-xs font-semibold rounded-xl text-stone-300 data-[state=active]:bg-amber-600 data-[state=active]:text-white transition-all"
-              >
-                Log Masuk
-              </TabsTrigger>
-              <TabsTrigger 
-                value="register" 
-                className="text-xs font-semibold rounded-xl text-stone-300 data-[state=active]:bg-amber-600 data-[state=active]:text-white transition-all"
-              >
-                Daftar Baru
-              </TabsTrigger>
-            </TabsList>
+          {/* LOGIN FORM */}
+          <form onSubmit={handleLoginRider} className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-stone-300">Emel Rider</label>
+              <div className="relative">
+                <Mail className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Input
+                  type="email"
+                  placeholder="emel@warungjnj.com"
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                  className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
+                  required
+                />
+              </div>
+            </div>
 
-            {/* TAB: LOGIN */}
-            <TabsContent value="login" className="space-y-4 pt-4">
-              <form onSubmit={handleLoginRider} className="space-y-3.5">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-stone-300">Emel</label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <Input
-                      type="email"
-                      placeholder="emel@anda.com"
-                      value={loginEmail}
-                      onChange={(e) => setLoginEmail(e.target.value)}
-                      className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
-                      required
-                    />
-                  </div>
-                </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-stone-300">Kata Laluan</label>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Input
+                  type="password"
+                  placeholder="••••••••"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
+                  required
+                />
+              </div>
+            </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-stone-300">Kata Laluan</label>
-                  <div className="relative">
-                    <Lock className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      value={loginPassword}
-                      onChange={(e) => setLoginPassword(e.target.value)}
-                      className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
-                      required
-                    />
-                  </div>
-                </div>
+            <Button
+              type="submit"
+              disabled={isAuthSubmitting}
+              className="w-full h-11 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-amber-600/20 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
+            >
+              {isAuthSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Log Masuk & Mula Bertugas'}
+            </Button>
+          </form>
 
-                <Button
-                  type="submit"
-                  disabled={isAuthSubmitting}
-                  className="w-full h-11 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-amber-600/20 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
-                >
-                  {isAuthSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Log Masuk & Mula Bertugas'}
-                </Button>
-              </form>
-            </TabsContent>
+          {/* IN-STORE REGISTRATION NOTICE */}
+          <div className="p-4 bg-[#141211] border border-[#2e2a27] rounded-2xl text-left space-y-1.5">
+            <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs">
+              <Store className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>Pendaftaran Rakan Penghantar Baharu</span>
+            </div>
+            <p className="text-[11px] text-stone-400 leading-relaxed">
+              Bagi menjamin kualiti dan keselamatan perkhidmatan, pendaftaran rider hanya diproses secara bersemuka di premis <strong className="text-stone-200">Warung J&J (de Baxters Café, Penampang)</strong> oleh pihak pengurusan warung.
+            </p>
+          </div>
 
-            {/* TAB: REGISTER */}
-            <TabsContent value="register" className="space-y-4 pt-4">
-              <form onSubmit={handleRegisterRider} className="space-y-3">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-stone-300">Nama Penuh</label>
-                  <div className="relative">
-                    <User className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <Input
-                      placeholder="cth: Mohd Azlan"
-                      value={regName}
-                      onChange={(e) => setRegName(e.target.value)}
-                      className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-stone-300">No. Telefon (WhatsApp)</label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <Input
-                      placeholder="cth: 0198887766"
-                      value={regPhone}
-                      onChange={(e) => setRegPhone(e.target.value)}
-                      className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-stone-300">No. Plat Kenderaan</label>
-                  <div className="relative">
-                    <Bike className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <Input
-                      placeholder="cth: SAB 1234 A"
-                      value={regPlate}
-                      onChange={(e) => setRegPlate(e.target.value)}
-                      className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-stone-300">Emel</label>
-                  <div className="relative">
-                    <Mail className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <Input
-                      type="email"
-                      placeholder="nama@gmail.com"
-                      value={regEmail}
-                      onChange={(e) => setRegEmail(e.target.value)}
-                      className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-stone-300">Kata Laluan</label>
-                  <div className="relative">
-                    <Lock className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                    <Input
-                      type="password"
-                      placeholder="Minimum 6 aksara"
-                      value={regPassword}
-                      onChange={(e) => setRegPassword(e.target.value)}
-                      className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isAuthSubmitting}
-                  className="w-full h-11 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-amber-600/20 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
-                >
-                  {isAuthSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Hantar Pendaftaran'}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-
-          <div className="pt-3 border-t border-[#2e2a27] text-center">
+          <div className="pt-2 border-t border-[#2e2a27] text-center">
             <button
               onClick={() => navigate({ to: '/' })}
               className="text-xs text-stone-400 hover:text-stone-200 transition-colors"
