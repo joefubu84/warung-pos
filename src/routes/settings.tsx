@@ -21,8 +21,8 @@ import {
 } from '@/lib/addons-config';
 import { MessageSquare, ShieldCheck, QrCode, Phone, AlertTriangle, RefreshCw, Globe, Key, ExternalLink, Lock } from 'lucide-react';
 import { markManualRefundComplete } from '@/lib/riders';
-import { getToyyibPayConfig, saveToyyibPayConfig, ToyyibPayConfig } from '@/lib/toyyibpay';
 import { KitchenChecklistCustomizer } from '@/components/KitchenChecklistCustomizer';
+import { DishAddonsCustomizer } from '@/components/DishAddonsCustomizer';
 
 export const Route = createFileRoute('/settings')({
   ssr: false,
@@ -615,6 +615,9 @@ function SettingsPage() {
 
         {/* KITCHEN PACKING QC CHECKLIST CUSTOMIZER */}
         <KitchenChecklistCustomizer menuItems={menuItems || []} />
+
+        {/* DISH ADD-ONS (TAMBAHAN PILIHAN) CUSTOMIZER */}
+        <DishAddonsCustomizer />
 
         {/* DUITNOW MERCHANT QR & HYBRID PAYMENT CARD */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
