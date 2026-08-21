@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -48,7 +48,7 @@ export function DishAddonsCustomizer() {
     }
 
     const newAddon: CustomAddon = {
-      id: ddon__,
+      id: `addon_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
       name: newName.trim(),
       price: Number(priceNum.toFixed(2)),
       available: true
