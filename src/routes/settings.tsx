@@ -205,6 +205,19 @@ function SettingsPage() {
     onError: (error) => toast.error(error.message),
   });
 
+  type SettingsSection = 
+    | 'riders' 
+    | 'payments' 
+    | 'kitchen' 
+    | 'checklist' 
+    | 'addons' 
+    | 'store' 
+    | 'appearance' 
+    | 'refunds' 
+    | 'security';
+
+  const [activeSection, setActiveSection] = useState<SettingsSection>('riders');
+
   const [storeForm, setStoreForm] = useState({ name: '', address: '', logo_url: '', phone_number: '', phone_number_2: '' });
 
   const [printerForm, setPrinterForm] = useState({ 
@@ -348,19 +361,6 @@ function SettingsPage() {
       toast.error(`Upload failed: ${err.message}`);
     }
   };
-
-  type SettingsSection = 
-    | 'riders' 
-    | 'payments' 
-    | 'kitchen' 
-    | 'checklist' 
-    | 'addons' 
-    | 'store' 
-    | 'appearance' 
-    | 'refunds' 
-    | 'security';
-
-  const [activeSection, setActiveSection] = useState<SettingsSection>('riders');
 
   const SIDEBAR_ITEMS: {
     id: SettingsSection;
