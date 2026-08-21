@@ -42,7 +42,11 @@ import {
   PlusCircle,
   Upload,
   User,
-  Bike
+  Bike,
+  CreditCard,
+  Landmark,
+  Copy,
+  Check
 } from 'lucide-react';
 import {
   Dialog,
@@ -1191,6 +1195,9 @@ interface RiderKYCRecord {
   icNumber: string;
   phone: string;
   email: string;
+  bankName?: string;
+  bankAccountNumber?: string;
+  bankAccountHolder?: string;
   vehiclePlate: string;
   vehicleModel: string;
   licenseNumber: string;
@@ -1201,9 +1208,32 @@ interface RiderKYCRecord {
   photoRider?: string;
   photoIc?: string;
   photoLicense?: string;
+  photoBankStatement?: string;
   registeredAt: string;
   isVerified: boolean;
 }
+
+const MALAYSIAN_BANKS = [
+  'Maybank (Malayan Banking)',
+  'CIMB Bank',
+  'Alliance Bank Malaysia',
+  'Public Bank',
+  'RHB Bank',
+  'Bank Islam Malaysia',
+  'Hong Leong Bank',
+  'Bank Simpanan Nasional (BSN)',
+  'AmBank',
+  'Bank Rakyat',
+  'Affin Bank',
+  'Bank Muamalat',
+  'Agrobank',
+  'HSBC Bank Malaysia',
+  'Standard Chartered Malaysia',
+  'OCBC Bank Malaysia',
+  'UOB Malaysia',
+  'Touch n Go eWallet (DuitNow)',
+  'Lain-lain Bank / Akaun'
+];
 
 function AdminRiderManagementCard() {
   const queryClient = useQueryClient();
@@ -1214,6 +1244,13 @@ function AdminRiderManagementCard() {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  // Bank Account State
+  const [bankName, setBankName] = useState('Maybank (Malayan Banking)');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [bankAccountHolder, setBankAccountHolder] = useState('');
+  
+  // Vehicle & License State
   const [vehiclePlate, setVehiclePlate] = useState('');
   const [vehicleModel, setVehicleModel] = useState('');
   const [licenseNumber, setLicenseNumber] = useState('');
@@ -1226,18 +1263,19 @@ function AdminRiderManagementCard() {
   const [photoRider, setPhotoRider] = useState<string>('');
   const [photoIc, setPhotoIc] = useState<string>('');
   const [photoLicense, setPhotoLicense] = useState<string>('');
+  const [photoBankStatement, setPhotoBankStatement] = useState<string>('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedRider, setSelectedRider] = useState<RiderKYCRecord | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [copiedBankId, setCopiedBankId] = useState<string | null>(null);
 
   // Helper to handle camera/file uploads into Base64
   const handleFileCapture = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check size max 5MB
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Saiz gambar terlalu besar. Sila pilih gambar di bawah 5MB.');
       return;
@@ -1249,6 +1287,13 @@ function AdminRiderManagementCard() {
       toast.success('Dokumen berjaya dimuat naik! 📸');
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleCopyAccount = (accNo: string, riderId: string) => {
+    navigator.clipboard.writeText(accNo);
+    setCopiedBankId(riderId);
+    toast.success(`No. Akaun ${accNo} berjaya disalin! Sedia untuk pindahan gaji. 📋`);
+    setTimeout(() => setCopiedBankId(null), 2500);
   };
 
   // Fetch Store settings for verified riders
@@ -1285,8 +1330,8 @@ function AdminRiderManagementCard() {
 
   const handleRegisterRiderKYC = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || !icNumber.trim() || !phone.trim() || !email.trim() || !password.trim() || !vehiclePlate.trim() || !licenseExpiry.trim() || !homeAddress.trim()) {
-      toast.error('Sila lengkapkan semua butiran wajib (Nama, IC, Telefon, No Plat, Tarikh Lesen, Alamat Rumah).');
+    if (!fullName.trim() || !icNumber.trim() || !phone.trim() || !email.trim() || !password.trim() || !vehiclePlate.trim() || !licenseExpiry.trim() || !homeAddress.trim() || !bankAccountNumber.trim()) {
+      toast.error('Sila lengkapkan semua butiran wajib (Nama, IC, Telefon, Bank & No Akaun, No Plat, Tarikh Lesen, Alamat Rumah).');
       return;
     }
 
@@ -1317,7 +1362,7 @@ function AdminRiderManagementCard() {
         role: 'rider' as any,
       });
 
-      // 3. Create full KYC record
+      // 3. Create full KYC record with bank info
       const newRecord: RiderKYCRecord = {
         id: crypto.randomUUID(),
         userId,
@@ -1325,6 +1370,9 @@ function AdminRiderManagementCard() {
         icNumber,
         phone,
         email,
+        bankName: bankName || 'Maybank',
+        bankAccountNumber: bankAccountNumber.replace(/\s+/g, ''),
+        bankAccountHolder: bankAccountHolder || fullName,
         vehiclePlate: vehiclePlate.toUpperCase(),
         vehicleModel: vehicleModel || 'Motosikal',
         licenseNumber: licenseNumber || icNumber,
@@ -1335,6 +1383,7 @@ function AdminRiderManagementCard() {
         photoRider,
         photoIc,
         photoLicense,
+        photoBankStatement,
         registeredAt: new Date().toISOString(),
         isVerified: true,
       };
@@ -1355,7 +1404,7 @@ function AdminRiderManagementCard() {
           .eq('id', storeData.id);
       }
 
-      toast.success(`🎉 Rakan Penghantar ${fullName} berjaya didaftarkan & disahkan!`);
+      toast.success(`🎉 Rakan Penghantar ${fullName} berjaya didaftarkan dengan akaun bank & disahkan!`);
       
       // Reset form
       setFullName('');
@@ -1363,6 +1412,9 @@ function AdminRiderManagementCard() {
       setPhone('');
       setEmail('');
       setPassword('');
+      setBankName('Maybank (Malayan Banking)');
+      setBankAccountNumber('');
+      setBankAccountHolder('');
       setVehiclePlate('');
       setVehicleModel('');
       setLicenseNumber('');
@@ -1373,6 +1425,7 @@ function AdminRiderManagementCard() {
       setPhotoRider('');
       setPhotoIc('');
       setPhotoLicense('');
+      setPhotoBankStatement('');
       setShowForm(false);
       
       refetchStore();
@@ -1408,10 +1461,10 @@ function AdminRiderManagementCard() {
         <div>
           <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
             <span>🛵</span>
-            <span>Pengurusan & Pendaftaran Rakan Penghantar (KYC Rider)</span>
+            <span>Pengurusan & Pendaftaran Rakan Penghantar (KYC & Gaji Rider)</span>
           </h2>
           <p className="text-xs text-slate-400 font-mono mt-0.5">
-            Pendaftaran bersemuka oleh Admin sahaja. Lengkap dengan MyKad, lesen sah, nombor kenderaan, alamat rumah, & dokumen foto.
+            Pendaftaran bersemuka oleh Admin. Lengkap dengan MyKad, lesen sah, kenderaan, akaun bank gaji, & dokumen foto.
           </p>
         </div>
 
@@ -1420,7 +1473,7 @@ function AdminRiderManagementCard() {
             onClick={() => setShowForm(!showForm)}
             className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs h-9 px-4 rounded-xl shadow-md gap-1.5"
           >
-            {showForm ? 'Tutup Borang' : '➕ Daftar Rider Baru (KYC)'}
+            {showForm ? 'Tutup Borang' : '➕ Daftar Rider Baru (KYC & Gaji)'}
           </Button>
         </div>
       </div>
@@ -1431,7 +1484,7 @@ function AdminRiderManagementCard() {
           <div className="flex items-center justify-between border-b border-slate-800 pb-3">
             <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
               <UserCheck className="w-5 h-5 text-amber-500" />
-              <span>Borang Pengesahan Identiti & Kenderaan Rider (In-Store KYC)</span>
+              <span>Borang Pengesahan Identiti, Kenderaan & Akaun Bank Gaji Rider</span>
             </div>
             <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px]">
               Wajib Hadir di Kaunter Warung
@@ -1502,11 +1555,58 @@ function AdminRiderManagementCard() {
             </div>
           </div>
 
-          {/* SECTION 2: KENDERAAN & LESEN MEMANDU */}
+          {/* SECTION 2: AKAUN BANK UNTUK PEMBAYARAN GAJI & UPAH */}
+          <div className="space-y-3 pt-3 border-t border-slate-800">
+            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <Landmark className="w-4 h-4 text-emerald-400" />
+              <span>2. Maklumat Akaun Bank Rider (Untuk Bayaran Gaji & Komisen)</span>
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="space-y-1">
+                <Label className="text-slate-300 font-bold">Nama Bank *</Label>
+                <select
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  className="w-full bg-slate-900 border border-slate-800 text-white h-10 rounded-xl px-3 text-xs focus:outline-none focus:border-amber-500"
+                  required
+                >
+                  {MALAYSIAN_BANKS.map((b) => (
+                    <option key={b} value={b} className="bg-slate-900 text-white">
+                      {b}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-slate-300 font-bold">No. Akaun Bank Rider *</Label>
+                <Input
+                  placeholder="cth: 162012345678"
+                  value={bankAccountNumber}
+                  onChange={(e) => setBankAccountNumber(e.target.value)}
+                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl font-bold tracking-wider"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-slate-300 font-bold">Nama Pemegang Akaun (Seperti di Bank)</Label>
+                <Input
+                  placeholder="Sama seperti nama MyKad jika kosong"
+                  value={bankAccountHolder}
+                  onChange={(e) => setBankAccountHolder(e.target.value)}
+                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 3: KENDERAAN & LESEN MEMANDU */}
           <div className="space-y-3 pt-3 border-t border-slate-800">
             <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
               <Bike className="w-4 h-4 text-sky-400" />
-              <span>2. Maklumat Kenderaan & Lesen Memandu</span>
+              <span>3. Maklumat Kenderaan & Lesen Memandu</span>
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
@@ -1554,11 +1654,11 @@ function AdminRiderManagementCard() {
             </div>
           </div>
 
-          {/* SECTION 3: LOG MASUK SISTEM */}
+          {/* SECTION 4: LOG MASUK SISTEM */}
           <div className="space-y-3 pt-3 border-t border-slate-800">
             <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
               <Lock className="w-4 h-4 text-amber-400" />
-              <span>3. Akaun Log Masuk Rider</span>
+              <span>4. Akaun Log Masuk Rider</span>
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
@@ -1588,17 +1688,17 @@ function AdminRiderManagementCard() {
             </div>
           </div>
 
-          {/* SECTION 4: TANGKAP GAMBAR DOKUMEN & FOTO RIDER */}
+          {/* SECTION 5: TANGKAP GAMBAR DOKUMEN, FOTO RIDER & PENYATA BANK */}
           <div className="space-y-3 pt-3 border-t border-slate-800">
             <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
               <Camera className="w-4 h-4 text-emerald-400" />
-              <span>4. Tangkap Gambar Wajah & Dokumen Pengesahan (Kamera / Muat Naik)</span>
+              <span>5. Tangkap Gambar Wajah & Dokumen Pengesahan (Kamera / Muat Naik)</span>
             </h4>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
               {/* Foto Wajah Rider */}
-              <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-xl space-y-2 text-center">
-                <Label className="text-slate-300 font-bold block text-left">📸 Foto Wajah / Swafoto Rider</Label>
+              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl space-y-2 text-center">
+                <Label className="text-slate-300 font-bold block text-left">📸 Foto Wajah Rider</Label>
                 {photoRider ? (
                   <div className="relative aspect-video rounded-lg overflow-hidden border border-emerald-500/50">
                     <img src={photoRider} alt="Foto Rider" className="w-full h-full object-cover" />
@@ -1611,8 +1711,8 @@ function AdminRiderManagementCard() {
                     </button>
                   </div>
                 ) : (
-                  <label className="border-2 border-dashed border-slate-700 hover:border-amber-500 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
-                    <Camera className="w-6 h-6 text-amber-400 mb-1" />
+                  <label className="border-2 border-dashed border-slate-700 hover:border-amber-500 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
+                    <Camera className="w-5 h-5 text-amber-400 mb-1" />
                     <span className="text-[11px] text-slate-300 font-bold">Ambil Foto Wajah</span>
                     <span className="text-[9px] text-slate-500">Kamera atau Galeri</span>
                     <input
@@ -1627,8 +1727,8 @@ function AdminRiderManagementCard() {
               </div>
 
               {/* Foto Kad Pengenalan */}
-              <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-xl space-y-2 text-center">
-                <Label className="text-slate-300 font-bold block text-left">📄 Salinan MyKad (Depan)</Label>
+              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl space-y-2 text-center">
+                <Label className="text-slate-300 font-bold block text-left">📄 Salinan MyKad</Label>
                 {photoIc ? (
                   <div className="relative aspect-video rounded-lg overflow-hidden border border-emerald-500/50">
                     <img src={photoIc} alt="Salinan IC" className="w-full h-full object-cover" />
@@ -1641,8 +1741,8 @@ function AdminRiderManagementCard() {
                     </button>
                   </div>
                 ) : (
-                  <label className="border-2 border-dashed border-slate-700 hover:border-sky-500 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
-                    <FileText className="w-6 h-6 text-sky-400 mb-1" />
+                  <label className="border-2 border-dashed border-slate-700 hover:border-sky-500 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
+                    <FileText className="w-5 h-5 text-sky-400 mb-1" />
                     <span className="text-[11px] text-slate-300 font-bold">Tangkap Gambar IC</span>
                     <span className="text-[9px] text-slate-500">Kamera atau Fail</span>
                     <input
@@ -1657,8 +1757,8 @@ function AdminRiderManagementCard() {
               </div>
 
               {/* Foto Lesen Memandu */}
-              <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-xl space-y-2 text-center">
-                <Label className="text-slate-300 font-bold block text-left">🪪 Salinan Lesen & Roadtax</Label>
+              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl space-y-2 text-center">
+                <Label className="text-slate-300 font-bold block text-left">🪪 Salinan Lesen</Label>
                 {photoLicense ? (
                   <div className="relative aspect-video rounded-lg overflow-hidden border border-emerald-500/50">
                     <img src={photoLicense} alt="Salinan Lesen" className="w-full h-full object-cover" />
@@ -1671,8 +1771,8 @@ function AdminRiderManagementCard() {
                     </button>
                   </div>
                 ) : (
-                  <label className="border-2 border-dashed border-slate-700 hover:border-emerald-500 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
-                    <Upload className="w-6 h-6 text-emerald-400 mb-1" />
+                  <label className="border-2 border-dashed border-slate-700 hover:border-emerald-500 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
+                    <Upload className="w-5 h-5 text-emerald-400 mb-1" />
                     <span className="text-[11px] text-slate-300 font-bold">Tangkap Gambar Lesen</span>
                     <span className="text-[9px] text-slate-500">Kamera atau Fail</span>
                     <input
@@ -1685,13 +1785,43 @@ function AdminRiderManagementCard() {
                   </label>
                 )}
               </div>
+
+              {/* Foto Penyata / Kad Bank */}
+              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl space-y-2 text-center">
+                <Label className="text-slate-300 font-bold block text-left">💳 Salinan Penyata / Kad Bank</Label>
+                {photoBankStatement ? (
+                  <div className="relative aspect-video rounded-lg overflow-hidden border border-emerald-500/50">
+                    <img src={photoBankStatement} alt="Salinan Penyata Bank" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setPhotoBankStatement('')}
+                      className="absolute top-1 right-1 bg-rose-600 text-white text-[10px] px-1.5 py-0.5 rounded"
+                    >
+                      Padam
+                    </button>
+                  </div>
+                ) : (
+                  <label className="border-2 border-dashed border-slate-700 hover:border-amber-500 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
+                    <CreditCard className="w-5 h-5 text-amber-400 mb-1" />
+                    <span className="text-[11px] text-slate-300 font-bold">Penyata / Kad Bank</span>
+                    <span className="text-[9px] text-slate-500">Kamera atau Fail</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={(e) => handleFileCapture(e, setPhotoBankStatement)}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
             </div>
           </div>
 
           {/* SUBMIT BUTTON */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-800">
             <span className="text-[11px] text-slate-400">
-              🛡️ Semua rekod disimpan secara selamat dalam pangkalan data berpusat Warung J&J.
+              🛡️ Semua butiran peribadi & akaun bank disimpan secara selamat dalam pangkalan data berpusat Warung J&J.
             </span>
 
             <Button
@@ -1724,7 +1854,7 @@ function AdminRiderManagementCard() {
           <div className="p-8 text-center bg-slate-950 rounded-2xl border border-slate-800 text-slate-500 text-xs space-y-2">
             <Bike className="w-8 h-8 mx-auto text-slate-600" />
             <p className="font-bold text-slate-400">Belum ada rakan penghantar didaftarkan.</p>
-            <p className="text-[11px]">Gunakan butang "➕ Daftar Rider Baru (KYC)" di atas untuk memulakan proses pendaftaran.</p>
+            <p className="text-[11px]">Gunakan butang "➕ Daftar Rider Baru (KYC & Gaji)" di atas untuk memulakan proses pendaftaran.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1755,11 +1885,17 @@ function AdminRiderManagementCard() {
                         </span>
                       </div>
 
-                      <p className="text-xs text-amber-400 font-bold flex items-center gap-1.5">
-                        <Bike className="w-3.5 h-3.5 text-amber-500" />
-                        <span>{rider.vehiclePlate}</span>
-                        {rider.vehicleModel && <span className="text-slate-500 font-normal">({rider.vehicleModel})</span>}
-                      </p>
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-amber-400 font-bold flex items-center gap-1">
+                          <Bike className="w-3.5 h-3.5 text-amber-500" />
+                          {rider.vehiclePlate}
+                        </span>
+                        {rider.bankName && (
+                          <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded font-mono truncate">
+                            🏦 {rider.bankName.split(' ')[0]} • {rider.bankAccountNumber?.slice(-4) || '****'}
+                          </span>
+                        )}
+                      </div>
 
                       <p className="text-[11px] text-slate-400 truncate">
                         📍 {rider.homeAddress}
@@ -1776,18 +1912,32 @@ function AdminRiderManagementCard() {
                       className="bg-slate-900 border-slate-800 text-slate-200 hover:text-white hover:bg-slate-800 text-xs h-8 rounded-xl gap-1"
                     >
                       <Eye className="w-3.5 h-3.5 text-sky-400" />
-                      <span>Semak Rekod Lengkap</span>
+                      <span>Semak Rekod & Gaji</span>
                     </Button>
 
-                    <a
-                      href={`https://wa.me/${rider.phone.replace(/\D/g, '')}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-xl transition-all flex items-center gap-1 font-bold text-xs"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5" />
-                      <span>WhatsApp</span>
-                    </a>
+                    <div className="flex items-center gap-1.5">
+                      {rider.bankAccountNumber && (
+                        <button
+                          type="button"
+                          onClick={() => handleCopyAccount(rider.bankAccountNumber!, rider.id)}
+                          className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-800 rounded-xl transition-all flex items-center gap-1 text-[11px] font-bold"
+                          title="Salin No. Akaun Bank untuk Gaji"
+                        >
+                          {copiedBankId === rider.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                          <span>{copiedBankId === rider.id ? 'Disalin' : 'Salin Bank'}</span>
+                        </button>
+                      )}
+
+                      <a
+                        href={`https://wa.me/${rider.phone.replace(/\D/g, '')}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-xl transition-all flex items-center gap-1 font-bold text-xs"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>WhatsApp</span>
+                      </a>
+                    </div>
                   </div>
                 </div>
               );
@@ -1796,13 +1946,13 @@ function AdminRiderManagementCard() {
         )}
       </div>
 
-      {/* MODAL: DETAIL RIDER KYC INSPECTION */}
+      {/* MODAL: DETAIL RIDER KYC & BANK INSPECTION */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent className="bg-slate-900 border border-slate-800 text-white max-w-xl max-h-[90vh] overflow-y-auto font-mono">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2 text-amber-400">
               <ShieldCheck className="w-5 h-5" />
-              <span>Dossier Pengesahan Rakan Penghantar Warung J&J</span>
+              <span>Dossier Pengesahan & Akaun Bank Rakan Penghantar</span>
             </DialogTitle>
           </DialogHeader>
 
@@ -1822,6 +1972,41 @@ function AdminRiderManagementCard() {
                   <h3 className="text-base font-black text-white">{selectedRider.fullName}</h3>
                   <p className="text-xs text-amber-400 font-bold">No. IC: {selectedRider.icNumber}</p>
                   <p className="text-[11px] text-slate-400">No. Telefon: {selectedRider.phone}</p>
+                </div>
+              </div>
+
+              {/* SECTION: BANK ACCOUNT & PAYOUT HIGHLIGHT */}
+              <div className="bg-emerald-950/30 border border-emerald-500/30 p-4 rounded-2xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs">
+                    <Landmark className="w-4 h-4" />
+                    <span>Maklumat Akaun Bank Untuk Bayaran Gaji</span>
+                  </div>
+                  {selectedRider.bankAccountNumber && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleCopyAccount(selectedRider.bankAccountNumber!, selectedRider.id)}
+                      className="h-7 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] rounded-lg gap-1"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>Salin No. Akaun</span>
+                    </Button>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs pt-1">
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">Nama Bank:</span>
+                    <span className="font-bold text-white">{selectedRider.bankName || 'Maybank'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-slate-400 block">No. Akaun:</span>
+                    <span className="font-bold text-emerald-300 font-mono tracking-wider">{selectedRider.bankAccountNumber || 'Tiada'}</span>
+                  </div>
+                  <div className="col-span-2 sm:col-span-1">
+                    <span className="text-[10px] text-slate-400 block">Pemegang Akaun:</span>
+                    <span className="font-bold text-slate-200 truncate block">{selectedRider.bankAccountHolder || selectedRider.fullName}</span>
+                  </div>
                 </div>
               </div>
 
@@ -1858,7 +2043,7 @@ function AdminRiderManagementCard() {
               {/* DOCUMENT IMAGES PREVIEWS */}
               <div className="space-y-2">
                 <h4 className="font-bold text-slate-300 text-xs">Dokumen Bukti Disahkan:</h4>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {selectedRider.photoIc && (
                     <div className="space-y-1">
                       <span className="text-[10px] text-slate-400 block">Salinan MyKad</span>
@@ -1873,6 +2058,15 @@ function AdminRiderManagementCard() {
                       <span className="text-[10px] text-slate-400 block">Salinan Lesen & Roadtax</span>
                       <div className="aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
                         <img src={selectedRider.photoLicense} alt="Lesen" className="w-full h-full object-contain" />
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedRider.photoBankStatement && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 block">Penyata / Kad Bank</span>
+                      <div className="aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
+                        <img src={selectedRider.photoBankStatement} alt="Penyata Bank" className="w-full h-full object-contain" />
                       </div>
                     </div>
                   )}
