@@ -19,7 +19,37 @@ import {
   resetNavOrderConfig, 
   NavItemConfig 
 } from '@/lib/addons-config';
-import { MessageSquare, ShieldCheck, QrCode, Phone, AlertTriangle, RefreshCw, Globe, Key, ExternalLink, Lock, Store } from 'lucide-react';
+import { 
+  MessageSquare, 
+  ShieldCheck, 
+  QrCode, 
+  Phone, 
+  AlertTriangle, 
+  RefreshCw, 
+  Globe, 
+  Key, 
+  ExternalLink, 
+  Lock, 
+  Store,
+  Camera,
+  FileText,
+  Calendar,
+  MapPin,
+  Eye,
+  CheckCircle2,
+  UserCheck,
+  ShieldAlert,
+  PlusCircle,
+  Upload,
+  User,
+  Bike
+} from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { markManualRefundComplete } from '@/lib/riders';
 import { getToyyibPayConfig, saveToyyibPayConfig, type ToyyibPayConfig } from '@/lib/toyyibpay';
 import { KitchenChecklistCustomizer } from '@/components/KitchenChecklistCustomizer';
@@ -1154,17 +1184,91 @@ function ToyyibPaySettingsCard() {
   );
 }
 
+interface RiderKYCRecord {
+  id: string;
+  userId?: string;
+  fullName: string;
+  icNumber: string;
+  phone: string;
+  email: string;
+  vehiclePlate: string;
+  vehicleModel: string;
+  licenseNumber: string;
+  licenseExpiry: string;
+  roadtaxExpiry: string;
+  homeAddress: string;
+  emergencyContact: string;
+  photoRider?: string;
+  photoIc?: string;
+  photoLicense?: string;
+  registeredAt: string;
+  isVerified: boolean;
+}
+
 function AdminRiderManagementCard() {
   const queryClient = useQueryClient();
-  const [riderName, setRiderName] = useState('');
-  const [riderPhone, setRiderPhone] = useState('');
-  const [riderEmail, setRiderEmail] = useState('');
-  const [riderPassword, setRiderPassword] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // KYC Form State
+  const [fullName, setFullName] = useState('');
+  const [icNumber, setIcNumber] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [vehiclePlate, setVehiclePlate] = useState('');
+  const [vehicleModel, setVehicleModel] = useState('');
+  const [licenseNumber, setLicenseNumber] = useState('');
+  const [licenseExpiry, setLicenseExpiry] = useState('');
+  const [roadtaxExpiry, setRoadtaxExpiry] = useState('');
+  const [homeAddress, setHomeAddress] = useState('');
+  const [emergencyContact, setEmergencyContact] = useState('');
+  
+  // Photos & Documents State
+  const [photoRider, setPhotoRider] = useState<string>('');
+  const [photoIc, setPhotoIc] = useState<string>('');
+  const [photoLicense, setPhotoLicense] = useState<string>('');
 
-  // Fetch all riders
-  const { data: riders, isLoading, refetch } = useQuery({
-    queryKey: ['admin-riders-list'],
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedRider, setSelectedRider] = useState<RiderKYCRecord | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+
+  // Helper to handle camera/file uploads into Base64
+  const handleFileCapture = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check size max 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Saiz gambar terlalu besar. Sila pilih gambar di bawah 5MB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setter(reader.result as string);
+      toast.success('Dokumen berjaya dimuat naik! 📸');
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Fetch Store settings for verified riders
+  const { data: storeData, refetch: refetchStore } = useQuery({
+    queryKey: ['store-kyc-riders'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('stores')
+        .select('id, settings')
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Fetch registered users with role rider
+  const { data: dbRiders, refetch: refetchUsers } = useQuery({
+    queryKey: ['admin-riders-users'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('users')
@@ -1177,23 +1281,25 @@ function AdminRiderManagementCard() {
     },
   });
 
-  const handleRegisterRiderByAdmin = async (e: React.FormEvent) => {
+  const kycRecords: RiderKYCRecord[] = (storeData?.settings as any)?.verified_riders || [];
+
+  const handleRegisterRiderKYC = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!riderName.trim() || !riderPhone.trim() || !riderEmail.trim() || !riderPassword.trim()) {
-      toast.error('Sila lengkapkan semua butiran pendaftaran rider.');
+    if (!fullName.trim() || !icNumber.trim() || !phone.trim() || !email.trim() || !password.trim() || !vehiclePlate.trim() || !licenseExpiry.trim() || !homeAddress.trim()) {
+      toast.error('Sila lengkapkan semua butiran wajib (Nama, IC, Telefon, No Plat, Tarikh Lesen, Alamat Rumah).');
       return;
     }
 
     setIsSubmitting(true);
     try {
-      // 1. Sign up user account in Supabase
+      // 1. Create auth user in Supabase
       const { data: authRes, error: authErr } = await supabase.auth.signUp({
-        email: riderEmail,
-        password: riderPassword,
+        email,
+        password,
         options: {
           data: {
-            name: riderName,
-            phone_number: riderPhone,
+            name: fullName,
+            phone_number: phone,
             role: 'rider',
           },
         },
@@ -1201,24 +1307,76 @@ function AdminRiderManagementCard() {
 
       if (authErr) throw authErr;
 
-      if (authRes.user) {
-        // 2. Upsert into users table with role 'rider'
-        const { error: upsertErr } = await supabase.from('users').upsert({
-          id: authRes.user.id,
-          name: riderName,
-          phone_number: riderPhone,
-          role: 'rider' as any,
-        });
+      const userId = authRes?.user?.id || crypto.randomUUID();
 
-        if (upsertErr) console.warn('User upsert note:', upsertErr);
+      // 2. Upsert into users table
+      await supabase.from('users').upsert({
+        id: userId,
+        name: fullName,
+        phone_number: phone,
+        role: 'rider' as any,
+      });
 
-        toast.success(`🎉 Rider ${riderName} berjaya didaftarkan! Mereka kini boleh log masuk di /rider.`);
-        setRiderName('');
-        setRiderPhone('');
-        setRiderEmail('');
-        setRiderPassword('');
-        refetch();
+      // 3. Create full KYC record
+      const newRecord: RiderKYCRecord = {
+        id: crypto.randomUUID(),
+        userId,
+        fullName,
+        icNumber,
+        phone,
+        email,
+        vehiclePlate: vehiclePlate.toUpperCase(),
+        vehicleModel: vehicleModel || 'Motosikal',
+        licenseNumber: licenseNumber || icNumber,
+        licenseExpiry,
+        roadtaxExpiry: roadtaxExpiry || licenseExpiry,
+        homeAddress,
+        emergencyContact,
+        photoRider,
+        photoIc,
+        photoLicense,
+        registeredAt: new Date().toISOString(),
+        isVerified: true,
+      };
+
+      const updatedRecords = [newRecord, ...kycRecords.filter(r => r.email !== email)];
+
+      // 4. Save to store settings
+      if (storeData?.id) {
+        const existingSettings = (storeData.settings as any) || {};
+        await supabase
+          .from('stores')
+          .update({
+            settings: {
+              ...existingSettings,
+              verified_riders: updatedRecords,
+            } as any,
+          })
+          .eq('id', storeData.id);
       }
+
+      toast.success(`🎉 Rakan Penghantar ${fullName} berjaya didaftarkan & disahkan!`);
+      
+      // Reset form
+      setFullName('');
+      setIcNumber('');
+      setPhone('');
+      setEmail('');
+      setPassword('');
+      setVehiclePlate('');
+      setVehicleModel('');
+      setLicenseNumber('');
+      setLicenseExpiry('');
+      setRoadtaxExpiry('');
+      setHomeAddress('');
+      setEmergencyContact('');
+      setPhotoRider('');
+      setPhotoIc('');
+      setPhotoLicense('');
+      setShowForm(false);
+      
+      refetchStore();
+      refetchUsers();
     } catch (err: any) {
       toast.error(`Ralat pendaftaran rider: ${err.message}`);
     } finally {
@@ -1226,142 +1384,514 @@ function AdminRiderManagementCard() {
     }
   };
 
+  // Check if license is valid
+  const checkLicenseStatus = (expiryDate: string) => {
+    if (!expiryDate) return { valid: false, text: 'Tiada Tarikh', color: 'text-amber-400' };
+    const exp = new Date(expiryDate);
+    const now = new Date();
+    const diffDays = Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffDays < 0) {
+      return { valid: false, text: '🔴 Lesen Tamat Tempoh', color: 'text-rose-400 bg-rose-500/10 border-rose-500/30' };
+    } else if (diffDays <= 30) {
+      return { valid: true, text: `⚠️ Luput dlm ${diffDays} hari`, color: 'text-amber-400 bg-amber-500/10 border-amber-500/30' };
+    } else {
+      return { valid: true, text: '🟢 Lesen Sah', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' };
+    }
+  };
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+      
+      {/* HEADER BAR */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
         <div>
           <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
             <span>🛵</span>
-            <span>Pengurusan Rakan Penghantar (Rider Warung J&J)</span>
+            <span>Pengurusan & Pendaftaran Rakan Penghantar (KYC Rider)</span>
           </h2>
           <p className="text-xs text-slate-400 font-mono mt-0.5">
-            Pendaftaran berpusat oleh Admin sahaja. Rider mendaftar secara bersemuka di premis untuk keselamatan kedai.
+            Pendaftaran bersemuka oleh Admin sahaja. Lengkap dengan MyKad, lesen sah, nombor kenderaan, alamat rumah, & dokumen foto.
           </p>
         </div>
-        <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs px-2.5 py-1 font-mono font-bold">
-          {riders?.length || 0} Rider Berdaftar
-        </Badge>
-      </div>
 
-      {/* ADMIN IN-STORE RIDER REGISTRATION FORM */}
-      <form onSubmit={handleRegisterRiderByAdmin} className="bg-slate-950 border border-slate-800 p-5 rounded-2xl space-y-4">
-        <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider">
-          <Store className="w-4 h-4" />
-          <span>Borang Pendaftaran Rider Baharu (Di Kaunter Warung)</span>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-xs">
-          <div className="space-y-1">
-            <Label className="text-slate-300 font-bold">Nama Penuh Rider</Label>
-            <Input
-              placeholder="cth: Mohd Azlan"
-              value={riderName}
-              onChange={(e) => setRiderName(e.target.value)}
-              className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
-              required
-            />
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-slate-300 font-bold">No. Telefon WhatsApp</Label>
-            <Input
-              placeholder="cth: 0198887766"
-              value={riderPhone}
-              onChange={(e) => setRiderPhone(e.target.value)}
-              className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
-              required
-            />
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-slate-300 font-bold">Emel Log Masuk Rider</Label>
-            <Input
-              type="email"
-              placeholder="azlan.rider@warungjnj.com"
-              value={riderEmail}
-              onChange={(e) => setRiderEmail(e.target.value)}
-              className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
-              required
-            />
-          </div>
-
-          <div className="space-y-1">
-            <Label className="text-slate-300 font-bold">Kata Laluan Sementara</Label>
-            <Input
-              type="text"
-              placeholder="cth: jnj123456"
-              value={riderPassword}
-              onChange={(e) => setRiderPassword(e.target.value)}
-              className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
-              required
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end pt-1">
+        <div className="flex items-center gap-2">
           <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full sm:w-auto bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs h-10 px-6 rounded-xl shadow-lg shadow-amber-600/20"
+            onClick={() => setShowForm(!showForm)}
+            className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs h-9 px-4 rounded-xl shadow-md gap-1.5"
           >
-            {isSubmitting ? 'Mendaftarkan Rider...' : '➕ Daftarkan Rider Sekarang'}
+            {showForm ? 'Tutup Borang' : '➕ Daftar Rider Baru (KYC)'}
           </Button>
         </div>
-      </form>
+      </div>
 
-      {/* REGISTERED RIDERS DIRECTORY */}
+      {/* FULL KYC ONBOARDING FORM */}
+      {showForm && (
+        <form onSubmit={handleRegisterRiderKYC} className="bg-slate-950 border-2 border-amber-500/40 p-5 rounded-2xl space-y-5 font-mono">
+          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
+              <UserCheck className="w-5 h-5 text-amber-500" />
+              <span>Borang Pengesahan Identiti & Kenderaan Rider (In-Store KYC)</span>
+            </div>
+            <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px]">
+              Wajib Hadir di Kaunter Warung
+            </Badge>
+          </div>
+
+          {/* SECTION 1: BUTIRAN PERIBADI & MYKAD */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <User className="w-4 h-4 text-emerald-400" />
+              <span>1. Butiran Peribadi & Kad Pengenalan</span>
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+              <div className="space-y-1">
+                <Label className="text-slate-300 font-bold">Nama Penuh Seperti Dalam MyKad *</Label>
+                <Input
+                  placeholder="cth: Mohd Azlan Bin Ramli"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-slate-300 font-bold">No. Kad Pengenalan (MyKad) *</Label>
+                <Input
+                  placeholder="cth: 920514-12-5678"
+                  value={icNumber}
+                  onChange={(e) => setIcNumber(e.target.value)}
+                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-slate-300 font-bold">No. Telefon WhatsApp *</Label>
+                <Input
+                  placeholder="cth: 019-888 7766"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-slate-300 font-bold">Alamat Kediaman Lengkap *</Label>
+                <Input
+                  placeholder="cth: No. 12, Lorong 3, Taman Penampang, 89500 Penampang, Sabah"
+                  value={homeAddress}
+                  onChange={(e) => setHomeAddress(e.target.value)}
+                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-slate-300 font-bold">No. Telefon Waris / Kecemasan</Label>
+                <Input
+                  placeholder="cth: 012-345 6789 (Isteri)"
+                  value={emergencyContact}
+                  onChange={(e) => setEmergencyContact(e.target.value)}
+                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 2: KENDERAAN & LESEN MEMANDU */}
+          <div className="space-y-3 pt-3 border-t border-slate-800">
+            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <Bike className="w-4 h-4 text-sky-400" />
+              <span>2. Maklumat Kenderaan & Lesen Memandu</span>
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+              <div className="space-y-1">
+                <Label className="text-slate-300 font-bold">No. Plat Motosikal / Kenderaan *</Label>
+                <Input
+                  placeholder="cth: SAB 1234 A"
+                  value={vehiclePlate}
+                  onChange={(e) => setVehiclePlate(e.target.value)}
+                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl uppercase"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-slate-300 font-bold">Model / Jenis Kenderaan</Label>
+                <Input
+                  placeholder="cth: Yamaha Y15ZR / Honda RSX"
+                  value={vehicleModel}
+                  onChange={(e) => setVehicleModel(e.target.value)}
+                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-slate-300 font-bold">Tarikh Sah Lesen Memandu *</Label>
+                <Input
+                  type="date"
+                  value={licenseExpiry}
+                  onChange={(e) => setLicenseExpiry(e.target.value)}
+                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-slate-300 font-bold">Tarikh Luput Cukai Jalan (Roadtax)</Label>
+                <Input
+                  type="date"
+                  value={roadtaxExpiry}
+                  onChange={(e) => setRoadtaxExpiry(e.target.value)}
+                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 3: LOG MASUK SISTEM */}
+          <div className="space-y-3 pt-3 border-t border-slate-800">
+            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <Lock className="w-4 h-4 text-amber-400" />
+              <span>3. Akaun Log Masuk Rider</span>
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="space-y-1">
+                <Label className="text-slate-300 font-bold">Emel Log Masuk Rider *</Label>
+                <Input
+                  type="email"
+                  placeholder="azlan.rider@warungjnj.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-slate-300 font-bold">Kata Laluan Sementara *</Label>
+                <Input
+                  type="text"
+                  placeholder="cth: warung123456"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 4: TANGKAP GAMBAR DOKUMEN & FOTO RIDER */}
+          <div className="space-y-3 pt-3 border-t border-slate-800">
+            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <Camera className="w-4 h-4 text-emerald-400" />
+              <span>4. Tangkap Gambar Wajah & Dokumen Pengesahan (Kamera / Muat Naik)</span>
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              {/* Foto Wajah Rider */}
+              <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-xl space-y-2 text-center">
+                <Label className="text-slate-300 font-bold block text-left">📸 Foto Wajah / Swafoto Rider</Label>
+                {photoRider ? (
+                  <div className="relative aspect-video rounded-lg overflow-hidden border border-emerald-500/50">
+                    <img src={photoRider} alt="Foto Rider" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setPhotoRider('')}
+                      className="absolute top-1 right-1 bg-rose-600 text-white text-[10px] px-1.5 py-0.5 rounded"
+                    >
+                      Padam
+                    </button>
+                  </div>
+                ) : (
+                  <label className="border-2 border-dashed border-slate-700 hover:border-amber-500 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
+                    <Camera className="w-6 h-6 text-amber-400 mb-1" />
+                    <span className="text-[11px] text-slate-300 font-bold">Ambil Foto Wajah</span>
+                    <span className="text-[9px] text-slate-500">Kamera atau Galeri</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="user"
+                      onChange={(e) => handleFileCapture(e, setPhotoRider)}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* Foto Kad Pengenalan */}
+              <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-xl space-y-2 text-center">
+                <Label className="text-slate-300 font-bold block text-left">📄 Salinan MyKad (Depan)</Label>
+                {photoIc ? (
+                  <div className="relative aspect-video rounded-lg overflow-hidden border border-emerald-500/50">
+                    <img src={photoIc} alt="Salinan IC" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setPhotoIc('')}
+                      className="absolute top-1 right-1 bg-rose-600 text-white text-[10px] px-1.5 py-0.5 rounded"
+                    >
+                      Padam
+                    </button>
+                  </div>
+                ) : (
+                  <label className="border-2 border-dashed border-slate-700 hover:border-sky-500 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
+                    <FileText className="w-6 h-6 text-sky-400 mb-1" />
+                    <span className="text-[11px] text-slate-300 font-bold">Tangkap Gambar IC</span>
+                    <span className="text-[9px] text-slate-500">Kamera atau Fail</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={(e) => handleFileCapture(e, setPhotoIc)}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* Foto Lesen Memandu */}
+              <div className="bg-slate-900 border border-slate-800 p-3.5 rounded-xl space-y-2 text-center">
+                <Label className="text-slate-300 font-bold block text-left">🪪 Salinan Lesen & Roadtax</Label>
+                {photoLicense ? (
+                  <div className="relative aspect-video rounded-lg overflow-hidden border border-emerald-500/50">
+                    <img src={photoLicense} alt="Salinan Lesen" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setPhotoLicense('')}
+                      className="absolute top-1 right-1 bg-rose-600 text-white text-[10px] px-1.5 py-0.5 rounded"
+                    >
+                      Padam
+                    </button>
+                  </div>
+                ) : (
+                  <label className="border-2 border-dashed border-slate-700 hover:border-emerald-500 p-4 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
+                    <Upload className="w-6 h-6 text-emerald-400 mb-1" />
+                    <span className="text-[11px] text-slate-300 font-bold">Tangkap Gambar Lesen</span>
+                    <span className="text-[9px] text-slate-500">Kamera atau Fail</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={(e) => handleFileCapture(e, setPhotoLicense)}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* SUBMIT BUTTON */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-800">
+            <span className="text-[11px] text-slate-400">
+              🛡️ Semua rekod disimpan secara selamat dalam pangkalan data berpusat Warung J&J.
+            </span>
+
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-11 px-8 rounded-xl shadow-lg shadow-emerald-600/30"
+            >
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : '✅ Sahkan & Daftarkan Rakan Penghantar'}
+            </Button>
+          </div>
+        </form>
+      )}
+
+      {/* VERIFIED RIDERS LIST */}
       <div className="space-y-3 font-mono">
         <div className="flex items-center justify-between text-xs text-slate-400">
-          <span className="font-bold text-slate-300">Senarai Rakan Penghantar Sah Warung J&J</span>
+          <span className="font-bold text-slate-300 uppercase tracking-wider">
+            Senarai Rakan Penghantar Sah Warung J&J ({kycRecords.length || dbRiders?.length || 0})
+          </span>
           <button
             type="button"
-            onClick={() => refetch()}
+            onClick={() => { refetchStore(); refetchUsers(); }}
             className="text-amber-400 hover:underline inline-flex items-center gap-1"
           >
-            <RefreshCw className="w-3 h-3" /> Kemaskini Senarai
+            <RefreshCw className="w-3 h-3" /> Kemaskini Rekod
           </button>
         </div>
 
-        {isLoading ? (
-          <div className="p-6 text-center text-slate-500 text-xs">Memuat senarai rider...</div>
-        ) : riders?.length === 0 ? (
-          <div className="p-6 text-center bg-slate-950 rounded-xl border border-slate-800 text-slate-500 text-xs">
-            Belum ada rider yang didaftarkan. Gunakan borang di atas untuk mendaftarkan rakan penghantar pertama anda.
+        {kycRecords.length === 0 && (!dbRiders || dbRiders.length === 0) ? (
+          <div className="p-8 text-center bg-slate-950 rounded-2xl border border-slate-800 text-slate-500 text-xs space-y-2">
+            <Bike className="w-8 h-8 mx-auto text-slate-600" />
+            <p className="font-bold text-slate-400">Belum ada rakan penghantar didaftarkan.</p>
+            <p className="text-[11px]">Gunakan butang "➕ Daftar Rider Baru (KYC)" di atas untuk memulakan proses pendaftaran.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {riders?.map((rider) => (
-              <div
-                key={rider.id}
-                className="bg-slate-950 border border-slate-800 p-4 rounded-xl flex items-center justify-between gap-3"
-              >
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-white text-sm">🛵 {rider.name || 'Rider J&J'}</span>
-                    <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-[9px] px-1.5 py-0">
-                      Rider Aktif
-                    </Badge>
-                  </div>
-                  <p className="text-slate-400 text-xs">📞 {rider.phone_number || 'Tiada No Telefon'}</p>
-                  <p className="text-slate-500 text-[10px]">ID: {rider.id.slice(0, 8)}</p>
-                </div>
+            {kycRecords.map((rider) => {
+              const licenseStatus = checkLicenseStatus(rider.licenseExpiry);
 
-                {rider.phone_number && (
-                  <a
-                    href={`https://wa.me/${rider.phone_number.replace(/\D/g, '')}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="p-2 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-xl transition-all"
-                    title="Hubungi Rider via WhatsApp"
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                  </a>
-                )}
-              </div>
-            ))}
+              return (
+                <div
+                  key={rider.id}
+                  className="bg-slate-950 border border-slate-800 hover:border-amber-500/40 p-4 rounded-2xl flex flex-col justify-between gap-3 shadow-lg transition-all"
+                >
+                  <div className="flex items-start gap-3">
+                    {/* AVATAR / PHOTO */}
+                    <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-700 overflow-hidden shrink-0 flex items-center justify-center">
+                      {rider.photoRider ? (
+                        <img src={rider.photoRider} alt={rider.fullName} className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="w-6 h-6 text-slate-500" />
+                      )}
+                    </div>
+
+                    {/* RIDER INFO */}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="font-bold text-white text-sm truncate">{rider.fullName}</h4>
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${licenseStatus.color}`}>
+                          {licenseStatus.text}
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-amber-400 font-bold flex items-center gap-1.5">
+                        <Bike className="w-3.5 h-3.5 text-amber-500" />
+                        <span>{rider.vehiclePlate}</span>
+                        {rider.vehicleModel && <span className="text-slate-500 font-normal">({rider.vehicleModel})</span>}
+                      </p>
+
+                      <p className="text-[11px] text-slate-400 truncate">
+                        📍 {rider.homeAddress}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* ACTION BUTTONS */}
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80 text-xs">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => { setSelectedRider(rider); setIsDetailOpen(true); }}
+                      className="bg-slate-900 border-slate-800 text-slate-200 hover:text-white hover:bg-slate-800 text-xs h-8 rounded-xl gap-1"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-sky-400" />
+                      <span>Semak Rekod Lengkap</span>
+                    </Button>
+
+                    <a
+                      href={`https://wa.me/${rider.phone.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-xl transition-all flex items-center gap-1 font-bold text-xs"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      <span>WhatsApp</span>
+                    </a>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
+
+      {/* MODAL: DETAIL RIDER KYC INSPECTION */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className="bg-slate-900 border border-slate-800 text-white max-w-xl max-h-[90vh] overflow-y-auto font-mono">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2 text-amber-400">
+              <ShieldCheck className="w-5 h-5" />
+              <span>Dossier Pengesahan Rakan Penghantar Warung J&J</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {selectedRider && (
+            <div className="space-y-4 text-xs pt-2">
+              {/* HEADER WITH PHOTO */}
+              <div className="flex items-center gap-4 bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-700 overflow-hidden shrink-0">
+                  {selectedRider.photoRider ? (
+                    <img src={selectedRider.photoRider} alt={selectedRider.fullName} className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-8 h-8 text-slate-500 m-auto mt-4" />
+                  )}
+                </div>
+
+                <div>
+                  <h3 className="text-base font-black text-white">{selectedRider.fullName}</h3>
+                  <p className="text-xs text-amber-400 font-bold">No. IC: {selectedRider.icNumber}</p>
+                  <p className="text-[11px] text-slate-400">No. Telefon: {selectedRider.phone}</p>
+                </div>
+              </div>
+
+              {/* DETAILS GRID */}
+              <div className="grid grid-cols-2 gap-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
+                <div>
+                  <span className="text-[10px] text-slate-500 block">No. Plat Kenderaan:</span>
+                  <span className="font-bold text-white">{selectedRider.vehiclePlate}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block">Model Kenderaan:</span>
+                  <span className="font-bold text-white">{selectedRider.vehicleModel || 'Motosikal'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block">Tarikh Sah Lesen:</span>
+                  <span className="font-bold text-emerald-400">{selectedRider.licenseExpiry}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-500 block">Tarikh Luput Roadtax:</span>
+                  <span className="font-bold text-sky-400">{selectedRider.roadtaxExpiry || 'N/A'}</span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-[10px] text-slate-500 block">Alamat Kediaman:</span>
+                  <span className="text-slate-200">{selectedRider.homeAddress}</span>
+                </div>
+                {selectedRider.emergencyContact && (
+                  <div className="col-span-2">
+                    <span className="text-[10px] text-slate-500 block">Hubungan Kecemasan:</span>
+                    <span className="text-rose-400 font-bold">{selectedRider.emergencyContact}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* DOCUMENT IMAGES PREVIEWS */}
+              <div className="space-y-2">
+                <h4 className="font-bold text-slate-300 text-xs">Dokumen Bukti Disahkan:</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  {selectedRider.photoIc && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 block">Salinan MyKad</span>
+                      <div className="aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
+                        <img src={selectedRider.photoIc} alt="IC" className="w-full h-full object-contain" />
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedRider.photoLicense && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] text-slate-400 block">Salinan Lesen & Roadtax</span>
+                      <div className="aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
+                        <img src={selectedRider.photoLicense} alt="Lesen" className="w-full h-full object-contain" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <Button
+                  onClick={() => setIsDetailOpen(false)}
+                  className="bg-slate-800 hover:bg-slate-700 text-white text-xs rounded-xl"
+                >
+                  Tutup
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
