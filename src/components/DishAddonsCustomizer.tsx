@@ -59,14 +59,14 @@ export function DishAddonsCustomizer() {
     saveAddonsConfig(updated);
     setNewName('');
     setNewPrice('1.50');
-    toast.success(Add-on "" (+RM ) berjaya ditambah!);
+    toast.success(`Add-on "${newAddon.name}" (+RM ${newAddon.price.toFixed(2)}) berjaya ditambah!`);
   };
 
   const handleToggleAvailability = (id: string, available: boolean) => {
     const updated = addons.map(a => a.id === id ? { ...a, available } : a);
     setAddons(updated);
     saveAddonsConfig(updated);
-    toast.success(Status add-on dikemaskini.);
+    toast.success('Status add-on dikemaskini.');
   };
 
   const handleUpdatePrice = (id: string, newPriceStr: string) => {
