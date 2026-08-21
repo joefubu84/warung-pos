@@ -71,6 +71,8 @@ const OrderCard = memo(({
   badgeColors, 
   deliveryServiceColors, 
   deliveryServiceNames, 
+  tablesMap,
+  menuMap,
   onAcknowledge, 
   onAdvanceStatus 
 }: any) => {
@@ -84,6 +86,8 @@ const OrderCard = memo(({
   } else {
     cardClasses += "border-slate-800 bg-slate-900";
   }
+
+  const tableNumber = order.tables?.table_number || (order.table_id && tablesMap?.[order.table_id]) || null;
 
   return (
     <div className={cardClasses}>
@@ -143,10 +147,10 @@ const OrderCard = memo(({
               
               <h2 className="text-lg font-black leading-tight flex items-center gap-2 text-white flex-wrap w-full">
                 {order.type === 'dine_in' 
-                  ? `Meja ${order.tables?.table_number || '?'}` 
+                  ? `Meja ${tableNumber || '?'}` 
                   : (order.customer_name || 'Pelanggan Walk-In')}
                 
-                {order.paid ? (
+                {order.paid || order.payment_status === 'paid' ? (
                   <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-md border border-emerald-500/30 whitespace-nowrap font-bold">
                     ✓ DAH BAYAR {order.payment_method === 'card' ? '💳' : '📱/💵'}
                   </span>
@@ -194,6 +198,7 @@ const OrderCard = memo(({
 
           {order.order_items.map((item: any) => {
             const isNewItem = highlightedItems[item.id];
+            const itemName = item.menu_items?.name || (item.menu_item_id && menuMap?.[item.menu_item_id]) || 'Hidangan Makanan';
             return (
               <div 
                 key={item.id} 
@@ -205,7 +210,7 @@ const OrderCard = memo(({
               >
                 <div className="flex justify-between items-center text-sm">
                   <span className="flex items-center gap-2 flex-wrap font-semibold">
-                    <span className="text-white font-bold">{item.menu_items?.name || 'Menu Item'}</span>
+                    <span className="text-white font-bold">{itemName}</span>
                     {isNewItem && (
                       <span className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded-md font-black uppercase">
                         BARU / DIUBAH ✨
@@ -287,6 +292,31 @@ function KitchenPage() {
     }
   }, [storeId]);
 
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [tablesMap, setTablesMap] = useState<Record<string, string>>({});
+  const [menuMap, setMenuMap] = useState<Record<string, string>>({});
+
+  const fetchLookupData = useCallback(async () => {
+    try {
+      const [{ data: tablesData }, { data: menuData }] = await Promise.all([
+        supabase.from('tables').select('id, table_number'),
+        supabase.from('menu_items').select('id, name')
+      ]);
+      if (tablesData) {
+        const tMap: Record<string, string> = {};
+        tablesData.forEach((t: any) => { tMap[t.id] = t.table_number; });
+        setTablesMap(tMap);
+      }
+      if (menuData) {
+        const mMap: Record<string, string> = {};
+        menuData.forEach((m: any) => { mMap[m.id] = m.name; });
+        setMenuMap(mMap);
+      }
+    } catch (e) {
+      console.warn('Lookup data warning:', e);
+    }
+  }, []);
+
   const acknowledgeOrder = useCallback((orderId: string) => {
     setHighlightedOrders(prev => {
       const next = { ...prev };
@@ -308,112 +338,121 @@ function KitchenPage() {
 
   const fetchActiveOrders = useCallback(async (isSilent = false) => {
     if (!isSilent) setIsLoading(true);
-    let query = supabase
-      .from('orders')
-      .select(`
-        id,
-        status,
-        type,
-        delivery_service,
-        customer_name,
-        table_id,
-        paid,
-        payment_status,
-        payment_method,
-        customer_phone,
-        delivery_address,
-        created_at,
-        ready_at,
-        tables (table_number),
-        order_items (
+    setFetchError(null);
+
+    try {
+      let query = supabase
+        .from('orders')
+        .select(`
           id,
-          quantity,
-          fulfillment_type,
-          container_size,
-          notes,
-          menu_items (name)
-        )
-      `)
-      .in('status', ['pending', 'confirmed', 'preparing'])
-      .order('created_at', { ascending: true });
+          store_id,
+          status,
+          type,
+          delivery_service,
+          customer_name,
+          table_id,
+          paid,
+          payment_status,
+          payment_method,
+          customer_phone,
+          delivery_address,
+          created_at,
+          ready_at,
+          order_items (
+            id,
+            menu_item_id,
+            quantity,
+            fulfillment_type,
+            notes,
+            menu_items (name)
+          )
+        `)
+        .in('status', ['pending', 'confirmed', 'preparing'])
+        .order('created_at', { ascending: true });
 
-    if (storeId) {
-      query = query.eq('store_id', storeId);
-    }
+      if (storeId) {
+        query = query.eq('store_id', storeId);
+      }
 
-    const { data, error } = await query;
+      const { data, error } = await query;
 
-    if (error) {
-      console.error('Error fetching kitchen orders:', error);
-    } else if (data) {
-      const newOrdersData = data as unknown as Order[];
-      const now = Date.now();
-      let hasNewOrder = false;
-      let hasUpdatedOrder = false;
-      const newHighlights: Record<string, any> = {};
-      const newItemHighlights: Record<string, number> = {};
-      
-      if (!isInitialLoad.current) {
-        newOrdersData.forEach(newOrder => {
-          const oldOrder = ordersRef.current.find(o => o.id === newOrder.id);
-          
-          if (!oldOrder) {
-            newHighlights[newOrder.id] = { type: 'new', timestamp: now };
-            hasNewOrder = true;
-          } 
-          else {
-            // Check for modified items via ID map
-            let isModified = false;
-            if (newOrder.order_items.length !== oldOrder.order_items.length) {
-              isModified = true;
-            } else {
-              const oldItemsMap = new Map(oldOrder.order_items.map((i: any) => [i.id, i]));
-              for (const newItem of newOrder.order_items as any[]) {
-                const oldItem = oldItemsMap.get(newItem.id);
-                if (!oldItem || 
-                    oldItem.quantity !== newItem.quantity || 
-                    oldItem.notes !== newItem.notes || 
-                    oldItem.container_size !== newItem.container_size) {
-                  isModified = true;
-                  newItemHighlights[newItem.id] = now;
+      if (error) {
+        console.error('Error fetching kitchen orders:', error);
+        setFetchError(error.message);
+      } else if (data) {
+        const newOrdersData = data as unknown as Order[];
+        const now = Date.now();
+        let hasNewOrder = false;
+        let hasUpdatedOrder = false;
+        const newHighlights: Record<string, any> = {};
+        const newItemHighlights: Record<string, number> = {};
+        
+        if (!isInitialLoad.current) {
+          newOrdersData.forEach(newOrder => {
+            const oldOrder = ordersRef.current.find(o => o.id === newOrder.id);
+            
+            if (!oldOrder) {
+              newHighlights[newOrder.id] = { type: 'new', timestamp: now };
+              hasNewOrder = true;
+            } 
+            else {
+              // Check for modified items via ID map
+              let isModified = false;
+              if (newOrder.order_items.length !== oldOrder.order_items.length) {
+                isModified = true;
+              } else {
+                const oldItemsMap = new Map(oldOrder.order_items.map((i: any) => [i.id, i]));
+                for (const newItem of newOrder.order_items as any[]) {
+                  const oldItem = oldItemsMap.get(newItem.id);
+                  if (!oldItem || 
+                      oldItem.quantity !== newItem.quantity || 
+                      oldItem.notes !== newItem.notes) {
+                    isModified = true;
+                    newItemHighlights[newItem.id] = now;
+                  }
                 }
               }
+              if (isModified) {
+                newHighlights[newOrder.id] = { type: 'updated', timestamp: now };
+                hasUpdatedOrder = true;
+              }
             }
-            if (isModified) {
-              newHighlights[newOrder.id] = { type: 'updated', timestamp: now };
-              hasUpdatedOrder = true;
-            }
-          }
-        });
-      }
-
-      const hasChanges = hasNewOrder || hasUpdatedOrder;
-
-      if (hasChanges) {
-        setHighlightedOrders(prev => ({ ...prev, ...newHighlights }));
-        setHighlightedItems(prev => ({ ...prev, ...newItemHighlights }));
-        
-        const settings = settingsRef.current;
-        if (settings && settings.sound_choice) {
-          playKitchenSound(settings.sound_choice, settings.sound_file_url);
-        } else {
-          playKitchenSound('kitchen_bell');
+          });
         }
+
+        const hasChanges = hasNewOrder || hasUpdatedOrder;
+
+        if (hasChanges) {
+          setHighlightedOrders(prev => ({ ...prev, ...newHighlights }));
+          setHighlightedItems(prev => ({ ...prev, ...newItemHighlights }));
+          
+          const settings = settingsRef.current;
+          if (settings && settings.sound_choice) {
+            playKitchenSound(settings.sound_choice, settings.sound_file_url);
+          } else {
+            playKitchenSound('kitchen_bell');
+          }
+        }
+        
+        const hasContentChanged = JSON.stringify(newOrdersData) !== JSON.stringify(ordersRef.current);
+        
+        if (hasContentChanged || hasChanges) {
+          ordersRef.current = newOrdersData;
+          setOrders(newOrdersData);
+        }
+        
+        isInitialLoad.current = false;
       }
-      
-      const hasContentChanged = JSON.stringify(newOrdersData) !== JSON.stringify(ordersRef.current);
-      
-      if (hasContentChanged || hasChanges) {
-        ordersRef.current = newOrdersData;
-        setOrders(newOrdersData);
-      }
-      
-      isInitialLoad.current = false;
+    } catch (err: any) {
+      console.error('Kitchen fetch fatal error:', err);
+      setFetchError(err.message || 'Ralat memuatkan pesanan dapur');
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, [storeId]);
 
   useEffect(() => {
+    fetchLookupData();
     fetchPrinterSettings();
     fetchActiveOrders();
 
@@ -497,13 +536,74 @@ function KitchenPage() {
   };
 
   return (
-    <div className="p-8 font-sans min-h-screen bg-slate-900 text-slate-100">
-      <h1 className="text-2xl font-bold mb-6 text-white">Kitchen Display</h1>
+    <div className="p-6 md:p-8 font-sans min-h-screen bg-slate-950 text-slate-100">
+      {/* KITCHEN HEADER & CONTROLS */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black text-white flex items-center gap-3">
+            <span>👨‍🍳</span>
+            <span>Paparan Dapur (Kitchen Display)</span>
+            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 font-mono font-bold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+              LIVE REALTIME
+            </span>
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Pesanan aktif masuk secara automatik. Skrin akan berbunyi dan berkelip merah jika ada pesanan diubah.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          <button
+            onClick={() => {
+              playKitchenSound('kitchen_bell');
+            }}
+            className="px-3.5 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow"
+            title="Klik untuk membuka kebenaran audio pelayar"
+          >
+            <span>🔔</span>
+            <span>Uji Loceng Dapur</span>
+          </button>
+
+          <button
+            onClick={() => {
+              fetchActiveOrders();
+              fetchLookupData();
+            }}
+            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow active:scale-95"
+          >
+            <span>🔄</span>
+            <span>Muat Semula (Refresh)</span>
+          </button>
+        </div>
+      </div>
+
+      {/* ERROR BANNER IF OCCURRED */}
+      {fetchError && (
+        <div className="mb-6 p-4 rounded-xl bg-rose-950/80 border-2 border-rose-500 text-rose-200 flex items-center justify-between gap-3 shadow-lg">
+          <div>
+            <p className="font-bold text-sm">⚠️ Ralat Mendapatkan Pesanan:</p>
+            <p className="text-xs opacity-90 font-mono mt-0.5">{fetchError}</p>
+          </div>
+          <button
+            onClick={() => fetchActiveOrders()}
+            className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold"
+          >
+            Cuba Semula
+          </button>
+        </div>
+      )}
       
       {orders.length === 0 ? (
-        <p className="text-slate-400">No active orders</p>
+        <div className="py-24 text-center border-2 border-dashed border-slate-800 rounded-2xl bg-slate-900/30 my-4">
+          <p className="text-4xl mb-3">🍳</p>
+          <h3 className="text-lg font-bold text-white mb-1">Tiada Pesanan Aktif Buat Masa Ini</h3>
+          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+            Sistem sedia menerima pesanan. Sebarang pesanan baru dari kaunter atau penghantaran akan muncul secara automatik di sini.
+          </p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {orders.map((order) => (
             <OrderCard
               key={order.id}
@@ -513,6 +613,8 @@ function KitchenPage() {
               badgeColors={badgeColors}
               deliveryServiceColors={deliveryServiceColors}
               deliveryServiceNames={deliveryServiceNames}
+              tablesMap={tablesMap}
+              menuMap={menuMap}
               onAcknowledge={acknowledgeOrder}
               onAdvanceStatus={advanceStatus}
             />
@@ -521,7 +623,7 @@ function KitchenPage() {
       )}
 
       {/* Kitchen Stats Footer */}
-      <div className="mt-8 pt-4 border-t border-slate-700">
+      <div className="mt-8 pt-4 border-t border-slate-800">
         <KitchenStats activeOrders={orders} />
       </div>
     </div>
