@@ -352,7 +352,7 @@ function LandingPage() {
             <div>
               <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-stone-100 mb-4">Come Visit Us</h2>
               <p className="text-lg text-stone-400 font-medium leading-relaxed">
-                Nikmati hidangan panas dan lazat setiap hari di Warung J&J Penampang, Sabah.
+                Nikmati hidangan panas dan lazat setiap hari di Warung JNJ (Penampang), Sabah.
               </p>
             </div>
             
@@ -363,7 +363,7 @@ function LandingPage() {
                 </div>
                 <div className="pt-1">
                   <h4 className="font-bold text-[17px] tracking-tight text-stone-200">Address</h4>
-                  <p className="text-stone-400 leading-relaxed mt-1 whitespace-pre-wrap">{storeInfo?.address || 'Warung J&J\nJalan Penampang, 89500 Penampang,\nSabah, Malaysia'}</p>
+                  <p className="text-stone-400 leading-relaxed mt-1 whitespace-pre-wrap">{storeInfo?.address || 'Warung JNJ\na17, Jln Datuk Panglima Banting,\n89500 Penampang, Sabah, Malaysia'}</p>
                 </div>
               </div>
               
@@ -390,7 +390,7 @@ function LandingPage() {
           </div>
           
           <a 
-            href="https://share.google/QnAwg0vYtPvytnOG5" 
+            href="https://www.google.com/maps/dir//Warung+JNJ,+a17,+Jln+Datuk+Panglima+Banting,+89500+Penampang,+Sabah/@5.9810544,116.0768506,9z/data=!4m8!4m7!1m0!1m5!1m1!1s0x323b692e917f9eb1:0x66ccb58dff90bc87!2m2!1d116.1146463!2d5.9284153?entry=ttu" 
             target="_blank" 
             rel="noopener noreferrer"
             className="relative aspect-square lg:aspect-[4/3] rounded-[3rem] overflow-hidden border border-stone-800 shadow-2xl block group"
@@ -401,8 +401,8 @@ function LandingPage() {
               <div className="w-20 h-20 bg-orange-500/20 rounded-full flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(249,115,22,0.2)]">
                 <MapPin className="w-10 h-10 text-orange-500" />
               </div>
-              <h3 className="font-bold text-2xl text-white mb-2">Find Us on Maps</h3>
-              <p className="font-medium text-stone-400">Click to open directions</p>
+              <h3 className="font-bold text-2xl text-white mb-2">Find Us on Google Maps</h3>
+              <p className="font-medium text-stone-400">Warung JNJ, Penampang • Click to open directions</p>
             </div>
           </a>
         </div>
