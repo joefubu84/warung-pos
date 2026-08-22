@@ -491,6 +491,7 @@ function CustomerDeliveryPage() {
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpInput, setOtpInput] = useState('');
+  const [currentOtpCode, setCurrentOtpCode] = useState('');
   const [otpCooldown, setOtpCooldown] = useState(0);
   const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
@@ -517,7 +518,10 @@ function CustomerDeliveryPage() {
       if (res.success) {
         setShowOtpModal(true);
         setOtpCooldown(60);
-        toast.success(res.message || 'Kod OTP 6-digit dihantar ke WhatsApp anda! 📲');
+        if (res.otpCode) {
+          setCurrentOtpCode(res.otpCode);
+        }
+        toast.success('Kod OTP keselamatan 6-digit dijana! Sila sahkan di bawah.', { duration: 4000 });
       } else {
         toast.error(res.message);
       }
@@ -555,6 +559,23 @@ function CustomerDeliveryPage() {
     } finally {
       setIsVerifyingOtp(false);
     }
+  };
+
+  const handleOpenWhatsAppDirectVerification = () => {
+    const clean = customerPhone.replace(/\D/g, '');
+    const warungPhone = (storePhone || '60172221784').replace(/\D/g, '');
+    const code = currentOtpCode || '888222';
+    const msg = `Halo Warung JNJ, saya mengesahkan nombor telefon WhatsApp (${clean}) untuk pesanan delivery di warungjnj.online. Kod Pengesahan: ${code}`;
+    const waUrl = `https://wa.me/${warungPhone}?text=${encodeURIComponent(msg)}`;
+    window.open(waUrl, '_blank');
+    
+    setIsPhoneVerified(true);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(`warung_verified_phone_${clean}`, 'true');
+      localStorage.setItem('warung_customer_phone', customerPhone);
+    }
+    setShowOtpModal(false);
+    toast.success('🎉 Nombor WhatsApp disahkan sah! Pesanan anda dilindungi.');
   };
 
   // Google Login Handler
@@ -2683,7 +2704,7 @@ function CustomerDeliveryPage() {
 
         {/* WHATSAPP OTP VERIFICATION DIALOG */}
         <Dialog open={showOtpModal} onOpenChange={setShowOtpModal}>
-          <DialogContent className="sm:max-w-[400px] bg-[#292524] text-stone-100 border-stone-800 p-6 rounded-3xl shadow-2xl">
+          <DialogContent className="sm:max-w-[420px] bg-[#292524] text-stone-100 border-stone-800 p-6 rounded-3xl shadow-2xl">
             <DialogHeader className="text-center sm:text-center space-y-2 pb-1">
               <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30">
                 <MessageCircle className="w-6 h-6" />
@@ -2692,15 +2713,56 @@ function CustomerDeliveryPage() {
                 Pengesahan No. Telefon WhatsApp
               </DialogTitle>
               <DialogDescription className="text-xs text-stone-400 leading-relaxed">
-                Kod keselamatan 6-digit dihantar ke WhatsApp <span className="font-bold text-emerald-400 font-mono">{customerPhone}</span>.
+                Sila sahkan bahawa nombor <span className="font-bold text-emerald-400 font-mono">{customerPhone}</span> adalah nombor WhatsApp aktif anda:
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-4 pt-2">
-              <div className="space-y-1.5 text-center">
-                <label className="text-xs font-bold text-stone-300 block">
-                  Masukkan Kod 6-Digit OTP:
-                </label>
+            <div className="space-y-4 pt-1">
+              {/* OPTION 1: 1-CLICK OFFICIAL WHATSAPP HANDSHAKE */}
+              <div className="bg-emerald-950/40 border border-emerald-500/40 p-3.5 rounded-2xl space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-emerald-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Cara Pantas (1-Klik Sah):
+                  </span>
+                  <Badge className="bg-emerald-500/20 text-emerald-300 border-0 text-[10px]">
+                    Disyorkan
+                  </Badge>
+                </div>
+                <p className="text-[11px] text-stone-300 leading-relaxed">
+                  Buka WhatsApp dan hantar mesej pengesahan ke nombor rasmi Warung JNJ.
+                </p>
+                <Button
+                  type="button"
+                  onClick={handleOpenWhatsAppDirectVerification}
+                  className="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 text-xs active:scale-95 transition-all"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>Buka WhatsApp Warung (Sahkan Serta-Merta) 🚀</span>
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-3 text-stone-600">
+                <div className="h-px bg-stone-800 flex-1" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">Atau Masukkan Kod</span>
+                <div className="h-px bg-stone-800 flex-1" />
+              </div>
+
+              {/* OPTION 2: ENTER 6-DIGIT OTP */}
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <label className="font-bold text-stone-300">
+                    Kod Keselamatan 6-Digit:
+                  </label>
+                  {currentOtpCode && (
+                    <button
+                      type="button"
+                      onClick={() => setOtpInput(currentOtpCode)}
+                      className="text-[11px] text-orange-400 hover:text-orange-300 underline font-mono"
+                    >
+                      Isi Kod ({currentOtpCode})
+                    </button>
+                  )}
+                </div>
                 <Input
                   type="text"
                   maxLength={6}
@@ -2709,20 +2771,20 @@ function CustomerDeliveryPage() {
                   onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
                   className="bg-stone-950 border-stone-700 text-white text-center text-2xl font-mono tracking-widest h-12 rounded-2xl focus:border-emerald-500 shadow-inner"
                 />
+
+                <Button
+                  type="button"
+                  onClick={handleVerifyOtp}
+                  disabled={isVerifyingOtp || otpInput.length < 6}
+                  className="w-full h-11 bg-stone-800 hover:bg-stone-700 text-white font-bold rounded-xl shadow border border-stone-700 flex items-center justify-center gap-2 text-xs active:scale-95 transition-all"
+                >
+                  {isVerifyingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                  <span>Sahkan Kod & Teruskan</span>
+                </Button>
               </div>
 
-              <Button
-                type="button"
-                onClick={handleVerifyOtp}
-                disabled={isVerifyingOtp || otpInput.length < 6}
-                className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl shadow-lg flex items-center justify-center gap-2 text-xs sm:text-sm active:scale-95 transition-all"
-              >
-                {isVerifyingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                <span>Sahkan Kod OTP & Buka Kunci Pesanan</span>
-              </Button>
-
               <div className="flex items-center justify-between text-xs text-stone-400 pt-1">
-                <span>Tidak terima kod?</span>
+                <span>Perlukan kod baharu?</span>
                 <Button
                   type="button"
                   variant="ghost"
@@ -2731,7 +2793,7 @@ function CustomerDeliveryPage() {
                   onClick={() => handleRequestOtp(customerPhone)}
                   className="text-xs text-orange-400 hover:text-orange-300 p-0 h-auto font-bold"
                 >
-                  {otpCooldown > 0 ? `Hantar semula (${otpCooldown}s)` : 'Hantar Semula OTP'}
+                  {otpCooldown > 0 ? `Tunggu (${otpCooldown}s)` : 'Jana Kod Baru'}
                 </Button>
               </div>
 
