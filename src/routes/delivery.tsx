@@ -295,8 +295,17 @@ const LOCAL_SABAH_LANDMARKS: SabahLocationItem[] = [
 ];
 
 // Clean search string by stripping house/lot number prefixes
+function extractHouseNumberPrefix(raw: string): string {
+  if (!raw) return '';
+  const trimmed = raw.trim();
+  // Matches: "SD19", "No 14", "No. 14", "Lot 12A", "Unit 3B", "Blok C-2-1", "House 4", "Rumah 12", "Tingkat 2", "14A,", "14,"
+  const match = trimmed.match(/^(?:(?:lot|no\.?|house|rumah|unit|tingkat|blok|block|pintu|apt|apartment|sd|lorong|jalan)\s*[a-z0-9\-\/]+|[0-9]+[a-z]?)(?:,\s*(?:lorong|jalan|blok|tingkat)\s*[a-z0-9]+)?/i);
+  return match ? match[0].trim().replace(/,+$/, '') : '';
+}
+
 function sanitizeSearchQuery(raw: string): string {
   return raw
+    .replace(/^(?:(?:lot|no\.?|house|rumah|unit|tingkat|blok|block|pintu|apt|apartment|sd|lorong|jalan)\s*[a-z0-9\-\/]+|[0-9]+[a-z]?)(?:,\s*(?:lorong|jalan|blok|tingkat)\s*[a-z0-9]+)?/i, '')
     .replace(/(?:lot|no\.?|house|rumah|unit|tingkat|blok|block|pintu|apt|apartment|hotel|residence|condo|condominium|taman|jalan|lorong)\s*[a-z0-9\-\/]+/gi, '')
     .replace(/[,\-\/]/g, ' ')
     .replace(/\s+/g, ' ')
@@ -304,6 +313,7 @@ function sanitizeSearchQuery(raw: string): string {
 }
 
 function searchLocalSabahLandmarks(rawQuery: string) {
+  const housePrefix = extractHouseNumberPrefix(rawQuery);
   const cleanQ = sanitizeSearchQuery(rawQuery).toLowerCase();
   const rawQ = rawQuery.toLowerCase().trim();
   const tokens = (cleanQ || rawQ).split(' ').filter(t => t.length >= 2);
@@ -342,10 +352,11 @@ function searchLocalSabahLandmarks(rawQuery: string) {
       landmark: '📍'
     };
     const emoji = categoryEmoji[res.item.category] || '📍';
+    const displayPrefix = housePrefix ? `${housePrefix}, ` : '';
 
     return {
-      displayName: `${res.item.name}, ${res.item.desc}`,
-      mainText: `${emoji} ${res.item.name}`,
+      displayName: `${displayPrefix}${res.item.name}, ${res.item.desc}`,
+      mainText: `${emoji} ${displayPrefix}${res.item.name}`,
       rawName: res.item.name,
       secondaryText: res.item.desc,
       category: res.item.category,
@@ -759,12 +770,12 @@ function CustomerDeliveryPage() {
     return () => clearTimeout(timeout);
   }, [deliveryAddress]);
 
-  const handleSelectSuggestion = async (item: { displayName: string; mainText: string; lat: number; lng: number }) => {
-    // Check if user entered a specific house/lot number prefix to preserve
-    const lotMatch = deliveryAddress.match(/^(?:lot|no\.?|unit|house|tingkat|blok)\s*[a-z0-9\-\/]+(?:,\s*jalan\s*[a-z0-9]+)?/i);
+  const handleSelectSuggestion = async (item: { displayName: string; mainText: string; rawName?: string; lat: number; lng: number }) => {
+    const housePrefix = extractHouseNumberPrefix(deliveryAddress);
     let finalAddressText = item.displayName;
-    if (lotMatch && !item.displayName.toLowerCase().startsWith(lotMatch[0].toLowerCase())) {
-      finalAddressText = `${lotMatch[0]}, ${item.displayName}`;
+    
+    if (housePrefix && !finalAddressText.toLowerCase().includes(housePrefix.toLowerCase())) {
+      finalAddressText = `${housePrefix}, ${item.displayName}`;
     }
 
     setDeliveryAddress(finalAddressText);
@@ -772,7 +783,7 @@ function CustomerDeliveryPage() {
     setCustLng(item.lng);
     setShowSuggestionsDropdown(false);
     await fetchRoadRoute(item.lat, item.lng);
-    toast.success(`Lokasi dipilih: ${item.mainText} 📍`);
+    toast.success(`Lokasi dipilih: ${finalAddressText.split(',')[0]} 📍`);
   };
 
   const handleSearchAddress = async (addrText?: string) => {

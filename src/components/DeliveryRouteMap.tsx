@@ -168,11 +168,31 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
     });
   };
 
-  // Reverse Geocoding Helper restricted to Malaysia
+  // Reverse Geocoding Helper restricted to Malaysia with House & Building Number Detection
   const reverseGeocode = async (lat: number, lng: number) => {
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&countrycodes=my`);
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&countrycodes=my&addressdetails=1`);
       const data = await res.json();
+      if (data && data.address) {
+        const addr = data.address;
+        const houseNo = addr.house_number || addr.housenumber || addr.unit || addr.building || '';
+        const road = addr.road || addr.street || addr.residential || '';
+        const suburb = addr.suburb || addr.neighbourhood || addr.village || addr.city_district || '';
+        const city = addr.city || addr.town || 'Penampang';
+        const state = addr.state || 'Sabah';
+        const postcode = addr.postcode || '';
+
+        const parts = [
+          houseNo ? `No. ${houseNo}` : '',
+          road,
+          suburb,
+          city,
+          postcode,
+          state
+        ].filter(Boolean);
+
+        if (parts.length > 0) return parts.join(', ');
+      }
       if (data && data.display_name) {
         return data.display_name;
       }
