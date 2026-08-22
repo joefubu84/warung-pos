@@ -79,6 +79,38 @@ interface CartItem {
 const WARUNG_LAT = 5.9284138;
 const WARUNG_LNG = 116.1145036;
 
+const LOCAL_SABAH_LANDMARKS = [
+  { name: 'Taman Liana Phase 2, Penampang', lat: 5.9141659, lng: 116.085516, desc: 'Donggongon / Penampang' },
+  { name: 'Taman Liana Phase 1, Penampang', lat: 5.9135, lng: 116.0842, desc: 'Donggongon / Penampang' },
+  { name: 'Megalong Shopping Mall, Donggongon', lat: 5.9090, lng: 116.1025, desc: 'Donggongon, Penampang' },
+  { name: 'Pekan Donggongon, Penampang', lat: 5.9080, lng: 116.1030, desc: 'Pusat Bandar Donggongon' },
+  { name: 'ITCC Shopping Mall, Penampang', lat: 5.9225, lng: 116.0915, desc: 'Jalan Pintas Penampang' },
+  { name: 'Cyber City Apartment Phase 1', lat: 5.9210, lng: 116.0790, desc: 'Kepayan / Penampang' },
+  { name: 'Cyber City Apartment Phase 2', lat: 5.9230, lng: 116.0810, desc: 'Kepayan / Penampang' },
+  { name: 'Plaza 333, Kobusak', lat: 5.9320, lng: 116.0880, desc: 'Jalan Pintas Penampang' },
+  { name: 'Grand Millennium Plaza, Penampang', lat: 5.9340, lng: 116.0890, desc: 'Kobusak, Penampang' },
+  { name: 'Taman Penampang Phase 1 & 2', lat: 5.9260, lng: 116.0980, desc: 'Penampang' },
+  { name: 'Bundusan Commercial Centre', lat: 5.9450, lng: 116.1080, desc: 'Jalan Bundusan, Penampang' },
+  { name: 'Beverly Hills Apartment Phase 1-5', lat: 5.9480, lng: 116.1110, desc: 'Bundusan, Penampang' },
+  { name: 'Pavilion Bundusan', lat: 5.9430, lng: 116.1050, desc: 'Bundusan, Penampang' },
+  { name: 'Taman Suria Penampang', lat: 5.9270, lng: 116.1010, desc: 'Penampang' },
+  { name: 'Taman Ganang, Kepayan', lat: 5.9290, lng: 116.0680, desc: 'Kepayan / Penampang' },
+  { name: 'Austral Park, Kepayan', lat: 5.9380, lng: 116.0720, desc: 'Kepayan / KK' },
+  { name: 'Taman Sri Kepayan', lat: 5.9350, lng: 116.0690, desc: 'Kepayan' },
+  { name: 'Putatan Platinum Apartment', lat: 5.8950, lng: 116.0550, desc: 'Putatan' },
+  { name: 'Pekan Putatan / Servay Putatan', lat: 5.8920, lng: 116.0520, desc: 'Putatan' },
+  { name: 'Petagas / Lembaga Padi', lat: 5.9080, lng: 116.0560, desc: 'Petagas' },
+  { name: 'Lido Market / Lido Plaza', lat: 5.9480, lng: 116.0820, desc: 'Luyang, KK' },
+  { name: 'Foh Sang / Luyang Commercial', lat: 5.9550, lng: 116.0910, desc: 'Luyang, KK' },
+  { name: 'Aeropod Commercial Square', lat: 5.9470, lng: 116.0610, desc: 'Tanjung Aru, KK' },
+  { name: 'Imago Shopping Mall, KK', lat: 5.9710, lng: 116.0670, desc: 'Kota Kinabalu' },
+  { name: 'Centre Point Sabah / Api-Api', lat: 5.9790, lng: 116.0720, desc: 'KK Bandar' },
+  { name: 'Gaya Street / Suria Sabah', lat: 5.9860, lng: 116.0770, desc: 'Kota Kinabalu' },
+  { name: 'Inanam Taipan / Inanam Capital', lat: 5.9920, lng: 116.1320, desc: 'Inanam' },
+  { name: 'Kolombong Industrial / BDC', lat: 5.9810, lng: 116.1150, desc: 'Kolombong' },
+  { name: 'Kingfisher / Hospital Likas', lat: 6.0150, lng: 116.1260, desc: 'Likas, KK' },
+];
+
 function calculateHaversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth radius in km
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -112,6 +144,17 @@ function CustomerDeliveryPage() {
   const [roadDistanceKm, setRoadDistanceKm] = useState<number>(6.6);
   const [travelTimeMins, setTravelTimeMins] = useState<number>(12);
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
+
+  // Address Auto-suggestions
+  const [addressSuggestions, setAddressSuggestions] = useState<{
+    displayName: string;
+    mainText: string;
+    secondaryText: string;
+    lat: number;
+    lng: number;
+  }[]>([]);
+  const [showSuggestionsDropdown, setShowSuggestionsDropdown] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
@@ -370,6 +413,84 @@ function CustomerDeliveryPage() {
       return nextCart;
     });
     toast.success('Bungkusan dipecahkan kepada pek individu untuk pengkhususan berasingan.');
+  };
+
+  // Debounced Auto-suggestions effect
+  useEffect(() => {
+    if (!deliveryAddress || deliveryAddress.trim().length < 2) {
+      setAddressSuggestions([]);
+      setShowSuggestionsDropdown(false);
+      return;
+    }
+
+    const q = deliveryAddress.toLowerCase().trim();
+
+    // 1. Instant local search in curated Sabah landmarks database
+    const localMatches = LOCAL_SABAH_LANDMARKS.filter(
+      item => item.name.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q)
+    ).map(item => ({
+      displayName: `${item.name}, ${item.desc}`,
+      mainText: item.name,
+      secondaryText: item.desc,
+      lat: item.lat,
+      lng: item.lng,
+    }));
+
+    setAddressSuggestions(localMatches);
+    setShowSuggestionsDropdown(true);
+
+    // 2. Fetch live online geocoding suggestions from Nominatim (debounced 350ms)
+    const timeout = setTimeout(async () => {
+      if (q.length < 3) return;
+      setIsLoadingSuggestions(true);
+      try {
+        const query = encodeURIComponent(`${q}, Sabah, Malaysia`);
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${query}&countrycodes=my&viewbox=115.7,6.3,116.5,5.6&bounded=0&limit=5`
+        );
+        const data = await res.json();
+        if (data && Array.isArray(data)) {
+          const onlineItems = data
+            .filter((d: any) => {
+              const lat = parseFloat(d.lat);
+              const lon = parseFloat(d.lon);
+              return isWithinSabah(lat, lon);
+            })
+            .map((d: any) => {
+              const parts = d.display_name.split(', ');
+              return {
+                displayName: d.display_name,
+                mainText: parts.slice(0, 2).join(', '),
+                secondaryText: parts.slice(2, 5).join(', '),
+                lat: parseFloat(d.lat),
+                lng: parseFloat(d.lon),
+              };
+            });
+
+          // Merge without duplicates
+          setAddressSuggestions(prev => {
+            const names = new Set(prev.map(p => p.mainText.toLowerCase()));
+            const filteredOnline = onlineItems.filter(o => !names.has(o.mainText.toLowerCase()));
+            return [...prev, ...filteredOnline].slice(0, 6);
+          });
+        }
+      } catch (e) {
+        // Keep local matches
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(timeout);
+  }, [deliveryAddress]);
+
+  const handleSelectSuggestion = async (item: { displayName: string; lat: number; lng: number }) => {
+    setDeliveryAddress(item.displayName);
+    setCustLat(item.lat);
+    setCustLng(item.lng);
+    setShowSuggestionsDropdown(false);
+    await fetchRoadRoute(item.lat, item.lng);
+    toast.success(`Lokasi dipilih: ${item.displayName.split(',')[0]} 📍`);
   };
 
   const handleSearchAddress = async (addrText?: string) => {
@@ -710,21 +831,68 @@ function CustomerDeliveryPage() {
               showNavigationButtons={false}
             />
 
-            <div className="space-y-2">
-              <Textarea
-                placeholder="Masukkan alamat lengkap (Nama Jalan, Bangunan / Pejabat, Bandar, Poskod)..."
-                value={deliveryAddress}
-                onChange={(e) => setDeliveryAddress(e.target.value)}
-                onBlur={() => handleSearchAddress()}
-                className="bg-slate-950 border-slate-800 text-white placeholder-slate-600 rounded-2xl text-xs sm:text-sm min-h-[60px]"
-              />
+            <div className="space-y-2 relative">
+              <div className="relative">
+                <Textarea
+                  placeholder="Taip nama jalan, taman perumahan, atau bangunan (cth: Taman Liana, ITCC, Plaza 333, Bundusan)..."
+                  value={deliveryAddress}
+                  onChange={(e) => {
+                    setDeliveryAddress(e.target.value);
+                    setShowSuggestionsDropdown(true);
+                  }}
+                  onFocus={() => {
+                    if (addressSuggestions.length > 0) setShowSuggestionsDropdown(true);
+                  }}
+                  className="bg-slate-950 border-slate-800 text-white placeholder-slate-600 rounded-2xl text-xs sm:text-sm min-h-[60px]"
+                />
+
+                {/* AUTOCOMPLETE SUGGESTIONS DROPDOWN */}
+                {showSuggestionsDropdown && addressSuggestions.length > 0 && (
+                  <div className="absolute top-[64px] left-0 right-0 z-30 bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-md animate-fade-in divide-y divide-slate-800/80 font-mono">
+                    <div className="px-3 py-1.5 bg-slate-950/90 flex items-center justify-between text-[10px] text-slate-400">
+                      <span className="flex items-center gap-1 font-bold text-emerald-400">
+                        <Sparkles className="w-3 h-3 text-emerald-400" /> Cadangan Lokasi:
+                      </span>
+                      {isLoadingSuggestions && (
+                        <span className="flex items-center gap-1 text-[10px] text-slate-500">
+                          <Loader2 className="w-2.5 h-2.5 animate-spin" /> Mencari...
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="max-h-48 overflow-y-auto">
+                      {addressSuggestions.map((item, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleSelectSuggestion(item)}
+                          className="w-full px-3 py-2 text-left hover:bg-emerald-500/10 flex items-start gap-2.5 transition-colors group"
+                        >
+                          <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-slate-200 group-hover:text-emerald-300 truncate">
+                              {item.mainText}
+                            </p>
+                            <p className="text-[10px] text-slate-400 truncate">
+                              {item.secondaryText}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <div className="flex justify-end">
                 <Button
                   size="sm"
                   variant="ghost"
                   disabled={isSearchingAddress || isCalculatingRoute}
-                  onClick={() => handleSearchAddress()}
+                  onClick={() => {
+                    setShowSuggestionsDropdown(false);
+                    handleSearchAddress();
+                  }}
                   className="text-[11px] text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/40 h-7 px-2.5 rounded-lg border border-emerald-500/20"
                 >
                   {isSearchingAddress || isCalculatingRoute ? (
