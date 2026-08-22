@@ -59,6 +59,11 @@ import {
   clearStoredGoogleUser, 
   GoogleAuthUser 
 } from '@/lib/google-auth';
+import { 
+  requestWhatsAppOtp, 
+  verifyWhatsAppOtp, 
+  sanitizePhone 
+} from '@/lib/whatsapp-otp';
 
 export const Route = createFileRoute('/delivery')({
   component: CustomerDeliveryPage,
@@ -482,6 +487,76 @@ function CustomerDeliveryPage() {
     }
   };
 
+  // Phone OTP Verification State
+  const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpInput, setOtpInput] = useState('');
+  const [otpCooldown, setOtpCooldown] = useState(0);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+
+  // OTP Cooldown countdown
+  useEffect(() => {
+    if (otpCooldown > 0) {
+      const timer = setInterval(() => setOtpCooldown(prev => prev - 1), 1000);
+      return () => clearInterval(timer);
+    }
+  }, [otpCooldown]);
+
+  const handleRequestOtp = (phoneToVerify?: string) => {
+    const p = phoneToVerify || customerPhone;
+    const clean = p.replace(/\D/g, '');
+    if (!clean.startsWith('01') || clean.length < 10 || clean.length > 11) {
+      toast.error('Sila masukkan nombor telefon bimbit WhatsApp Malaysia yang sah (cth: 0198887766)');
+      return;
+    }
+
+    setIsSendingOtp(true);
+    try {
+      const res = requestWhatsAppOtp(clean);
+      if (res.success) {
+        setShowOtpModal(true);
+        setOtpCooldown(60);
+        toast.success(res.message || 'Kod OTP 6-digit dihantar ke WhatsApp anda! 📲');
+      } else {
+        toast.error(res.message);
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Gagal menghantar kod OTP.');
+    } finally {
+      setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = () => {
+    if (!otpInput.trim() || otpInput.trim().length < 6) {
+      toast.error('Sila masukkan 6-digit kod OTP yang sah');
+      return;
+    }
+
+    setIsVerifyingOtp(true);
+    try {
+      const clean = customerPhone.replace(/\D/g, '');
+      const res = verifyWhatsAppOtp(clean, otpInput.trim());
+      if (res.success) {
+        setIsPhoneVerified(true);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`warung_verified_phone_${clean}`, 'true');
+          localStorage.setItem('warung_customer_phone', customerPhone);
+        }
+        setShowOtpModal(false);
+        setOtpInput('');
+        toast.success('🎉 Nombor WhatsApp anda berjaya disahkan sah!');
+      } else {
+        toast.error(res.message);
+      }
+    } catch (e: any) {
+      toast.error(e.message || 'Pengesahan OTP gagal.');
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
   // Google Login Handler
   const handleGoogleLogin = async () => {
     try {
@@ -518,8 +593,10 @@ function CustomerDeliveryPage() {
     setCurrentUser(regUser);
     setCustomerName(name);
     setCustomerPhone(phone);
+    setIsPhoneVerified(true);
     if (typeof window !== 'undefined') {
       localStorage.setItem('warung_customer_phone', phone);
+      localStorage.setItem(`warung_verified_phone_${clean}`, 'true');
     }
     setShowAuthModal(false);
     toast.success(`Akaun disahkan! Selamat datang, ${name} 🎉`);
@@ -528,6 +605,7 @@ function CustomerDeliveryPage() {
   const handleLogout = async () => {
     clearStoredGoogleUser();
     setCurrentUser(null);
+    setIsPhoneVerified(false);
     await supabase.auth.signOut();
     toast.info('Log keluar akaun berjaya.');
   };
@@ -1169,9 +1247,18 @@ function CustomerDeliveryPage() {
       return;
     }
 
+    // 2. MUST VERIFY PHONE NUMBER VIA WHATSAPP OTP
+    const isSavedPhoneVerified = typeof window !== 'undefined' && localStorage.getItem(`warung_verified_phone_${phoneClean}`) === 'true';
+    if (!isPhoneVerified && !isSavedPhoneVerified) {
+      toast.error('Sila sahkan nombor WhatsApp anda dengan kod OTP terlebih dahulu.');
+      handleRequestOtp(customerPhone);
+      return;
+    }
+
     // Persist phone for returning user convenience
     if (typeof window !== 'undefined') {
       localStorage.setItem('warung_customer_phone', customerPhone);
+      localStorage.setItem(`warung_verified_phone_${phoneClean}`, 'true');
     }
 
     if (!deliveryAddress.trim()) {
@@ -1878,23 +1965,59 @@ function CustomerDeliveryPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-emerald-400" /> No. Telefon Bimbit (WhatsApp)
-                  </label>
-                  <Input
-                    placeholder="Contoh: 0198887766 / 0123456789"
-                    value={customerPhone}
-                    onChange={(e) => {
-                      setCustomerPhone(e.target.value);
-                      if (typeof window !== 'undefined') {
-                        localStorage.setItem('warung_customer_phone', e.target.value);
-                        if (currentUser?.email) {
-                          localStorage.setItem(`warung_phone_${currentUser.email}`, e.target.value);
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-emerald-400" /> No. Telefon Bimbit (WhatsApp)
+                    </label>
+                    {isPhoneVerified ? (
+                      <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-500/30 flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Sahih ✓
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
+                        ⚠️ Perlu Sahkan
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      placeholder="Contoh: 0198887766 / 0123456789"
+                      value={customerPhone}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setCustomerPhone(val);
+                        const cleanP = val.replace(/\D/g, '');
+                        const isVerifiedAlready = typeof window !== 'undefined' && localStorage.getItem(`warung_verified_phone_${cleanP}`) === 'true';
+                        setIsPhoneVerified(isVerifiedAlready);
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem('warung_customer_phone', val);
+                          if (currentUser?.email) {
+                            localStorage.setItem(`warung_phone_${currentUser.email}`, val);
+                          }
                         }
-                      }
-                    }}
-                    className="bg-stone-900 border-stone-700/80 text-white placeholder:text-stone-500 rounded-2xl text-xs sm:text-sm h-11 focus:border-orange-500/60 shadow-inner"
-                  />
+                      }}
+                      className="bg-stone-900 border-stone-700/80 text-white placeholder:text-stone-500 rounded-2xl text-xs sm:text-sm h-11 focus:border-orange-500/60 shadow-inner flex-1"
+                    />
+
+                    {!isPhoneVerified && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={isSendingOtp || !customerPhone}
+                        onClick={() => handleRequestOtp(customerPhone)}
+                        className="h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-2xl px-3 shrink-0 shadow-md active:scale-95 transition-all"
+                      >
+                        {isSendingOtp ? (
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        ) : (
+                          <>
+                            <MessageCircle className="w-3.5 h-3.5 mr-1" /> Sahkan No
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -2555,6 +2678,72 @@ function CustomerDeliveryPage() {
             >
               Tutup
             </Button>
+          </DialogContent>
+        </Dialog>
+
+        {/* WHATSAPP OTP VERIFICATION DIALOG */}
+        <Dialog open={showOtpModal} onOpenChange={setShowOtpModal}>
+          <DialogContent className="sm:max-w-[400px] bg-[#292524] text-stone-100 border-stone-800 p-6 rounded-3xl shadow-2xl">
+            <DialogHeader className="text-center sm:text-center space-y-2 pb-1">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30">
+                <MessageCircle className="w-6 h-6" />
+              </div>
+              <DialogTitle className="text-lg font-bold text-white">
+                Pengesahan No. Telefon WhatsApp
+              </DialogTitle>
+              <DialogDescription className="text-xs text-stone-400 leading-relaxed">
+                Kod keselamatan 6-digit dihantar ke WhatsApp <span className="font-bold text-emerald-400 font-mono">{customerPhone}</span>.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 pt-2">
+              <div className="space-y-1.5 text-center">
+                <label className="text-xs font-bold text-stone-300 block">
+                  Masukkan Kod 6-Digit OTP:
+                </label>
+                <Input
+                  type="text"
+                  maxLength={6}
+                  placeholder="Contoh: 123456"
+                  value={otpInput}
+                  onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
+                  className="bg-stone-950 border-stone-700 text-white text-center text-2xl font-mono tracking-widest h-12 rounded-2xl focus:border-emerald-500 shadow-inner"
+                />
+              </div>
+
+              <Button
+                type="button"
+                onClick={handleVerifyOtp}
+                disabled={isVerifyingOtp || otpInput.length < 6}
+                className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl shadow-lg flex items-center justify-center gap-2 text-xs sm:text-sm active:scale-95 transition-all"
+              >
+                {isVerifyingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                <span>Sahkan Kod OTP & Buka Kunci Pesanan</span>
+              </Button>
+
+              <div className="flex items-center justify-between text-xs text-stone-400 pt-1">
+                <span>Tidak terima kod?</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  disabled={otpCooldown > 0 || isSendingOtp}
+                  onClick={() => handleRequestOtp(customerPhone)}
+                  className="text-xs text-orange-400 hover:text-orange-300 p-0 h-auto font-bold"
+                >
+                  {otpCooldown > 0 ? `Hantar semula (${otpCooldown}s)` : 'Hantar Semula OTP'}
+                </Button>
+              </div>
+
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setShowOtpModal(false)}
+                className="w-full text-xs text-stone-500 hover:text-stone-400 h-8"
+              >
+                Tutup
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       </main>
