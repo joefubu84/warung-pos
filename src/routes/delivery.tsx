@@ -45,7 +45,9 @@ import {
   LogIn,
   LogOut,
   UploadCloud,
-  FileText
+  FileText,
+  Bike,
+  Store
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createToyyibPayCheckout } from '@/lib/toyyibpay';
@@ -396,7 +398,58 @@ function calculateHaversineKm(lat1: number, lon1: number, lat2: number, lon2: nu
   return Math.round(R * c * 100) / 100;
 }
 
+const IS_DELIVERY_ENABLED = false;
+
 function CustomerDeliveryPage() {
+  if (!IS_DELIVERY_ENABLED) {
+    return (
+      <div className="min-h-screen bg-[#1c1917] text-stone-100 flex flex-col items-center justify-center p-4 sm:p-6 text-center">
+        <div className="max-w-md w-full bg-[#292524] border border-stone-800 p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6">
+          <div className="w-20 h-20 bg-orange-500/10 border-2 border-orange-500/30 rounded-3xl flex items-center justify-center mx-auto text-orange-400">
+            <Bike className="w-10 h-10 animate-pulse" />
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              Delivery Ditutup Buat Sementara Waktu
+            </h1>
+            <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
+              Perkhidmatan pesanan online & penghantaran Warung JNJ sedang menjalani penyelarasan sistem dan ditutup buat sementara waktu.
+            </p>
+          </div>
+
+          <div className="bg-stone-900/90 border border-stone-800 p-4 rounded-2xl text-xs text-stone-300 space-y-1.5 text-left">
+            <p className="font-bold text-orange-400 flex items-center gap-1.5">
+              <Store className="w-4 h-4" /> Pesanan Dine-in / Bungkus:
+            </p>
+            <p className="text-stone-400 text-[11px] leading-relaxed">
+              Warung JNJ dibuka seperti biasa untuk pesanan makan di restoran atau bungkus (*takeaway*). Sila kunjungi cawangan kami di Penampang.
+            </p>
+          </div>
+
+          <div className="space-y-2.5 pt-1">
+            <Button
+              onClick={() => window.open('https://wa.me/60172221784?text=Halo%20Warung%20JNJ,%20saya%20ingin%20bertanya%20mengenai%20pesanan.', '_blank')}
+              className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl shadow-lg flex items-center justify-center gap-2 text-xs sm:text-sm active:scale-95 transition-all"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>Hubungi WhatsApp Warung (017-2221784)</span>
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => window.location.href = '/'}
+              className="w-full h-11 border-stone-700 bg-stone-800/80 hover:bg-stone-800 text-stone-300 font-bold rounded-2xl text-xs flex items-center justify-center gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Kembali ke Laman Utama</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
