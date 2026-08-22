@@ -84,6 +84,7 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
   const routePolylineInnerRef = useRef<L.Polyline | null>(null);
   const zoneCircleRef = useRef<L.Circle | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const isInternalUpdateRef = useRef<boolean>(false);
 
   const [mapViewMode, setMapViewMode] = useState<'streets' | 'satellite'>('satellite');
   const [isMapMoving, setIsMapMoving] = useState(false);
@@ -254,8 +255,9 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
               return;
             }
             const addr = await reverseGeocode(center.lat, center.lng);
+            isInternalUpdateRef.current = true;
             onDestinationChange(center.lat, center.lng, addr);
-          }, 350);
+          }, 300);
         });
 
         map.on('click', async (e: L.LeafletMouseEvent) => {
@@ -396,18 +398,20 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
           lineJoin: 'round'
         }).addTo(map);
 
-        // Auto Fit bounds to show the complete road route with comfortable padding
-        const bounds = L.latLngBounds(polylinePoints);
-        bounds.extend([startLat, startLng]);
-        bounds.extend([endLat, endLng]);
-        map.fitBounds(bounds, { padding: [35, 35], maxZoom: 15 });
+        // Auto Fit bounds to show the complete road route ONLY in read-only mode (not during user dragging)
+        if (!interactive) {
+          const bounds = L.latLngBounds(polylinePoints);
+          bounds.extend([startLat, startLng]);
+          bounds.extend([endLat, endLng]);
+          map.fitBounds(bounds, { padding: [35, 35], maxZoom: 15 });
+        }
       }
     } catch (err) {
       console.warn('Road routing fetch error:', err);
     } finally {
       setIsLoadingRoute(false);
     }
-  }, [onRouteCalculated]);
+  }, [onRouteCalculated, interactive]);
 
   // Update Markers & Zone Circle when coordinates change
   useEffect(() => {
@@ -448,11 +452,14 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
     // 3. Destination Marker (Customer)
     if (destination && destination.lat && destination.lng) {
       if (interactive) {
-        // If interactive center pin mode, gently pan map if coordinate changed from dropdown
-        if (!isMapMoving) {
+        // If this update was triggered internally by user dragging the map, DO NOT panTo or move map!
+        if (isInternalUpdateRef.current) {
+          isInternalUpdateRef.current = false;
+        } else {
+          // Triggered externally (e.g. user selected suggestion or GPS detection), gently pan to it
           const center = map.getCenter();
           const dist = calculateStraightKm(center.lat, center.lng, destination.lat, destination.lng);
-          if (dist > 0.05) {
+          if (dist > 0.02) {
             map.panTo([destination.lat, destination.lng], { animate: true, duration: 0.6 });
           }
         }
