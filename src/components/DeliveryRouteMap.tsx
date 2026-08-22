@@ -13,7 +13,8 @@ import {
   Clock,
   CheckCircle2,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -82,7 +83,9 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
   const routePolylineOuterRef = useRef<L.Polyline | null>(null);
   const routePolylineInnerRef = useRef<L.Polyline | null>(null);
   const zoneCircleRef = useRef<L.Circle | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
 
+  const [mapViewMode, setMapViewMode] = useState<'streets' | 'satellite'>('satellite');
   const [routeDistance, setRouteDistance] = useState<number | null>(null);
   const [routeDuration, setRouteDuration] = useState<number | null>(null);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
@@ -200,14 +203,15 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
         attributionControl: false,
       });
 
-      // Google Maps Tiles with Full Shop Names, Landmarks, Taman & Building Details
-      L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+      // Initialize Google Hybrid Satellite (with sharp road names & POI overlay)
+      const initialLayer = L.tileLayer('https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
         maxZoom: 20,
         minZoom: 10,
         subdomains: ['0', '1', '2', '3'],
         bounds: sabahBounds
       }).addTo(map);
 
+      tileLayerRef.current = initialLayer;
       mapInstanceRef.current = map;
 
       // Handle map clicks if interactive with Sabah boundary validation
@@ -231,6 +235,35 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
       }
     };
   }, []);
+
+  // Dynamically switch between Google Satellite (Hybrid) and Google Road Maps
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    
+    if (tileLayerRef.current) {
+      mapInstanceRef.current.removeLayer(tileLayerRef.current);
+    }
+
+    const sabahBounds = L.latLngBounds(
+      L.latLng(SABAH_BOUNDS_COORDS.minLat, SABAH_BOUNDS_COORDS.minLng),
+      L.latLng(SABAH_BOUNDS_COORDS.maxLat, SABAH_BOUNDS_COORDS.maxLng)
+    );
+
+    // lyrs=y: Google Hybrid Satellite (Real photographic satellite imagery with road & business labels)
+    // lyrs=m: Google Standard Road Map
+    const tileUrl = mapViewMode === 'satellite'
+      ? 'https://mt{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}'
+      : 'https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
+
+    const newLayer = L.tileLayer(tileUrl, {
+      maxZoom: 20,
+      minZoom: 10,
+      subdomains: ['0', '1', '2', '3'],
+      bounds: sabahBounds
+    }).addTo(mapInstanceRef.current);
+
+    tileLayerRef.current = newLayer;
+  }, [mapViewMode]);
 
   // Fetch Real Road Route from OSRM
   const fetchRoadRoute = useCallback(async (
@@ -503,6 +536,23 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
 
         {/* CONTROLS */}
         <div className="flex items-center gap-1.5 pointer-events-auto">
+          {/* Satellite vs Street View Mode Switcher */}
+          <Button
+            size="sm"
+            variant="ghost"
+            type="button"
+            onClick={() => setMapViewMode(prev => prev === 'satellite' ? 'streets' : 'satellite')}
+            className={`h-8 px-2.5 rounded-xl border font-bold font-mono text-xs shadow-lg flex items-center gap-1.5 transition-all ${
+              mapViewMode === 'satellite'
+                ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 hover:bg-amber-500/30'
+                : 'bg-slate-900/90 border-slate-700 text-sky-300 hover:bg-slate-800'
+            }`}
+            title="Tukar Paparan Satelit / Peta Standard"
+          >
+            <Layers className="w-3.5 h-3.5" />
+            <span>{mapViewMode === 'satellite' ? 'Satelit 🛰️' : 'Peta 🗺️'}</span>
+          </Button>
+
           <Button
             size="icon"
             variant="ghost"
