@@ -86,6 +86,7 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
   const tileLayerRef = useRef<L.TileLayer | null>(null);
 
   const [mapViewMode, setMapViewMode] = useState<'streets' | 'satellite'>('satellite');
+  const [isMapMoving, setIsMapMoving] = useState(false);
   const [routeDistance, setRouteDistance] = useState<number | null>(null);
   const [routeDuration, setRouteDuration] = useState<number | null>(null);
   const [isLoadingRoute, setIsLoadingRoute] = useState(false);
@@ -234,16 +235,36 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
       tileLayerRef.current = initialLayer;
       mapInstanceRef.current = map;
 
-      // Handle map clicks if interactive with Sabah boundary validation
+      // Mobile-friendly Center Pin Map Dragging (Grab / Google Maps style)
       if (interactive && onDestinationChange) {
+        let debounceTimer: any = null;
+
+        map.on('movestart', () => {
+          setIsMapMoving(true);
+        });
+
+        map.on('moveend', () => {
+          setIsMapMoving(false);
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(async () => {
+            if (!mapInstanceRef.current) return;
+            const center = mapInstanceRef.current.getCenter();
+            if (!isWithinSabah(center.lat, center.lng)) {
+              toast.error('Sila gerakkan peta ke dalam kawasan Sabah / Penampang.');
+              return;
+            }
+            const addr = await reverseGeocode(center.lat, center.lng);
+            onDestinationChange(center.lat, center.lng, addr);
+          }, 350);
+        });
+
         map.on('click', async (e: L.LeafletMouseEvent) => {
           const { lat, lng } = e.latlng;
           if (!isWithinSabah(lat, lng)) {
             toast.error('Sila pilih lokasi di dalam kawasan Sabah / Penampang.');
             return;
           }
-          const addr = await reverseGeocode(lat, lng);
-          onDestinationChange(lat, lng, addr);
+          map.panTo([lat, lng], { animate: true, duration: 0.5 });
         });
       }
     }
@@ -426,41 +447,38 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
 
     // 3. Destination Marker (Customer)
     if (destination && destination.lat && destination.lng) {
-      if (!destMarkerRef.current) {
-        destMarkerRef.current = L.marker([destination.lat, destination.lng], {
-          icon: createDestIcon(interactive),
-          draggable: interactive
-        }).addTo(map);
-
-        if (interactive) {
-          destMarkerRef.current.on('dragend', async (e) => {
-            const marker = e.target;
-            const pos = marker.getLatLng();
-            if (!isWithinSabah(pos.lat, pos.lng)) {
-              toast.error('Lokasi di luar kawasan penghantaran. Pin dikembalikan ke zon Sabah.');
-              marker.setLatLng([origin.lat, origin.lng]);
-              if (onDestinationChange) {
-                onDestinationChange(origin.lat, origin.lng, origin.title || 'Warung J&J');
-              }
-              return;
-            }
-            const addr = await reverseGeocode(pos.lat, pos.lng);
-            if (onDestinationChange) {
-              onDestinationChange(pos.lat, pos.lng, addr);
-            }
-          });
+      if (interactive) {
+        // If interactive center pin mode, gently pan map if coordinate changed from dropdown
+        if (!isMapMoving) {
+          const center = map.getCenter();
+          const dist = calculateStraightKm(center.lat, center.lng, destination.lat, destination.lng);
+          if (dist > 0.05) {
+            map.panTo([destination.lat, destination.lng], { animate: true, duration: 0.6 });
+          }
+        }
+        // Remove static Leaflet marker so only the mobile-friendly floating center pin is active
+        if (destMarkerRef.current) {
+          destMarkerRef.current.remove();
+          destMarkerRef.current = null;
         }
       } else {
-        destMarkerRef.current.setLatLng([destination.lat, destination.lng]);
-        destMarkerRef.current.setIcon(createDestIcon(interactive));
-      }
+        // In read-only mode (rider/tracking), show the static destination marker
+        if (!destMarkerRef.current) {
+          destMarkerRef.current = L.marker([destination.lat, destination.lng], {
+            icon: createDestIcon(false),
+            draggable: false
+          }).addTo(map);
+        } else {
+          destMarkerRef.current.setLatLng([destination.lat, destination.lng]);
+        }
 
-      destMarkerRef.current.bindPopup(`
-        <div style="font-family: inherit; font-size: 11px; padding: 2px;">
-          <strong style="color: #10b981; display: block; font-size: 12px;">📍 Lokasi Penghantaran</strong>
-          <span style="color: #cbd5e1;">${destination.address || 'Alamat Pelanggan'}</span>
-        </div>
-      `);
+        destMarkerRef.current.bindPopup(`
+          <div style="font-family: inherit; font-size: 11px; padding: 2px;">
+            <strong style="color: #10b981; display: block; font-size: 12px;">📍 Lokasi Penghantaran</strong>
+            <span style="color: #cbd5e1;">${destination.address || 'Alamat Pelanggan'}</span>
+          </div>
+        `);
+      }
 
       // Calculate & Render Real Road Route
       fetchRoadRoute(origin.lat, origin.lng, destination.lat, destination.lng);
@@ -599,12 +617,50 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
         </div>
       </div>
 
+      {/* MOBILE-FRIENDLY FIXED CENTER PIN (GRAB / GOOGLE MAPS STYLE) */}
+      {interactive && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full pointer-events-none z-20 flex flex-col items-center select-none">
+          {/* FLOATING ADDRESS/HINT PILL */}
+          <div 
+            className={`mb-2 px-3 py-1 rounded-full text-[11px] font-mono font-bold whitespace-nowrap shadow-2xl transition-all duration-300 border backdrop-blur-md flex items-center gap-1.5 ${
+              isMapMoving
+                ? 'bg-amber-950/90 text-amber-300 border-amber-500/60 scale-105 -translate-y-2 shadow-[0_10px_25px_rgba(245,158,11,0.4)]'
+                : 'bg-slate-950/90 text-emerald-300 border-emerald-500/60 scale-100 translate-y-0 shadow-[0_10px_25px_rgba(16,185,129,0.3)]'
+            }`}
+          >
+            <MapPin className={`w-3.5 h-3.5 ${isMapMoving ? 'text-amber-400 animate-spin' : 'text-emerald-400'}`} />
+            <span className="max-w-[200px] truncate">
+              {isMapMoving ? 'Lepaskan untuk tetapkan lokasi...' : (destination?.address ? destination.address.split(',')[0] : 'Lokasi Terpilih 📍')}
+            </span>
+          </div>
+
+          {/* PIN BODY */}
+          <div 
+            className={`relative flex items-center justify-center transition-all duration-300 ${
+              isMapMoving ? '-translate-y-3 scale-110' : 'translate-y-0 scale-100'
+            }`}
+          >
+            <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-[0_8px_20px_rgba(0,0,0,0.6)]">
+              <MapPin className="w-6 h-6 fill-white text-emerald-600" />
+            </div>
+            {/* PIN NEEDLE POINT */}
+            <div className="absolute -bottom-2 w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-emerald-500" />
+          </div>
+
+          {/* GROUND TARGET SHADOW / PULSE RING */}
+          <div className="relative mt-2 flex items-center justify-center">
+            <div className={`w-4 h-2 bg-black/60 rounded-full blur-[1px] transition-all duration-300 ${isMapMoving ? 'scale-75 opacity-40' : 'scale-100 opacity-90'}`} />
+            <div className={`absolute w-7 h-7 rounded-full border border-emerald-400/60 transition-all ${isMapMoving ? 'scale-125 opacity-70 animate-ping' : 'scale-100 opacity-30'}`} />
+          </div>
+        </div>
+      )}
+
       {/* INTERACTIVE HINT BANNER */}
       {interactive && (
         <div className="absolute bottom-3 left-3 right-3 z-10 pointer-events-none flex items-center justify-between gap-2">
           <div className="bg-slate-950/90 backdrop-blur-md border border-emerald-500/40 px-3 py-1.5 rounded-xl shadow-lg pointer-events-auto flex items-center gap-2 text-[11px] text-emerald-300 font-mono">
             <MapPin className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
-            <span>Klik peta atau tarik pin hijau untuk ubah lokasi penghantaran</span>
+            <span>Gerakkan peta untuk tepatkan pin lokasi penghantaran 📍</span>
           </div>
         </div>
       )}
