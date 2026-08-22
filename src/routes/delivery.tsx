@@ -80,7 +80,7 @@ const WARUNG_LAT = 5.9284138;
 const WARUNG_LNG = 116.1145036;
 
 const LOCAL_SABAH_LANDMARKS = [
-  // Likas / Teluk Likas / Tuaran Road
+  // Likas & Teluk Likas / Tuaran Road
   { name: 'Walai Good Shepherd, Likas', lat: 5.9865, lng: 116.1030, desc: 'Batu 3.5, Jalan Tuaran, Likas' },
   { name: 'Good Shepherd Services Sabah', lat: 5.9865, lng: 116.1030, desc: 'Jalan Tuaran, Likas' },
   { name: 'St. Simon Catholic Church, Likas', lat: 5.9860, lng: 116.1035, desc: 'Jalan Tuaran, Likas' },
@@ -90,24 +90,37 @@ const LOCAL_SABAH_LANDMARKS = [
   { name: 'Wisma Wanita Sabah, Likas', lat: 5.9790, lng: 116.0950, desc: 'Likas, KK' },
   { name: 'Taman Likas Jaya / Likas Bay', lat: 5.9910, lng: 116.1020, desc: 'Likas, KK' },
   { name: 'Taman Antarabangsa, Likas', lat: 5.9880, lng: 116.1080, desc: 'Likas, KK' },
-  { name: 'Taman Seri Likas', lat: 5.9890, lng: 116.1050, desc: 'Likas, KK' },
+  { name: 'Taman Seri Likas / Likas Court', lat: 5.9890, lng: 116.1050, desc: 'Likas, KK' },
   { name: 'All Saints Secondary School / Likas Plaza', lat: 5.9780, lng: 116.0980, desc: 'Likas, KK' },
   { name: 'SJK(C) St. James Likas / SMK Likas', lat: 5.9850, lng: 116.0990, desc: 'Likas, KK' },
   { name: 'Masjid Bandaraya Kota Kinabalu (Masjid Terapung)', lat: 5.9960, lng: 116.0850, desc: 'Teluk Likas, KK' },
+  { name: 'Menara Tun Mustapha (Yayasan Sabah)', lat: 6.0160, lng: 116.1110, desc: 'Teluk Likas, KK' },
+  { name: 'Pusat Konvensyen Antarabangsa Sabah (SICC)', lat: 5.9920, lng: 116.0880, desc: 'Tanjung Lipat, Likas' },
 
   // Inanam, Kolombong & Menggatal
   { name: 'Inanam Taipan Commercial Centre', lat: 5.9920, lng: 116.1320, desc: 'Inanam, KK' },
   { name: 'Inanam Capital / Inanam Business Centre', lat: 5.9940, lng: 116.1350, desc: 'Inanam, KK' },
   { name: 'Pekan Inanam / Pasar Inanam', lat: 5.9910, lng: 116.1300, desc: 'Inanam, KK' },
   { name: 'Taman Nountun / Nountun Apartment', lat: 5.9890, lng: 116.1280, desc: 'Inanam, KK' },
+  { name: 'Taman Impian Inanam / Inanam Villa', lat: 5.9930, lng: 116.1360, desc: 'Inanam, KK' },
+  { name: 'Taman Kionsom / Air Terjun Kionsom', lat: 5.9870, lng: 116.1480, desc: 'Kionsom, Inanam' },
   { name: 'Kolombong BDC Industrial Estate', lat: 5.9810, lng: 116.1150, desc: 'Kolombong, KK' },
   { name: 'Metro Town Commercial Centre', lat: 5.9670, lng: 116.1080, desc: 'Jalan Kolombong / Lintas' },
   { name: 'City Mall Shopping Centre', lat: 5.9640, lng: 116.1020, desc: 'Jalan Lintas, Luyang' },
+  { name: 'Taman Khidmat / Taman Nelly', lat: 5.9610, lng: 116.1090, desc: 'Kolombong / Luyang' },
+  { name: 'Taman Kolombong / Taman Bunga Raja', lat: 5.9790, lng: 116.1180, desc: 'Kolombong, KK' },
   { name: 'Menggatal Plaza / Pekan Menggatal', lat: 6.0220, lng: 116.1550, desc: 'Menggatal, KK' },
   { name: 'Universiti Malaysia Sabah (UMS)', lat: 6.0350, lng: 116.1200, desc: 'Teluk Likas / Sulaman' },
   { name: '1Borneo Hypermall & Prince Tower', lat: 6.0360, lng: 116.1280, desc: 'Jalan Sulaman, Menggatal' },
   { name: 'Alamesra Commercial Centre / Plaza Utama', lat: 6.0280, lng: 116.1240, desc: 'Jalan Sulaman, KK' },
   { name: 'Grand Merdeka Mall, Telipok', lat: 6.0730, lng: 116.1660, desc: 'Telipok, Menggatal' },
+  { name: 'Bandar Sierra Menggatal / Sierra Telipok', lat: 6.0620, lng: 116.1680, desc: 'Menggatal, KK' },
+  { name: 'University Apartment (UA 1 & UA 2)', lat: 6.0420, lng: 116.1340, desc: 'Jalan Sulaman, Menggatal' },
+  { name: 'University Condominium Pelangi (UCP)', lat: 6.0390, lng: 116.1380, desc: 'Jalan Sulaman, Menggatal' },
+  { name: 'Taman Indah Permai (IP Menggatal)', lat: 6.0490, lng: 116.1450, desc: 'Menggatal, KK' },
+  { name: 'Taman Bukit Sepangar / Sepanggar Bay', lat: 6.0520, lng: 116.1380, desc: 'Sepanggar, KK' },
+  { name: 'Politeknik Kota Kinabalu (PKK)', lat: 6.0680, lng: 116.1450, desc: 'Sepanggar, KK' },
+  { name: 'Taman Kingfisher Sulaman / Kingfisher UMS', lat: 6.0210, lng: 116.1290, desc: 'Kuala Menggatal' },
 
   // Penampang Core / Donggongon
   { name: 'Taman Liana Phase 2, Penampang', lat: 5.9141659, lng: 116.085516, desc: 'Donggongon / Penampang' },
@@ -119,23 +132,35 @@ const LOCAL_SABAH_LANDMARKS = [
   { name: 'Taman Penampang Phase 1 & 2', lat: 5.9260, lng: 116.0980, desc: 'Penampang' },
   { name: 'Taman Suria Penampang', lat: 5.9270, lng: 116.1010, desc: 'Penampang' },
   { name: 'Taman Towering, Penampang', lat: 5.9370, lng: 116.0950, desc: 'Penampang' },
-  { name: 'Taman Kasigui / Kasigui 3', lat: 5.8990, lng: 116.1150, desc: 'Penampang' },
+  { name: 'Taman Kasigui / Kasigui 1, 2, 3', lat: 5.8990, lng: 116.1150, desc: 'Penampang' },
   { name: 'Taman Nosoob Jaya / Nosoob Baru', lat: 5.9310, lng: 116.0810, desc: 'Penampang' },
+  { name: 'Ibu Pejabat Polis Daerah (IPD) Penampang', lat: 5.9140, lng: 116.1080, desc: 'Donggongon, Penampang' },
+  { name: 'Majlis Daerah Penampang (MDP)', lat: 5.9070, lng: 116.1020, desc: 'Donggongon, Penampang' },
+  { name: 'Monsopiad Heritage Village', lat: 5.8980, lng: 116.0950, desc: 'Kuai Kandazon, Penampang' },
+  { name: 'Kampung Terawi / Terawi Church', lat: 5.8920, lng: 116.0850, desc: 'Terawi, Penampang' },
+  { name: 'Taman Putera Jaya / Taman Sahabat', lat: 5.9180, lng: 116.0920, desc: 'Penampang' },
+  { name: 'Taman Dabak / Kampung Dabak', lat: 5.9060, lng: 116.0980, desc: 'Penampang' },
+  { name: 'Taman Mahandoi / Kampung Mahandoi', lat: 5.8890, lng: 116.0890, desc: 'Penampang' },
 
   // Kobusak / Pintas
   { name: 'ITCC Shopping Mall & Manhattan Suites', lat: 5.9225, lng: 116.0915, desc: 'Jalan Pintas Penampang' },
   { name: 'Plaza 333, Kobusak', lat: 5.9320, lng: 116.0880, desc: 'Jalan Pintas Penampang' },
   { name: 'Grand Millennium Plaza, Penampang', lat: 5.9340, lng: 116.0890, desc: 'Kobusak, Penampang' },
   { name: 'Pintas Avenue Commercial', lat: 5.9360, lng: 116.0830, desc: 'Jalan Pintas, Penampang' },
-  { name: 'Taman Kobusak Villa', lat: 5.9315, lng: 116.0850, desc: 'Kobusak, Penampang' },
+  { name: 'Taman Kobusak Villa / Kobusak Point', lat: 5.9315, lng: 116.0850, desc: 'Kobusak, Penampang' },
+  { name: 'Taman Millenium / Millenium Height', lat: 5.9350, lng: 116.0910, desc: 'Kobusak, Penampang' },
 
-  // Bundusan / Beverly
+  // Bundusan / Beverly Hills
   { name: 'Bundusan Commercial Centre', lat: 5.9450, lng: 116.1080, desc: 'Jalan Bundusan, Penampang' },
   { name: 'Beverly Hills Apartment Phase 1-5', lat: 5.9480, lng: 116.1110, desc: 'Bundusan, Penampang' },
   { name: 'Pavilion Bundusan / T1 Bundusan', lat: 5.9430, lng: 116.1050, desc: 'Bundusan, Penampang' },
-  { name: 'Taman Bundusan', lat: 5.9460, lng: 116.1070, desc: 'Bundusan, Penampang' },
-  { name: 'Taman Formosa / Bundusan Villa', lat: 5.9470, lng: 116.1020, desc: 'Bundusan, Penampang' },
+  { name: 'Taman Bundusan / Bundusan Villa', lat: 5.9460, lng: 116.1070, desc: 'Bundusan, Penampang' },
+  { name: 'Taman Formosa / Bundusan Commercial', lat: 5.9470, lng: 116.1020, desc: 'Bundusan, Penampang' },
   { name: 'Taman Permai, Bundusan', lat: 5.9490, lng: 116.1090, desc: 'Bundusan, Penampang' },
+  { name: 'Servay Hypermarket Bundusan', lat: 5.9440, lng: 116.1060, desc: 'Jalan Bundusan, Penampang' },
+  { name: 'Bataras Bundusan / McDonald Bundusan', lat: 5.9450, lng: 116.1075, desc: 'Bundusan, Penampang' },
+  { name: 'Sabah Golf & Country Club (SGCC)', lat: 5.9520, lng: 116.1020, desc: 'Bukit Padang, KK' },
+  { name: 'Taman Khidmat Bukit Padang', lat: 5.9580, lng: 116.1050, desc: 'Bukit Padang, Luyang' },
 
   // Kepayan / Austral / Ridge
   { name: 'Taman Kepayan Ridge', lat: 5.9412, lng: 116.0715, desc: 'Kepayan / KK' },
@@ -143,19 +168,24 @@ const LOCAL_SABAH_LANDMARKS = [
   { name: 'Kepayan Ridge Low Cost / Rumah Pangsa', lat: 5.9395, lng: 116.0730, desc: 'Kepayan, KK' },
   { name: 'Taman Ridgeview, Kepayan', lat: 5.9430, lng: 116.0740, desc: 'Kepayan, KK' },
   { name: 'Austral Park, Kepayan', lat: 5.9380, lng: 116.0720, desc: 'Kepayan / KK' },
-  { name: 'Taman Sri Kepayan', lat: 5.9350, lng: 116.0690, desc: 'Kepayan' },
-  { name: 'Taman Ganang, Kepayan', lat: 5.9290, lng: 116.0680, desc: 'Kepayan / Penampang' },
+  { name: 'Taman Sri Kepayan / Kepayan Point', lat: 5.9350, lng: 116.0690, desc: 'Kepayan' },
+  { name: 'Taman Ganang, Kepayan / Ganang Villa', lat: 5.9290, lng: 116.0680, desc: 'Kepayan / Penampang' },
   { name: 'Cyber City Apartment Phase 1', lat: 5.9210, lng: 116.0790, desc: 'Kepayan / Penampang' },
   { name: 'Cyber City Apartment Phase 2', lat: 5.9230, lng: 116.0810, desc: 'Kepayan / Penampang' },
   { name: 'Queen Elizabeth Hospital (QEH 1)', lat: 5.9540, lng: 116.0710, desc: 'Jalan Penampang, Kepayan' },
+  { name: 'IPK Sabah (Ibu Pejabat Polis Kontinjen)', lat: 5.9410, lng: 116.0650, desc: 'Kepayan, KK' },
+  { name: 'KKIA Terminal 1 (Lapangan Terbang KK)', lat: 5.9370, lng: 116.0510, desc: 'Kepayan / Tanjung Aru' },
 
-  // Putatan / Petagas
+  // Putatan, Petagas & Kinarut
   { name: 'Putatan Platinum Apartment', lat: 5.8950, lng: 116.0550, desc: 'Putatan' },
   { name: 'Pekan Putatan / Servay Putatan', lat: 5.8920, lng: 116.0520, desc: 'Putatan' },
-  { name: 'Petagas / Lembaga Padi', lat: 5.9080, lng: 116.0560, desc: 'Petagas' },
+  { name: 'Petagas / Lembaga Padi / Taman Jumbo', lat: 5.9080, lng: 116.0560, desc: 'Petagas, Putatan' },
   { name: 'Taman Bersatu, Putatan', lat: 5.8910, lng: 116.0580, desc: 'Putatan' },
   { name: 'Taman Pasir Putih, Putatan', lat: 5.8880, lng: 116.0490, desc: 'Putatan' },
-  { name: 'Pekan Kinarut / Palm Square', lat: 5.8210, lng: 116.0380, desc: 'Kinarut, Papar' },
+  { name: 'Taman Sri Keramat, Putatan', lat: 5.8960, lng: 116.0530, desc: 'Putatan' },
+  { name: 'Bukit Vor Villa, Putatan', lat: 5.8810, lng: 116.0480, desc: 'Putatan' },
+  { name: 'Pekan Kinarut / Palm Square Kinarut', lat: 5.8210, lng: 116.0380, desc: 'Kinarut, Papar' },
+  { name: 'Lok Kawi Wildlife Park', lat: 5.8510, lng: 116.0750, desc: 'Lok Kawi, Kinarut' },
 
   // Luyang / Lido / Foh Sang / Damai
   { name: 'Lido Market / Lido Plaza', lat: 5.9480, lng: 116.0820, desc: 'Luyang, KK' },
@@ -163,20 +193,26 @@ const LOCAL_SABAH_LANDMARKS = [
   { name: 'Taman Foh Sang / Taman Golden City', lat: 5.9540, lng: 116.0890, desc: 'Luyang, KK' },
   { name: 'Taman Bornion / Taman Hilltop', lat: 5.9510, lng: 116.0930, desc: 'Luyang, KK' },
   { name: 'Taman Cantek, Lido', lat: 5.9440, lng: 116.0790, desc: 'Lido / Luyang' },
-  { name: 'Heritage Plaza / Lintas Plaza', lat: 5.9580, lng: 116.0880, desc: 'Lintas, Luyang' },
+  { name: 'Heritage Plaza / Lintas Plaza / Lintas Square', lat: 5.9580, lng: 116.0880, desc: 'Lintas, Luyang' },
   { name: 'Queen Elizabeth Hospital II (QEH 2)', lat: 5.9680, lng: 116.0920, desc: 'Damai, Luyang, KK' },
   { name: 'KPJ Sabah Specialist Hospital', lat: 5.9660, lng: 116.0910, desc: 'Damai, Luyang, KK' },
+  { name: 'Damai Plaza Phase 1-4 / Damai Point', lat: 5.9670, lng: 116.0930, desc: 'Damai, Luyang' },
+  { name: 'Taman Friendly / Taman Foo Loong', lat: 5.9590, lng: 116.0920, desc: 'Luyang, KK' },
+  { name: 'Klinik Kesihatan Luyang', lat: 5.9560, lng: 116.0870, desc: 'Luyang, KK' },
 
   // KK City & Tanjung Aru
   { name: 'Aeropod Commercial Square & SOVO', lat: 5.9470, lng: 116.0610, desc: 'Tanjung Aru, KK' },
-  { name: 'Tanjung Aru Plaza & Pantai', lat: 5.9520, lng: 116.0540, desc: 'Tanjung Aru' },
+  { name: 'Tanjung Aru Plaza & Pantai 1, 2, 3', lat: 5.9520, lng: 116.0540, desc: 'Tanjung Aru' },
   { name: 'Imago Shopping Mall & The Loft', lat: 5.9710, lng: 116.0670, desc: 'KK Times Square' },
   { name: 'Gleneagles Hospital Kota Kinabalu', lat: 5.9690, lng: 116.0640, desc: 'Riverson, KK' },
   { name: 'Centre Point Sabah / Api-Api Centre', lat: 5.9790, lng: 116.0720, desc: 'KK Bandar' },
   { name: 'Suria Sabah Shopping Mall', lat: 5.9860, lng: 116.0770, desc: 'Pusat Bandar KK' },
   { name: 'Gaya Street / Pasar Tamu Gaya', lat: 5.9860, lng: 116.0770, desc: 'Kota Kinabalu' },
+  { name: 'Wisma Merdeka / Segama Commercial', lat: 5.9840, lng: 116.0750, desc: 'Pusat Bandar KK' },
   { name: 'Karamunsing Complex / Capital', lat: 5.9710, lng: 116.0770, desc: 'Karamunsing, KK' },
-  { name: 'Sutera Harbour Resort & Marina', lat: 5.9640, lng: 116.0590, desc: 'Sutera Harbour, KK' },
+  { name: 'Sutera Harbour Resort & Magellan', lat: 5.9640, lng: 116.0590, desc: 'Sutera Harbour, KK' },
+  { name: 'Jesselton Point Ferry Terminal', lat: 5.9910, lng: 116.0790, desc: 'Jesselton, KK' },
+  { name: 'Pasar Kraftangan / Pasar Filipina', lat: 5.9810, lng: 116.0720, desc: 'KK Waterfront' },
 ];
 
 // Clean search string by stripping house/lot number prefixes
