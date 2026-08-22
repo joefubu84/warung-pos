@@ -1493,12 +1493,13 @@ function CustomerDeliveryPage() {
           </div>
         )}
 
-        {/* DISH CUSTOMIZATION MODAL (REUSED FROM TABLE QR MODAL) */}
+        {/* DISH CUSTOMIZATION MODAL (DELIVERY & SELF-PICKUP MODE) */}
         <DishCustomizationModal
           isOpen={!!customizingItem}
           onClose={() => setCustomizingItem(null)}
           onAddToCart={handleAddToCartCustomized}
           menuItem={customizingItem}
+          mode="delivery"
         />
 
         {/* CART DRAWER DIALOG */}

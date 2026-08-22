@@ -30,7 +30,7 @@ export interface CustomizedCartItem {
   basePrice: number;
   finalPrice: number;
   quantity: number;
-  fulfillmentType: 'dine_in' | 'takeaway';
+  fulfillmentType: 'dine_in' | 'takeaway' | 'delivery' | 'self_pickup';
   spiceLevel: 'Mild' | 'Medium' | 'Hot';
   selectedAddons: { name: string; price: number }[];
   specialInstructions: string;
@@ -38,7 +38,7 @@ export interface CustomizedCartItem {
   notes: string;
 }
 
-interface DishCustomizationModalProps {
+export interface DishCustomizationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onAddToCart: (customizedItem: CustomizedCartItem) => void;
@@ -50,6 +50,7 @@ interface DishCustomizationModalProps {
     image_url: string | null;
     description?: string;
   } | null;
+  mode?: 'delivery' | 'dine_in' | 'table';
 }
 
 export const SPICE_LEVELS = [
@@ -58,9 +59,12 @@ export const SPICE_LEVELS = [
   { id: 'Hot', label: 'Hot 🌶️🌶️', icon: '🔥' },
 ];
 
-export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem }: DishCustomizationModalProps) {
+export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem, mode = 'dine_in' }: DishCustomizationModalProps) {
+  const isDeliveryMode = mode === 'delivery';
   const [spiceLevel, setSpiceLevel] = useState<'Mild' | 'Medium' | 'Hot'>('Medium');
-  const [fulfillmentType, setFulfillmentType] = useState<'dine_in' | 'takeaway'>('dine_in');
+  const [fulfillmentType, setFulfillmentType] = useState<'dine_in' | 'takeaway' | 'delivery' | 'self_pickup'>(
+    isDeliveryMode ? 'delivery' : 'dine_in'
+  );
   const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
   const [specialInstructions, setSpecialInstructions] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
@@ -76,13 +80,13 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
   useEffect(() => {
     if (isOpen) {
       setSpiceLevel('Medium');
-      setFulfillmentType('dine_in');
+      setFulfillmentType(isDeliveryMode ? 'delivery' : 'dine_in');
       setSelectedAddonIds([]);
       setSpecialInstructions('');
       setQuantity(1);
       setPlateNotes(['']);
     }
-  }, [isOpen, menuItem]);
+  }, [isOpen, menuItem, isDeliveryMode]);
 
   const updateQuantityClamped = (newQty: number) => {
     const clamped = Math.max(1, newQty);
@@ -144,7 +148,11 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
     });
 
     const notesSummaryParts: string[] = [];
-    if (fulfillmentType === 'takeaway') {
+    if (fulfillmentType === 'delivery') {
+      notesSummaryParts.push('DELIVERY (Penghantaran 🛵)');
+    } else if (fulfillmentType === 'self_pickup') {
+      notesSummaryParts.push('SELF PICKUP (Ambil Sendiri 🛍️)');
+    } else if (fulfillmentType === 'takeaway') {
       notesSummaryParts.push('TAKEAWAY (Bungkus 🥡)');
     } else {
       notesSummaryParts.push('DINE IN (Makan Sini 🍽️)');
@@ -155,7 +163,7 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
     }
 
     if (quantity > 1) {
-      const specifiedPlates = plateNotes.map((n, i) => `Pinggan #${i+1}: ${n || 'Standard'}`).join(' | ');
+      const specifiedPlates = plateNotes.map((n, i) => `Pek #${i+1}: ${n || 'Standard'}`).join(' | ');
       notesSummaryParts.push(specifiedPlates);
     } else if (specialInstructions.trim()) {
       notesSummaryParts.push(`Nota: "${specialInstructions.trim()}"`);
@@ -198,13 +206,6 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
             </div>
           )}
 
-          <button
-            onClick={onClose}
-            className="absolute top-3 right-3 p-2 bg-slate-950/80 hover:bg-slate-950 text-slate-300 rounded-full border border-slate-800 transition-colors shadow-lg"
-          >
-            <X className="w-4 h-4" />
-          </button>
-
           <div className="absolute bottom-3 left-3 bg-slate-950/90 border border-emerald-500/30 px-3 py-1 rounded-full text-emerald-400 font-mono font-bold text-xs shadow-md">
             RM {basePrice.toFixed(2)}
           </div>
@@ -224,38 +225,67 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem 
             )}
           </div>
 
-          {/* 1. FULFILLMENT TYPE SELECTOR (Dine In vs Takeaway) */}
+          {/* 1. FULFILLMENT TYPE SELECTOR */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center justify-between">
               <span>1. Jenis Pesanan</span>
               <span className="text-[10px] text-emerald-400 font-normal">Pilih Satu</span>
             </label>
-            <div className="grid grid-cols-2 gap-2 font-mono">
-              <button
-                type="button"
-                onClick={() => setFulfillmentType('dine_in')}
-                className={`p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 ${
-                  fulfillmentType === 'dine_in'
-                    ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 ring-1 ring-emerald-400 shadow-md scale-[1.02]'
-                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
-                }`}
-              >
-                <span className="text-lg">🍽️</span>
-                <span>Dine In (Makan Sini)</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setFulfillmentType('takeaway')}
-                className={`p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 ${
-                  fulfillmentType === 'takeaway'
-                    ? 'bg-amber-500/20 border-amber-400 text-amber-300 ring-1 ring-amber-400 shadow-md scale-[1.02]'
-                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
-                }`}
-              >
-                <span className="text-lg">🥡</span>
-                <span>Takeaway (Bungkus)</span>
-              </button>
-            </div>
+            {isDeliveryMode ? (
+              <div className="grid grid-cols-2 gap-2 font-mono">
+                <button
+                  type="button"
+                  onClick={() => setFulfillmentType('delivery')}
+                  className={`p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 ${
+                    fulfillmentType === 'delivery'
+                      ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 ring-1 ring-emerald-400 shadow-md scale-[1.02]'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span className="text-lg">🛵</span>
+                  <span>Penghantaran (Delivery)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFulfillmentType('self_pickup')}
+                  className={`p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 ${
+                    fulfillmentType === 'self_pickup'
+                      ? 'bg-amber-500/20 border-amber-400 text-amber-300 ring-1 ring-amber-400 shadow-md scale-[1.02]'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span className="text-lg">🛍️</span>
+                  <span>Ambil Sendiri (Self-Pickup)</span>
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 font-mono">
+                <button
+                  type="button"
+                  onClick={() => setFulfillmentType('dine_in')}
+                  className={`p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 ${
+                    fulfillmentType === 'dine_in'
+                      ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 ring-1 ring-emerald-400 shadow-md scale-[1.02]'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span className="text-lg">🍽️</span>
+                  <span>Dine In (Makan Sini)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFulfillmentType('takeaway')}
+                  className={`p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 ${
+                    fulfillmentType === 'takeaway'
+                      ? 'bg-amber-500/20 border-amber-400 text-amber-300 ring-1 ring-amber-400 shadow-md scale-[1.02]'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span className="text-lg">🥡</span>
+                  <span>Takeaway (Bungkus)</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* 2. SPICE LEVEL SELECTOR */}
