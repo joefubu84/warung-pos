@@ -51,6 +51,7 @@ export interface DishCustomizationModalProps {
     description?: string;
   } | null;
   mode?: 'delivery' | 'dine_in' | 'table';
+  isViewOnly?: boolean;
 }
 
 export const SPICE_LEVELS = [
@@ -59,7 +60,7 @@ export const SPICE_LEVELS = [
   { id: 'Hot', label: 'Hot 🌶️🌶️', icon: '🔥' },
 ];
 
-export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem, mode = 'dine_in' }: DishCustomizationModalProps) {
+export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem, mode = 'dine_in', isViewOnly = false }: DishCustomizationModalProps) {
   const isDeliveryMode = mode === 'delivery';
   const [spiceLevel, setSpiceLevel] = useState<'Mild' | 'Medium' | 'Hot'>('Medium');
   const [fulfillmentType, setFulfillmentType] = useState<'dine_in' | 'takeaway' | 'delivery' | 'self_pickup'>(
@@ -454,19 +455,34 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
             )}
           </div>
 
-          {/* ADD TO CART ACTION BUTTON */}
+          {/* ADD TO CART ACTION BUTTON OR VIEW ONLY NOTICE */}
           <div className="pt-2 border-t border-slate-800 flex flex-col gap-2 font-mono">
-            <Button
-              type="button"
-              onClick={handleConfirmAddToCart}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-xl flex items-center justify-between text-sm active:scale-98 transition-all"
-            >
-              <div className="flex items-center gap-2">
-                <ShoppingBag className="w-4 h-4" />
-                <span>Masukkan {quantity}x Hidangan ke Troli</span>
+            {isViewOnly ? (
+              <div className="space-y-2">
+                <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-center text-xs text-amber-300 font-medium">
+                  🍽️ Sila imbas Kod QR di atas meja anda atau pesan terus di kaunter Warung JNJ Penampang untuk menikmati hidangan ini!
+                </div>
+                <Button
+                  type="button"
+                  onClick={onClose}
+                  className="w-full bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold py-3 rounded-xl active:scale-98 transition-all"
+                >
+                  Tutup Paparan Menu
+                </Button>
               </div>
-              <span className="font-mono text-base font-black">RM {totalPrice.toFixed(2)}</span>
-            </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={handleConfirmAddToCart}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-xl flex items-center justify-between text-sm active:scale-98 transition-all"
+              >
+                <div className="flex items-center gap-2">
+                  <ShoppingBag className="w-4 h-4" />
+                  <span>Masukkan {quantity}x Hidangan ke Troli</span>
+                </div>
+                <span className="font-mono text-base font-black">RM {totalPrice.toFixed(2)}</span>
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>

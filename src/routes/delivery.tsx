@@ -401,58 +401,6 @@ function calculateHaversineKm(lat1: number, lon1: number, lat2: number, lon2: nu
 const IS_DELIVERY_ENABLED = false;
 
 function CustomerDeliveryPage() {
-  if (!IS_DELIVERY_ENABLED) {
-    return (
-      <div className="min-h-screen bg-[#1c1917] text-stone-100 flex flex-col items-center justify-center p-4 sm:p-6 text-center">
-        <div className="max-w-md w-full bg-[#292524] border border-stone-800 p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6">
-          <div className="w-20 h-20 bg-orange-500/10 border-2 border-orange-500/30 rounded-3xl flex items-center justify-center mx-auto text-orange-400">
-            <Bike className="w-10 h-10 animate-pulse" />
-          </div>
-
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold">
-              <span>🔴 Delivery & Online Order Ditutup</span>
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-              Pesanan Online Ditutup Buat Masa Sekarang
-            </h1>
-            <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-              Buat masa sekarang, perkhidmatan <b>Delivery & Order Online ditutup</b>. Warung JNJ <b>hanya menerima pesanan dari Meja (Imbas QR Meja) dan Kaunter</b> sahaja.
-            </p>
-          </div>
-
-          <div className="bg-stone-900/90 border border-stone-800 p-4 rounded-2xl text-xs text-stone-300 space-y-2 text-left">
-            <p className="font-bold text-emerald-400 flex items-center gap-1.5 text-xs">
-              <Store className="w-4 h-4" /> Cara Membuat Pesanan di Warung JNJ:
-            </p>
-            <ul className="text-stone-300 text-xs space-y-1.5 list-disc list-inside leading-relaxed">
-              <li><b>Makan di Meja (Dine-in):</b> Sila imbas pelekat Kod QR di atas meja anda.</li>
-              <li><b>Pesanan di Kaunter:</b> Buat pesanan & bayaran terus di kaunter juruwang.</li>
-            </ul>
-          </div>
-
-          <div className="space-y-2.5 pt-1">
-            <Button
-              onClick={() => window.location.href = '/#location'}
-              className="w-full h-12 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-2xl shadow-lg flex items-center justify-center gap-2 text-xs sm:text-sm active:scale-95 transition-all"
-            >
-              <MapPin className="w-4 h-4" />
-              <span>📍 Lihat Lokasi Warung JNJ Penampang</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => window.location.href = '/'}
-              className="w-full h-11 border-stone-700 bg-stone-800/80 hover:bg-stone-800 text-stone-300 font-bold rounded-2xl text-xs flex items-center justify-center gap-2"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Kembali ke Laman Utama</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
@@ -1448,367 +1396,49 @@ function CustomerDeliveryPage() {
               </div>
               <div>
                 <h1 className="font-bold text-base sm:text-lg tracking-tight text-stone-100 flex items-center gap-1.5">
-                  Warung JNJ Delivery 🛵
+                  Warung JNJ Menu 🍲
                 </h1>
                 <p className="text-[11px] text-amber-400 font-medium flex items-center gap-2">
-                  <span className="flex items-center gap-1">⚡ RM1.00 / km</span>
-                  <span className="text-stone-600">•</span>
-                  <span>⏱️ 25-40 minit</span>
+                  <span>🍽️ Dine-In Meja & Kaunter POS Dibuka</span>
                 </p>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* GOOGLE AUTH BADGE / LOGIN BUTTON */}
-            {currentUser ? (
-              <div className="flex items-center gap-2 bg-stone-900/90 border border-stone-700/70 py-1 px-2.5 rounded-full shadow-inner">
-                {currentUser.avatarUrl ? (
-                  <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-6 h-6 rounded-full object-cover border border-emerald-500/50" />
-                ) : (
-                  <div className="w-6 h-6 rounded-full bg-orange-600 text-white font-bold text-[10px] flex items-center justify-center">
-                    {currentUser.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <span className="text-xs font-bold text-stone-200 max-w-[90px] sm:max-w-[120px] truncate">
-                  {currentUser.name}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  title="Log Keluar Google"
-                  className="text-stone-400 hover:text-rose-400 p-0.5 ml-0.5 transition-colors"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowAuthModal(true)}
-                className="bg-stone-900 border-amber-500/40 text-amber-300 hover:bg-stone-800 text-xs rounded-full h-8 px-3 flex items-center gap-1.5 shadow-sm"
-              >
-                <LogIn className="w-3.5 h-3.5 text-amber-400" />
-                <span>Log Masuk Google</span>
-              </Button>
-            )}
-
-            <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-medium text-xs px-3 py-1 hidden sm:inline-flex rounded-full">
-              🟢 Zon 15km
+            <Badge className="bg-rose-500/15 text-rose-300 border border-rose-500/30 font-bold text-xs px-3 py-1 rounded-full">
+              🔴 Delivery Ditutup Sementara
             </Badge>
-
-            {cart.length > 0 && (
-              <Button
-                onClick={() => setIsCartDrawerOpen(true)}
-                className="bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-full px-3.5 py-2 flex items-center gap-1.5 shadow-[0_4px_15px_rgba(234,88,12,0.35)] active:scale-95 transition-all text-xs"
-              >
-                <ShoppingBag className="w-4 h-4" />
-                <span className="hidden sm:inline">Troli</span>
-                <span className="bg-black/40 px-2 py-0.5 rounded-full text-[11px] font-mono">{totalCartCount}</span>
-              </Button>
-            )}
           </div>
         </div>
       </header>
 
-      {/* PROCESS STEP TRACKER PILLS */}
-      <div className="max-w-4xl mx-auto px-4 pt-5">
-        <div className="flex items-center justify-between gap-2 p-2 rounded-2xl bg-[#292524]/60 border border-stone-800/80 text-xs font-medium backdrop-blur-md">
-          <div className="flex items-center gap-1.5 text-amber-400 font-bold px-2 py-1 rounded-xl bg-amber-500/10 border border-amber-500/20">
-            <span>1️⃣ Lokasi & Peta</span>
+      <main className="max-w-4xl mx-auto px-4 py-5 space-y-6">
+        {/* VIEW-ONLY MENU SHOWCASE BANNER */}
+        <div className="bg-gradient-to-r from-amber-950/80 via-[#292524] to-[#292524] border-2 border-amber-500/50 p-4 sm:p-5 rounded-3xl space-y-3 shadow-2xl animate-fade-in">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-amber-300 font-bold text-xs sm:text-sm">
+              <Eye className="w-4 h-4 text-amber-400" />
+              <span>👀 Mod Paparan Menu Sahaja (Dine-in & Kaunter Dibuka)</span>
+            </div>
+            <Badge className="bg-amber-500 text-stone-950 font-black text-[10px]">MENU SHOWCASE</Badge>
           </div>
-          <ChevronRight className="w-3.5 h-3.5 text-stone-600 shrink-0" />
-          <div className="flex items-center gap-1.5 text-emerald-400 font-bold px-2 py-1 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-            <span>2️⃣ Pilih Makanan</span>
-          </div>
-          <ChevronRight className="w-3.5 h-3.5 text-stone-600 shrink-0" />
-          <div className={`flex items-center gap-1.5 px-2 py-1 rounded-xl border transition-all ${
-            cart.length > 0 
-              ? 'text-orange-400 font-bold bg-orange-500/10 border-orange-500/20' 
-              : 'text-stone-500 border-transparent'
-          }`}>
-            <span>3️⃣ Pembayaran QR</span>
+          <p className="text-xs text-stone-300 leading-relaxed">
+            Pesanan online & delivery ditutup buat masa ini. Anda boleh meneroka senarai menu, harga, dan pilihan makanan kami di bawah. Untuk membuat pesanan, sila <b>Imbas Kod QR di Meja</b> anda atau <b>Pesan di Kaunter Warung JNJ Penampang</b>.
+          </p>
+          <div className="flex flex-wrap gap-2 pt-1 border-t border-amber-900/40">
+            <a href="/#location">
+              <Button size="sm" className="bg-orange-600 hover:bg-orange-500 text-white text-xs rounded-xl h-8 px-3 font-bold">
+                📍 Panduan Lokasi Warung
+              </Button>
+            </a>
+            <Link to="/">
+              <Button size="sm" variant="outline" className="bg-stone-900 border-stone-700 text-stone-300 text-xs rounded-xl h-8 px-3">
+                ← Kembali ke Utama
+              </Button>
+            </Link>
           </div>
         </div>
-      </div>
-
-      <main className="max-w-4xl mx-auto px-4 py-5 space-y-6">
-        {/* ACTIVE ORDER TRACKER BANNER */}
-        {activeOrderId && (
-          <div className="bg-gradient-to-r from-emerald-950/80 via-[#292524] to-[#292524] border-2 border-emerald-500/60 p-4 rounded-3xl space-y-2 shadow-2xl animate-fade-in">
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
-                <Clock className="w-4 h-4 animate-spin text-emerald-400" /> Pesanan Delivery Aktif
-              </span>
-              <Badge className="bg-emerald-500 text-stone-950 font-black"># {activeOrderId.slice(0, 8)}</Badge>
-            </div>
-            <p className="text-xs text-stone-300 leading-relaxed">
-              ⏳ Menunggu pengesahan bayaran DuitNow / FPX. Pesanan akan terus dimasak di dapur sebaik bayaran disahkan!
-            </p>
-          </div>
-        )}
-
-        {/* STEP 1: COMPACT DELIVERY BAR & COLLAPSIBLE REAL-ROAD MAP */}
-        <Card className="bg-[#292524] border-stone-800 text-stone-100 rounded-3xl shadow-xl overflow-hidden transition-all duration-300">
-          {/* COMPACT VIEW (COLLAPSED BY DEFAULT FOR INSTANT FOOD BROWSING) */}
-          <div className="p-3.5 sm:p-4 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <div className="w-10 h-10 rounded-2xl bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center justify-center shrink-0 shadow-inner">
-                <MapPin className="w-5 h-5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Hantar Ke:</span>
-                  <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-500/20">
-                    🛣️ {roadDistanceKm} km • ~{travelTimeMins} min
-                  </span>
-                </div>
-                <p className="text-xs sm:text-sm font-bold text-white truncate mt-0.5">
-                  {deliveryAddress || 'Kesan Lokasi GPS / Pilih Alamat Penghantaran...'}
-                </p>
-                <p className="text-[11px] text-amber-400 font-bold mt-0.5">
-                  Caj Delivery: RM {deliveryFee.toFixed(2)} (RM 1.00/km)
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setIsMapExpanded(prev => !prev)}
-                className={`text-xs rounded-xl flex items-center gap-1.5 h-9 px-3 transition-all active:scale-95 ${
-                  isMapExpanded 
-                    ? 'bg-orange-600 text-white border-orange-500 hover:bg-orange-500' 
-                    : 'bg-stone-900 border-stone-700 text-orange-400 hover:bg-stone-800 hover:text-orange-300'
-                }`}
-              >
-                <span>{isMapExpanded ? 'Tutup Peta' : '🗺️ Ubah Lokasi'}</span>
-                {isMapExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              </Button>
-            </div>
-          </div>
-
-          {/* EXPANDABLE FULL MAP & ADDRESS PICKER */}
-          {isMapExpanded && (
-            <CardContent className="p-4 sm:p-5 pt-0 space-y-4 border-t border-stone-800/80 mt-1 animate-fade-in">
-              <div className="flex items-center justify-between pt-3">
-                <div className="space-y-0.5">
-                  <h3 className="font-bold text-sm text-white flex items-center gap-2">
-                    <span>Peta Interaktif & Pelaras Lokasi Pin</span>
-                  </h3>
-                  <p className="text-[10px] text-stone-400">Gerakkan peta untuk menepatkan pin rumah anda</p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleGetLocation} 
-                  className="bg-stone-900 border-stone-700/80 text-emerald-400 text-xs rounded-xl hover:bg-stone-800 hover:text-emerald-300 flex items-center gap-1.5 shadow-sm h-8"
-                >
-                  <Navigation className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Kesan GPS</span>
-                </Button>
-              </div>
-
-              {/* INTERACTIVE REAL ROAD LEAFLET MAP */}
-              <DeliveryRouteMap
-                origin={{
-                  lat: WARUNG_LAT,
-                  lng: WARUNG_LNG,
-                  title: 'Warung JNJ (Penampang)'
-                }}
-                destination={{
-                  lat: custLat,
-                  lng: custLng,
-                  address: deliveryAddress
-                }}
-                interactive={true}
-                showZoneCircle={true}
-                height="280px"
-                onDestinationChange={handleMapDestinationChange}
-                onRouteCalculated={handleMapRouteCalculated}
-                showNavigationButtons={false}
-              />
-
-              <div className="space-y-2 relative">
-                <div className="relative">
-                  <Textarea
-                    placeholder="Taip alamat lengkap (cth: Lot 14, Jalan 3D, Taman Kepayan Ridge / SD19 Taman Liana)..."
-                    value={deliveryAddress}
-                    onChange={(e) => {
-                      setDeliveryAddress(e.target.value);
-                      setShowSuggestionsDropdown(true);
-                    }}
-                    onFocus={() => {
-                      if (addressSuggestions.length > 0) setShowSuggestionsDropdown(true);
-                    }}
-                    className="bg-stone-900 border-stone-700/80 text-white placeholder:text-stone-500 rounded-2xl text-xs sm:text-sm min-h-[64px] focus:border-orange-500/60 transition-all shadow-inner"
-                  />
-
-                  {/* AUTOCOMPLETE SUGGESTIONS DROPDOWN */}
-                  {showSuggestionsDropdown && addressSuggestions.length > 0 && (
-                    <div className="absolute top-[68px] left-0 right-0 z-30 bg-stone-900 border border-stone-700 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl animate-fade-in divide-y divide-stone-800">
-                      <div className="px-3.5 py-2 bg-stone-950/90 flex items-center justify-between text-[11px] text-stone-400">
-                        <span className="flex items-center gap-1.5 font-bold text-emerald-400">
-                          <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Cadangan Lokasi Pantas:
-                        </span>
-                        {isLoadingSuggestions && (
-                          <span className="flex items-center gap-1 text-[10px] text-stone-500">
-                            <Loader2 className="w-2.5 h-2.5 animate-spin" /> Mencari...
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="max-h-52 overflow-y-auto">
-                        {addressSuggestions.map((item, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => handleSelectSuggestion(item)}
-                            className="w-full px-3.5 py-2.5 text-left hover:bg-orange-500/10 flex items-start gap-2.5 transition-colors group"
-                          >
-                            <MapPin className="w-4 h-4 text-orange-400 shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-bold text-stone-200 group-hover:text-orange-300 truncate">
-                                {item.mainText}
-                              </p>
-                              <p className="text-[10px] text-stone-400 truncate">
-                                {item.secondaryText}
-                              </p>
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] text-stone-400">Tukar manual jarak jika perlu:</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={isSearchingAddress || isCalculatingRoute}
-                    onClick={() => {
-                      setShowSuggestionsDropdown(false);
-                      handleSearchAddress();
-                    }}
-                    className="text-[11px] text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/40 h-7 px-3 rounded-xl border border-emerald-500/20 active:scale-95 transition-all"
-                  >
-                    {isSearchingAddress || isCalculatingRoute ? (
-                      <>
-                        <Loader2 className="w-3 h-3 animate-spin mr-1" /> Mengira Laluan...
-                      </>
-                    ) : (
-                      <>
-                        <Search className="w-3 h-3 mr-1" /> Sahkan Lokasi & Kira Jarak
-                      </>
-                    )}
-                  </Button>
-                </div>
-
-                {/* QUICK SABAH LOCAL AREA SELECTOR */}
-                <div className="space-y-1.5 pt-1">
-                  <span className="text-[11px] font-bold text-stone-400 block">Pilihan Pantas Kawasan (Penampang / KK):</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {[
-                      { name: 'Donggongon / Megalong', distanceKm: 1.5, lat: 5.9080, lng: 116.1030, label: 'Donggongon (1.5km)' },
-                      { name: 'ITCC Penampang / Cyber City', distanceKm: 2.8, lat: 5.9220, lng: 116.0910, label: 'ITCC / Cyber City (2.8km)' },
-                      { name: 'Kobusak / Grand Millennium', distanceKm: 3.2, lat: 5.9320, lng: 116.0880, label: 'Kobusak (3.2km)' },
-                      { name: 'Kepayan / Austral Park', distanceKm: 4.5, lat: 5.9380, lng: 116.0720, label: 'Kepayan (4.5km)' },
-                      { name: 'Bundusan / Beverly Hills', distanceKm: 4.8, lat: 5.9450, lng: 116.1080, label: 'Bundusan (4.8km)' },
-                      { name: 'Putatan / Petagas', distanceKm: 6.0, lat: 5.8920, lng: 116.0520, label: 'Putatan (6.0km)' },
-                      { name: 'Luyang / Lido / Foh Sang', distanceKm: 6.5, lat: 5.9520, lng: 116.0850, label: 'Luyang / Lido (6.5km)' },
-                      { name: 'KK Bandar / Api-Api', distanceKm: 8.8, lat: 5.9800, lng: 116.0750, label: 'KK Bandar (8.8km)' },
-                      { name: 'Inanam / Kolombong', distanceKm: 11.5, lat: 5.9920, lng: 116.1320, label: 'Inanam (11.5km)' },
-                    ].map((zone) => (
-                      <button
-                        key={zone.name}
-                        type="button"
-                        onClick={() => {
-                          setDeliveryAddress(prev => prev ? `${prev}, ${zone.name}` : zone.name);
-                          setCustLat(zone.lat);
-                          setCustLng(zone.lng);
-                          setRoadDistanceKm(zone.distanceKm);
-                          setTravelTimeMins(Math.max(5, Math.ceil(zone.distanceKm * 2)));
-                          toast.success(`Kawasan dipilih: ${zone.name} (${zone.distanceKm} km) 📍`);
-                        }}
-                        className={`px-3 py-1.5 text-[11px] rounded-xl border font-medium transition-all active:scale-95 ${
-                          Math.abs(roadDistanceKm - zone.distanceKm) < 0.2
-                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
-                            : 'bg-stone-900/90 hover:bg-stone-800 text-stone-300 border-stone-800'
-                        }`}
-                      >
-                        {zone.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* ROUTE STATISTICS METRIC CARDS */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs pt-1">
-                <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl flex flex-col justify-between shadow-inner">
-                  <span className="text-stone-400 text-[11px] block mb-0.5">Jarak Jalan Raya:</span>
-                  <div className="flex items-center justify-between">
-                    <span className={`font-black text-sm sm:text-base ${isOutOfZone ? 'text-rose-400' : 'text-emerald-400'}`}>
-                      {roadDistanceKm} km {isOutOfZone ? '⚠️' : '✓'}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        title="Kurangkan jarak 0.5km"
-                        onClick={() => setRoadDistanceKm(prev => Math.max(1.0, Math.round((prev - 0.5) * 10) / 10))}
-                        className="w-6 h-6 bg-stone-800 hover:bg-stone-700 text-white rounded-lg text-xs flex items-center justify-center font-bold active:scale-95 border border-stone-700"
-                      >
-                        -
-                      </button>
-                      <button
-                        type="button"
-                        title="Tambah jarak 0.5km"
-                        onClick={() => setRoadDistanceKm(prev => Math.min(15.0, Math.round((prev + 0.5) * 10) / 10))}
-                        className="w-6 h-6 bg-stone-800 hover:bg-stone-700 text-white rounded-lg text-xs flex items-center justify-center font-bold active:scale-95 border border-stone-700"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl flex flex-col justify-center shadow-inner">
-                  <span className="text-stone-400 text-[11px] block mb-0.5">Anggaran Masa Rider:</span>
-                  <span className="font-bold text-sm sm:text-base text-sky-400 flex items-center gap-1.5">
-                    <Clock className="w-4 h-4" /> ~{travelTimeMins} minit
-                  </span>
-                </div>
-
-                <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl flex flex-col justify-center shadow-inner">
-                  <span className="text-stone-400 text-[11px] block mb-0.5">Caj Penghantaran:</span>
-                  <span className="font-black text-sm sm:text-base text-amber-400">
-                    RM {deliveryFee.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              {isOutOfZone && (
-                <div className="bg-rose-500/10 border border-rose-500/30 p-3.5 rounded-2xl text-xs text-rose-300 flex items-start gap-2.5">
-                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                  <span>Maaf, kami hanya menghantar dalam zon 15km dari Warung JNJ Penampang. Sila pilih alamat yang lebih hampir.</span>
-                </div>
-              )}
-
-              {/* SAVE & CLOSE MAP BUTTON */}
-              <Button
-                onClick={() => setIsMapExpanded(false)}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-11 rounded-2xl shadow-lg flex items-center justify-center gap-2 active:scale-98 transition-all"
-              >
-                <Check className="w-4 h-4" />
-                <span>Sahkan Lokasi & Teruskan Pilih Makanan</span>
-              </Button>
-            </CardContent>
-          )}
-        </Card>
 
         {/* STEP 2: SEARCH AND CATEGORY FILTER BAR */}
         <div className="space-y-3 pt-2">
@@ -1899,60 +1529,13 @@ function CustomerDeliveryPage() {
 
                     {/* ACTION BUTTONS */}
                     <div className="p-3 pt-0 border-t border-stone-800/80 bg-stone-950/30 flex items-center justify-between gap-2">
-                      {inCart ? (
-                        <div className="w-full flex items-center justify-between bg-stone-900 border border-stone-700/60 p-1 rounded-2xl shadow-inner">
-                          <div className="flex items-center gap-2">
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="w-7 h-7 text-stone-300 hover:bg-stone-800 rounded-xl" 
-                              onClick={() => handleQuantityChange(inCart.id, -1)}
-                            >
-                              <Minus className="w-3.5 h-3.5" />
-                            </Button>
-                            <span className="font-mono font-bold text-xs text-orange-400 w-5 text-center">
-                              {inCart.quantity}
-                            </span>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              className="w-7 h-7 text-stone-300 hover:bg-stone-800 rounded-xl" 
-                              onClick={() => handleQuantityChange(inCart.id, 1)}
-                            >
-                              <Plus className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setCustomizingItem(item)}
-                            className="text-[11px] text-amber-400 hover:text-amber-300 px-3 h-7 rounded-xl font-medium"
-                          >
-                            ✏️ Kustom
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="w-full flex items-center gap-2">
-                          <Button
-                            disabled={isSoldOut}
-                            onClick={() => setCustomizingItem(item)}
-                            className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl h-9 text-xs shadow-md active:scale-95 flex items-center justify-center gap-1.5 transition-all"
-                          >
-                            <SlidersHorizontal className="w-3.5 h-3.5" />
-                            <span>Pilih & Kustom</span>
-                          </Button>
-                          <Button
-                            disabled={isSoldOut}
-                            onClick={() => handleQuickAdd(item)}
-                            variant="outline"
-                            className="border-stone-700 bg-stone-900 hover:bg-stone-800 text-stone-300 h-9 px-3 rounded-xl text-xs active:scale-95 transition-all"
-                            title="Tambah terus 1x"
-                          >
-                            <Plus className="w-3.5 h-3.5" />
-                          </Button>
-                        </div>
-                      )}
+                      <Button
+                        onClick={() => setCustomizingItem(item)}
+                        className="w-full bg-orange-600/90 hover:bg-orange-500 text-white font-bold rounded-xl h-9 text-xs shadow-md active:scale-95 flex items-center justify-center gap-1.5 transition-all"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Lihat Butiran & Pilihan</span>
+                      </Button>
                     </div>
                   </Card>
                 );
@@ -2305,13 +1888,14 @@ function CustomerDeliveryPage() {
           </div>
         )}
 
-        {/* DISH CUSTOMIZATION MODAL (DELIVERY & SELF-PICKUP MODE) */}
+        {/* DISH CUSTOMIZATION MODAL (MENU SHOWCASE MODE) */}
         <DishCustomizationModal
           isOpen={!!customizingItem}
           onClose={() => setCustomizingItem(null)}
           onAddToCart={handleAddToCartCustomized}
           menuItem={customizingItem}
           mode="delivery"
+          isViewOnly={true}
         />
 
         {/* CART DRAWER DIALOG */}
