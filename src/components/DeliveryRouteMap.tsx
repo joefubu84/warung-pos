@@ -19,9 +19,11 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
 export const WARUNG_COORDS = {
-  lat: 5.9284138,
-  lng: 116.1145036,
-  name: 'Warung J&J (Penampang)'
+  lat: 5.9284153,
+  lng: 116.1146463,
+  name: 'Warung JNJ (Penampang)',
+  address: 'a17, Jln Datuk Panglima Banting, 89500 Penampang, Sabah',
+  googleMapsUrl: 'https://www.google.com/maps/dir//Warung+JNJ,+a17,+Jln+Datuk+Panglima+Banting,+89500+Penampang,+Sabah/@5.9810544,116.0768506,9z/data=!4m8!4m7!1m0!1m5!1m1!1s0x323b692e917f9eb1:0x66ccb58dff90bc87!2m2!1d116.1146463!2d5.9284153?entry=ttu'
 };
 
 // Strict Sabah / Greater KK & Penampang Bounding Box to prevent glitched locations outside Malaysia

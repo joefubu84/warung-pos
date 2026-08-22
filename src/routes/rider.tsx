@@ -506,8 +506,8 @@ function RiderPortalPage() {
     }
     // 3. Fallback coordinates calculation (from actual road distance)
     if (job.delivery_lat && job.delivery_lng) {
-      const WARUNG_LAT = 5.9284138;
-      const WARUNG_LNG = 116.1145036;
+      const WARUNG_LAT = 5.9284153;
+      const WARUNG_LNG = 116.1146463;
       const straightKm = calculateHaversineKm(WARUNG_LAT, WARUNG_LNG, job.delivery_lat, job.delivery_lng);
       const roadKm = Math.round(straightKm * 1.35 * 10) / 10;
       return Math.max(Math.round(roadKm * 1.00 * 100) / 100, 2.00);

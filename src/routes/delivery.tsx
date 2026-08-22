@@ -75,9 +75,10 @@ interface CartItem {
   spiceLevel?: string;
 }
 
-// Base Coordinates for Warung J&J (de Baxters Café, a17, Jln Datuk Panglima Banting, 89500 Penampang, Sabah)
-const WARUNG_LAT = 5.9284138;
-const WARUNG_LNG = 116.1145036;
+// Official Google Business Location for Warung JNJ (Penampang)
+// Google Maps: https://www.google.com/maps/dir//Warung+JNJ,+a17,+Jln+Datuk+Panglima+Banting,+89500+Penampang,+Sabah/@5.9810544,116.0768506,9z/data=!4m8!4m7!1m0!1m5!1m1!1s0x323b692e917f9eb1:0x66ccb58dff90bc87!2m2!1d116.1146463!2d5.9284153
+const WARUNG_LAT = 5.9284153;
+const WARUNG_LNG = 116.1146463;
 
 interface SabahLocationItem {
   name: string;
@@ -88,6 +89,8 @@ interface SabahLocationItem {
 }
 
 const LOCAL_SABAH_LANDMARKS: SabahLocationItem[] = [
+  // Warung JNJ HQ
+  { name: 'Warung JNJ Penampang', lat: 5.9284153, lng: 116.1146463, desc: 'a17, Jln Datuk Panglima Banting, Penampang', category: 'shoplot' },
   // ==========================================
   // 1. HOTELS & RESORTS (KOTA KINABALU & PENAMPANG & SABAH)
   // ==========================================
