@@ -157,13 +157,12 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
     } else {
       notesSummaryParts.push('DINE IN (Makan Sini 🍽️)');
     }
-    notesSummaryParts.push(`Spice: ${spiceLevel}`);
     if (selectedAddonsList.length > 0) {
       notesSummaryParts.push(`Add-ons: ${selectedAddonsList.map(a => a.name).join(', ')}`);
     }
 
     if (quantity > 1) {
-      const specifiedPlates = plateNotes.map((n, i) => `Pek #${i+1}: ${n || 'Standard'}`).join(' | ');
+      const specifiedPlates = plateNotes.map((n, i) => `${fulfillmentType === 'dine_in' ? 'Pinggan' : 'Pek'} #${i+1}: ${n || 'Standard'}`).join(' | ');
       notesSummaryParts.push(specifiedPlates);
     } else if (specialInstructions.trim()) {
       notesSummaryParts.push(`Nota: "${specialInstructions.trim()}"`);
@@ -288,37 +287,10 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
             )}
           </div>
 
-          {/* 2. SPICE LEVEL SELECTOR */}
+          {/* 2. OPTIONAL ADD-ONS CHECKBOXES */}
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center justify-between">
-              <span>2. Pilih Tahap Kepedasan</span>
-              <span className="text-[10px] text-amber-400 font-normal">Wajib</span>
-            </label>
-            <div className="grid grid-cols-3 gap-2 font-mono">
-              {SPICE_LEVELS.map(spice => {
-                const isSelected = spiceLevel === spice.id;
-                return (
-                  <button
-                    key={spice.id}
-                    type="button"
-                    onClick={() => setSpiceLevel(spice.id as any)}
-                    className={`p-2.5 rounded-xl border text-xs font-bold transition-all text-center flex items-center justify-center gap-1.5 ${
-                      isSelected
-                        ? 'bg-amber-500/20 border-amber-500 text-amber-300 shadow-md scale-[1.02]'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
-                    }`}
-                  >
-                    <span>{spice.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 3. OPTIONAL ADD-ONS CHECKBOXES */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center justify-between">
-              <span>3. Tambahan Pilihan (Optional)</span>
+              <span>2. Tambahan Pilihan (Optional)</span>
               <span className="text-[10px] text-slate-500 font-normal">Boleh Pilih Banyak</span>
             </label>
             <div className="space-y-1.5 font-mono">
@@ -350,11 +322,13 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
             </div>
           </div>
 
-          {/* 4. QUANTITY SELECTOR */}
+          {/* 3. QUANTITY SELECTOR */}
           <div className="p-3 bg-slate-950 rounded-2xl border border-slate-800 flex justify-between items-center font-mono">
             <div>
-              <span className="text-xs text-slate-300 font-bold uppercase block">4. Bilangan Pinggan (Kuantiti)</span>
-              <span className="text-[10px] text-slate-500">Pilih berapa pinggan untuk hidangan ini</span>
+              <span className="text-xs text-slate-300 font-bold uppercase block">
+                3. Bilangan {isDeliveryMode || fulfillmentType !== 'dine_in' ? 'Bungkusan / Pek' : 'Pinggan'} (Kuantiti)
+              </span>
+              <span className="text-[10px] text-slate-500">Pilih berapa kuantiti untuk hidangan ini</span>
             </div>
             <div className="flex items-center gap-3 bg-slate-900 border border-slate-700 rounded-xl p-1">
               <Button
@@ -379,11 +353,13 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
             </div>
           </div>
 
-          {/* 5. SPECIAL INSTRUCTIONS (PER-PLATE IF QTY > 1) */}
+          {/* 4. SPECIAL INSTRUCTIONS (PER-PLATE IF QTY > 1) */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
-                {quantity > 1 ? `5. Permintaan Khas Setiap Pinggan (1 hingga ${quantity})` : '5. Permintaan Khas Dapur (Optional)'}
+                {quantity > 1 
+                  ? `4. Permintaan Khas Setiap ${fulfillmentType === 'dine_in' ? 'Pinggan' : 'Pek'} (1 hingga ${quantity})` 
+                  : '4. Permintaan Khas Dapur (Optional)'}
               </label>
               <span className="text-[10px] text-amber-400 font-mono">Pilihan Pantas 👇</span>
             </div>
