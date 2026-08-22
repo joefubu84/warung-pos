@@ -44,8 +44,7 @@ import {
 import { toast } from 'sonner';
 import { createToyyibPayCheckout } from '@/lib/toyyibpay';
 import { COMMON_MODIFIERS } from '@/lib/kitchen-checklist-config';
-import { DishCustomizationModal, CustomizedCartItem } from '@/components/DishCustomizationModal';
-import { DeliveryRouteMap, WARUNG_COORDS } from '@/components/DeliveryRouteMap';
+import { DeliveryRouteMap, WARUNG_COORDS, isWithinSabah } from '@/components/DeliveryRouteMap';
 
 export const Route = createFileRoute('/delivery')({
   component: CustomerDeliveryPage,
@@ -378,23 +377,35 @@ function CustomerDeliveryPage() {
 
     setIsSearchingAddress(true);
     try {
-      // Search Nominatim within Sabah/Malaysia context
+      // Search Nominatim strictly within Sabah / Malaysia context
       const query = encodeURIComponent(`${textToSearch}, Sabah, Malaysia`);
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=1`);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${query}&countrycodes=my&viewbox=115.7,6.3,116.5,5.6&bounded=0&limit=1`
+      );
       const data = await res.json();
       if (data && data.length > 0) {
         const lat = parseFloat(data[0].lat);
         const lon = parseFloat(data[0].lon);
+
+        if (!isWithinSabah(lat, lon)) {
+          toast.error('Lokasi dikesan di luar kawasan Sabah. Sila pilih alamat dalam zon Sabah/Penampang.');
+          return;
+        }
+
         setCustLat(lat);
         setCustLng(lon);
         await fetchRoadRoute(lat, lon);
         toast.success(`Lokasi dikesan: ${data[0].display_name.split(',')[0]} 📍`);
       } else {
-        // Fallback: estimate route with current coordinates
-        await fetchRoadRoute(custLat, custLng);
+        // Fallback: estimate route with current coordinates if in Sabah
+        if (isWithinSabah(custLat, custLng)) {
+          await fetchRoadRoute(custLat, custLng);
+        }
       }
     } catch (e) {
-      await fetchRoadRoute(custLat, custLng);
+      if (isWithinSabah(custLat, custLng)) {
+        await fetchRoadRoute(custLat, custLng);
+      }
     } finally {
       setIsSearchingAddress(false);
     }
@@ -403,13 +414,20 @@ function CustomerDeliveryPage() {
   const handleGetLocation = () => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(async (pos) => {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
+        let lat = pos.coords.latitude;
+        let lng = pos.coords.longitude;
+
+        if (!isWithinSabah(lat, lng)) {
+          toast.error('GPS dikesan di luar Sabah/Malaysia. Menggunakan koordinat pusat Penampang.');
+          lat = 5.9141659;
+          lng = 116.085516;
+        }
+
         setCustLat(lat);
         setCustLng(lng);
         
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&countrycodes=my`);
           const data = await res.json();
           if (data && data.display_name) {
             setDeliveryAddress(data.display_name);

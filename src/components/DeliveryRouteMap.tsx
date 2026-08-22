@@ -16,11 +16,29 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 export const WARUNG_COORDS = {
   lat: 5.9284138,
   lng: 116.1145036,
   name: 'Warung J&J (Penampang)'
+};
+
+// Strict Sabah / Greater KK & Penampang Bounding Box to prevent glitched locations outside Malaysia
+export const SABAH_BOUNDS_COORDS = {
+  minLat: 4.0,
+  maxLat: 7.5,
+  minLng: 114.8,
+  maxLng: 119.5,
+};
+
+export const isWithinSabah = (lat: number, lng: number): boolean => {
+  return (
+    lat >= SABAH_BOUNDS_COORDS.minLat &&
+    lat <= SABAH_BOUNDS_COORDS.maxLat &&
+    lng >= SABAH_BOUNDS_COORDS.minLng &&
+    lng <= SABAH_BOUNDS_COORDS.maxLng
+  );
 };
 
 export interface DeliveryRouteMapProps {
@@ -145,10 +163,10 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
     });
   };
 
-  // Reverse Geocoding Helper
+  // Reverse Geocoding Helper restricted to Malaysia
   const reverseGeocode = async (lat: number, lng: number) => {
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+      const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&countrycodes=my`);
       const data = await res.json();
       if (data && data.display_name) {
         return data.display_name;
@@ -159,30 +177,45 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
     return `Lokasi (${lat.toFixed(4)}, ${lng.toFixed(4)})`;
   };
 
-  // Initialize Map
+  // Initialize Map with strict Sabah/Malaysia Bounding Box & Max Viscosity
   useEffect(() => {
     if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
+      const sabahBounds = L.latLngBounds(
+        L.latLng(SABAH_BOUNDS_COORDS.minLat, SABAH_BOUNDS_COORDS.minLng),
+        L.latLng(SABAH_BOUNDS_COORDS.maxLat, SABAH_BOUNDS_COORDS.maxLng)
+      );
+
       const map = L.map(mapContainerRef.current, {
         center: [origin.lat, origin.lng],
         zoom: 13,
+        minZoom: 10,
+        maxZoom: 18,
+        maxBounds: sabahBounds,
+        maxBoundsViscosity: 1.0, // 100% strict lock preventing user from dragging outside Sabah
         zoomControl: true,
         attributionControl: false,
       });
 
       // Dark Theme OpenStreetMap Tiles via CartoDB Dark Matter / OSM
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19,
+        maxZoom: 18,
+        minZoom: 10,
         subdomains: 'abcd',
+        bounds: sabahBounds
       }).addTo(map);
 
       mapInstanceRef.current = map;
 
-      // Handle map clicks if interactive
+      // Handle map clicks if interactive with Sabah boundary validation
       if (interactive && onDestinationChange) {
         map.on('click', async (e: L.LeafletMouseEvent) => {
           const { lat, lng } = e.latlng;
+          if (!isWithinSabah(lat, lng)) {
+            toast.error('Sila pilih lokasi di dalam kawasan Sabah / Penampang.');
+            return;
+          }
           const addr = await reverseGeocode(lat, lng);
           onDestinationChange(lat, lng, addr);
         });
@@ -348,6 +381,14 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
           destMarkerRef.current.on('dragend', async (e) => {
             const marker = e.target;
             const pos = marker.getLatLng();
+            if (!isWithinSabah(pos.lat, pos.lng)) {
+              toast.error('Lokasi di luar kawasan penghantaran. Pin dikembalikan ke zon Sabah.');
+              marker.setLatLng([origin.lat, origin.lng]);
+              if (onDestinationChange) {
+                onDestinationChange(origin.lat, origin.lng, origin.title || 'Warung J&J');
+              }
+              return;
+            }
             const addr = await reverseGeocode(pos.lat, pos.lng);
             if (onDestinationChange) {
               onDestinationChange(pos.lat, pos.lng, addr);
