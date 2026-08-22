@@ -29,6 +29,7 @@ import {
   Bike
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DeliveryRouteMap, WARUNG_COORDS } from '@/components/DeliveryRouteMap';
 
 export const Route = createFileRoute('/rider')({
   component: RiderPortalPage,
@@ -80,6 +81,7 @@ function RiderPortalPage() {
   const [loadingJobs, setLoadingJobs] = useState(false);
   const [activeTab, setActiveTab] = useState<'jobs' | 'active' | 'wallet'>('jobs');
   const [isClaiming, setIsClaiming] = useState<string | null>(null);
+  const [previewRouteJobId, setPreviewRouteJobId] = useState<string | null>(null);
 
   // Initialize Session
   useEffect(() => {
@@ -767,6 +769,35 @@ function RiderPortalPage() {
                         </div>
                       </div>
 
+                      {/* TOGGLE PREVIEW REAL ROAD MAP */}
+                      <div className="pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setPreviewRouteJobId(prev => prev === job.id ? null : job.id)}
+                          className="text-[11px] font-mono text-sky-400 hover:text-sky-300 flex items-center gap-1.5 py-1 transition-colors"
+                        >
+                          <Navigation className="w-3.5 h-3.5 text-sky-400" />
+                          <span>{previewRouteJobId === job.id ? 'Sembunyikan Peta Laluan' : '📍 Papar Peta Laluan Jalan Raya'}</span>
+                        </button>
+
+                        {previewRouteJobId === job.id && (
+                          <div className="mt-2 animate-fade-in">
+                            <DeliveryRouteMap
+                              origin={WARUNG_COORDS}
+                              destination={{
+                                lat: job.delivery_lat || 5.9141659,
+                                lng: job.delivery_lng || 116.085516,
+                                address: getCleanDeliveryAddress(job.delivery_address)
+                              }}
+                              height="220px"
+                              showZoneCircle={false}
+                              showNavigationButtons={true}
+                              interactive={false}
+                            />
+                          </div>
+                        )}
+                      </div>
+
                       <Button
                         disabled={isClaiming === job.id || !isOnline}
                         onClick={() => handleClaimJob(job)}
@@ -822,6 +853,25 @@ function RiderPortalPage() {
                     <p className="text-stone-200 leading-relaxed">{getCleanDeliveryAddress(activeJob.delivery_address)}</p>
                   </div>
 
+                  {/* REAL-ROAD INTERACTIVE ROUTE MAP FOR RIDER */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10px] text-stone-400 uppercase tracking-wider block font-bold">
+                      🗺️ Peta Pandu Arah Laluan Sebenar:
+                    </span>
+                    <DeliveryRouteMap
+                      origin={WARUNG_COORDS}
+                      destination={{
+                        lat: activeJob.delivery_lat || 5.9141659,
+                        lng: activeJob.delivery_lng || 116.085516,
+                        address: getCleanDeliveryAddress(activeJob.delivery_address)
+                      }}
+                      height="260px"
+                      showZoneCircle={false}
+                      showNavigationButtons={true}
+                      interactive={false}
+                    />
+                  </div>
+
                   {/* QUICK 1-CLICK NAVIGATION / WHATSAPP */}
                   <div className="grid grid-cols-2 gap-2">
                     <Button
@@ -829,7 +879,7 @@ function RiderPortalPage() {
                       className="bg-stone-800 hover:bg-stone-700 text-stone-100 font-semibold h-10 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-stone-700"
                     >
                       <Navigation className="w-3.5 h-3.5 text-sky-400" />
-                      <span>Buka GPS Maps</span>
+                      <span>Buka Google Maps</span>
                     </Button>
 
                     <Button

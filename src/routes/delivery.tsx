@@ -45,6 +45,7 @@ import { toast } from 'sonner';
 import { createToyyibPayCheckout } from '@/lib/toyyibpay';
 import { COMMON_MODIFIERS } from '@/lib/kitchen-checklist-config';
 import { DishCustomizationModal, CustomizedCartItem } from '@/components/DishCustomizationModal';
+import { DeliveryRouteMap, WARUNG_COORDS } from '@/components/DeliveryRouteMap';
 
 export const Route = createFileRoute('/delivery')({
   component: CustomerDeliveryPage,
@@ -643,12 +644,12 @@ function CustomerDeliveryPage() {
           </div>
         )}
 
-        {/* DELIVERY ADDRESS & ZONE CHECK CARD */}
+        {/* DELIVERY ADDRESS & REAL-ROAD ROUTE MAP CARD */}
         <Card className="bg-slate-900 border-slate-800 text-white rounded-3xl shadow-xl overflow-hidden font-mono">
           <CardContent className="p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-black text-sm uppercase tracking-wider text-slate-300 flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-emerald-400" /> 1. Alamat Penghantaran & Jarak Laluan
+                <MapPin className="w-4 h-4 text-emerald-400" /> 1. Alamat Penghantaran & Peta Jalan Raya
               </h2>
               <Button 
                 variant="outline" 
@@ -660,6 +661,33 @@ function CustomerDeliveryPage() {
                 <span>Kesan Lokasi GPS</span>
               </Button>
             </div>
+
+            {/* INTERACTIVE REAL ROAD LEAFLET MAP */}
+            <DeliveryRouteMap
+              origin={{
+                lat: WARUNG_LAT,
+                lng: WARUNG_LNG,
+                title: 'Warung J&J (Penampang)'
+              }}
+              destination={{
+                lat: custLat,
+                lng: custLng,
+                address: deliveryAddress
+              }}
+              interactive={true}
+              showZoneCircle={true}
+              height="280px"
+              onDestinationChange={(lat, lng, addr) => {
+                setCustLat(lat);
+                setCustLng(lng);
+                if (addr) setDeliveryAddress(addr);
+              }}
+              onRouteCalculated={(route) => {
+                setRoadDistanceKm(route.distanceKm);
+                setTravelTimeMins(route.durationMins);
+              }}
+              showNavigationButtons={false}
+            />
 
             <div className="space-y-2">
               <Textarea
@@ -731,7 +759,7 @@ function CustomerDeliveryPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
               <div className="bg-slate-950 border border-slate-800 p-3 rounded-2xl flex flex-col justify-between">
-                <span className="text-slate-400 text-[10px] block mb-0.5">Jarak Laluan:</span>
+                <span className="text-slate-400 text-[10px] block mb-0.5">Jarak Jalan Raya:</span>
                 <div className="flex items-center justify-between">
                   <span className={`font-black text-sm ${isOutOfZone ? 'text-rose-400' : 'text-emerald-400'}`}>
                     {roadDistanceKm} km {isOutOfZone ? '⚠️' : '✓'}
