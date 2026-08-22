@@ -38,6 +38,8 @@ import {
   Flame,
   ArrowRight,
   ArrowLeft,
+  ChevronDown,
+  ChevronUp,
   Clock,
   Navigation
 } from 'lucide-react';
@@ -399,6 +401,7 @@ function CustomerDeliveryPage() {
   const [roadDistanceKm, setRoadDistanceKm] = useState<number>(6.6);
   const [travelTimeMins, setTravelTimeMins] = useState<number>(12);
   const [isCalculatingRoute, setIsCalculatingRoute] = useState(false);
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
 
   // Address Auto-suggestions
   const [addressSuggestions, setAddressSuggestions] = useState<{
@@ -1160,213 +1163,265 @@ function CustomerDeliveryPage() {
           </div>
         )}
 
-        {/* STEP 1: DELIVERY ADDRESS & REAL-ROAD ROUTE MAP CARD */}
-        <Card className="bg-[#292524] border-stone-800 text-stone-100 rounded-3xl shadow-xl overflow-hidden">
-          <CardContent className="p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <h2 className="font-bold text-sm sm:text-base tracking-tight text-white flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-orange-500" /> 1. Alamat Penghantaran & Peta Jalan Raya
-                </h2>
-                <p className="text-[11px] text-stone-400">Peta interaktif automatik mengira jarak sebenar & caj penghantaran</p>
+        {/* STEP 1: COMPACT DELIVERY BAR & COLLAPSIBLE REAL-ROAD MAP */}
+        <Card className="bg-[#292524] border-stone-800 text-stone-100 rounded-3xl shadow-xl overflow-hidden transition-all duration-300">
+          {/* COMPACT VIEW (COLLAPSED BY DEFAULT FOR INSTANT FOOD BROWSING) */}
+          <div className="p-3.5 sm:p-4 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="w-10 h-10 rounded-2xl bg-orange-500/20 text-orange-400 border border-orange-500/30 flex items-center justify-center shrink-0 shadow-inner">
+                <MapPin className="w-5 h-5" />
               </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-stone-400 font-bold uppercase tracking-wider">Hantar Ke:</span>
+                  <span className="text-[10px] text-emerald-400 font-mono font-bold bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                    🛣️ {roadDistanceKm} km • ~{travelTimeMins} min
+                  </span>
+                </div>
+                <p className="text-xs sm:text-sm font-bold text-white truncate mt-0.5">
+                  {deliveryAddress || 'Kesan Lokasi GPS / Pilih Alamat Penghantaran...'}
+                </p>
+                <p className="text-[11px] text-amber-400 font-bold mt-0.5">
+                  Caj Delivery: RM {deliveryFee.toFixed(2)} (RM 1.00/km)
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
               <Button 
                 variant="outline" 
                 size="sm" 
-                onClick={handleGetLocation} 
-                className="bg-stone-900 border-stone-700/80 text-emerald-400 text-xs rounded-xl hover:bg-stone-800 hover:text-emerald-300 flex items-center gap-1.5 shadow-sm"
+                onClick={() => setIsMapExpanded(prev => !prev)}
+                className={`text-xs rounded-xl flex items-center gap-1.5 h-9 px-3 transition-all active:scale-95 ${
+                  isMapExpanded 
+                    ? 'bg-orange-600 text-white border-orange-500 hover:bg-orange-500' 
+                    : 'bg-stone-900 border-stone-700 text-orange-400 hover:bg-stone-800 hover:text-orange-300'
+                }`}
               >
-                <Navigation className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Kesan GPS</span>
+                <span>{isMapExpanded ? 'Tutup Peta' : '🗺️ Ubah Lokasi'}</span>
+                {isMapExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </Button>
             </div>
+          </div>
 
-            {/* INTERACTIVE REAL ROAD LEAFLET MAP */}
-            <DeliveryRouteMap
-              origin={{
-                lat: WARUNG_LAT,
-                lng: WARUNG_LNG,
-                title: 'Warung JNJ (Penampang)'
-              }}
-              destination={{
-                lat: custLat,
-                lng: custLng,
-                address: deliveryAddress
-              }}
-              interactive={true}
-              showZoneCircle={true}
-              height="280px"
-              onDestinationChange={handleMapDestinationChange}
-              onRouteCalculated={handleMapRouteCalculated}
-              showNavigationButtons={false}
-            />
-
-            <div className="space-y-2 relative">
-              <div className="relative">
-                <Textarea
-                  placeholder="Taip alamat lengkap (cth: Lot 14, Jalan 3D, Taman Kepayan Ridge / SD19 Taman Liana)..."
-                  value={deliveryAddress}
-                  onChange={(e) => {
-                    setDeliveryAddress(e.target.value);
-                    setShowSuggestionsDropdown(true);
-                  }}
-                  onFocus={() => {
-                    if (addressSuggestions.length > 0) setShowSuggestionsDropdown(true);
-                  }}
-                  className="bg-stone-900 border-stone-700/80 text-white placeholder:text-stone-500 rounded-2xl text-xs sm:text-sm min-h-[64px] focus:border-orange-500/60 transition-all shadow-inner"
-                />
-
-                {/* AUTOCOMPLETE SUGGESTIONS DROPDOWN */}
-                {showSuggestionsDropdown && addressSuggestions.length > 0 && (
-                  <div className="absolute top-[68px] left-0 right-0 z-30 bg-stone-900 border border-stone-700 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl animate-fade-in divide-y divide-stone-800">
-                    <div className="px-3.5 py-2 bg-stone-950/90 flex items-center justify-between text-[11px] text-stone-400">
-                      <span className="flex items-center gap-1.5 font-bold text-emerald-400">
-                        <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Cadangan Lokasi Pantas:
-                      </span>
-                      {isLoadingSuggestions && (
-                        <span className="flex items-center gap-1 text-[10px] text-stone-500">
-                          <Loader2 className="w-2.5 h-2.5 animate-spin" /> Mencari...
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="max-h-52 overflow-y-auto">
-                      {addressSuggestions.map((item, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => handleSelectSuggestion(item)}
-                          className="w-full px-3.5 py-2.5 text-left hover:bg-orange-500/10 flex items-start gap-2.5 transition-colors group"
-                        >
-                          <MapPin className="w-4 h-4 text-orange-400 shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-bold text-stone-200 group-hover:text-orange-300 truncate">
-                              {item.mainText}
-                            </p>
-                            <p className="text-[10px] text-stone-400 truncate">
-                              {item.secondaryText}
-                            </p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              <div className="flex justify-end">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  disabled={isSearchingAddress || isCalculatingRoute}
-                  onClick={() => {
-                    setShowSuggestionsDropdown(false);
-                    handleSearchAddress();
-                  }}
-                  className="text-[11px] text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/40 h-7 px-3 rounded-xl border border-emerald-500/20 active:scale-95 transition-all"
+          {/* EXPANDABLE FULL MAP & ADDRESS PICKER */}
+          {isMapExpanded && (
+            <CardContent className="p-4 sm:p-5 pt-0 space-y-4 border-t border-stone-800/80 mt-1 animate-fade-in">
+              <div className="flex items-center justify-between pt-3">
+                <div className="space-y-0.5">
+                  <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                    <span>Peta Interaktif & Pelaras Lokasi Pin</span>
+                  </h3>
+                  <p className="text-[10px] text-stone-400">Gerakkan peta untuk menepatkan pin rumah anda</p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleGetLocation} 
+                  className="bg-stone-900 border-stone-700/80 text-emerald-400 text-xs rounded-xl hover:bg-stone-800 hover:text-emerald-300 flex items-center gap-1.5 shadow-sm h-8"
                 >
-                  {isSearchingAddress || isCalculatingRoute ? (
-                    <>
-                      <Loader2 className="w-3 h-3 animate-spin mr-1" /> Mengira Laluan...
-                    </>
-                  ) : (
-                    <>
-                      <Search className="w-3 h-3 mr-1" /> Sahkan Lokasi & Kira Jarak
-                    </>
-                  )}
+                  <Navigation className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Kesan GPS</span>
                 </Button>
               </div>
 
-              {/* QUICK SABAH LOCAL AREA SELECTOR */}
-              <div className="space-y-1.5 pt-1">
-                <span className="text-[11px] font-bold text-stone-400 block">Pilihan Pantas Kawasan (Penampang / KK):</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    { name: 'Donggongon / Megalong', distanceKm: 1.5, lat: 5.9080, lng: 116.1030, label: 'Donggongon (1.5km)' },
-                    { name: 'ITCC Penampang / Cyber City', distanceKm: 2.8, lat: 5.9220, lng: 116.0910, label: 'ITCC / Cyber City (2.8km)' },
-                    { name: 'Kobusak / Grand Millennium', distanceKm: 3.2, lat: 5.9320, lng: 116.0880, label: 'Kobusak (3.2km)' },
-                    { name: 'Kepayan / Austral Park', distanceKm: 4.5, lat: 5.9380, lng: 116.0720, label: 'Kepayan (4.5km)' },
-                    { name: 'Bundusan / Beverly Hills', distanceKm: 4.8, lat: 5.9450, lng: 116.1080, label: 'Bundusan (4.8km)' },
-                    { name: 'Putatan / Petagas', distanceKm: 6.0, lat: 5.8920, lng: 116.0520, label: 'Putatan (6.0km)' },
-                    { name: 'Luyang / Lido / Foh Sang', distanceKm: 6.5, lat: 5.9520, lng: 116.0850, label: 'Luyang / Lido (6.5km)' },
-                    { name: 'KK Bandar / Api-Api', distanceKm: 8.8, lat: 5.9800, lng: 116.0750, label: 'KK Bandar (8.8km)' },
-                    { name: 'Inanam / Kolombong', distanceKm: 11.5, lat: 5.9920, lng: 116.1320, label: 'Inanam (11.5km)' },
-                  ].map((zone) => (
-                    <button
-                      key={zone.name}
-                      type="button"
-                      onClick={() => {
-                        setDeliveryAddress(prev => prev ? `${prev}, ${zone.name}` : zone.name);
-                        setCustLat(zone.lat);
-                        setCustLng(zone.lng);
-                        setRoadDistanceKm(zone.distanceKm);
-                        setTravelTimeMins(Math.max(5, Math.ceil(zone.distanceKm * 2)));
-                        toast.success(`Kawasan dipilih: ${zone.name} (${zone.distanceKm} km) 📍`);
-                      }}
-                      className={`px-3 py-1.5 text-[11px] rounded-xl border font-medium transition-all active:scale-95 ${
-                        Math.abs(roadDistanceKm - zone.distanceKm) < 0.2
-                          ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
-                          : 'bg-stone-900/90 hover:bg-stone-800 text-stone-300 border-stone-800'
-                      }`}
-                    >
-                      {zone.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+              {/* INTERACTIVE REAL ROAD LEAFLET MAP */}
+              <DeliveryRouteMap
+                origin={{
+                  lat: WARUNG_LAT,
+                  lng: WARUNG_LNG,
+                  title: 'Warung JNJ (Penampang)'
+                }}
+                destination={{
+                  lat: custLat,
+                  lng: custLng,
+                  address: deliveryAddress
+                }}
+                interactive={true}
+                showZoneCircle={true}
+                height="280px"
+                onDestinationChange={handleMapDestinationChange}
+                onRouteCalculated={handleMapRouteCalculated}
+                showNavigationButtons={false}
+              />
 
-            {/* ROUTE STATISTICS METRIC CARDS */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs pt-1">
-              <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl flex flex-col justify-between shadow-inner">
-                <span className="text-stone-400 text-[11px] block mb-0.5">Jarak Jalan Raya:</span>
-                <div className="flex items-center justify-between">
-                  <span className={`font-black text-sm sm:text-base ${isOutOfZone ? 'text-rose-400' : 'text-emerald-400'}`}>
-                    {roadDistanceKm} km {isOutOfZone ? '⚠️' : '✓'}
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <button
-                      type="button"
-                      title="Kurangkan jarak 0.5km"
-                      onClick={() => setRoadDistanceKm(prev => Math.max(1.0, Math.round((prev - 0.5) * 10) / 10))}
-                      className="w-6 h-6 bg-stone-800 hover:bg-stone-700 text-white rounded-lg text-xs flex items-center justify-center font-bold active:scale-95 border border-stone-700"
-                    >
-                      -
-                    </button>
-                    <button
-                      type="button"
-                      title="Tambah jarak 0.5km"
-                      onClick={() => setRoadDistanceKm(prev => Math.min(15.0, Math.round((prev + 0.5) * 10) / 10))}
-                      className="w-6 h-6 bg-stone-800 hover:bg-stone-700 text-white rounded-lg text-xs flex items-center justify-center font-bold active:scale-95 border border-stone-700"
-                    >
-                      +
-                    </button>
+              <div className="space-y-2 relative">
+                <div className="relative">
+                  <Textarea
+                    placeholder="Taip alamat lengkap (cth: Lot 14, Jalan 3D, Taman Kepayan Ridge / SD19 Taman Liana)..."
+                    value={deliveryAddress}
+                    onChange={(e) => {
+                      setDeliveryAddress(e.target.value);
+                      setShowSuggestionsDropdown(true);
+                    }}
+                    onFocus={() => {
+                      if (addressSuggestions.length > 0) setShowSuggestionsDropdown(true);
+                    }}
+                    className="bg-stone-900 border-stone-700/80 text-white placeholder:text-stone-500 rounded-2xl text-xs sm:text-sm min-h-[64px] focus:border-orange-500/60 transition-all shadow-inner"
+                  />
+
+                  {/* AUTOCOMPLETE SUGGESTIONS DROPDOWN */}
+                  {showSuggestionsDropdown && addressSuggestions.length > 0 && (
+                    <div className="absolute top-[68px] left-0 right-0 z-30 bg-stone-900 border border-stone-700 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl animate-fade-in divide-y divide-stone-800">
+                      <div className="px-3.5 py-2 bg-stone-950/90 flex items-center justify-between text-[11px] text-stone-400">
+                        <span className="flex items-center gap-1.5 font-bold text-emerald-400">
+                          <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Cadangan Lokasi Pantas:
+                        </span>
+                        {isLoadingSuggestions && (
+                          <span className="flex items-center gap-1 text-[10px] text-stone-500">
+                            <Loader2 className="w-2.5 h-2.5 animate-spin" /> Mencari...
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="max-h-52 overflow-y-auto">
+                        {addressSuggestions.map((item, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handleSelectSuggestion(item)}
+                            className="w-full px-3.5 py-2.5 text-left hover:bg-orange-500/10 flex items-start gap-2.5 transition-colors group"
+                          >
+                            <MapPin className="w-4 h-4 text-orange-400 shrink-0 mt-0.5 group-hover:scale-110 transition-transform" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-stone-200 group-hover:text-orange-300 truncate">
+                                {item.mainText}
+                              </p>
+                              <p className="text-[10px] text-stone-400 truncate">
+                                {item.secondaryText}
+                              </p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] text-stone-400">Tukar manual jarak jika perlu:</span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={isSearchingAddress || isCalculatingRoute}
+                    onClick={() => {
+                      setShowSuggestionsDropdown(false);
+                      handleSearchAddress();
+                    }}
+                    className="text-[11px] text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/40 h-7 px-3 rounded-xl border border-emerald-500/20 active:scale-95 transition-all"
+                  >
+                    {isSearchingAddress || isCalculatingRoute ? (
+                      <>
+                        <Loader2 className="w-3 h-3 animate-spin mr-1" /> Mengira Laluan...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="w-3 h-3 mr-1" /> Sahkan Lokasi & Kira Jarak
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* QUICK SABAH LOCAL AREA SELECTOR */}
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-[11px] font-bold text-stone-400 block">Pilihan Pantas Kawasan (Penampang / KK):</span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {[
+                      { name: 'Donggongon / Megalong', distanceKm: 1.5, lat: 5.9080, lng: 116.1030, label: 'Donggongon (1.5km)' },
+                      { name: 'ITCC Penampang / Cyber City', distanceKm: 2.8, lat: 5.9220, lng: 116.0910, label: 'ITCC / Cyber City (2.8km)' },
+                      { name: 'Kobusak / Grand Millennium', distanceKm: 3.2, lat: 5.9320, lng: 116.0880, label: 'Kobusak (3.2km)' },
+                      { name: 'Kepayan / Austral Park', distanceKm: 4.5, lat: 5.9380, lng: 116.0720, label: 'Kepayan (4.5km)' },
+                      { name: 'Bundusan / Beverly Hills', distanceKm: 4.8, lat: 5.9450, lng: 116.1080, label: 'Bundusan (4.8km)' },
+                      { name: 'Putatan / Petagas', distanceKm: 6.0, lat: 5.8920, lng: 116.0520, label: 'Putatan (6.0km)' },
+                      { name: 'Luyang / Lido / Foh Sang', distanceKm: 6.5, lat: 5.9520, lng: 116.0850, label: 'Luyang / Lido (6.5km)' },
+                      { name: 'KK Bandar / Api-Api', distanceKm: 8.8, lat: 5.9800, lng: 116.0750, label: 'KK Bandar (8.8km)' },
+                      { name: 'Inanam / Kolombong', distanceKm: 11.5, lat: 5.9920, lng: 116.1320, label: 'Inanam (11.5km)' },
+                    ].map((zone) => (
+                      <button
+                        key={zone.name}
+                        type="button"
+                        onClick={() => {
+                          setDeliveryAddress(prev => prev ? `${prev}, ${zone.name}` : zone.name);
+                          setCustLat(zone.lat);
+                          setCustLng(zone.lng);
+                          setRoadDistanceKm(zone.distanceKm);
+                          setTravelTimeMins(Math.max(5, Math.ceil(zone.distanceKm * 2)));
+                          toast.success(`Kawasan dipilih: ${zone.name} (${zone.distanceKm} km) 📍`);
+                        }}
+                        className={`px-3 py-1.5 text-[11px] rounded-xl border font-medium transition-all active:scale-95 ${
+                          Math.abs(roadDistanceKm - zone.distanceKm) < 0.2
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                            : 'bg-stone-900/90 hover:bg-stone-800 text-stone-300 border-stone-800'
+                        }`}
+                      >
+                        {zone.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
 
-              <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl flex flex-col justify-center shadow-inner">
-                <span className="text-stone-400 text-[11px] block mb-0.5">Anggaran Masa Rider:</span>
-                <span className="font-bold text-sm sm:text-base text-sky-400 flex items-center gap-1.5">
-                  <Clock className="w-4 h-4" /> ~{travelTimeMins} minit
-                </span>
+              {/* ROUTE STATISTICS METRIC CARDS */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs pt-1">
+                <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl flex flex-col justify-between shadow-inner">
+                  <span className="text-stone-400 text-[11px] block mb-0.5">Jarak Jalan Raya:</span>
+                  <div className="flex items-center justify-between">
+                    <span className={`font-black text-sm sm:text-base ${isOutOfZone ? 'text-rose-400' : 'text-emerald-400'}`}>
+                      {roadDistanceKm} km {isOutOfZone ? '⚠️' : '✓'}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        title="Kurangkan jarak 0.5km"
+                        onClick={() => setRoadDistanceKm(prev => Math.max(1.0, Math.round((prev - 0.5) * 10) / 10))}
+                        className="w-6 h-6 bg-stone-800 hover:bg-stone-700 text-white rounded-lg text-xs flex items-center justify-center font-bold active:scale-95 border border-stone-700"
+                      >
+                        -
+                      </button>
+                      <button
+                        type="button"
+                        title="Tambah jarak 0.5km"
+                        onClick={() => setRoadDistanceKm(prev => Math.min(15.0, Math.round((prev + 0.5) * 10) / 10))}
+                        className="w-6 h-6 bg-stone-800 hover:bg-stone-700 text-white rounded-lg text-xs flex items-center justify-center font-bold active:scale-95 border border-stone-700"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl flex flex-col justify-center shadow-inner">
+                  <span className="text-stone-400 text-[11px] block mb-0.5">Anggaran Masa Rider:</span>
+                  <span className="font-bold text-sm sm:text-base text-sky-400 flex items-center gap-1.5">
+                    <Clock className="w-4 h-4" /> ~{travelTimeMins} minit
+                  </span>
+                </div>
+
+                <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl flex flex-col justify-center shadow-inner">
+                  <span className="text-stone-400 text-[11px] block mb-0.5">Caj Penghantaran:</span>
+                  <span className="font-black text-sm sm:text-base text-amber-400">
+                    RM {deliveryFee.toFixed(2)}
+                  </span>
+                </div>
               </div>
 
-              <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl flex flex-col justify-center shadow-inner">
-                <span className="text-stone-400 text-[11px] block mb-0.5">Caj Penghantaran:</span>
-                <span className="font-black text-sm sm:text-base text-amber-400">
-                  RM {deliveryFee.toFixed(2)}
-                </span>
-              </div>
-            </div>
+              {isOutOfZone && (
+                <div className="bg-rose-500/10 border border-rose-500/30 p-3.5 rounded-2xl text-xs text-rose-300 flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+                  <span>Maaf, kami hanya menghantar dalam zon 15km dari Warung JNJ Penampang. Sila pilih alamat yang lebih hampir.</span>
+                </div>
+              )}
 
-            {isOutOfZone && (
-              <div className="bg-rose-500/10 border border-rose-500/30 p-3.5 rounded-2xl text-xs text-rose-300 flex items-start gap-2.5">
-                <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-                <span>Maaf, kami hanya menghantar dalam zon 15km dari Warung JNJ Penampang. Sila pilih alamat yang lebih hampir.</span>
-              </div>
-            )}
-          </CardContent>
+              {/* SAVE & CLOSE MAP BUTTON */}
+              <Button
+                onClick={() => setIsMapExpanded(false)}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-11 rounded-2xl shadow-lg flex items-center justify-center gap-2 active:scale-98 transition-all"
+              >
+                <Check className="w-4 h-4" />
+                <span>Sahkan Lokasi & Teruskan Pilih Makanan</span>
+              </Button>
+            </CardContent>
+          )}
         </Card>
 
         {/* STEP 2: SEARCH AND CATEGORY FILTER BAR */}
