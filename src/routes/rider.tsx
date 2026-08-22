@@ -486,7 +486,7 @@ function RiderPortalPage() {
     window.open(`https://wa.me/${validPhone}?text=${encodeURIComponent(msg)}`, '_blank');
   };
 
-  // Accurate Delivery Fee Resolver (From actual map road distance tag or DB)
+  // Accurate Delivery Fee Resolver (From actual map road distance tag or DB or live coordinates)
   const getJobDeliveryFee = (job: DeliveryJob): number => {
     // 1. Check if delivery_address has encoded fee tag e.g. [TAMBANG:RM6.60|JARAK:6.6KM]
     if (job.delivery_address) {
@@ -494,12 +494,17 @@ function RiderPortalPage() {
       if (feeMatch && feeMatch[1]) {
         return parseFloat(feeMatch[1]);
       }
+      const distMatch = job.delivery_address.match(/JARAK:\s*([0-9.]+)\s*KM/i);
+      if (distMatch && distMatch[1]) {
+        const km = parseFloat(distMatch[1]);
+        return Math.max(Math.round(km * 1.00 * 100) / 100, 2.00);
+      }
     }
-    // 2. Check explicit database fee
-    if (job.delivery_fee != null && Number(job.delivery_fee) > 0) {
+    // 2. Check explicit database fee (if realistic and > 2.00)
+    if (job.delivery_fee != null && Number(job.delivery_fee) > 2.00) {
       return Number(job.delivery_fee);
     }
-    // 3. Fallback coordinates calculation
+    // 3. Fallback coordinates calculation (from actual road distance)
     if (job.delivery_lat && job.delivery_lng) {
       const WARUNG_LAT = 5.9284138;
       const WARUNG_LNG = 116.1145036;
@@ -507,7 +512,11 @@ function RiderPortalPage() {
       const roadKm = Math.round(straightKm * 1.35 * 10) / 10;
       return Math.max(Math.round(roadKm * 1.00 * 100) / 100, 2.00);
     }
-    return 4.00;
+    // 4. Return database fee if available, otherwise default
+    if (job.delivery_fee != null && Number(job.delivery_fee) > 0) {
+      return Number(job.delivery_fee);
+    }
+    return 6.00;
   };
 
   // Earnings
