@@ -80,29 +80,61 @@ const WARUNG_LAT = 5.9284138;
 const WARUNG_LNG = 116.1145036;
 
 const LOCAL_SABAH_LANDMARKS = [
+  // Kepayan / Austral / Ridge
+  { name: 'Taman Kepayan Ridge', lat: 5.9412, lng: 116.0715, desc: 'Kepayan / KK' },
+  { name: 'Jalan Kepayan Ridge', lat: 5.9418, lng: 116.0720, desc: 'Kepayan Ridge, KK' },
+  { name: 'Kepayan Ridge Low Cost / Rumah Pangsa', lat: 5.9395, lng: 116.0730, desc: 'Kepayan, KK' },
+  { name: 'Taman Ridgeview, Kepayan', lat: 5.9430, lng: 116.0740, desc: 'Kepayan, KK' },
+  { name: 'Austral Park, Kepayan', lat: 5.9380, lng: 116.0720, desc: 'Kepayan / KK' },
+  { name: 'Taman Sri Kepayan', lat: 5.9350, lng: 116.0690, desc: 'Kepayan' },
+  { name: 'Taman Ganang, Kepayan', lat: 5.9290, lng: 116.0680, desc: 'Kepayan / Penampang' },
+  { name: 'Cyber City Apartment Phase 1', lat: 5.9210, lng: 116.0790, desc: 'Kepayan / Penampang' },
+  { name: 'Cyber City Apartment Phase 2', lat: 5.9230, lng: 116.0810, desc: 'Kepayan / Penampang' },
+
+  // Penampang Core / Donggongon
   { name: 'Taman Liana Phase 2, Penampang', lat: 5.9141659, lng: 116.085516, desc: 'Donggongon / Penampang' },
   { name: 'Taman Liana Phase 1, Penampang', lat: 5.9135, lng: 116.0842, desc: 'Donggongon / Penampang' },
   { name: 'Megalong Shopping Mall, Donggongon', lat: 5.9090, lng: 116.1025, desc: 'Donggongon, Penampang' },
   { name: 'Pekan Donggongon, Penampang', lat: 5.9080, lng: 116.1030, desc: 'Pusat Bandar Donggongon' },
+  { name: 'Taman Penampang Phase 1 & 2', lat: 5.9260, lng: 116.0980, desc: 'Penampang' },
+  { name: 'Taman Suria Penampang', lat: 5.9270, lng: 116.1010, desc: 'Penampang' },
+  { name: 'Taman Towering, Penampang', lat: 5.9370, lng: 116.0950, desc: 'Penampang' },
+  { name: 'Taman Kasigui / Kasigui 3', lat: 5.8990, lng: 116.1150, desc: 'Penampang' },
+  { name: 'Taman Nosoob Jaya / Nosoob Baru', lat: 5.9310, lng: 116.0810, desc: 'Penampang' },
+
+  // Kobusak / Pintas
   { name: 'ITCC Shopping Mall, Penampang', lat: 5.9225, lng: 116.0915, desc: 'Jalan Pintas Penampang' },
-  { name: 'Cyber City Apartment Phase 1', lat: 5.9210, lng: 116.0790, desc: 'Kepayan / Penampang' },
-  { name: 'Cyber City Apartment Phase 2', lat: 5.9230, lng: 116.0810, desc: 'Kepayan / Penampang' },
   { name: 'Plaza 333, Kobusak', lat: 5.9320, lng: 116.0880, desc: 'Jalan Pintas Penampang' },
   { name: 'Grand Millennium Plaza, Penampang', lat: 5.9340, lng: 116.0890, desc: 'Kobusak, Penampang' },
-  { name: 'Taman Penampang Phase 1 & 2', lat: 5.9260, lng: 116.0980, desc: 'Penampang' },
+  { name: 'Pintas Avenue Commercial', lat: 5.9360, lng: 116.0830, desc: 'Jalan Pintas, Penampang' },
+  { name: 'Taman Kobusak Villa', lat: 5.9315, lng: 116.0850, desc: 'Kobusak, Penampang' },
+
+  // Bundusan / Beverly
   { name: 'Bundusan Commercial Centre', lat: 5.9450, lng: 116.1080, desc: 'Jalan Bundusan, Penampang' },
   { name: 'Beverly Hills Apartment Phase 1-5', lat: 5.9480, lng: 116.1110, desc: 'Bundusan, Penampang' },
   { name: 'Pavilion Bundusan', lat: 5.9430, lng: 116.1050, desc: 'Bundusan, Penampang' },
-  { name: 'Taman Suria Penampang', lat: 5.9270, lng: 116.1010, desc: 'Penampang' },
-  { name: 'Taman Ganang, Kepayan', lat: 5.9290, lng: 116.0680, desc: 'Kepayan / Penampang' },
-  { name: 'Austral Park, Kepayan', lat: 5.9380, lng: 116.0720, desc: 'Kepayan / KK' },
-  { name: 'Taman Sri Kepayan', lat: 5.9350, lng: 116.0690, desc: 'Kepayan' },
+  { name: 'Taman Bundusan', lat: 5.9460, lng: 116.1070, desc: 'Bundusan, Penampang' },
+  { name: 'Taman Formosa / Bundusan Villa', lat: 5.9470, lng: 116.1020, desc: 'Bundusan, Penampang' },
+  { name: 'Taman Permai, Bundusan', lat: 5.9490, lng: 116.1090, desc: 'Bundusan, Penampang' },
+
+  // Putatan / Petagas
   { name: 'Putatan Platinum Apartment', lat: 5.8950, lng: 116.0550, desc: 'Putatan' },
   { name: 'Pekan Putatan / Servay Putatan', lat: 5.8920, lng: 116.0520, desc: 'Putatan' },
   { name: 'Petagas / Lembaga Padi', lat: 5.9080, lng: 116.0560, desc: 'Petagas' },
+  { name: 'Taman Bersatu, Putatan', lat: 5.8910, lng: 116.0580, desc: 'Putatan' },
+  { name: 'Taman Pasir Putih, Putatan', lat: 5.8880, lng: 116.0490, desc: 'Putatan' },
+
+  // Luyang / Lido / Foh Sang
   { name: 'Lido Market / Lido Plaza', lat: 5.9480, lng: 116.0820, desc: 'Luyang, KK' },
   { name: 'Foh Sang / Luyang Commercial', lat: 5.9550, lng: 116.0910, desc: 'Luyang, KK' },
+  { name: 'Taman Foh Sang / Taman Golden City', lat: 5.9540, lng: 116.0890, desc: 'Luyang, KK' },
+  { name: 'Taman Bornion / Taman Hilltop', lat: 5.9510, lng: 116.0930, desc: 'Luyang, KK' },
+  { name: 'Taman Cantek, Lido', lat: 5.9440, lng: 116.0790, desc: 'Lido / Luyang' },
+  { name: 'Heritage Plaza / Lintas Plaza', lat: 5.9580, lng: 116.0880, desc: 'Lintas, Luyang' },
+
+  // KK City & Likas / Inanam
   { name: 'Aeropod Commercial Square', lat: 5.9470, lng: 116.0610, desc: 'Tanjung Aru, KK' },
+  { name: 'Tanjung Aru Plaza', lat: 5.9520, lng: 116.0540, desc: 'Tanjung Aru' },
   { name: 'Imago Shopping Mall, KK', lat: 5.9710, lng: 116.0670, desc: 'Kota Kinabalu' },
   { name: 'Centre Point Sabah / Api-Api', lat: 5.9790, lng: 116.0720, desc: 'KK Bandar' },
   { name: 'Gaya Street / Suria Sabah', lat: 5.9860, lng: 116.0770, desc: 'Kota Kinabalu' },
@@ -110,6 +142,54 @@ const LOCAL_SABAH_LANDMARKS = [
   { name: 'Kolombong Industrial / BDC', lat: 5.9810, lng: 116.1150, desc: 'Kolombong' },
   { name: 'Kingfisher / Hospital Likas', lat: 6.0150, lng: 116.1260, desc: 'Likas, KK' },
 ];
+
+// Clean search string by stripping house/lot number prefixes
+function sanitizeSearchQuery(raw: string): string {
+  return raw
+    .replace(/(?:lot|no\.?|house|rumah|unit|tingkat|blok|block|pintu|apt|apartment)\s*[a-z0-9\-\/]+/gi, '')
+    .replace(/[,\-\/]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function searchLocalSabahLandmarks(rawQuery: string) {
+  const cleanQ = sanitizeSearchQuery(rawQuery).toLowerCase();
+  const rawQ = rawQuery.toLowerCase().trim();
+  const tokens = cleanQ.split(' ').filter(t => t.length >= 2);
+
+  return LOCAL_SABAH_LANDMARKS.map(item => {
+    const itemName = item.name.toLowerCase();
+    const itemDesc = item.desc.toLowerCase();
+    const fullText = `${itemName} ${itemDesc}`;
+
+    let score = 0;
+    if (itemName.includes(cleanQ) || itemDesc.includes(cleanQ)) {
+      score += 100;
+    }
+    if (tokens.length > 0) {
+      const matchCount = tokens.filter(t => fullText.includes(t)).length;
+      if (matchCount === tokens.length) {
+        score += 80;
+      } else if (matchCount > 0) {
+        score += matchCount * 25;
+      }
+    }
+    if (fullText.includes(rawQ)) {
+      score += 50;
+    }
+
+    return { item, score };
+  })
+  .filter(res => res.score > 0)
+  .sort((a, b) => b.score - a.score)
+  .map(res => ({
+    displayName: `${res.item.name}, ${res.item.desc}`,
+    mainText: res.item.name,
+    secondaryText: res.item.desc,
+    lat: res.item.lat,
+    lng: res.item.lng,
+  }));
+}
 
 function calculateHaversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371; // Earth radius in km
@@ -415,7 +495,7 @@ function CustomerDeliveryPage() {
     toast.success('Bungkusan dipecahkan kepada pek individu untuk pengkhususan berasingan.');
   };
 
-  // Debounced Auto-suggestions effect
+  // Debounced Auto-suggestions effect with token matching & Photon/Nominatim
   useEffect(() => {
     if (!deliveryAddress || deliveryAddress.trim().length < 2) {
       setAddressSuggestions([]);
@@ -423,74 +503,112 @@ function CustomerDeliveryPage() {
       return;
     }
 
-    const q = deliveryAddress.toLowerCase().trim();
+    const rawInput = deliveryAddress.trim();
+    const cleanQ = sanitizeSearchQuery(rawInput);
 
-    // 1. Instant local search in curated Sabah landmarks database
-    const localMatches = LOCAL_SABAH_LANDMARKS.filter(
-      item => item.name.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q)
-    ).map(item => ({
-      displayName: `${item.name}, ${item.desc}`,
-      mainText: item.name,
-      secondaryText: item.desc,
-      lat: item.lat,
-      lng: item.lng,
-    }));
+    // 1. Instant local landmark search (supports lot/jalan prefixes + keyword matching)
+    const localMatches = searchLocalSabahLandmarks(rawInput);
+    if (localMatches.length > 0) {
+      setAddressSuggestions(localMatches.slice(0, 6));
+      setShowSuggestionsDropdown(true);
+    }
 
-    setAddressSuggestions(localMatches);
-    setShowSuggestionsDropdown(true);
-
-    // 2. Fetch live online geocoding suggestions from Nominatim (debounced 350ms)
+    // 2. Fetch live online geocoding suggestions from Photon & Nominatim (debounced 300ms)
     const timeout = setTimeout(async () => {
-      if (q.length < 3) return;
+      const searchTerms = [cleanQ, rawInput].filter(s => s && s.length >= 2);
+      if (searchTerms.length === 0) return;
+
       setIsLoadingSuggestions(true);
       try {
-        const query = encodeURIComponent(`${q}, Sabah, Malaysia`);
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${query}&countrycodes=my&viewbox=115.7,6.3,116.5,5.6&bounded=0&limit=5`
-        );
-        const data = await res.json();
-        if (data && Array.isArray(data)) {
-          const onlineItems = data
-            .filter((d: any) => {
-              const lat = parseFloat(d.lat);
-              const lon = parseFloat(d.lon);
-              return isWithinSabah(lat, lon);
-            })
-            .map((d: any) => {
-              const parts = d.display_name.split(', ');
-              return {
-                displayName: d.display_name,
-                mainText: parts.slice(0, 2).join(', '),
-                secondaryText: parts.slice(2, 5).join(', '),
-                lat: parseFloat(d.lat),
-                lng: parseFloat(d.lon),
-              };
-            });
+        const queryToUse = searchTerms[0];
 
-          // Merge without duplicates
-          setAddressSuggestions(prev => {
-            const names = new Set(prev.map(p => p.mainText.toLowerCase()));
-            const filteredOnline = onlineItems.filter(o => !names.has(o.mainText.toLowerCase()));
-            return [...prev, ...filteredOnline].slice(0, 6);
+        // Query Photon (fast OSM autocomplete biased around Penampang/KK: 5.928, 116.114)
+        const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(queryToUse)}&lat=5.9284&lon=116.1145&limit=6`;
+        const photonRes = await fetch(photonUrl);
+        const photonData = await photonRes.json();
+
+        const onlineItems: { displayName: string; mainText: string; secondaryText: string; lat: number; lng: number }[] = [];
+
+        if (photonData && photonData.features) {
+          photonData.features.forEach((feat: any) => {
+            const coords = feat.geometry?.coordinates;
+            if (coords && coords.length >= 2) {
+              const lon = coords[0];
+              const lat = coords[1];
+              if (isWithinSabah(lat, lon)) {
+                const props = feat.properties || {};
+                const name = props.name || props.street || queryToUse;
+                const city = props.city || props.district || props.county || 'Sabah';
+                const state = props.state || 'Sabah';
+                onlineItems.push({
+                  displayName: `${name}, ${city}, ${state}`,
+                  mainText: name,
+                  secondaryText: `${city}, ${state}`,
+                  lat: lat,
+                  lng: lon,
+                });
+              }
+            }
           });
         }
+
+        // Also query Nominatim as fallback if Photon had few results
+        if (onlineItems.length < 3) {
+          const nominatimQuery = encodeURIComponent(`${queryToUse}, Sabah, Malaysia`);
+          const nomRes = await fetch(
+            `https://nominatim.openstreetmap.org/search?format=json&q=${nominatimQuery}&countrycodes=my&viewbox=115.7,6.3,116.5,5.6&bounded=0&limit=4`
+          );
+          const nomData = await nomRes.json();
+          if (nomData && Array.isArray(nomData)) {
+            nomData.forEach((d: any) => {
+              const lat = parseFloat(d.lat);
+              const lon = parseFloat(d.lon);
+              if (isWithinSabah(lat, lon)) {
+                const parts = d.display_name.split(', ');
+                onlineItems.push({
+                  displayName: d.display_name,
+                  mainText: parts.slice(0, 2).join(', '),
+                  secondaryText: parts.slice(2, 5).join(', '),
+                  lat: lat,
+                  lng: lon,
+                });
+              }
+            });
+          }
+        }
+
+        // Merge local matches and online items without duplicates
+        setAddressSuggestions(prev => {
+          const names = new Set(prev.map(p => p.mainText.toLowerCase()));
+          const filteredOnline = onlineItems.filter(o => !names.has(o.mainText.toLowerCase()));
+          const combined = [...prev, ...filteredOnline].slice(0, 6);
+          if (combined.length > 0) setShowSuggestionsDropdown(true);
+          return combined;
+        });
       } catch (e) {
         // Keep local matches
       } finally {
         setIsLoadingSuggestions(false);
       }
-    }, 350);
+    }, 300);
 
     return () => clearTimeout(timeout);
   }, [deliveryAddress]);
 
-  const handleSelectSuggestion = async (item: { displayName: string; lat: number; lng: number }) => {
-    setDeliveryAddress(item.displayName);
+  const handleSelectSuggestion = async (item: { displayName: string; mainText: string; lat: number; lng: number }) => {
+    // Check if user entered a specific house/lot number prefix to preserve
+    const lotMatch = deliveryAddress.match(/^(?:lot|no\.?|unit|house|tingkat|blok)\s*[a-z0-9\-\/]+(?:,\s*jalan\s*[a-z0-9]+)?/i);
+    let finalAddressText = item.displayName;
+    if (lotMatch && !item.displayName.toLowerCase().startsWith(lotMatch[0].toLowerCase())) {
+      finalAddressText = `${lotMatch[0]}, ${item.displayName}`;
+    }
+
+    setDeliveryAddress(finalAddressText);
     setCustLat(item.lat);
     setCustLng(item.lng);
     setShowSuggestionsDropdown(false);
     await fetchRoadRoute(item.lat, item.lng);
-    toast.success(`Lokasi dipilih: ${item.displayName.split(',')[0]} 📍`);
+    toast.success(`Lokasi dipilih: ${item.mainText} 📍`);
   };
 
   const handleSearchAddress = async (addrText?: string) => {
