@@ -670,6 +670,20 @@ function CustomerDeliveryPage() {
     toast.success('Bungkusan dipecahkan kepada pek individu untuk pengkhususan berasingan.');
   };
 
+  // Memoized handlers for DeliveryRouteMap to prevent re-render feedback loops
+  const handleMapDestinationChange = useCallback((lat: number, lng: number, addr?: string) => {
+    setCustLat(lat);
+    setCustLng(lng);
+    if (addr) {
+      setDeliveryAddress(addr);
+    }
+  }, []);
+
+  const handleMapRouteCalculated = useCallback((route: { distanceKm: number; durationMins: number }) => {
+    setRoadDistanceKm(route.distanceKm);
+    setTravelTimeMins(route.durationMins);
+  }, []);
+
   // Debounced Auto-suggestions effect with token matching & Photon/Nominatim
   useEffect(() => {
     if (!deliveryAddress || deliveryAddress.trim().length < 2) {
@@ -1148,15 +1162,8 @@ function CustomerDeliveryPage() {
               interactive={true}
               showZoneCircle={true}
               height="280px"
-              onDestinationChange={(lat, lng, addr) => {
-                setCustLat(lat);
-                setCustLng(lng);
-                if (addr) setDeliveryAddress(addr);
-              }}
-              onRouteCalculated={(route) => {
-                setRoadDistanceKm(route.distanceKm);
-                setTravelTimeMins(route.durationMins);
-              }}
+              onDestinationChange={handleMapDestinationChange}
+              onRouteCalculated={handleMapRouteCalculated}
               showNavigationButtons={false}
             />
 

@@ -85,6 +85,10 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
   const zoneCircleRef = useRef<L.Circle | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const isInternalUpdateRef = useRef<boolean>(false);
+  const lastCenteredCoordRef = useRef<{ lat: number; lng: number }>({
+    lat: destination?.lat || origin.lat,
+    lng: destination?.lng || origin.lng
+  });
 
   const [mapViewMode, setMapViewMode] = useState<'streets' | 'satellite'>('satellite');
   const [isMapMoving, setIsMapMoving] = useState(false);
@@ -254,9 +258,12 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
               toast.error('Sila gerakkan peta ke dalam kawasan Sabah / Penampang.');
               return;
             }
-            const addr = await reverseGeocode(center.lat, center.lng);
+            lastCenteredCoordRef.current = { lat: center.lat, lng: center.lng };
             isInternalUpdateRef.current = true;
-            onDestinationChange(center.lat, center.lng, addr);
+            const addr = await reverseGeocode(center.lat, center.lng);
+            if (onDestinationChange) {
+              onDestinationChange(center.lat, center.lng, addr);
+            }
           }, 300);
         });
 
@@ -266,6 +273,7 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
             toast.error('Sila pilih lokasi di dalam kawasan Sabah / Penampang.');
             return;
           }
+          lastCenteredCoordRef.current = { lat, lng };
           map.panTo([lat, lng], { animate: true, duration: 0.5 });
         });
       }
@@ -452,17 +460,17 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
     // 3. Destination Marker (Customer)
     if (destination && destination.lat && destination.lng) {
       if (interactive) {
-        // If this update was triggered internally by user dragging the map, DO NOT panTo or move map!
-        if (isInternalUpdateRef.current) {
-          isInternalUpdateRef.current = false;
-        } else {
-          // Triggered externally (e.g. user selected suggestion or GPS detection), gently pan to it
-          const center = map.getCenter();
-          const dist = calculateStraightKm(center.lat, center.lng, destination.lat, destination.lng);
-          if (dist > 0.02) {
-            map.panTo([destination.lat, destination.lng], { animate: true, duration: 0.6 });
-          }
+        const center = map.getCenter();
+        const distFromCenter = calculateStraightKm(center.lat, center.lng, destination.lat, destination.lng);
+        const distFromLast = calculateStraightKm(lastCenteredCoordRef.current.lat, lastCenteredCoordRef.current.lng, destination.lat, destination.lng);
+
+        // Only pan map if update was triggered externally from search selection AND distance is substantial (> 200m)
+        if (!isInternalUpdateRef.current && distFromCenter > 0.2 && distFromLast > 0.2 && !isMapMoving) {
+          lastCenteredCoordRef.current = { lat: destination.lat, lng: destination.lng };
+          map.panTo([destination.lat, destination.lng], { animate: true, duration: 0.5 });
         }
+        isInternalUpdateRef.current = false;
+
         // Remove static Leaflet marker so only the mobile-friendly floating center pin is active
         if (destMarkerRef.current) {
           destMarkerRef.current.remove();
