@@ -413,26 +413,20 @@ function LandingPage() {
 
       {/* Footer */}
       <footer className="py-12 px-6 border-t border-stone-800/50 bg-[#0c0a09]">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full flex items-center justify-center overflow-hidden border border-stone-700/80 shadow-inner">
               <img src="/logo.png" alt="Warung J&J Logo" className="w-full h-full object-cover scale-[1.05]" />
             </div>
-            <span className="text-lg font-bold tracking-tight text-stone-300">Warung J&J</span>
+            <div>
+              <span className="text-lg font-bold tracking-tight text-stone-200 block leading-none">Warung J&J</span>
+              <span className="text-[11px] text-stone-400">Penampang, Sabah • Citarasa Asli Malaysia</span>
+            </div>
           </div>
 
-          {/* QUICK PORTAL LINKS */}
-          <div className="flex items-center gap-4 text-xs font-mono">
-            <Link to="/rider" className="text-amber-400 hover:text-amber-300 hover:underline flex items-center gap-1 font-bold">
-              🛵 Portal Rider (Daftar / Bertugas)
-            </Link>
-            <span className="text-stone-700">•</span>
-            <Link to="/auth" className="text-stone-400 hover:text-stone-200 hover:underline">
-              🔐 Staff Login
-            </Link>
-          </div>
-
-          <p className="text-sm font-medium text-stone-500 tracking-tight">© {new Date().getFullYear()} Warung J&J. All rights reserved.</p>
+          <p className="text-xs sm:text-sm font-medium text-stone-400 tracking-tight">
+            © {new Date().getFullYear()} Warung J&J. All rights reserved.
+          </p>
         </div>
       </footer>
     </div>
