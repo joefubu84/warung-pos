@@ -47,7 +47,7 @@ export function clearStoredGoogleUser(): void {
  * Handle Supabase Google OAuth Provider Login
  * Triggers native OAuth flow or OAuth pop-up/redirect
  */
-export async function signInWithGoogleOAuth(): Promise<{ success: boolean; message: string }> {
+export async function signInWithGoogleOAuth(): Promise<{ success: boolean; message: string; isNotConfigured?: boolean }> {
   try {
     const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
     const { error } = await supabase.auth.signInWithOAuth({
@@ -57,10 +57,17 @@ export async function signInWithGoogleOAuth(): Promise<{ success: boolean; messa
 
     if (error) {
       console.warn('Supabase OAuth trigger warning:', error);
+      if (error.message.includes('missing OAuth secret') || error.message.includes('validation_failed') || error.message.includes('Unsupported provider')) {
+        return { 
+          success: false, 
+          isNotConfigured: true,
+          message: 'Google OAuth belum dikonfigurasi Client ID & Secret dalam Supabase Dashboard. Anda boleh daftar terus menggunakan No. Telefon & Nama.' 
+        };
+      }
       return { success: false, message: error.message };
     }
 
-    return { success: true, message: 'Redirecting to Google Sign-In...' };
+    return { success: true, message: 'Menghubungkan ke akaun Google...' };
   } catch (err: any) {
     return { success: false, message: err?.message || 'Google OAuth failed to trigger.' };
   }
