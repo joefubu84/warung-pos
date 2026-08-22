@@ -198,11 +198,11 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
         attributionControl: false,
       });
 
-      // Dark Theme OpenStreetMap Tiles via CartoDB Dark Matter / OSM
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        maxZoom: 18,
+      // Google Maps Tiles with Full Shop Names, Landmarks, Taman & Building Details
+      L.tileLayer('https://mt{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+        maxZoom: 20,
         minZoom: 10,
-        subdomains: 'abcd',
+        subdomains: ['0', '1', '2', '3'],
         bounds: sabahBounds
       }).addTo(map);
 
