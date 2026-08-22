@@ -410,30 +410,34 @@ function CustomerDeliveryPage() {
           </div>
 
           <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-bold">
+              <span>🔴 Delivery & Online Order Ditutup</span>
+            </div>
             <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-              Delivery Ditutup Buat Sementara Waktu
+              Pesanan Online Ditutup Buat Masa Sekarang
             </h1>
-            <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
-              Perkhidmatan pesanan online & penghantaran Warung JNJ sedang menjalani penyelarasan sistem dan ditutup buat sementara waktu.
+            <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+              Buat masa sekarang, perkhidmatan <b>Delivery & Order Online ditutup</b>. Warung JNJ <b>hanya menerima pesanan dari Meja (Imbas QR Meja) dan Kaunter</b> sahaja.
             </p>
           </div>
 
-          <div className="bg-stone-900/90 border border-stone-800 p-4 rounded-2xl text-xs text-stone-300 space-y-1.5 text-left">
-            <p className="font-bold text-orange-400 flex items-center gap-1.5">
-              <Store className="w-4 h-4" /> Pesanan Dine-in / Bungkus:
+          <div className="bg-stone-900/90 border border-stone-800 p-4 rounded-2xl text-xs text-stone-300 space-y-2 text-left">
+            <p className="font-bold text-emerald-400 flex items-center gap-1.5 text-xs">
+              <Store className="w-4 h-4" /> Cara Membuat Pesanan di Warung JNJ:
             </p>
-            <p className="text-stone-400 text-[11px] leading-relaxed">
-              Warung JNJ dibuka seperti biasa untuk pesanan makan di restoran atau bungkus (*takeaway*). Sila kunjungi cawangan kami di Penampang.
-            </p>
+            <ul className="text-stone-300 text-xs space-y-1.5 list-disc list-inside leading-relaxed">
+              <li><b>Makan di Meja (Dine-in):</b> Sila imbas pelekat Kod QR di atas meja anda.</li>
+              <li><b>Pesanan di Kaunter:</b> Buat pesanan & bayaran terus di kaunter juruwang.</li>
+            </ul>
           </div>
 
           <div className="space-y-2.5 pt-1">
             <Button
-              onClick={() => window.open('https://wa.me/60172221784?text=Halo%20Warung%20JNJ,%20saya%20ingin%20bertanya%20mengenai%20pesanan.', '_blank')}
-              className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl shadow-lg flex items-center justify-center gap-2 text-xs sm:text-sm active:scale-95 transition-all"
+              onClick={() => window.location.href = '/#location'}
+              className="w-full h-12 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-2xl shadow-lg flex items-center justify-center gap-2 text-xs sm:text-sm active:scale-95 transition-all"
             >
-              <MessageCircle className="w-4 h-4" />
-              <span>Hubungi WhatsApp Warung (017-2221784)</span>
+              <MapPin className="w-4 h-4" />
+              <span>📍 Lihat Lokasi Warung JNJ Penampang</span>
             </Button>
 
             <Button

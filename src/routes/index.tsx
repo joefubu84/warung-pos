@@ -120,11 +120,11 @@ function LandingPage() {
 
           {/* CTA */}
           <div className="pr-1">
-            <Link to="/delivery">
+            <a href="#menu">
               <Button className="rounded-full px-7 h-10 bg-orange-600 hover:bg-orange-500 text-white font-bold tracking-tight transition-all active:scale-[0.96] border-none shadow-[0_0_20px_rgba(234,88,12,0.3)]">
-                Order Now
+                Lihat Menu 🍽️
               </Button>
-            </Link>
+            </a>
           </div>
         </motion.nav>
       </div>
@@ -142,10 +142,13 @@ function LandingPage() {
             animate="show"
             className="flex-1 space-y-8 text-center lg:text-left z-10"
           >
-            <motion.div variants={item}>
+            <motion.div variants={item} className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
               <div className="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-orange-500/10 border border-orange-500/20 text-sm font-semibold tracking-tight text-orange-400">
                 <Flame className="w-4 h-4" />
                 Authentic Malaysian Flavors
+              </div>
+              <div className="inline-flex items-center gap-1.5 py-1.5 px-3.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-bold tracking-tight text-amber-300">
+                <span>🍽️ Pesanan Meja & Kaunter Sahaja</span>
               </div>
             </motion.div>
 
@@ -158,19 +161,19 @@ function LandingPage() {
             </motion.h1>
 
             <motion.p variants={item} className="text-lg md:text-xl text-stone-400 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
-              Rich, bold, and unforgettable. We serve generations of family recipes crafted with the finest local spices, bringing the true taste of home to your table.
+              Rich, bold, and unforgettable. Sila kunjungi restoran kami di Penampang untuk menikmati hidangan segar melalui <b>Pesanan Kod QR di Meja</b> atau <b>Pesanan di Kaunter</b>.
             </motion.p>
 
             <motion.div variants={item} className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
-              <Link to="/delivery" className="w-full sm:w-auto">
+              <a href="#menu" className="w-full sm:w-auto">
                 <Button size="lg" className="h-14 px-8 rounded-full text-[17px] font-semibold bg-orange-600 hover:bg-orange-500 text-white shadow-[0_8px_30px_rgba(234,88,12,0.3)] transition-all active:scale-[0.97] w-full border-none">
-                  Order Delivery & Takeaway
+                  Lihat Pilihan Menu
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
-              </Link>
-              <a href="#menu" className="w-full sm:w-auto">
+              </a>
+              <a href="#location" className="w-full sm:w-auto">
                 <Button size="lg" variant="outline" className="h-14 px-8 rounded-full text-[17px] font-semibold border-stone-600 text-stone-300 hover:text-white hover:bg-stone-800 transition-all active:scale-[0.97] w-full bg-transparent">
-                  View Menu
+                  📍 Lokasi Warung
                 </Button>
               </a>
             </motion.div>
