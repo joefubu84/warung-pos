@@ -537,27 +537,83 @@ function CustomerDeliveryPage() {
     fetchStore();
     fetchRoadRoute(custLat, custLng);
 
+    const hydrateCustomerFromUser = async (u: any) => {
+      const gName = u.user_metadata?.full_name || u.user_metadata?.name || u.user_metadata?.custom_claims?.name || u.email?.split('@')[0] || 'Pelanggan';
+      const gPhone = u.phone || u.user_metadata?.phone || u.user_metadata?.phone_number || '';
+      
+      const gUser: GoogleAuthUser = {
+        id: u.id,
+        email: u.email || '',
+        name: gName,
+        avatarUrl: u.user_metadata?.avatar_url || u.user_metadata?.picture
+      };
+      saveStoredGoogleUser(gUser);
+      setCurrentUser(gUser);
+      setCustomerName(gName);
+
+      // Auto-detect phone from metadata, localStorage, or previous orders
+      let detectedPhone = gPhone;
+      if (!detectedPhone && typeof window !== 'undefined') {
+        detectedPhone = localStorage.getItem(`warung_phone_${u.email}`) || localStorage.getItem('warung_customer_phone') || '';
+      }
+
+      if (u.email) {
+        try {
+          const { data: prevOrder } = await supabase
+            .from('orders')
+            .select('customer_name, customer_phone, delivery_address, delivery_lat, delivery_lng')
+            .eq('customer_email', u.email)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (prevOrder) {
+            if (prevOrder.customer_phone) {
+              detectedPhone = prevOrder.customer_phone;
+            }
+            if (prevOrder.customer_name) {
+              setCustomerName(prevOrder.customer_name);
+            }
+            if (prevOrder.delivery_address) {
+              const cleanAddr = prevOrder.delivery_address.replace(/\[TAMBANG:.*?\]/g, '').trim();
+              setDeliveryAddress(prev => prev || cleanAddr);
+              if (prevOrder.delivery_lat && prevOrder.delivery_lng) {
+                setCustLat(prevOrder.delivery_lat);
+                setCustLng(prevOrder.delivery_lng);
+                fetchRoadRoute(prevOrder.delivery_lat, prevOrder.delivery_lng);
+              }
+            }
+          }
+        } catch (err) {
+          console.warn('Previous order lookup:', err);
+        }
+      }
+
+      if (detectedPhone) {
+        setCustomerPhone(detectedPhone);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('warung_customer_phone', detectedPhone);
+          if (u.email) localStorage.setItem(`warung_phone_${u.email}`, detectedPhone);
+        }
+      }
+    };
+
     // 1. Check Stored or Supabase Auth User
     const stored = getStoredGoogleUser();
     if (stored) {
       setCurrentUser(stored);
       setCustomerName(prev => prev || stored.name);
+      if (stored.email && typeof window !== 'undefined') {
+        const savedPhone = localStorage.getItem(`warung_phone_${stored.email}`) || localStorage.getItem('warung_customer_phone');
+        if (savedPhone) setCustomerPhone(savedPhone);
+      }
     }
 
     const checkAuth = async () => {
       setIsAuthLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
-        const u = session.user;
-        const gUser: GoogleAuthUser = {
-          id: u.id,
-          email: u.email || '',
-          name: u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0] || 'Pelanggan',
-          avatarUrl: u.user_metadata?.avatar_url || u.user_metadata?.picture
-        };
-        saveStoredGoogleUser(gUser);
-        setCurrentUser(gUser);
-        setCustomerName(prev => prev || gUser.name);
+        await hydrateCustomerFromUser(session.user);
       }
       setIsAuthLoading(false);
     };
@@ -565,16 +621,7 @@ function CustomerDeliveryPage() {
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        const u = session.user;
-        const gUser: GoogleAuthUser = {
-          id: u.id,
-          email: u.email || '',
-          name: u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0] || 'Pelanggan',
-          avatarUrl: u.user_metadata?.avatar_url || u.user_metadata?.picture
-        };
-        saveStoredGoogleUser(gUser);
-        setCurrentUser(gUser);
-        setCustomerName(prev => prev || gUser.name);
+        hydrateCustomerFromUser(session.user);
         setShowAuthModal(false);
       } else {
         clearStoredGoogleUser();
@@ -585,7 +632,7 @@ function CustomerDeliveryPage() {
     // 2. Restore saved phone
     if (typeof window !== 'undefined') {
       const savedPhone = localStorage.getItem('warung_customer_phone');
-      if (savedPhone) setCustomerPhone(savedPhone);
+      if (savedPhone) setCustomerPhone(prev => prev || savedPhone);
     }
 
     // 3. Check for ToyyibPay FPX redirect return params
@@ -1820,7 +1867,12 @@ function CustomerDeliveryPage() {
                   <Input
                     placeholder="Contoh: Farhan / Siti / John"
                     value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
+                    onChange={(e) => {
+                      setCustomerName(e.target.value);
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('warung_customer_name', e.target.value);
+                      }
+                    }}
                     className="bg-stone-900 border-stone-700/80 text-white placeholder:text-stone-500 rounded-2xl text-xs sm:text-sm h-11 focus:border-orange-500/60 shadow-inner"
                   />
                 </div>
@@ -1832,7 +1884,15 @@ function CustomerDeliveryPage() {
                   <Input
                     placeholder="Contoh: 0198887766 / 0123456789"
                     value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
+                    onChange={(e) => {
+                      setCustomerPhone(e.target.value);
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('warung_customer_phone', e.target.value);
+                        if (currentUser?.email) {
+                          localStorage.setItem(`warung_phone_${currentUser.email}`, e.target.value);
+                        }
+                      }
+                    }}
                     className="bg-stone-900 border-stone-700/80 text-white placeholder:text-stone-500 rounded-2xl text-xs sm:text-sm h-11 focus:border-orange-500/60 shadow-inner"
                   />
                 </div>
