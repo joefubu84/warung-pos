@@ -41,13 +41,24 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
-  Navigation
+  Navigation,
+  LogIn,
+  LogOut,
+  UploadCloud,
+  FileText
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createToyyibPayCheckout } from '@/lib/toyyibpay';
 import { COMMON_MODIFIERS } from '@/lib/kitchen-checklist-config';
 import { DishCustomizationModal, CustomizedCartItem } from '@/components/DishCustomizationModal';
 import { DeliveryRouteMap, WARUNG_COORDS, isWithinSabah } from '@/components/DeliveryRouteMap';
+import { 
+  signInWithGoogleOAuth, 
+  getStoredGoogleUser, 
+  saveStoredGoogleUser, 
+  clearStoredGoogleUser, 
+  GoogleAuthUser 
+} from '@/lib/google-auth';
 
 export const Route = createFileRoute('/delivery')({
   component: CustomerDeliveryPage,
@@ -391,6 +402,13 @@ function CustomerDeliveryPage() {
   const [customizingItem, setCustomizingItem] = useState<MenuItem | null>(null);
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState(false);
 
+  // Google Authentication & Anti-Scam State
+  const [currentUser, setCurrentUser] = useState<GoogleAuthUser | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [receiptProofUrl, setReceiptProofUrl] = useState<string | null>(null);
+  const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
+
   // Customer & Delivery Info
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -462,19 +480,89 @@ function CustomerDeliveryPage() {
     }
   };
 
+  // Google Login Handler
+  const handleGoogleLogin = async () => {
+    try {
+      const res = await signInWithGoogleOAuth();
+      if (!res.success) {
+        toast.error(res.message);
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal menyambung ke Google.');
+    }
+  };
+
+  const handleLogout = async () => {
+    clearStoredGoogleUser();
+    setCurrentUser(null);
+    await supabase.auth.signOut();
+    toast.info('Log keluar akaun Google berjaya.');
+  };
+
   useEffect(() => {
     fetchMenuItems();
     fetchStore();
     fetchRoadRoute(custLat, custLng);
 
-    // Check for ToyyibPay FPX redirect return params
+    // 1. Check Stored or Supabase Auth User
+    const stored = getStoredGoogleUser();
+    if (stored) {
+      setCurrentUser(stored);
+      setCustomerName(prev => prev || stored.name);
+    }
+
+    const checkAuth = async () => {
+      setIsAuthLoading(true);
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const u = session.user;
+        const gUser: GoogleAuthUser = {
+          id: u.id,
+          email: u.email || '',
+          name: u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0] || 'Pelanggan',
+          avatarUrl: u.user_metadata?.avatar_url || u.user_metadata?.picture
+        };
+        saveStoredGoogleUser(gUser);
+        setCurrentUser(gUser);
+        setCustomerName(prev => prev || gUser.name);
+      }
+      setIsAuthLoading(false);
+    };
+    checkAuth();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const u = session.user;
+        const gUser: GoogleAuthUser = {
+          id: u.id,
+          email: u.email || '',
+          name: u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split('@')[0] || 'Pelanggan',
+          avatarUrl: u.user_metadata?.avatar_url || u.user_metadata?.picture
+        };
+        saveStoredGoogleUser(gUser);
+        setCurrentUser(gUser);
+        setCustomerName(prev => prev || gUser.name);
+        setShowAuthModal(false);
+      } else {
+        clearStoredGoogleUser();
+        setCurrentUser(null);
+      }
+    });
+
+    // 2. Restore saved phone
+    if (typeof window !== 'undefined') {
+      const savedPhone = localStorage.getItem('warung_customer_phone');
+      if (savedPhone) setCustomerPhone(savedPhone);
+    }
+
+    // 3. Check for ToyyibPay FPX redirect return params
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
       const statusId = searchParams.get('status_id');
       const orderIdParam = searchParams.get('order_id');
 
       if (statusId === '1') {
-        toast.success('🎉 Pembayaran FPX berjaya disahkan! Pesanan anda sedang diproses.', { duration: 6000 });
+        toast.success('🎉 Pembayaran FPX berjaya disahkan! Pesanan anda kini dihantar ke dapur & rider.', { duration: 7000 });
         if (orderIdParam) {
           supabase
             .from('orders')
@@ -492,6 +580,10 @@ function CustomerDeliveryPage() {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   const fetchStore = async () => {
@@ -980,15 +1072,28 @@ function CustomerDeliveryPage() {
   };
 
   const handlePlaceDeliveryOrder = async () => {
+    // 1. MUST LOGIN WITH GOOGLE FIRST
+    if (!currentUser) {
+      setShowAuthModal(true);
+      toast.error('Sila log masuk dengan Google terlebih dahulu untuk pengesahan akaun dan keselamatan pesanan.');
+      return;
+    }
+
     if (!customerName.trim()) {
       toast.error('Sila masukkan nama penuh anda');
       return;
     }
     const phoneClean = customerPhone.replace(/\D/g, '');
     if (!phoneClean.startsWith('01') || phoneClean.length < 10 || phoneClean.length > 11) {
-      toast.error('Sila masukkan nombor telefon bimbit Malaysia yang sah (cth: 0198887766)');
+      toast.error('Sila masukkan nombor telefon bimbit WhatsApp Malaysia yang sah (cth: 0198887766)');
       return;
     }
+
+    // Persist phone for returning user convenience
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('warung_customer_phone', customerPhone);
+    }
+
     if (!deliveryAddress.trim()) {
       toast.error('Sila masukkan alamat penghantaran lengkap');
       return;
@@ -1049,7 +1154,7 @@ function CustomerDeliveryPage() {
 
       const newOrderId = resObj.order_id;
       if (newOrderId) {
-        // Guarantee delivery_fee, coords, addressWithFeeTag and delivery_service are saved accurately in database
+        // Guarantee delivery_fee, coords, addressWithFeeTag, anti-scam status and delivery_service are saved accurately in database
         await supabase
           .from('orders')
           .update({
@@ -1061,6 +1166,8 @@ function CustomerDeliveryPage() {
             customer_phone: customerPhone,
             delivery_service: 'jnj',
             total_amount: grandTotal,
+            payment_status: 'pending',
+            status: 'pending_payment'
           })
           .eq('id', newOrderId);
       }
@@ -1068,7 +1175,7 @@ function CustomerDeliveryPage() {
       setActiveOrderId(newOrderId);
       setIsCartDrawerOpen(false);
       setShowDuitNowModal(true);
-      toast.success('Pesanan disimpan! Sila teruskan dengan bayaran.');
+      toast.success('Pesanan disimpan! Sila buat bayaran & hantar resit untuk pengesahan.');
     } catch (err: any) {
       toast.error(`Pesanan Gagal: ${err.message}`);
     } finally {
@@ -1108,8 +1215,42 @@ function CustomerDeliveryPage() {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* GOOGLE AUTH BADGE / LOGIN BUTTON */}
+            {currentUser ? (
+              <div className="flex items-center gap-2 bg-stone-900/90 border border-stone-700/70 py-1 px-2.5 rounded-full shadow-inner">
+                {currentUser.avatarUrl ? (
+                  <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-6 h-6 rounded-full object-cover border border-emerald-500/50" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-orange-600 text-white font-bold text-[10px] flex items-center justify-center">
+                    {currentUser.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-xs font-bold text-stone-200 max-w-[90px] sm:max-w-[120px] truncate">
+                  {currentUser.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  title="Log Keluar Google"
+                  className="text-stone-400 hover:text-rose-400 p-0.5 ml-0.5 transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowAuthModal(true)}
+                className="bg-stone-900 border-amber-500/40 text-amber-300 hover:bg-stone-800 text-xs rounded-full h-8 px-3 flex items-center gap-1.5 shadow-sm"
+              >
+                <LogIn className="w-3.5 h-3.5 text-amber-400" />
+                <span>Log Masuk Google</span>
+              </Button>
+            )}
+
             <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-medium text-xs px-3 py-1 hidden sm:inline-flex rounded-full">
-              🟢 Dapur Dibuka • Zon 15km
+              🟢 Zon 15km
             </Badge>
 
             {cart.length > 0 && (
@@ -1578,18 +1719,65 @@ function CustomerDeliveryPage() {
         {/* STEP 3: CUSTOMER CONTACT & IN-PAGE CHECKOUT CARD */}
         {cart.length > 0 && (
           <Card className="bg-[#292524] border-2 border-orange-500/40 text-stone-100 rounded-3xl shadow-2xl overflow-hidden">
-            <CardContent className="p-5 sm:p-6 space-y-6">
+            <CardContent className="p-5 sm:p-6 space-y-5">
               <div className="flex items-center justify-between border-b border-stone-800 pb-3.5">
                 <div className="space-y-0.5">
                   <h2 className="font-bold text-base sm:text-lg tracking-tight text-white flex items-center gap-2">
-                    <User className="w-4 h-4 text-orange-500" /> 3. Maklumat Penerima & Pengesahan
+                    <User className="w-4 h-4 text-orange-500" /> 3. Maklumat Penerima & Keselamatan
                   </h2>
-                  <p className="text-[11px] text-stone-400">Rider kami akan menghubungi anda melalui panggilan / WhatsApp</p>
+                  <p className="text-[11px] text-stone-400">Pengesahan akaun Google & No. Telefon WhatsApp untuk keselamatan pesanan</p>
                 </div>
                 <Badge className="bg-orange-500/20 text-orange-300 border-orange-500/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
                   Wajib Diisi
                 </Badge>
               </div>
+
+              {/* GOOGLE ACCOUNT REQUIREMENT BANNER */}
+              {!currentUser ? (
+                <div className="bg-amber-500/10 border-2 border-amber-500/40 p-4 rounded-2xl space-y-2.5 shadow-lg">
+                  <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
+                    <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Wajib Log Masuk Google untuk Buat Pesanan:</span>
+                  </div>
+                  <p className="text-xs text-stone-300 leading-relaxed">
+                    Bagi mengelakkan pesanan palsu/scam, sila log masuk dengan akaun Google anda sebelum meneruskan pesanan delivery.
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={() => setShowAuthModal(true)}
+                    className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold h-10 rounded-xl flex items-center justify-center gap-2 text-xs shadow-md active:scale-95 transition-all"
+                  >
+                    <LogIn className="w-4 h-4" />
+                    <span>Log Masuk Pantas dengan Google</span>
+                  </Button>
+                </div>
+              ) : (
+                <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-2xl flex items-center justify-between gap-2 shadow-inner">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {currentUser.avatarUrl ? (
+                      <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-7 h-7 rounded-full object-cover border border-emerald-500/60 shrink-0" />
+                    ) : (
+                      <div className="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                        {currentUser.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" /> Akaun Google Disahkan
+                      </p>
+                      <p className="text-xs font-bold text-white truncate">{currentUser.name}</p>
+                      <p className="text-[10px] text-stone-400 truncate">{currentUser.email}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="text-[11px] text-stone-400 hover:text-rose-400 underline shrink-0 px-2"
+                  >
+                    Tukar
+                  </button>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="space-y-1.5">
@@ -1614,6 +1802,17 @@ function CustomerDeliveryPage() {
                     onChange={(e) => setCustomerPhone(e.target.value)}
                     className="bg-stone-900 border-stone-700/80 text-white placeholder:text-stone-500 rounded-2xl text-xs sm:text-sm h-11 focus:border-orange-500/60 shadow-inner"
                   />
+                </div>
+              </div>
+
+              {/* ANTI-SCAM NOTICE */}
+              <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl flex items-start gap-2.5 text-xs text-stone-300">
+                <ShieldCheck className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+                <div className="space-y-0.5 text-[11px] leading-relaxed">
+                  <span className="font-bold text-orange-300 block">Dasar Anti-Scam & Pembayaran Warung JNJ:</span>
+                  <span>
+                    Pelanggan wajib membuat bayaran dan menunjukkan bukti bayaran kepada Warung JNJ. Pihak kami hanya akan menyerahkan pesanan kepada rider sebaik bayaran disahkan sah.
+                  </span>
                 </div>
               </div>
 
@@ -2113,6 +2312,18 @@ function CustomerDeliveryPage() {
             {/* ACTIONS */}
             <div className="w-full space-y-2 pt-1.5">
               {/* WHATSAPP SEND PROOF BUTTON */}
+              {/* ANTI-SCAM VERIFICATION BANNER */}
+              <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-2xl flex items-start gap-2.5 text-xs text-amber-200 shadow-inner">
+                <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <div className="space-y-0.5 text-[11px] leading-relaxed">
+                  <span className="font-bold text-amber-300 block">🛡️ Polisi Anti-Scam Warung JNJ:</span>
+                  <span>
+                    Sila hantar / tunjukkan resit bayaran. Pesanan anda akan disahkan oleh juruwang Warung JNJ sebelum hidangan dimasak & diserahkan kepada rider untuk penghantaran.
+                  </span>
+                </div>
+              </div>
+
+              {/* WHATSAPP SEND PROOF BUTTON */}
               <Button 
                 className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-emerald-600/30 gap-2 flex items-center justify-center transition-all active:scale-[0.98]"
                 onClick={handleSendWhatsAppProof}
@@ -2125,14 +2336,75 @@ function CustomerDeliveryPage() {
               <Button 
                 variant="outline"
                 className="w-full h-11 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white font-semibold text-xs border-stone-700 rounded-2xl active:scale-[0.98] transition-all"
-                onClick={() => {
+                onClick={async () => {
+                  if (activeOrderId) {
+                    await supabase
+                      .from('orders')
+                      .update({
+                        status: 'pending_verification',
+                      })
+                      .eq('id', activeOrderId);
+                  }
                   setShowDuitNowModal(false);
-                  toast.success('🎉 Pesanan diterima! Warung JNJ sedang memproses pesanan anda.');
+                  toast.success('🎉 Resit direkodkan! Pihak Warung JNJ sedang menyemak bayaran anda sebelum job diserahkan kepada rider.', { duration: 6000 });
                   setCart([]);
                 }}
               >
                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mr-1.5" />
-                ✅ Saya Dah Selesai Bayar
+                ✅ Saya Dah Selesai Bayar & Hantar Resit
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* GOOGLE AUTH REQUIREMENT MODAL */}
+        <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
+          <DialogContent className="sm:max-w-[400px] bg-[#292524] text-stone-100 border-stone-800 p-6 rounded-3xl shadow-2xl">
+            <DialogHeader className="text-center sm:text-center space-y-2">
+              <div className="w-12 h-12 rounded-2xl bg-orange-500/20 text-orange-400 flex items-center justify-center mx-auto border border-orange-500/30">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <DialogTitle className="text-lg font-bold text-white">
+                Log Masuk Pelanggan Delivery
+              </DialogTitle>
+              <DialogDescription className="text-xs text-stone-400 leading-relaxed">
+                Untuk mengelakkan pesanan palsu / scam dan memastikan penghantaran selamat, sila log masuk dengan akaun Google anda terlebih dahulu.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 pt-2">
+              <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl space-y-2 text-xs text-stone-300">
+                <p className="font-bold text-amber-400 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5" /> Kelebihan Akaun Berdaftar:
+                </p>
+                <ul className="space-y-1.5 text-[11px] text-stone-400">
+                  <li className="flex items-center gap-1.5">✓ Pengesahan identiti penerima yang sah</li>
+                  <li className="flex items-center gap-1.5">✓ Simpan alamat & No. Telefon automatik</li>
+                  <li className="flex items-center gap-1.5">✓ Perlindungan anti-scam & pantau status rider</li>
+                </ul>
+              </div>
+
+              <Button
+                type="button"
+                onClick={handleGoogleLogin}
+                className="w-full h-12 bg-white hover:bg-stone-100 text-stone-900 font-bold rounded-2xl shadow-lg flex items-center justify-center gap-2.5 active:scale-95 transition-all text-xs sm:text-sm"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span>Teruskan dengan Akaun Google</span>
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setShowAuthModal(false)}
+                className="w-full text-xs text-stone-500 hover:text-stone-400 h-9"
+              >
+                Tutup
               </Button>
             </div>
           </DialogContent>

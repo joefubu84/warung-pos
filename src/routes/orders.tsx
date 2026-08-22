@@ -12,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from 'sonner';
 
 export const Route = createFileRoute('/orders')({
   ssr: false,
@@ -197,6 +198,25 @@ function OrdersPage() {
       setError(error.message);
     } else if (data) {
       setOrders(data as unknown as Order[]);
+    }
+  };
+
+  const handleVerifyDeliveryPayment = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          payment_status: 'paid',
+          paid: true,
+          status: 'confirmed'
+        })
+        .eq('id', orderId);
+
+      if (error) throw error;
+      toast.success('🎉 Bayaran disahkan! Job delivery kini dibuka kepada rider di /rider.');
+      await fetchOrders();
+    } catch (e: any) {
+      toast.error('Gagal mengesahkan bayaran: ' + e.message);
     }
   };
 
@@ -825,6 +845,22 @@ function OrdersPage() {
                               PAY
                             </button>
                           </form>
+                        </div>
+                      )}
+
+                      {/* ANTI-SCAM: STAFF ONE-CLICK VERIFY DELIVERY PAYMENT */}
+                      {order.type === 'delivery' && (!order.paid || (order as any).payment_status === 'pending' || order.status === 'pending_payment' || order.status === 'pending_verification') && (
+                        <div className="mb-3 p-2 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-1.5">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-amber-400">
+                            <span>🛡️ Delivery Menunggu Pengesahan Resit</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleVerifyDeliveryPayment(order.id)}
+                            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"
+                          >
+                            <span>✓ Sahkan Bayaran & Buka Job Rider</span>
+                          </button>
                         </div>
                       )}
 

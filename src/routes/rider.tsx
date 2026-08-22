@@ -180,13 +180,17 @@ function RiderPortalPage() {
         orders.forEach((ord: any) => {
           const isClaimedByMe = ord.id === claimedLocalId;
           
+          // ANTI-SCAM GATING: Only dispatch jobs to riders once customer has PAID and Warung JNJ verified payment!
+          const isVerifiedPaid = ord.payment_status === 'paid' || ord.status === 'confirmed' || ord.status === 'preparing' || ord.status === 'ready';
+          const isUnverifiedPayment = ord.payment_status === 'pending' || ord.status === 'pending_payment' || ord.status === 'pending_verification';
+
           if (ord.status === 'completed') {
             completed.push(ord);
-          } else if (ord.status === 'preparing' || ord.status === 'ready' || ord.status === 'confirmed' || ord.status === 'pending') {
+          } else if (isVerifiedPaid && !isUnverifiedPayment) {
             if (isClaimedByMe) {
               active = ord;
             } else {
-              // All active delivery orders from Warung J&J are available for riders to pick up
+              // Verified paid orders are available for riders to pick up
               available.push(ord);
             }
           }
