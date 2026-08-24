@@ -51,3 +51,7 @@ CHECKLIST FOR EVERY NEW PAGE:
 - [ ] Performance acceptable (< 100ms updates)
 
 RULE: If a page blinks, it's not done. Must be smooth, responsive, professional.
+
+## LOVABLE BADGE SUPPRESSION RULE
+- **CRITICAL**: Always maintain and enforce global and shell CSS rules to completely hide the Lovable badge (the 'Made with Lovable' floating element) across ALL pages without breaking page layout.
+- Ensure `a[href*="lovable.dev"]`, `a[href*="lovable.app"]`, `[id*="lovable"]`, `[class*="lovable-badge"]`, and related wrapper selectors are permanently hidden (`display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; position: absolute !important; top: -9999px !important; z-index: -9999 !important;`).
