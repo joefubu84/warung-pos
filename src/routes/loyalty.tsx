@@ -63,6 +63,12 @@ function LoyaltyPage() {
   const [isRedeemOpen, setIsRedeemOpen] = useState(false);
 
   useEffect(() => {
+    // Purge any legacy demo storage keys
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('warung_loyalty_members_v2');
+      localStorage.removeItem('warung_loyalty_members_v1');
+    }
+
     const handleUpdate = () => setMembers(getLoyaltyMembers());
     window.addEventListener('warung_loyalty_updated', handleUpdate);
     fetchMembersFromSupabase().then(loaded => setMembers(loaded));

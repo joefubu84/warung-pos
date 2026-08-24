@@ -98,18 +98,6 @@ export function getLoyaltyMembers(): LoyaltyMember[] {
   }
 }
 
-export function clearAllLoyaltyMembers(): void {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.setItem(MEMBERS_STORAGE_KEY, JSON.stringify([]));
-    localStorage.removeItem('warung_loyalty_members_v2');
-    localStorage.removeItem('warung_loyalty_members_v1');
-    window.dispatchEvent(new Event('warung_loyalty_updated'));
-  } catch (err) {
-    console.error('Failed to clear loyalty members:', err);
-  }
-}
-
 export function saveLoyaltyMembers(members: LoyaltyMember[]): void {
   if (typeof window === 'undefined') return;
   try {
@@ -165,11 +153,36 @@ export async function syncMembersToSupabase(members: LoyaltyMember[]): Promise<v
   }
 }
 
+export const DEMO_MEMBER_IDS = ['mem-user', 'mem-1', 'mem-2', 'mem-3', 'mem-row-mem-user', 'mem-row-mem-1', 'mem-row-mem-2', 'mem-row-mem-3'];
+export const DEMO_MEMBER_NAMES = ['Boss J&J', 'Ahmad Faiz', 'Siti Nurhaliza', 'Tan Wei Ming'];
+
+export function clearAllLoyaltyMembers(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(MEMBERS_STORAGE_KEY, JSON.stringify([]));
+    localStorage.removeItem('warung_loyalty_members_v2');
+    localStorage.removeItem('warung_loyalty_members_v1');
+    window.dispatchEvent(new Event('warung_loyalty_updated'));
+
+    // Purge demo members from Supabase
+    supabase.from('members').delete().in('id', ['mem-row-mem-user', 'mem-row-mem-1', 'mem-row-mem-2', 'mem-row-mem-3']).then(() => {}).catch(() => {});
+    supabase.from('users').delete().in('id', ['mem-user', 'mem-1', 'mem-2', 'mem-3']).then(() => {}).catch(() => {});
+  } catch (err) {
+    console.error('Failed to clear loyalty members:', err);
+  }
+}
+
 /**
  * Fetches members live from Supabase DB
  */
 export async function fetchMembersFromSupabase(): Promise<LoyaltyMember[]> {
   try {
+    // Purge demo members in background
+    try {
+      supabase.from('members').delete().in('id', ['mem-row-mem-user', 'mem-row-mem-1', 'mem-row-mem-2', 'mem-row-mem-3']).then(() => {}).catch(() => {});
+      supabase.from('users').delete().in('id', ['mem-user', 'mem-1', 'mem-2', 'mem-3']).then(() => {}).catch(() => {});
+    } catch {}
+
     const { data: memberRows, error } = await supabase
       .from('members')
       .select('*, users!inner(*)');
@@ -178,26 +191,28 @@ export async function fetchMembersFromSupabase(): Promise<LoyaltyMember[]> {
       return getLoyaltyMembers();
     }
 
-    const loaded: LoyaltyMember[] = memberRows.map((r: any) => ({
-      id: r.user_id || r.id,
-      phone: r.users?.phone || '601125251817',
-      name: r.users?.name || 'Valued Member',
-      points: r.loyalty_points || 0,
-      totalSpent: r.loyalty_points ? r.loyalty_points * 1.5 : 0,
-      tier: calculateTier(r.loyalty_points || 0),
-      joinedAt: r.created_at?.split('T')[0] || new Date().toISOString().split('T')[0] || '2026-08-15',
-      lastVisitAt: new Date().toISOString().split('T')[0] || '2026-08-15'
-    }));
+    const loaded: LoyaltyMember[] = memberRows
+      .filter((r: any) => {
+        const id = r.user_id || r.id;
+        const name = r.users?.name || '';
+        return !DEMO_MEMBER_IDS.includes(id) && !DEMO_MEMBER_NAMES.includes(name);
+      })
+      .map((r: any) => ({
+        id: r.user_id || r.id,
+        phone: r.users?.phone || '601125251817',
+        name: r.users?.name || 'Valued Member',
+        points: r.loyalty_points || 0,
+        totalSpent: r.loyalty_points ? r.loyalty_points * 1.5 : 0,
+        tier: calculateTier(r.loyalty_points || 0),
+        joinedAt: r.created_at?.split('T')[0] || new Date().toISOString().split('T')[0] || '2026-08-15',
+        lastVisitAt: new Date().toISOString().split('T')[0] || '2026-08-15'
+      }));
 
-    if (loaded.length > 0) {
-      localStorage.setItem(MEMBERS_STORAGE_KEY, JSON.stringify(loaded));
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new Event('warung_loyalty_updated'));
-      }
-      return loaded;
+    localStorage.setItem(MEMBERS_STORAGE_KEY, JSON.stringify(loaded));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('warung_loyalty_updated'));
     }
-
-    return getLoyaltyMembers();
+    return loaded;
   } catch (err) {
     return getLoyaltyMembers();
   }
