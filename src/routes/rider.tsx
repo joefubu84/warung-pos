@@ -715,20 +715,11 @@ function RiderPortalPage() {
             <Button
               type="submit"
               disabled={isAuthSubmitting}
-              className="w-full h-11 bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold text-xs rounded-xl border border-stone-700 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
+              className="w-full h-11 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-amber-600/30 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
             >
-              {isAuthSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Log Masuk Manual'}
+              {isAuthSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Log Masuk Rider'}
             </Button>
           </form>
-
-          <div className="pt-2 border-t border-[#2e2a27] text-center">
-            <button
-              onClick={() => navigate({ to: '/' })}
-              className="text-xs text-stone-400 hover:text-stone-200 transition-colors"
-            >
-              ← Kembali ke Laman Utama
-            </button>
-          </div>
         </div>
       </div>
     );
