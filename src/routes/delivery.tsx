@@ -1397,49 +1397,138 @@ function CustomerDeliveryPage() {
               </div>
               <div>
                 <h1 className="font-bold text-base sm:text-lg tracking-tight text-stone-100 flex items-center gap-1.5">
-                  Warung JNJ Menu 🍲
+                  Warung JNJ Delivery 🛵
                 </h1>
-                <p className="text-[11px] text-amber-400 font-medium flex items-center gap-2">
-                  <span>🍽️ Dine-In Meja & Kaunter POS Dibuka</span>
+                <p className="text-[11px] text-emerald-400 font-medium flex items-center gap-2">
+                  <span>✨ Penghantaran Makanan Panas & Segar • Penampang, Sabah</span>
                 </p>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <Badge className="bg-rose-500/15 text-rose-300 border border-rose-500/30 font-bold text-xs px-3 py-1 rounded-full">
-              🔴 Delivery Ditutup Sementara
+            <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold text-xs px-3 py-1 rounded-full animate-pulse">
+              🟢 Delivery & Online Dibuka
             </Badge>
           </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-5 space-y-6">
-        {/* VIEW-ONLY MENU SHOWCASE BANNER */}
-        <div className="bg-gradient-to-r from-amber-950/80 via-[#292524] to-[#292524] border-2 border-amber-500/50 p-4 sm:p-5 rounded-3xl space-y-3 shadow-2xl animate-fade-in">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-amber-300 font-bold text-xs sm:text-sm">
-              <Eye className="w-4 h-4 text-amber-400" />
-              <span>👀 Mod Paparan Menu Sahaja (Dine-in & Kaunter Dibuka)</span>
+        {/* STEP 1: DELIVERY ADDRESS & REAL-ROAD ROUTE MAP CARD */}
+        <Card className="bg-[#292524] border border-stone-800 text-stone-100 rounded-3xl shadow-xl overflow-hidden">
+          <CardContent className="p-4 sm:p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-bold text-sm sm:text-base tracking-tight text-white flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-emerald-400" /> 1. Alamat Penghantaran & Peta Jalan Raya
+              </h2>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleGetLocation} 
+                className="bg-stone-900 border-stone-700 text-emerald-400 hover:text-emerald-300 text-xs rounded-xl hover:bg-stone-800 flex items-center gap-1.5 h-8"
+              >
+                <Navigation className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Kesan Lokasi GPS</span>
+              </Button>
             </div>
-            <Badge className="bg-amber-500 text-stone-950 font-black text-[10px]">MENU SHOWCASE</Badge>
-          </div>
-          <p className="text-xs text-stone-300 leading-relaxed">
-            Pesanan online & delivery ditutup buat masa ini. Anda boleh meneroka senarai menu, harga, dan pilihan makanan kami di bawah. Untuk membuat pesanan, sila <b>Imbas Kod QR di Meja</b> anda atau <b>Pesan di Kaunter Warung JNJ Penampang</b>.
-          </p>
-          <div className="flex flex-wrap gap-2 pt-1 border-t border-amber-900/40">
-            <a href="/#location">
-              <Button size="sm" className="bg-orange-600 hover:bg-orange-500 text-white text-xs rounded-xl h-8 px-3 font-bold">
-                📍 Panduan Lokasi Warung
-              </Button>
-            </a>
-            <Link to="/">
-              <Button size="sm" variant="outline" className="bg-stone-900 border-stone-700 text-stone-300 text-xs rounded-xl h-8 px-3">
-                ← Kembali ke Utama
-              </Button>
-            </Link>
-          </div>
-        </div>
+
+            {/* INTERACTIVE REAL ROAD LEAFLET MAP */}
+            <DeliveryRouteMap
+              origin={WARUNG_COORDS}
+              destination={{
+                lat: custLat,
+                lng: custLng,
+                address: deliveryAddress
+              }}
+              interactive={true}
+              showZoneCircle={true}
+              height="280px"
+              onDestinationChange={handleMapDestinationChange}
+              onRouteCalculated={handleMapRouteCalculated}
+              showNavigationButtons={false}
+            />
+
+            <div className="space-y-2 relative">
+              <div className="relative">
+                <Textarea
+                  placeholder="Taip nama jalan, taman perumahan, atau bangunan (cth: Taman Liana, ITCC, Plaza 333, Bundusan)..."
+                  value={deliveryAddress}
+                  onChange={(e) => {
+                    setDeliveryAddress(e.target.value);
+                    setShowSuggestionsDropdown(true);
+                  }}
+                  onFocus={() => {
+                    if (addressSuggestions.length > 0) setShowSuggestionsDropdown(true);
+                  }}
+                  className="bg-stone-900 border-stone-800 text-white placeholder:text-stone-500 rounded-2xl text-xs sm:text-sm min-h-[60px]"
+                />
+
+                {/* AUTOCOMPLETE SUGGESTIONS DROPDOWN */}
+                {showSuggestionsDropdown && addressSuggestions.length > 0 && (
+                  <div className="absolute top-[64px] left-0 right-0 z-30 bg-[#292524] border border-stone-700/80 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-md animate-fade-in divide-y divide-stone-800">
+                    <div className="px-3 py-1.5 bg-stone-950/90 flex items-center justify-between text-[10px] text-stone-400">
+                      <span className="flex items-center gap-1 font-bold text-emerald-400">
+                        <Sparkles className="w-3 h-3 text-emerald-400" /> Cadangan Lokasi:
+                      </span>
+                      {isLoadingSuggestions && (
+                        <span className="flex items-center gap-1 text-[10px] text-stone-500">
+                          <Loader2 className="w-2.5 h-2.5 animate-spin" /> Mencari...
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="max-h-48 overflow-y-auto">
+                      {addressSuggestions.map((item, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => handleSelectSuggestion(item)}
+                          className="w-full text-left px-3.5 py-2.5 hover:bg-stone-800 flex items-start gap-2 text-xs transition-colors"
+                        >
+                          <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-white truncate">{item.displayName}</p>
+                            <p className="text-[11px] text-stone-400 truncate">{item.mainText}</p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* ROUTE INFO & DELIVERY FEE BADGES */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+              <div className="bg-stone-900 border border-stone-800 p-3 rounded-2xl flex flex-col justify-between">
+                <span className="text-stone-400 text-[10px] block mb-0.5">Jarak Jalan Raya:</span>
+                <div className="flex items-center justify-between">
+                  <span className={`font-bold text-sm ${isOutOfZone ? 'text-rose-400' : 'text-emerald-400'}`}>
+                    {roadDistanceKm} km {isOutOfZone ? '⚠️' : '✓'}
+                  </span>
+                  {travelTimeMins && (
+                    <span className="text-[10px] text-stone-400">~{travelTimeMins} minit</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-stone-900 border border-stone-800 p-3 rounded-2xl flex flex-col justify-between">
+                <span className="text-stone-400 text-[10px] block mb-0.5">Zon Penghantaran:</span>
+                <span className={`font-bold text-xs ${isOutOfZone ? 'text-rose-400' : 'text-emerald-400'}`}>
+                  {isOutOfZone ? 'Luar Zon (> 15km)' : 'Dalam Zon Warung J&J'}
+                </span>
+              </div>
+
+              <div className="bg-stone-900 border border-stone-800 p-3 rounded-2xl flex flex-col justify-between">
+                <span className="text-stone-400 text-[10px] block mb-0.5">Tambang Rider:</span>
+                <span className="font-bold text-sm text-emerald-400 font-mono">
+                  RM {deliveryFee.toFixed(2)}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* STEP 2: SEARCH AND CATEGORY FILTER BAR */}
         <div className="space-y-3 pt-2">
@@ -1530,13 +1619,41 @@ function CustomerDeliveryPage() {
 
                     {/* ACTION BUTTONS */}
                     <div className="p-3 pt-0 border-t border-stone-800/80 bg-stone-950/30 flex items-center justify-between gap-2">
-                      <Button
-                        onClick={() => setCustomizingItem(item)}
-                        className="w-full bg-orange-600/90 hover:bg-orange-500 text-white font-bold rounded-xl h-9 text-xs shadow-md active:scale-95 flex items-center justify-center gap-1.5 transition-all"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Lihat Butiran & Pilihan</span>
-                      </Button>
+                      {inCart ? (
+                        <div className="w-full flex items-center justify-between bg-stone-900/90 border border-orange-500/40 rounded-xl p-1 px-2.5">
+                          <span className="text-xs font-bold text-orange-400 font-mono">
+                            {inCart.quantity}x Ditambah
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setCustomizingItem(item)}
+                            className="text-[11px] text-amber-400 hover:text-amber-300 px-3 h-7 rounded-xl font-medium"
+                          >
+                            ✏️ Kustom
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="w-full flex items-center gap-2">
+                          <Button
+                            disabled={isSoldOut}
+                            onClick={() => setCustomizingItem(item)}
+                            className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl h-9 text-xs shadow-md active:scale-95 flex items-center justify-center gap-1.5 transition-all"
+                          >
+                            <SlidersHorizontal className="w-3.5 h-3.5" />
+                            <span>Pilih & Kustom</span>
+                          </Button>
+                          <Button
+                            disabled={isSoldOut}
+                            onClick={() => handleQuickAdd(item)}
+                            variant="outline"
+                            className="border-stone-700 bg-stone-900 hover:bg-stone-800 text-stone-300 h-9 px-3 rounded-xl text-xs active:scale-95 transition-all"
+                            title="Tambah terus 1x"
+                          >
+                            <Plus className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </Card>
                 );
@@ -1889,14 +2006,14 @@ function CustomerDeliveryPage() {
           </div>
         )}
 
-        {/* DISH CUSTOMIZATION MODAL (MENU SHOWCASE MODE) */}
+        {/* DISH CUSTOMIZATION MODAL (DELIVERY & SELF-PICKUP MODE) */}
         <DishCustomizationModal
           isOpen={!!customizingItem}
           onClose={() => setCustomizingItem(null)}
           onAddToCart={handleAddToCartCustomized}
           menuItem={customizingItem}
           mode="delivery"
-          isViewOnly={true}
+          isViewOnly={false}
         />
 
         {/* CART DRAWER DIALOG */}
