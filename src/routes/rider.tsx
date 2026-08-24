@@ -874,18 +874,10 @@ function RiderPortalPage() {
                 <span>Memeriksa pesanan baru...</span>
               </div>
             ) : availableJobs.length === 0 ? (
-              <div className="p-6 text-center bg-[#1c1a18] rounded-2xl border border-[#2e2a27] text-stone-400 space-y-3">
+              <div className="p-8 text-center bg-[#1c1a18] rounded-2xl border border-[#2e2a27] text-stone-400 space-y-2">
                 <Store className="w-8 h-8 mx-auto text-stone-600" />
-                <p className="text-xs font-medium text-stone-300">Tiada pesanan baru dari dapur buat masa ini.</p>
-                <p className="text-[11px] text-stone-500">Anda boleh mencuba sistem menerima pesanan dengan menekan butang simulasi di bawah.</p>
-                
-                <Button
-                  onClick={handleSpawnSimulatedOrder}
-                  className="bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/40 text-xs font-bold rounded-xl h-9 px-4 gap-1.5 mx-auto"
-                >
-                  <Bike className="w-4 h-4" />
-                  <span>🧪 Cipta 1 Pesanan Ujian (Simulasi)</span>
-                </Button>
+                <p className="text-xs font-medium text-stone-300">Tiada pesanan baru untuk dihantar buat masa ini.</p>
+                <p className="text-[11px] text-stone-500">Pesanan dari kaunter & dapur akan dipaparkan di sini secara automatik apabila sedia untuk dihantar.</p>
               </div>
             ) : (
               <div className="space-y-3">
