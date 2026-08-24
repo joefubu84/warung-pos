@@ -78,66 +78,35 @@ export const DEFAULT_REWARDS_CATALOG: RewardCatalogItem[] = [
   }
 ];
 
-export const INITIAL_MEMBERS: LoyaltyMember[] = [
-  {
-    id: 'mem-user',
-    phone: '601125251817',
-    name: 'Boss J&J',
-    points: 750,
-    totalSpent: 750.00,
-    tier: 'Gold',
-    joinedAt: '2026-08-01',
-    lastVisitAt: '2026-08-15'
-  },
-  {
-    id: 'mem-1',
-    phone: '60172221784',
-    name: 'Ahmad Faiz',
-    points: 55,
-    totalSpent: 240.00,
-    tier: 'Silver',
-    joinedAt: '2026-08-01',
-    lastVisitAt: '2026-08-15'
-  },
-  {
-    id: 'mem-2',
-    phone: '60129876543',
-    name: 'Siti Nurhaliza',
-    points: 65,
-    totalSpent: 620.00,
-    tier: 'Gold',
-    joinedAt: '2026-07-15',
-    lastVisitAt: '2026-08-14'
-  },
-  {
-    id: 'mem-3',
-    phone: '60183339900',
-    name: 'Tan Wei Ming',
-    points: 1250,
-    totalSpent: 1250.00,
-    tier: 'Platinum',
-    joinedAt: '2026-06-10',
-    lastVisitAt: '2026-08-15'
-  }
-];
+export const INITIAL_MEMBERS: LoyaltyMember[] = [];
 
-const MEMBERS_STORAGE_KEY = 'warung_loyalty_members_v2';
-const TRANSACTIONS_STORAGE_KEY = 'warung_membership_transactions_v1';
+const MEMBERS_STORAGE_KEY = 'warung_loyalty_members_v3';
+const TRANSACTIONS_STORAGE_KEY = 'warung_membership_transactions_v2';
 
 export function getLoyaltyMembers(): LoyaltyMember[] {
-  if (typeof window === 'undefined') return INITIAL_MEMBERS;
+  if (typeof window === 'undefined') return [];
   try {
     const raw = localStorage.getItem(MEMBERS_STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(MEMBERS_STORAGE_KEY, JSON.stringify(INITIAL_MEMBERS));
-      // Trigger background sync to seed Supabase
-      syncMembersToSupabase(INITIAL_MEMBERS);
-      return INITIAL_MEMBERS;
+      localStorage.setItem(MEMBERS_STORAGE_KEY, JSON.stringify([]));
+      return [];
     }
     const parsed: LoyaltyMember[] = JSON.parse(raw);
-    return parsed;
+    return Array.isArray(parsed) ? parsed : [];
   } catch (err) {
-    return INITIAL_MEMBERS;
+    return [];
+  }
+}
+
+export function clearAllLoyaltyMembers(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(MEMBERS_STORAGE_KEY, JSON.stringify([]));
+    localStorage.removeItem('warung_loyalty_members_v2');
+    localStorage.removeItem('warung_loyalty_members_v1');
+    window.dispatchEvent(new Event('warung_loyalty_updated'));
+  } catch (err) {
+    console.error('Failed to clear loyalty members:', err);
   }
 }
 

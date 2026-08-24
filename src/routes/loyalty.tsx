@@ -28,6 +28,7 @@ import {
 import { 
   getLoyaltyMembers, 
   fetchMembersFromSupabase,
+  clearAllLoyaltyMembers,
   registerOrUpdateMember, 
   redeemRewardForMember, 
   getRewardsCatalog, 
@@ -35,7 +36,7 @@ import {
   RewardCatalogItem 
 } from '@/lib/loyalty-config';
 import { getWhatsAppWebUrl, sanitizePhone } from '@/lib/whatsapp-otp';
-import { MessageSquare, Send, Share2 } from 'lucide-react';
+import { MessageSquare, Send, Share2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const Route = createFileRoute('/loyalty')({
@@ -118,6 +119,33 @@ function LoyaltyPage() {
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans pb-24">
       <div className="max-w-7xl mx-auto space-y-6">
 
+        {/* LOYALTY PAUSED NOTICE BANNER */}
+        <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5 text-amber-300">
+            <Sparkles className="w-5 h-5 text-amber-400 shrink-0" />
+            <div>
+              <p className="font-bold text-amber-200 text-sm">Program Loyaliti Ditangguhkan Buat Sementara Waktu</p>
+              <p className="text-xs text-amber-400/80 mt-0.5">
+                Semua senarai ahli demo telah dikosongkan. Pendaftaran rasmi ahli akan dibuka apabila program ganjaran dilancarkan kelak.
+              </p>
+            </div>
+          </div>
+          {members.length > 0 && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                clearAllLoyaltyMembers();
+                setMembers([]);
+                toast.success('Semua senarai ahli telah dikosongkan.');
+              }}
+              className="border-rose-500/40 bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 text-xs font-mono shrink-0 gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Padam Semua Ahli
+            </Button>
+          )}
+        </div>
+
         {/* LOYALTY HEADER CARD */}
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -130,12 +158,14 @@ function LoyaltyPage() {
             </p>
           </div>
 
-          <Button 
-            onClick={() => setIsRegisterOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-xs font-mono"
-          >
-            <Plus className="w-4 h-4" /> Register / Add Member Points
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              onClick={() => setIsRegisterOpen(true)}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-xs font-mono"
+            >
+              <Plus className="w-4 h-4" /> Register / Add Member Points
+            </Button>
+          </div>
         </div>
 
         {/* SUMMARY STATS GRID */}
@@ -238,8 +268,12 @@ function LoyaltyPage() {
                   ))}
                   {filteredMembers.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-slate-500">
-                        No members found matching "{searchQuery}". Click "Register / Add Member" to add one!
+                      <td colSpan={5} className="py-12 text-center text-slate-400">
+                        <Award className="w-8 h-8 text-slate-600 mx-auto mb-2 opacity-60" />
+                        <p className="font-bold text-slate-300 text-sm">Tiada Ahli Berdaftar Buat Masa Ini</p>
+                        <p className="text-[11px] text-slate-500 max-w-sm mx-auto mt-1">
+                          Program ganjaran ahli belum dilancarkan secara rasmi. Pendaftaran ahli boleh ditambah pada bila-bila masa menggunakan butang "Register / Add Member Points".
+                        </p>
                       </td>
                     </tr>
                   )}
