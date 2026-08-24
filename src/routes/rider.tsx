@@ -26,11 +26,13 @@ import {
   Store,
   ArrowRight,
   Shield,
-  Bike
+  Bike,
+  Check
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeliveryRouteMap, WARUNG_COORDS } from '@/components/DeliveryRouteMap';
 import { acceptJob } from '@/lib/riders';
+import { sendRiderDeliveryWhatsAppNotification } from '@/lib/whatsapp-otp';
 
 export const Route = createFileRoute('/rider')({
   component: RiderPortalPage,
@@ -46,8 +48,11 @@ interface DeliveryJob {
   delivery_fee: number | null;
   total_amount: number;
   status: string;
+  delivery_status?: string | null;
   created_at: string;
   delivery_service?: string | null;
+  notes?: string | null;
+  order_items?: any[];
 }
 
 const IS_RIDER_ENABLED = true;
@@ -548,6 +553,42 @@ function RiderPortalPage() {
     }
   };
 
+  // 3-Step Milestone Progression Handler (with zero-cost WhatsApp notification)
+  const handleUpdateMilestone = async (newStatus: 'picked_up' | 'arrived' | 'completed') => {
+    if (!activeJob) return;
+
+    try {
+      if (newStatus === 'completed') {
+        await handleCompleteJob(activeJob.id);
+        sendRiderDeliveryWhatsAppNotification('completed', activeJob.customer_phone || '', activeJob.id);
+        return;
+      }
+
+      if (activeJob.id.startsWith('mock-del-')) {
+        setActiveJob(prev => prev ? { ...prev, delivery_status: newStatus } : null);
+        toast.success(newStatus === 'picked_up' ? '🍱 Pesanan telah diambil dari warung!' : '🛵 Anda telah tiba di lokasi pelanggan!');
+        sendRiderDeliveryWhatsAppNotification(newStatus, activeJob.customer_phone || '', activeJob.id);
+        return;
+      }
+
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          delivery_status: newStatus,
+          updated_at: new Date().toISOString()
+        } as any)
+        .eq('id', activeJob.id);
+
+      if (error) throw error;
+
+      setActiveJob(prev => prev ? { ...prev, delivery_status: newStatus } : null);
+      toast.success(newStatus === 'picked_up' ? '🍱 Pesanan telah diambil dari warung!' : '🛵 Anda telah tiba di lokasi pelanggan!');
+      sendRiderDeliveryWhatsAppNotification(newStatus, activeJob.customer_phone || '', activeJob.id);
+    } catch (err: any) {
+      toast.error('Gagal mengemas kini status: ' + err.message);
+    }
+  };
+
   // Helper to extract clean address without internal fee tags for maps and UI
   const getCleanDeliveryAddress = (address: string | null): string => {
     if (!address) return 'Penampang, Sabah';
@@ -1007,21 +1048,66 @@ function RiderPortalPage() {
                     </Button>
                   </div>
 
-                  <div className="border-t border-[#2e2a27] pt-3">
-                    <div className="flex justify-between items-center text-xs mb-3 font-mono">
+                  {/* 3-STEP PROGRESSIVE MILESTONES (FALLBACK GPS & WHATSAPP NOTIFICATION) */}
+                  <div className="border-t border-[#2e2a27] pt-3.5 space-y-2.5">
+                    <div className="flex justify-between items-center text-xs mb-1 font-mono">
                       <span className="text-stone-400">Upah Pesanan:</span>
                       <span className="font-bold text-base text-emerald-400">
                         RM {getJobDeliveryFee(activeJob).toFixed(2)}
                       </span>
                     </div>
 
-                    <Button
-                      onClick={() => handleCompleteJob(activeJob.id)}
-                      className="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-center gap-2 active:scale-[0.98] transition-all"
-                    >
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Sahkan Pesanan Selesai Dihantar</span>
-                    </Button>
+                    <div className="bg-[#141211] p-3 rounded-2xl border border-[#2e2a27] space-y-2">
+                      <span className="text-[11px] font-bold text-amber-400 block uppercase tracking-wider">
+                        🚀 Tindakan Kemajuan Penghantaran:
+                      </span>
+
+                      {/* STEP 1: PICKED UP */}
+                      {(!activeJob.delivery_status || activeJob.delivery_status === 'dispatched' || activeJob.delivery_status === 'preparing') && (
+                        <Button
+                          onClick={() => handleUpdateMilestone('picked_up')}
+                          className="w-full h-11 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-between px-4 active:scale-[0.98] transition-all"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span>🍱</span>
+                            <span>1. Telah Diambil di Warung</span>
+                          </span>
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                      )}
+
+                      {/* STEP 2: ARRIVED */}
+                      {activeJob.delivery_status === 'picked_up' && (
+                        <Button
+                          onClick={() => handleUpdateMilestone('arrived')}
+                          className="w-full h-11 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-between px-4 active:scale-[0.98] transition-all"
+                        >
+                          <span className="flex items-center gap-2">
+                            <span>🛵</span>
+                            <span>2. Telah Tiba di Lokasi Pelanggan</span>
+                          </span>
+                          <ArrowRight className="w-4 h-4" />
+                        </Button>
+                      )}
+
+                      {/* STEP 3: COMPLETED */}
+                      {activeJob.delivery_status === 'arrived' && (
+                        <Button
+                          onClick={() => handleUpdateMilestone('completed')}
+                          className="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-between px-4 active:scale-[0.98] transition-all"
+                        >
+                          <span className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>3. Selesai Serah & Terima Upah</span>
+                          </span>
+                          <Check className="w-4 h-4" />
+                        </Button>
+                      )}
+
+                      <p className="text-[10px] text-stone-500 text-center pt-0.5">
+                        * Tekan butang di atas untuk maklumkan pelanggan secara automatik (WhatsApp & Live Status).
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

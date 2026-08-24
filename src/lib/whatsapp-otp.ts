@@ -289,3 +289,38 @@ export function getWhatsAppWebUrl(phone: string, text: string): string {
   const clean = sanitizePhone(phone);
   return `https://wa.me/${clean}?text=${encodeURIComponent(text)}`;
 }
+
+/**
+ * 📲 Quick Zero-Cost WhatsApp Notifications for Rider Milestones & Dispatch Alerts
+ */
+export function sendRiderDeliveryWhatsAppNotification(
+  status: 'picked_up' | 'arrived' | 'completed' | 'dispatched', 
+  customerPhone: string, 
+  orderId: string
+): void {
+  if (!customerPhone) return;
+  const cleanPhone = sanitizePhone(customerPhone);
+  const shortId = orderId.slice(0, 8).toUpperCase();
+  
+  let message = "";
+
+  switch (status) {
+    case 'picked_up':
+      message = `Halo! 🍱 Pesanan Warung J&J anda (#${shortId}) telah diambil oleh rider kami dan sedang dalam perjalanan ke lokasi anda. Sedia ya! 🛵💨`;
+      break;
+    case 'arrived':
+      message = `Halo! 🛵 Rider Warung J&J (#${shortId}) telah tiba di hadapan lokasi penghantaran anda. Sila sedia untuk menerima pesanan. Terima kasih! 🍱✨`;
+      break;
+    case 'completed':
+      message = `Terima kasih! ✅ Pesanan Warung J&J (#${shortId}) telah diserahkan dengan jayanya. Selamat menjamu selera! Lawati https://warungjnj.online lagi. 🌟`;
+      break;
+    case 'dispatched':
+      message = `🚨 *TUGASAN PESANAN BARU!* Pesanan #${shortId} di Warung J&J sedia untuk diambil. Sila buka aplikasi rider anda untuk terima tugasan.`;
+      break;
+  }
+
+  const waLink = getWhatsAppWebUrl(cleanPhone, message);
+  if (typeof window !== 'undefined') {
+    window.open(waLink, '_blank');
+  }
+}

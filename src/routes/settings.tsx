@@ -1487,7 +1487,59 @@ function AdminRiderManagementCard() {
     },
   });
 
+  // Fetch live riders table (is_approved, status, current_lat, current_lng)
+  const { data: ridersTableData, refetch: refetchRidersTable } = useQuery({
+    queryKey: ['admin-riders-table'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('riders')
+        .select('*');
+      if (error) return [];
+      return data || [];
+    },
+  });
+
   const kycRecords: RiderKYCRecord[] = (storeData?.settings as any)?.verified_riders || [];
+
+  // 1-Click Approval Toggle for Rider Fleet
+  const toggleRiderApproval = async (userId: string, currentApproved: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('riders')
+        .upsert({
+          user_id: userId,
+          store_id: storeData?.id || '',
+          is_approved: !currentApproved,
+          status: !currentApproved ? 'offline' : 'offline',
+          updated_at: new Date().toISOString()
+        } as any, { onConflict: 'user_id' });
+
+      if (error) throw error;
+      toast.success(!currentApproved ? '✅ Rider berjaya diluluskan (APPROVED)!' : '⏸️ Kelulusan rider dinyahaktif (REVOKED).');
+      refetchRidersTable();
+      refetchUsers();
+    } catch (err: any) {
+      toast.error('Gagal mengemas kini kelulusan rider: ' + err.message);
+    }
+  };
+
+  // Force Re-dispatch order if rider is stuck
+  const forceRedispatchOrder = async (orderId: string) => {
+    const confirmAction = window.confirm("Adakah anda pasti mahu membatalkan tugasan rider ini dan buka semula pesanan untuk dispatch?");
+    if (!confirmAction) return;
+
+    try {
+      await supabase
+        .from('orders')
+        .update({ delivery_service: null, status: 'ready', updated_at: new Date().toISOString() } as any)
+        .eq('id', orderId);
+
+      toast.success("✅ Pesanan berjaya dibuka semula untuk dispatch!");
+      refetchRidersTable();
+    } catch (err: any) {
+      toast.error("Ralat membuka semula pesanan: " + err.message);
+    }
+  };
 
   const handleRegisterRiderKYC = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -2022,11 +2074,14 @@ function AdminRiderManagementCard() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {kycRecords.map((rider) => {
               const licenseStatus = checkLicenseStatus(rider.licenseExpiry);
+              const riderRow = ridersTableData?.find((r: any) => r.user_id === rider.userId || r.id === rider.id);
+              const isApproved = riderRow ? Boolean(riderRow.is_approved) : Boolean(rider.isVerified);
+              const statusVal = riderRow?.status || 'offline';
 
               return (
                 <div
                   key={rider.id}
-                  className="bg-slate-950 border border-slate-800 hover:border-amber-500/40 p-4 rounded-2xl flex flex-col justify-between gap-3 shadow-lg transition-all"
+                  className={`bg-slate-950 border ${isApproved ? 'border-slate-800' : 'border-amber-500/50'} hover:border-amber-500/40 p-4 rounded-2xl flex flex-col justify-between gap-3 shadow-lg transition-all`}
                 >
                   <div className="flex items-start gap-3">
                     {/* AVATAR / PHOTO */}
@@ -2042,9 +2097,27 @@ function AdminRiderManagementCard() {
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center justify-between gap-2">
                         <h4 className="font-bold text-white text-sm truncate">{rider.fullName}</h4>
-                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${licenseStatus.color}`}>
-                          {licenseStatus.text}
-                        </span>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {/* LIVE STATUS BADGE */}
+                          {statusVal === 'available' && (
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse">
+                              🟢 ONLINE
+                            </span>
+                          )}
+                          {statusVal === 'busy' && (
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                              🟡 BUSY
+                            </span>
+                          )}
+                          {statusVal === 'offline' && (
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                              ⚪ OFFLINE
+                            </span>
+                          )}
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${isApproved ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/30'}`}>
+                            {isApproved ? 'APPROVED' : 'PENDING'}
+                          </span>
+                        </div>
                       </div>
 
                       <div className="flex items-center gap-2 text-xs">
@@ -2065,28 +2138,43 @@ function AdminRiderManagementCard() {
                     </div>
                   </div>
 
-                  {/* ACTION BUTTONS */}
+                  {/* ACTION BUTTONS & 1-CLICK APPROVAL */}
                   <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80 text-xs">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => { setSelectedRider(rider); setIsDetailOpen(true); }}
-                      className="bg-slate-900 border-slate-800 text-slate-200 hover:text-white hover:bg-slate-800 text-xs h-8 rounded-xl gap-1"
-                    >
-                      <Eye className="w-3.5 h-3.5 text-sky-400" />
-                      <span>Semak Rekod & Gaji</span>
-                    </Button>
+                    <div className="flex items-center gap-1.5">
+                      {/* 1-CLICK APPROVE / REVOKE TOGGLE */}
+                      <button
+                        type="button"
+                        onClick={() => toggleRiderApproval(rider.userId || rider.id, isApproved)}
+                        className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1 ${
+                          isApproved 
+                            ? 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30' 
+                            : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
+                        }`}
+                      >
+                        {isApproved ? '⏸️ Nyahaktif' : '✅ Luluskan (Approve)'}
+                      </button>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => { setSelectedRider(rider); setIsDetailOpen(true); }}
+                        className="bg-slate-900 border-slate-800 text-slate-200 hover:text-white hover:bg-slate-800 text-xs h-7 px-2 rounded-xl gap-1"
+                      >
+                        <Eye className="w-3 h-3 text-sky-400" />
+                        <span>Dossier</span>
+                      </Button>
+                    </div>
 
                     <div className="flex items-center gap-1.5">
                       {rider.bankAccountNumber && (
                         <button
                           type="button"
                           onClick={() => handleCopyAccount(rider.bankAccountNumber!, rider.id)}
-                          className="px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-800 rounded-xl transition-all flex items-center gap-1 text-[11px] font-bold"
+                          className="px-2 py-1 bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-800 rounded-xl transition-all flex items-center gap-1 text-[10px] font-bold"
                           title="Salin No. Akaun Bank untuk Gaji"
                         >
-                          {copiedBankId === rider.id ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                          <span>{copiedBankId === rider.id ? 'Disalin' : 'Salin Bank'}</span>
+                          {copiedBankId === rider.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          <span>{copiedBankId === rider.id ? 'Disalin' : 'Bank'}</span>
                         </button>
                       )}
 
@@ -2094,10 +2182,10 @@ function AdminRiderManagementCard() {
                         href={`https://wa.me/${rider.phone.replace(/\D/g, '')}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-3 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-xl transition-all flex items-center gap-1 font-bold text-xs"
+                        className="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-xl transition-all flex items-center gap-1 font-bold text-xs"
                       >
-                        <MessageSquare className="w-3.5 h-3.5" />
-                        <span>WhatsApp</span>
+                        <MessageSquare className="w-3 h-3" />
+                        <span>WA</span>
                       </a>
                     </div>
                   </div>
