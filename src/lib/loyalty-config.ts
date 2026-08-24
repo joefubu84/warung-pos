@@ -324,8 +324,58 @@ export function calculateTier(points: number): 'Bronze' | 'Silver' | 'Gold' | 'P
   return 'Bronze';
 }
 
+const REWARDS_CATALOG_STORAGE_KEY = 'warung_rewards_catalog_v2';
+
 export function getRewardsCatalog(): RewardCatalogItem[] {
-  return DEFAULT_REWARDS_CATALOG;
+  if (typeof window === 'undefined') return DEFAULT_REWARDS_CATALOG;
+  try {
+    const raw = localStorage.getItem(REWARDS_CATALOG_STORAGE_KEY);
+    if (!raw) {
+      localStorage.setItem(REWARDS_CATALOG_STORAGE_KEY, JSON.stringify(DEFAULT_REWARDS_CATALOG));
+      return DEFAULT_REWARDS_CATALOG;
+    }
+    const parsed: RewardCatalogItem[] = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : DEFAULT_REWARDS_CATALOG;
+  } catch (err) {
+    return DEFAULT_REWARDS_CATALOG;
+  }
+}
+
+export function saveRewardsCatalog(items: RewardCatalogItem[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(REWARDS_CATALOG_STORAGE_KEY, JSON.stringify(items));
+    window.dispatchEvent(new Event('warung_rewards_catalog_updated'));
+  } catch (err) {
+    console.error('Failed to save rewards catalog:', err);
+  }
+}
+
+export function addRewardItem(item: Omit<RewardCatalogItem, 'id'>): RewardCatalogItem {
+  const newItem: RewardCatalogItem = {
+    ...item,
+    id: `reward-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`
+  };
+  const list = getRewardsCatalog();
+  const updated = [newItem, ...list];
+  saveRewardsCatalog(updated);
+  return newItem;
+}
+
+export function updateRewardItem(item: RewardCatalogItem): void {
+  const list = getRewardsCatalog();
+  const updated = list.map(r => r.id === item.id ? item : r);
+  saveRewardsCatalog(updated);
+}
+
+export function deleteRewardItem(id: string): void {
+  const list = getRewardsCatalog();
+  const updated = list.filter(r => r.id !== id);
+  saveRewardsCatalog(updated);
+}
+
+export function clearAllRewards(): void {
+  saveRewardsCatalog([]);
 }
 
 export function logMembershipTransaction(phone: string, type: MembershipTransaction['type'], pointsChange: number, description: string): MembershipTransaction {

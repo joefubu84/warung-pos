@@ -31,12 +31,18 @@ import {
   clearAllLoyaltyMembers,
   registerOrUpdateMember, 
   redeemRewardForMember, 
-  getRewardsCatalog, 
+  getRewardsCatalog,
+  addRewardItem,
+  updateRewardItem,
+  deleteRewardItem,
+  clearAllRewards,
+  saveRewardsCatalog,
+  DEFAULT_REWARDS_CATALOG,
   LoyaltyMember, 
   RewardCatalogItem 
 } from '@/lib/loyalty-config';
 import { getWhatsAppWebUrl, sanitizePhone } from '@/lib/whatsapp-otp';
-import { MessageSquare, Send, Share2, Trash2 } from 'lucide-react';
+import { MessageSquare, Send, Share2, Trash2, Pencil, RotateCcw, Tag } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const Route = createFileRoute('/loyalty')({
@@ -49,7 +55,7 @@ export const Route = createFileRoute('/loyalty')({
 
 function LoyaltyPage() {
   const [members, setMembers] = useState<LoyaltyMember[]>(getLoyaltyMembers());
-  const [rewardsCatalog] = useState<RewardCatalogItem[]>(getRewardsCatalog());
+  const [rewardsCatalog, setRewardsCatalog] = useState<RewardCatalogItem[]>(getRewardsCatalog());
   const [searchQuery, setSearchQuery] = useState('');
 
   // Register / Add Points Modal State
@@ -62,6 +68,16 @@ function LoyaltyPage() {
   const [selectedMember, setSelectedMember] = useState<LoyaltyMember | null>(null);
   const [isRedeemOpen, setIsRedeemOpen] = useState(false);
 
+  // Add / Edit Reward Modal State
+  const [isRewardModalOpen, setIsRewardModalOpen] = useState(false);
+  const [editingReward, setEditingReward] = useState<RewardCatalogItem | null>(null);
+  const [rewEmoji, setRewEmoji] = useState('💎');
+  const [rewTitle, setRewTitle] = useState('');
+  const [rewPoints, setRewPoints] = useState(50);
+  const [rewType, setRewType] = useState<'discount_rm' | 'free_item' | 'percentage_off'>('discount_rm');
+  const [rewValue, setRewValue] = useState(5.00);
+  const [rewDesc, setRewDesc] = useState('');
+
   useEffect(() => {
     // Purge any legacy demo storage keys
     if (typeof window !== 'undefined') {
@@ -69,10 +85,17 @@ function LoyaltyPage() {
       localStorage.removeItem('warung_loyalty_members_v1');
     }
 
-    const handleUpdate = () => setMembers(getLoyaltyMembers());
+    const handleUpdate = () => {
+      setMembers(getLoyaltyMembers());
+      setRewardsCatalog(getRewardsCatalog());
+    };
     window.addEventListener('warung_loyalty_updated', handleUpdate);
+    window.addEventListener('warung_rewards_catalog_updated', handleUpdate);
     fetchMembersFromSupabase().then(loaded => setMembers(loaded));
-    return () => window.removeEventListener('warung_loyalty_updated', handleUpdate);
+    return () => {
+      window.removeEventListener('warung_loyalty_updated', handleUpdate);
+      window.removeEventListener('warung_rewards_catalog_updated', handleUpdate);
+    };
   }, []);
 
   const filteredMembers = members.filter(m => {
@@ -84,6 +107,79 @@ function LoyaltyPage() {
   const totalPointsIssued = members.reduce((sum, m) => sum + m.points, 0);
   const platinumCount = members.filter(m => m.tier === 'Platinum').length;
   const goldCount = members.filter(m => m.tier === 'Gold').length;
+
+  const handleOpenAddReward = () => {
+    setEditingReward(null);
+    setRewEmoji('💎');
+    setRewTitle('');
+    setRewPoints(50);
+    setRewType('discount_rm');
+    setRewValue(5.00);
+    setRewDesc('');
+    setIsRewardModalOpen(true);
+  };
+
+  const handleOpenEditReward = (reward: RewardCatalogItem) => {
+    setEditingReward(reward);
+    setRewEmoji(reward.emoji || '💎');
+    setRewTitle(reward.title);
+    setRewPoints(reward.pointsRequired);
+    setRewType(reward.rewardType || 'discount_rm');
+    setRewValue(reward.value || 0);
+    setRewDesc(reward.description || '');
+    setIsRewardModalOpen(true);
+  };
+
+  const handleDeleteReward = (id: string, title: string) => {
+    deleteRewardItem(id);
+    setRewardsCatalog(getRewardsCatalog());
+    toast.success(`Baucar ganjaran "${title}" telah dipadam.`);
+  };
+
+  const handleSaveReward = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rewTitle.trim()) {
+      toast.error('Sila masukkan nama baucar ganjaran.');
+      return;
+    }
+
+    if (editingReward) {
+      updateRewardItem({
+        id: editingReward.id,
+        title: rewTitle.trim(),
+        emoji: rewEmoji,
+        pointsRequired: Number(rewPoints) || 10,
+        rewardType: rewType,
+        value: Number(rewValue) || 0,
+        description: rewDesc.trim() || `${rewEmoji} ${rewTitle}`
+      });
+      toast.success(`Ganjaran "${rewTitle}" berjaya dikemaskini!`);
+    } else {
+      addRewardItem({
+        title: rewTitle.trim(),
+        emoji: rewEmoji,
+        pointsRequired: Number(rewPoints) || 10,
+        rewardType: rewType,
+        value: Number(rewValue) || 0,
+        description: rewDesc.trim() || `${rewEmoji} ${rewTitle}`
+      });
+      toast.success(`Ganjaran baru "${rewTitle}" berjaya ditambah!`);
+    }
+    setRewardsCatalog(getRewardsCatalog());
+    setIsRewardModalOpen(false);
+  };
+
+  const handleResetRewardsToDefault = () => {
+    saveRewardsCatalog(DEFAULT_REWARDS_CATALOG);
+    setRewardsCatalog(DEFAULT_REWARDS_CATALOG);
+    toast.success('Katalog ganjaran telah ditetapkan semula.');
+  };
+
+  const handleClearAllRewards = () => {
+    clearAllRewards();
+    setRewardsCatalog([]);
+    toast.success('Semua baucar ganjaran telah dikosongkan.');
+  };
 
   const handleSaveMember = (e: React.FormEvent) => {
     e.preventDefault();
@@ -121,10 +217,11 @@ function LoyaltyPage() {
     return <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2.5 py-1 rounded-full text-xs font-bold font-mono">🥉 Bronze Member</span>;
   };
 
+  const emojiPresets = ['💎', '🎁', '🥤', '☕', '🍗', '🍱', '🍔', '💵', '🌟', '🏷️', '🎉', '🔥'];
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans pb-24">
       <div className="max-w-7xl mx-auto space-y-6">
-
 
         {/* LOYALTY HEADER CARD */}
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -264,36 +361,210 @@ function LoyaltyPage() {
 
           {/* RIGHT COL: REWARDS CATALOG */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-            <div className="border-b border-slate-800 pb-4">
-              <h2 className="text-lg font-black text-white flex items-center gap-2">
-                <Gift className="w-5 h-5 text-amber-400" /> Rewards Catalog
-              </h2>
-              <p className="text-xs text-slate-400 font-mono">Available reward vouchers & free items</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-4">
+              <div>
+                <h2 className="text-lg font-black text-white flex items-center gap-2">
+                  <Gift className="w-5 h-5 text-amber-400" /> Rewards Catalog
+                </h2>
+                <p className="text-xs text-slate-400 font-mono">Available reward vouchers ({rewardsCatalog.length})</p>
+              </div>
+
+              <div className="flex items-center gap-1.5">
+                <Button
+                  size="sm"
+                  onClick={handleOpenAddReward}
+                  className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs px-2.5 py-1.5 rounded-lg flex items-center gap-1 shadow-md font-mono"
+                >
+                  <Plus className="w-3.5 h-3.5" /> + Tambah Ganjaran
+                </Button>
+                {rewardsCatalog.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleClearAllRewards}
+                    title="Kosongkan Semua Baucar"
+                    className="border-slate-800 bg-slate-950 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 text-xs px-2 py-1.5 rounded-lg"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-3 font-mono">
+            <div className="space-y-3 font-mono max-h-[520px] overflow-y-auto pr-1">
               {rewardsCatalog.map((reward) => (
                 <div key={reward.id} className="p-3.5 bg-slate-950 border border-slate-800 rounded-xl space-y-2 hover:border-amber-500/30 transition-all">
-                  <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xl">{reward.emoji}</span>
-                      <div>
-                        <h4 className="font-bold text-white text-xs">{reward.title}</h4>
-                        <p className="text-[10px] text-slate-400">{reward.description}</p>
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex items-start gap-2.5 flex-1 min-w-0">
+                      <span className="text-2xl shrink-0 mt-0.5">{reward.emoji}</span>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-bold text-white text-xs truncate">{reward.title}</h4>
+                        <p className="text-[10px] text-slate-400 line-clamp-2 mt-0.5">{reward.description}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[10px] text-emerald-400 font-bold">
+                            {reward.rewardType === 'free_item' ? '🎁 Free Item' : reward.rewardType === 'percentage_off' ? `${reward.value}% Off` : `RM ${reward.value.toFixed(2)} Off`}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0">
-                      {reward.pointsRequired} pts
-                    </span>
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      <span className="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold">
+                        {reward.pointsRequired} pts
+                      </span>
+                      <div className="flex items-center gap-1 mt-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleOpenEditReward(reward)}
+                          className="h-6 w-6 p-0 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md"
+                          title="Edit Ganjaran"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleDeleteReward(reward.id, reward.title)}
+                          className="h-6 w-6 p-0 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-md"
+                          title="Padam Ganjaran"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               ))}
+
+              {rewardsCatalog.length === 0 && (
+                <div className="py-10 text-center text-slate-500 space-y-3">
+                  <Gift className="w-8 h-8 mx-auto text-slate-600 opacity-50" />
+                  <p className="text-xs text-slate-400 font-bold">Tiada Baucar Ganjaran</p>
+                  <p className="text-[11px] text-slate-500 max-w-xs mx-auto">
+                    Klik butang <strong>"+ Tambah Ganjaran"</strong> untuk mencipta baucar baru, atau muat semula templat standard.
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleResetRewardsToDefault}
+                    className="border-slate-800 text-amber-300 hover:bg-slate-800 text-xs gap-1.5 mx-auto font-mono"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" /> Muat Templat Contoh
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
         </div>
 
       </div>
+
+      {/* ADD / EDIT REWARD DIALOG */}
+      <Dialog open={isRewardModalOpen} onOpenChange={setIsRewardModalOpen}>
+        <DialogContent className="bg-slate-900 text-white border-slate-800 max-w-md font-sans">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg font-bold text-amber-400 font-mono">
+              <Gift className="w-5 h-5" /> {editingReward ? 'Edit Baucar Ganjaran' : 'Tambah Baucar Ganjaran Baru'}
+            </DialogTitle>
+            <DialogDescription className="text-slate-400 text-xs font-mono">
+              Tetapkan syarat mata, jenis diskaun, dan butiran baucar ganjaran ahli.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSaveReward} className="space-y-4 my-2">
+            {/* Emoji selector */}
+            <div className="space-y-1.5">
+              <Label className="text-slate-300 text-xs font-bold">Pilih Ikon / Emoji</Label>
+              <div className="flex flex-wrap gap-1.5 p-2 bg-slate-950 border border-slate-800 rounded-xl">
+                {emojiPresets.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => setRewEmoji(emoji)}
+                    className={`w-8 h-8 rounded-lg text-lg flex items-center justify-center transition-all ${
+                      rewEmoji === emoji ? 'bg-amber-500/30 border border-amber-400 scale-110' : 'hover:bg-slate-800'
+                    }`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-300 text-xs font-bold">Nama Baucar / Ganjaran *</Label>
+              <Input
+                required
+                placeholder="e.g. Diskaun RM 5.00 Ahli"
+                value={rewTitle}
+                onChange={(e) => setRewTitle(e.target.value)}
+                className="bg-slate-950 border-slate-800 text-white text-xs font-mono"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label className="text-slate-300 text-xs font-bold">Mata Diperlukan (pts) *</Label>
+                <Input
+                  required
+                  type="number"
+                  min="1"
+                  value={rewPoints}
+                  onChange={(e) => setRewPoints(Number(e.target.value))}
+                  className="bg-slate-950 border-slate-800 text-white text-xs font-mono"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label className="text-slate-300 text-xs font-bold">Jenis Ganjaran *</Label>
+                <select
+                  value={rewType}
+                  onChange={(e) => setRewType(e.target.value as any)}
+                  className="w-full h-9 rounded-md bg-slate-950 border border-slate-800 text-white text-xs px-3 font-mono focus:outline-none focus:ring-1 focus:ring-amber-500"
+                >
+                  <option value="discount_rm">Potongan Nilai (RM)</option>
+                  <option value="free_item">Item / Minuman Percuma</option>
+                  <option value="percentage_off">Potongan Peratus (%)</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-300 text-xs font-bold">
+                {rewType === 'discount_rm' ? 'Nilai Potongan (RM)' : rewType === 'percentage_off' ? 'Peratus Diskaun (%)' : 'Anggaran Nilai Item (RM)'}
+              </Label>
+              <Input
+                type="number"
+                step="0.1"
+                min="0"
+                value={rewValue}
+                onChange={(e) => setRewValue(Number(e.target.value))}
+                className="bg-slate-950 border-slate-800 text-white text-xs font-mono"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-slate-300 text-xs font-bold">Penerangan / Syarat Ganjaran</Label>
+              <Input
+                placeholder="e.g. Tebus 50 mata untuk potongan RM 5.00 pada jumlah bil."
+                value={rewDesc}
+                onChange={(e) => setRewDesc(e.target.value)}
+                className="bg-slate-950 border-slate-800 text-white text-xs"
+              />
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" onClick={() => setIsRewardModalOpen(false)} className="border-slate-800 text-slate-300 text-xs">
+                Batal
+              </Button>
+              <Button type="submit" className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs">
+                {editingReward ? 'Kemaskini Ganjaran' : 'Simpan Ganjaran'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* REGISTER / ADD POINTS DIALOG */}
       <Dialog open={isRegisterOpen} onOpenChange={setIsRegisterOpen}>
