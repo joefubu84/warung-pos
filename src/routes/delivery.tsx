@@ -1274,18 +1274,9 @@ function CustomerDeliveryPage() {
       return;
     }
 
-    // 2. MUST VERIFY PHONE NUMBER VIA WHATSAPP OTP
-    const isSavedPhoneVerified = typeof window !== 'undefined' && localStorage.getItem(`warung_verified_phone_${phoneClean}`) === 'true';
-    if (!isPhoneVerified && !isSavedPhoneVerified) {
-      toast.error('Sila sahkan nombor WhatsApp anda dengan kod OTP terlebih dahulu.');
-      handleRequestOtp(customerPhone);
-      return;
-    }
-
     // Persist phone for returning user convenience
     if (typeof window !== 'undefined') {
       localStorage.setItem('warung_customer_phone', customerPhone);
-      localStorage.setItem(`warung_verified_phone_${phoneClean}`, 'true');
     }
 
     if (!deliveryAddress.trim()) {
@@ -1748,13 +1739,13 @@ function CustomerDeliveryPage() {
                     <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
                       <Phone className="w-3.5 h-3.5 text-emerald-400" /> No. Telefon Bimbit (WhatsApp)
                     </label>
-                    {isPhoneVerified ? (
+                    {customerPhone.replace(/\D/g, '').startsWith('01') && customerPhone.replace(/\D/g, '').length >= 10 && customerPhone.replace(/\D/g, '').length <= 11 ? (
                       <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-500/30 flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Sahih ✓
+                        <CheckCircle2 className="w-3 h-3" /> Format Sah (01X) ✓
                       </span>
                     ) : (
                       <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
-                        ⚠️ Perlu Sahkan
+                        ⚠️ Masukkan No. 01X (10-11 digit)
                       </span>
                     )}
                   </div>
@@ -1766,9 +1757,6 @@ function CustomerDeliveryPage() {
                       onChange={(e) => {
                         const val = e.target.value;
                         setCustomerPhone(val);
-                        const cleanP = val.replace(/\D/g, '');
-                        const isVerifiedAlready = typeof window !== 'undefined' && localStorage.getItem(`warung_verified_phone_${cleanP}`) === 'true';
-                        setIsPhoneVerified(isVerifiedAlready);
                         if (typeof window !== 'undefined') {
                           localStorage.setItem('warung_customer_phone', val);
                           if (currentUser?.email) {
@@ -1778,35 +1766,17 @@ function CustomerDeliveryPage() {
                       }}
                       className="bg-stone-900 border-stone-700/80 text-white placeholder:text-stone-500 rounded-2xl text-xs sm:text-sm h-11 focus:border-orange-500/60 shadow-inner flex-1"
                     />
-
-                    {!isPhoneVerified && (
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={isSendingOtp || !customerPhone}
-                        onClick={() => handleRequestOtp(customerPhone)}
-                        className="h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-2xl px-3 shrink-0 shadow-md active:scale-95 transition-all"
-                      >
-                        {isSendingOtp ? (
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                        ) : (
-                          <>
-                            <MessageCircle className="w-3.5 h-3.5 mr-1" /> Sahkan No
-                          </>
-                        )}
-                      </Button>
-                    )}
                   </div>
                 </div>
               </div>
 
-              {/* ANTI-SCAM NOTICE */}
+              {/* ANTI-SCAM & ADMIN APPROVAL NOTICE */}
               <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl flex items-start gap-2.5 text-xs text-stone-300">
                 <ShieldCheck className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
-                <div className="space-y-0.5 text-[11px] leading-relaxed">
-                  <span className="font-bold text-orange-300 block">Dasar Anti-Scam & Pembayaran Warung JNJ:</span>
+                <div className="space-y-1 text-[11px] leading-relaxed">
+                  <span className="font-bold text-orange-300 block">🛡️ Pengesahan Pesanan & Bayaran oleh Admin Warung J&J:</span>
                   <span>
-                    Pelanggan wajib membuat bayaran dan menunjukkan bukti bayaran kepada Warung JNJ. Pihak kami hanya akan menyerahkan pesanan kepada rider sebaik bayaran disahkan sah.
+                    Status pesanan akan diletakkan sebagai <strong>Menunggu Pengesahan Bayaran Admin</strong>. Pihak warung akan menyemak resit bayaran DuitNow/Online Banking anda di kaunter sebelum pesanan dilepaskan kepada rider untuk penghantaran.
                   </span>
                 </div>
               </div>
