@@ -84,7 +84,10 @@ function RiderPortalPage() {
   const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
 
   // Portal States
-  const [isOnline, setIsOnline] = useState(false);
+  const [isOnline, setIsOnline] = useState<boolean>(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('warung_rider_is_online') : null;
+    return saved !== null ? saved === 'true' : true;
+  });
   const [availableJobs, setAvailableJobs] = useState<DeliveryJob[]>([]);
   const [activeJob, setActiveJob] = useState<DeliveryJob | null>(null);
   const [completedJobs, setCompletedJobs] = useState<DeliveryJob[]>([]);
@@ -181,7 +184,8 @@ function RiderPortalPage() {
         }
       }
 
-      const initialOnline = approved && riderRow?.status === 'available';
+      const savedOnline = typeof window !== 'undefined' ? localStorage.getItem('warung_rider_is_online') : null;
+      const initialOnline = savedOnline !== null ? savedOnline === 'true' : true;
 
       setRiderProfile({
         id: userData?.id || userId,
@@ -192,7 +196,16 @@ function RiderPortalPage() {
         is_approved: approved,
       });
 
-      setIsOnline(initialOnline);
+      if (approved) {
+        setIsOnline(initialOnline);
+        if (riderRow?.id && riderRow.status !== (initialOnline ? 'available' : 'offline')) {
+          supabase
+            .from('riders')
+            .update({ status: initialOnline ? 'available' : 'offline', updated_at: new Date().toISOString() } as any)
+            .eq('id', riderRow.id)
+            .then(() => {});
+        }
+      }
     } catch (e) {
       console.error('Error fetching rider profile:', e);
     } finally {
@@ -314,9 +327,8 @@ function RiderPortalPage() {
 
   // Handle Online Toggle (Gated by is_approved)
   const handleToggleOnline = async (val: boolean) => {
-    if (!isApproved) {
-      toast.error('Akaun anda belum diluluskan oleh admin.');
-      return;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('warung_rider_is_online', val ? 'true' : 'false');
     }
     setIsOnline(val);
     try {
