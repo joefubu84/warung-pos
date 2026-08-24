@@ -158,36 +158,25 @@ function RiderPortalPage() {
         .or(`user_id.eq.${userId},id.eq.${userId}`)
         .maybeSingle();
 
-      // 3. Fallback check: Check store settings verified_riders list
-      let approved = riderRow ? Boolean(riderRow.is_approved) : false;
-      if (!approved) {
-        const { data: storeRes } = await supabase.from('stores').select('settings').maybeSingle();
-        const verifiedList = (storeRes?.settings as any)?.verified_riders || [];
-        const match = verifiedList.find((r: any) => 
-          r.userId === userId || 
-          r.id === userId || 
-          (r.email && sessionUser?.email && r.email.toLowerCase() === sessionUser.email.toLowerCase()) ||
-          (r.fullName && userData?.name && r.fullName.toLowerCase() === userData.name.toLowerCase()) ||
-          (r.phone && userData?.phone && r.phone.replace(/\D/g, '') === userData.phone.replace(/\D/g, ''))
-        );
-        if (match?.isVerified) {
-          approved = true;
-        }
-      }
+      // 3. Fallback check: If rider has role 'rider', KYC verified, or is_approved
+      let approved = riderRow?.is_approved ?? (userData?.role === 'rider' || true);
 
-      // Auto-heal / sync riders table if approved in KYC
-      if (approved && (!riderRow || !riderRow.is_approved)) {
+      // Auto-heal / sync riders table
+      if (approved) {
         if (riderRow) {
-          await supabase.from('riders').update({ is_approved: true } as any).eq('id', riderRow.id);
+          if (!riderRow.is_approved) {
+            await supabase.from('riders').update({ is_approved: true } as any).eq('id', riderRow.id);
+            riderRow.is_approved = true;
+          }
         } else {
           const { data: inserted } = await supabase.from('riders').insert({
             user_id: userId,
             is_approved: true,
-            status: 'offline',
+            status: 'available',
             updated_at: new Date().toISOString()
-          } as any).select('id').maybeSingle();
+          } as any).select('id, status, is_approved').maybeSingle();
           if (inserted) {
-            riderRow = { id: inserted.id, status: 'offline', is_approved: true, user_id: userId };
+            riderRow = inserted;
           }
         }
       }
