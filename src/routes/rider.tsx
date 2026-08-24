@@ -152,13 +152,46 @@ function RiderPortalPage() {
         .maybeSingle();
 
       // 2. Fetch rider table row for is_approved & status
-      const { data: riderRow } = await supabase
+      let { data: riderRow } = await supabase
         .from('riders')
-        .select('id, status, is_approved')
-        .eq('user_id', userId)
+        .select('id, status, is_approved, user_id')
+        .or(`user_id.eq.${userId},id.eq.${userId}`)
         .maybeSingle();
 
-      const approved = riderRow ? Boolean(riderRow.is_approved) : false;
+      // 3. Fallback check: Check store settings verified_riders list
+      let approved = riderRow ? Boolean(riderRow.is_approved) : false;
+      if (!approved) {
+        const { data: storeRes } = await supabase.from('stores').select('settings').maybeSingle();
+        const verifiedList = (storeRes?.settings as any)?.verified_riders || [];
+        const match = verifiedList.find((r: any) => 
+          r.userId === userId || 
+          r.id === userId || 
+          (r.email && sessionUser?.email && r.email.toLowerCase() === sessionUser.email.toLowerCase()) ||
+          (r.fullName && userData?.name && r.fullName.toLowerCase() === userData.name.toLowerCase()) ||
+          (r.phone && userData?.phone && r.phone.replace(/\D/g, '') === userData.phone.replace(/\D/g, ''))
+        );
+        if (match?.isVerified) {
+          approved = true;
+        }
+      }
+
+      // Auto-heal / sync riders table if approved in KYC
+      if (approved && (!riderRow || !riderRow.is_approved)) {
+        if (riderRow) {
+          await supabase.from('riders').update({ is_approved: true } as any).eq('id', riderRow.id);
+        } else {
+          const { data: inserted } = await supabase.from('riders').insert({
+            user_id: userId,
+            is_approved: true,
+            status: 'offline',
+            updated_at: new Date().toISOString()
+          } as any).select('id').maybeSingle();
+          if (inserted) {
+            riderRow = { id: inserted.id, status: 'offline', is_approved: true, user_id: userId };
+          }
+        }
+      }
+
       const initialOnline = approved && riderRow?.status === 'available';
 
       setRiderProfile({
