@@ -752,9 +752,9 @@ function CustomerDeliveryPage() {
           supabase
             .from('orders')
             .update({
-              payment_status: 'paid',
-              status: 'confirmed',
-            })
+              paid: true,
+              status: 'preparing',
+            } as any)
             .eq('id', orderIdParam)
             .then(() => {});
         }

@@ -206,14 +206,13 @@ function OrdersPage() {
       const { error } = await supabase
         .from('orders')
         .update({
-          payment_status: 'paid',
           paid: true,
-          status: 'confirmed'
-        })
+          status: 'preparing',
+        } as any)
         .eq('id', orderId);
 
       if (error) throw error;
-      toast.success('🎉 Bayaran disahkan! Job delivery kini dibuka kepada rider di /rider.');
+      toast.success('🎉 Bayaran disahkan! Pesanan kini dibuka ke dapur dan rider di /rider.');
       await fetchOrders();
     } catch (e: any) {
       toast.error('Gagal mengesahkan bayaran: ' + e.message);
