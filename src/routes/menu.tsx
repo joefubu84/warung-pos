@@ -283,6 +283,24 @@ function MenuPage() {
     );
   }
 
+  const activeCount = items.filter(i => i.is_available).length;
+  const archivedCount = items.filter(i => !i.is_available).length;
+
+  const filteredItems = items.filter((item) => {
+    const matchesSearch =
+      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchQuery.toLowerCase());
+
+    if (!matchesSearch) return false;
+
+    if (menuFilter === 'active') {
+      return item.is_available;
+    } else if (menuFilter === 'archived') {
+      return !item.is_available;
+    }
+    return true;
+  });
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
