@@ -28,7 +28,14 @@ import {
   Shield,
   Bike,
   Check,
-  Smartphone
+  Smartphone,
+  Calendar,
+  TrendingUp,
+  Coins,
+  Landmark,
+  ArrowUpRight,
+  Receipt,
+  CreditCard
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeliveryRouteMap, WARUNG_COORDS } from '@/components/DeliveryRouteMap';
@@ -70,6 +77,10 @@ function RiderPortalPage() {
     phone_number?: string;
     role: string;
     is_approved: boolean;
+    vehicle_plate?: string;
+    bank_name?: string;
+    bank_account_number?: string;
+    bank_account_holder?: string;
   } | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
@@ -96,6 +107,7 @@ function RiderPortalPage() {
   const [activeTab, setActiveTab] = useState<'jobs' | 'active' | 'wallet'>('jobs');
   const [isClaiming, setIsClaiming] = useState<string | null>(null);
   const [previewRouteJobId, setPreviewRouteJobId] = useState<string | null>(null);
+  const [earningsFilter, setEarningsFilter] = useState<'today' | 'week' | 'month' | 'all'>('today');
 
   // Screen Wake Lock State (Keeps screen awake during active delivery/online mode)
   const wakeLockRef = useRef<any>(null);
@@ -192,13 +204,27 @@ function RiderPortalPage() {
       const savedOnline = typeof window !== 'undefined' ? localStorage.getItem('warung_rider_is_online') : null;
       const initialOnline = savedOnline !== null ? savedOnline === 'true' : true;
 
+      // Load KYC bank details from store settings
+      let kycBankInfo: any = null;
+      try {
+        const { data: storeRes } = await supabase.from('stores').select('settings').limit(1).maybeSingle();
+        const kycList = (storeRes?.settings as any)?.verified_riders || [];
+        kycBankInfo = kycList.find((k: any) => k.userId === userId || k.id === userId || k.email === sessionUser?.email);
+      } catch (storeErr) {
+        console.warn('KYC bank fetch note:', storeErr);
+      }
+
       setRiderProfile({
         id: userData?.id || userId,
         rider_db_id: riderRow?.id || userData?.id || userId,
-        name: userData?.name || sessionUser?.user_metadata?.name || 'Rider J&J',
-        phone_number: userData?.phone || sessionUser?.user_metadata?.phone_number || '',
+        name: kycBankInfo?.fullName || userData?.name || sessionUser?.user_metadata?.name || 'Rider J&J',
+        phone_number: kycBankInfo?.phone || userData?.phone || sessionUser?.user_metadata?.phone_number || '',
         role: userData?.role || 'rider',
         is_approved: approved,
+        vehicle_plate: kycBankInfo?.vehiclePlate || 'Motosikal',
+        bank_name: kycBankInfo?.bankName || 'Maybank',
+        bank_account_number: kycBankInfo?.bankAccountNumber || '',
+        bank_account_holder: kycBankInfo?.bankAccountHolder || kycBankInfo?.fullName || userData?.name || '',
       });
 
       if (approved) {
@@ -231,22 +257,31 @@ function RiderPortalPage() {
         .select('*')
         .eq('type', 'delivery')
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(100);
 
       if (!error && orders) {
         const available: DeliveryJob[] = [];
         const completed: DeliveryJob[] = [];
         let active: DeliveryJob | null = null;
 
+        const currentRiderId = riderProfile?.rider_db_id || sessionUser.id;
+
         orders.forEach((ord: any) => {
           const isClaimedByMe = ord.id === claimedLocalId;
+          const isMyDeliveredOrder =
+            ord.delivery_service === currentRiderId ||
+            ord.delivery_service === sessionUser.id ||
+            ord.delivery_service === 'jnj' ||
+            isClaimedByMe;
           
           // ANTI-SCAM GATING: Only dispatch jobs to riders once customer has PAID and Warung JNJ verified payment!
           const isVerifiedPaid = ord.payment_status === 'paid' || ord.status === 'confirmed' || ord.status === 'preparing' || ord.status === 'ready';
           const isUnverifiedPayment = ord.payment_status === 'pending' || ord.status === 'pending_payment' || ord.status === 'pending_verification';
 
           if (ord.status === 'completed') {
-            completed.push(ord);
+            if (isMyDeliveredOrder) {
+              completed.push(ord);
+            }
           } else if (isVerifiedPaid && !isUnverifiedPayment) {
             if (isClaimedByMe) {
               const savedMilestone = localStorage.getItem('warung_rider_milestone_' + ord.id);
@@ -748,8 +783,43 @@ function RiderPortalPage() {
     return 6.00;
   };
 
-  // Earnings
-  const totalEarningsToday = completedJobs.reduce((sum, j) => sum + getJobDeliveryFee(j), 0);
+  // Extract Numeric Distance in KM for statistics
+  const getJobDistanceKm = (job: DeliveryJob): number => {
+    if (job.delivery_address) {
+      const distMatch = job.delivery_address.match(/JARAK:\s*([0-9.]+)\s*KM/i);
+      if (distMatch && distMatch[1]) {
+        return parseFloat(distMatch[1]);
+      }
+    }
+    if (job.delivery_lat && job.delivery_lng) {
+      const WARUNG_LAT = 5.9284153;
+      const WARUNG_LNG = 116.1146463;
+      const straightKm = calculateHaversineKm(WARUNG_LAT, WARUNG_LNG, job.delivery_lat, job.delivery_lng);
+      return Math.round(straightKm * 1.35 * 10) / 10;
+    }
+    return 3.5;
+  };
+
+  // Filter Completed Jobs by Selected Period (Today, 7 Days, Month, All)
+  const filteredCompletedJobs = completedJobs.filter((job) => {
+    const jobDate = new Date(job.created_at || new Date().toISOString());
+    const now = new Date();
+
+    if (earningsFilter === 'today') {
+      return jobDate.toDateString() === now.toDateString();
+    } else if (earningsFilter === 'week') {
+      const diffMs = now.getTime() - jobDate.getTime();
+      return diffMs <= 7 * 24 * 3600 * 1000;
+    } else if (earningsFilter === 'month') {
+      return jobDate.getMonth() === now.getMonth() && jobDate.getFullYear() === now.getFullYear();
+    }
+    return true; // 'all'
+  });
+
+  const periodEarnings = filteredCompletedJobs.reduce((sum, j) => sum + getJobDeliveryFee(j), 0);
+  const periodTrips = filteredCompletedJobs.length;
+  const periodAvg = periodTrips > 0 ? periodEarnings / periodTrips : 0;
+  const periodDistance = filteredCompletedJobs.reduce((sum, j) => sum + getJobDistanceKm(j), 0);
 
   // 1. AUTHENTICATION VIEW (CLEAN WARUNG BRANDING)
   if (!sessionUser) {
@@ -1173,51 +1243,199 @@ function RiderPortalPage() {
 
           {/* TAB 3: WALLET & EARNINGS */}
           <TabsContent value="wallet" className="space-y-4 pt-3">
-            {/* EARNINGS SUMMARY */}
-            <div className="bg-[#1c1a18] border border-[#2e2a27] p-5 rounded-2xl space-y-3 shadow-lg">
-              <div className="flex items-center gap-2 text-amber-400 text-xs font-semibold">
-                <Wallet className="w-4 h-4" />
-                <span>Ringkasan Pendapatan Hari Ini</span>
+            
+            {/* 1. PERIOD FILTER BUTTONS */}
+            <div className="grid grid-cols-4 gap-1.5 bg-[#141211] p-1.5 rounded-2xl border border-[#2e2a27]">
+              <button
+                type="button"
+                onClick={() => setEarningsFilter('today')}
+                className={`py-2 text-[11px] font-bold rounded-xl transition-all ${
+                  earningsFilter === 'today'
+                    ? 'bg-amber-600 text-white shadow-md'
+                    : 'text-stone-400 hover:text-stone-200 hover:bg-[#1c1a18]'
+                }`}
+              >
+                Hari Ini
+              </button>
+              <button
+                type="button"
+                onClick={() => setEarningsFilter('week')}
+                className={`py-2 text-[11px] font-bold rounded-xl transition-all ${
+                  earningsFilter === 'week'
+                    ? 'bg-amber-600 text-white shadow-md'
+                    : 'text-stone-400 hover:text-stone-200 hover:bg-[#1c1a18]'
+                }`}
+              >
+                7 Hari
+              </button>
+              <button
+                type="button"
+                onClick={() => setEarningsFilter('month')}
+                className={`py-2 text-[11px] font-bold rounded-xl transition-all ${
+                  earningsFilter === 'month'
+                    ? 'bg-amber-600 text-white shadow-md'
+                    : 'text-stone-400 hover:text-stone-200 hover:bg-[#1c1a18]'
+                }`}
+              >
+                Bulan Ini
+              </button>
+              <button
+                type="button"
+                onClick={() => setEarningsFilter('all')}
+                className={`py-2 text-[11px] font-bold rounded-xl transition-all ${
+                  earningsFilter === 'all'
+                    ? 'bg-amber-600 text-white shadow-md'
+                    : 'text-stone-400 hover:text-stone-200 hover:bg-[#1c1a18]'
+                }`}
+              >
+                Semua
+              </button>
+            </div>
+
+            {/* 2. EARNINGS OVERVIEW BENTO GRID */}
+            <div className="bg-gradient-to-br from-[#1e1a16] to-[#141211] border border-amber-500/20 p-4 sm:p-5 rounded-3xl space-y-4 shadow-xl">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
+                  <Coins className="w-4 h-4 text-amber-400" />
+                  <span>
+                    Upah Bersih Penghantaran ({earningsFilter === 'today' ? 'Hari Ini' : earningsFilter === 'week' ? '7 Hari Lepas' : earningsFilter === 'month' ? 'Bulan Ini' : 'Keseluruhan'})
+                  </span>
+                </div>
+                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                  Disahkan ✓
+                </span>
               </div>
 
               <div>
-                <span className="text-3xl font-bold text-emerald-400 font-mono">
-                  RM {totalEarningsToday.toFixed(2)}
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl sm:text-4xl font-black text-emerald-400 font-mono tracking-tight">
+                    RM {periodEarnings.toFixed(2)}
+                  </span>
+                </div>
+                <span className="text-[11px] text-stone-400 block mt-1">
+                  100% upah penghantaran adalah milik rider sepenuhnya tanpa caj tersembunyi.
                 </span>
-                <span className="text-xs text-stone-400 block mt-0.5">
-                  {completedJobs.length} trip selesai hari ini
-                </span>
+              </div>
+
+              {/* 3 STATS PILLS */}
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#2e2a27]/80 text-center">
+                <div className="bg-[#171513] p-2.5 rounded-xl border border-[#2e2a27]">
+                  <span className="text-[10px] text-stone-400 block">Trip Selesai</span>
+                  <span className="text-sm font-bold text-white font-mono mt-0.5 block">
+                    {periodTrips} <span className="text-[10px] font-normal text-stone-400">trip</span>
+                  </span>
+                </div>
+                <div className="bg-[#171513] p-2.5 rounded-xl border border-[#2e2a27]">
+                  <span className="text-[10px] text-stone-400 block">Purata / Trip</span>
+                  <span className="text-sm font-bold text-amber-400 font-mono mt-0.5 block">
+                    RM {periodAvg.toFixed(2)}
+                  </span>
+                </div>
+                <div className="bg-[#171513] p-2.5 rounded-xl border border-[#2e2a27]">
+                  <span className="text-[10px] text-stone-400 block">Jarak Laluan</span>
+                  <span className="text-sm font-bold text-sky-400 font-mono mt-0.5 block">
+                    {periodDistance.toFixed(1)} <span className="text-[10px] font-normal text-stone-400">KM</span>
+                  </span>
+                </div>
               </div>
             </div>
 
-            {/* COMPLETED TRIPS */}
-            <div className="space-y-2">
-              <h3 className="font-semibold text-xs text-stone-400 uppercase tracking-wider">
-                Sejarah Penghantaran Selesai
-              </h3>
+            {/* 3. REGISTERED BANK ACCOUNT CARD */}
+            <div className="bg-[#1c1a18] border border-[#2e2a27] p-4 rounded-2xl space-y-2 text-xs">
+              <div className="flex items-center justify-between text-emerald-400 font-bold">
+                <div className="flex items-center gap-1.5">
+                  <Landmark className="w-4 h-4" />
+                  <span>Akaun Bank Penerima Gaji</span>
+                </div>
+                <span className="text-[10px] text-stone-400 font-normal">Pindahan Mingguan / Harian</span>
+              </div>
 
-              {completedJobs.length === 0 ? (
-                <div className="p-6 text-center bg-[#1c1a18] rounded-xl border border-[#2e2a27] text-xs text-stone-500">
-                  Belum ada rekod penghantaran yang selesai hari ini.
+              <div className="bg-[#141211] p-3 rounded-xl border border-[#2e2a27] grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-[10px] text-stone-400 block">Nama Bank:</span>
+                  <span className="font-bold text-white block truncate">{riderProfile?.bank_name || 'Maybank'}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-stone-400 block">No. Akaun:</span>
+                  <span className="font-bold text-emerald-300 font-mono block truncate">
+                    {riderProfile?.bank_account_number ? riderProfile.bank_account_number : 'Belum Ditetapkan'}
+                  </span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-[10px] text-stone-400 block">Nama Pemegang Akaun:</span>
+                  <span className="font-bold text-stone-200 block truncate">{riderProfile?.bank_account_holder || riderProfile?.name || 'Rider J&J'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 4. DETAILED COMPLETED TRIPS LIST */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between text-xs text-stone-400">
+                <span className="font-bold text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
+                  <Receipt className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Rekod Tugasan Selesai ({filteredCompletedJobs.length})</span>
+                </span>
+                <span className="text-[11px] text-stone-500">
+                  {earningsFilter === 'today' ? 'Hari Ini' : earningsFilter === 'week' ? '7 Hari' : earningsFilter === 'month' ? 'Bulan Ini' : 'Semua'}
+                </span>
+              </div>
+
+              {filteredCompletedJobs.length === 0 ? (
+                <div className="p-8 text-center bg-[#1c1a18] rounded-2xl border border-[#2e2a27] text-xs text-stone-500 space-y-1">
+                  <Bike className="w-6 h-6 mx-auto text-stone-600 mb-2" />
+                  <p className="font-bold text-stone-400">Tiada rekod penghantaran bagi tempoh ini.</p>
+                  <p className="text-[11px] text-stone-500">Tugasan yang diselesaikan akan direkodkan dan dijumlahkan di sini secara automatik.</p>
                 </div>
               ) : (
                 <div className="space-y-2">
-                  {completedJobs.map((job) => (
-                    <div key={job.id} className="p-3 bg-[#1c1a18] border border-[#2e2a27] rounded-xl flex justify-between items-center text-xs">
-                      <div>
-                        <span className="font-semibold text-stone-200 block">
-                          #{job.id.slice(0, 8).toUpperCase()} • {job.customer_name}
-                        </span>
-                        <span className="text-[11px] text-stone-400 line-clamp-1">{getCleanDeliveryAddress(job.delivery_address)}</span>
+                  {filteredCompletedJobs.map((job) => {
+                    const fee = getJobDeliveryFee(job);
+                    const distKm = getJobDistanceKm(job);
+                    const completedDate = new Date(job.created_at || new Date().toISOString());
+                    const timeStr = completedDate.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', hour12: true });
+                    const dateStr = completedDate.toLocaleDateString('ms-MY', { day: 'numeric', month: 'short' });
+
+                    return (
+                      <div
+                        key={job.id}
+                        className="p-3.5 bg-[#1c1a18] hover:bg-[#22201d] border border-[#2e2a27] rounded-2xl flex flex-col gap-2 transition-all shadow-sm"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-mono font-black text-amber-400 text-xs">
+                                #{job.id.slice(0, 8).toUpperCase()}
+                              </span>
+                              <span className="text-[11px] text-stone-400">
+                                • {dateStr}, {timeStr}
+                              </span>
+                            </div>
+                            <h4 className="font-bold text-white text-xs truncate mt-0.5">
+                              {job.customer_name || 'Pelanggan J&J'}
+                            </h4>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <span className="font-black text-emerald-400 text-sm block font-mono">
+                              +RM {fee.toFixed(2)}
+                            </span>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              DITERIMA
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[11px] text-stone-400 pt-1 border-t border-[#2e2a27]/60">
+                          <span className="truncate pr-2">
+                            📍 {getCleanDeliveryAddress(job.delivery_address)}
+                          </span>
+                          <span className="font-bold text-sky-400 shrink-0 font-mono">
+                            {distKm.toFixed(1)} KM
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-right shrink-0 ml-3">
-                        <span className="font-bold text-emerald-400 block font-mono">
-                          +RM {getJobDeliveryFee(job).toFixed(2)}
-                        </span>
-                        <span className="text-[10px] text-stone-400">Selesai</span>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
