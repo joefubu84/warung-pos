@@ -125,32 +125,6 @@ function LoyaltyPage() {
     <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans pb-24">
       <div className="max-w-7xl mx-auto space-y-6">
 
-        {/* LOYALTY PAUSED NOTICE BANNER */}
-        <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2.5 text-amber-300">
-            <Sparkles className="w-5 h-5 text-amber-400 shrink-0" />
-            <div>
-              <p className="font-bold text-amber-200 text-sm">Program Loyaliti Ditangguhkan Buat Sementara Waktu</p>
-              <p className="text-xs text-amber-400/80 mt-0.5">
-                Semua senarai ahli demo telah dikosongkan. Pendaftaran rasmi ahli akan dibuka apabila program ganjaran dilancarkan kelak.
-              </p>
-            </div>
-          </div>
-          {members.length > 0 && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                clearAllLoyaltyMembers();
-                setMembers([]);
-                toast.success('Semua senarai ahli telah dikosongkan.');
-              }}
-              className="border-rose-500/40 bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 text-xs font-mono shrink-0 gap-1.5"
-            >
-              <Trash2 className="w-3.5 h-3.5" /> Padam Semua Ahli
-            </Button>
-          )}
-        </div>
 
         {/* LOYALTY HEADER CARD */}
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
