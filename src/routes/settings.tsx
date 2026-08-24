@@ -51,7 +51,8 @@ import {
   Printer,
   Utensils,
   Palette,
-  ChevronRight
+  ChevronRight,
+  Loader2
 } from 'lucide-react';
 import {
   Dialog,
