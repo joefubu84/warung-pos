@@ -1507,36 +1507,37 @@ function AdminRiderManagementCard() {
     try {
       const nextApproved = !currentApproved;
 
-      // 1. Update or Insert in 'riders' table
-      const { data: existingRows } = await supabase
-        .from('riders')
-        .select('id, user_id')
-        .or(`user_id.eq.${userId},id.eq.${userId}`);
+      // 1. Update or Insert in 'riders' table (if user exists in auth)
+      try {
+        const { data: existingRows } = await supabase
+          .from('riders')
+          .select('id, user_id')
+          .or(`user_id.eq.${userId},id.eq.${userId}`);
 
-      if (existingRows && existingRows.length > 0) {
-        for (const row of existingRows) {
-          const { error } = await supabase
+        if (existingRows && existingRows.length > 0) {
+          for (const row of existingRows) {
+            await supabase
+              .from('riders')
+              .update({
+                is_approved: nextApproved,
+                status: 'offline',
+                updated_at: new Date().toISOString()
+              } as any)
+              .eq('id', row.id);
+          }
+        } else {
+          await supabase
             .from('riders')
-            .update({
+            .insert({
+              user_id: userId,
+              store_id: storeData?.id || '',
               is_approved: nextApproved,
               status: 'offline',
               updated_at: new Date().toISOString()
-            } as any)
-            .eq('id', row.id);
-          if (error) throw error;
+            } as any);
         }
-      } else {
-        const { error } = await supabase
-          .from('riders')
-          .insert({
-            user_id: userId,
-            store_id: storeData?.id || '',
-            is_approved: nextApproved,
-            status: 'offline',
-            updated_at: new Date().toISOString()
-          } as any);
-
-        if (error) throw error;
+      } catch (riderTableErr) {
+        console.warn('Riders table sync note:', riderTableErr);
       }
 
       // 2. Synchronize with storeData.settings.verified_riders
