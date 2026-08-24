@@ -1,6 +1,6 @@
 // src/routes/rider.tsx
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,7 +27,8 @@ import {
   ArrowRight,
   Shield,
   Bike,
-  Check
+  Check,
+  Smartphone
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeliveryRouteMap, WARUNG_COORDS } from '@/components/DeliveryRouteMap';
@@ -95,6 +96,10 @@ function RiderPortalPage() {
   const [activeTab, setActiveTab] = useState<'jobs' | 'active' | 'wallet'>('jobs');
   const [isClaiming, setIsClaiming] = useState<string | null>(null);
   const [previewRouteJobId, setPreviewRouteJobId] = useState<string | null>(null);
+
+  // Screen Wake Lock State (Keeps screen awake during active delivery/online mode)
+  const wakeLockRef = useRef<any>(null);
+  const [isWakeLockActive, setIsWakeLockActive] = useState(false);
 
   // Computed approval status
   const isApproved = Boolean(riderProfile?.is_approved);
@@ -324,6 +329,66 @@ function RiderPortalPage() {
       supabase.removeChannel(locationChannel);
     };
   }, [sessionUser, isOnline, activeJob, riderProfile]);
+
+  // Screen Wake Lock Auto Management (Keeps phone screen lit while Online or Delivering)
+  useEffect(() => {
+    let isMounted = true;
+
+    const requestWakeLock = async () => {
+      try {
+        if (typeof navigator !== 'undefined' && 'wakeLock' in navigator) {
+          if (wakeLockRef.current !== null) return;
+          const lock = await (navigator as any).wakeLock.request('screen');
+          if (isMounted) {
+            wakeLockRef.current = lock;
+            setIsWakeLockActive(true);
+            console.log('📱 Screen Wake Lock aktif: Skrin peranti rider tidak akan padam.');
+            lock.addEventListener('release', () => {
+              if (isMounted) {
+                wakeLockRef.current = null;
+                setIsWakeLockActive(false);
+              }
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Screen Wake Lock notice:', err);
+      }
+    };
+
+    const releaseWakeLock = async () => {
+      try {
+        if (wakeLockRef.current) {
+          await wakeLockRef.current.release();
+          wakeLockRef.current = null;
+          if (isMounted) setIsWakeLockActive(false);
+        }
+      } catch (err) {
+        console.warn('Wake Lock release note:', err);
+      }
+    };
+
+    // Auto re-acquire wake lock if rider switches apps and returns to browser
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && (isOnline || activeJob)) {
+        requestWakeLock();
+      }
+    };
+
+    if (isOnline || activeJob) {
+      requestWakeLock();
+    } else {
+      releaseWakeLock();
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      isMounted = false;
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      releaseWakeLock();
+    };
+  }, [isOnline, activeJob]);
 
   // Handle Online Toggle (Gated by is_approved)
   const handleToggleOnline = async (val: boolean) => {
@@ -821,18 +886,26 @@ function RiderPortalPage() {
         )}
 
         {/* STATUS CARD */}
-        <div className="bg-[#1c1a18] border border-[#2e2a27] p-3.5 rounded-2xl flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2">
-            <div className={`w-2.5 h-2.5 rounded-full ${!isApproved ? 'bg-amber-500' : isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-stone-500'}`} />
-            <span className="text-stone-300 font-medium">
-              {!isApproved ? 'Akaun Menunggu Kelulusan Admin' : isOnline ? 'Sedia menerima tugasan penghantaran' : 'Status: Sedang Berehat'}
-            </span>
+        <div className="bg-[#1c1a18] border border-[#2e2a27] p-3.5 rounded-2xl flex items-center justify-between text-xs gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`w-2.5 h-2.5 shrink-0 rounded-full ${!isApproved ? 'bg-amber-500' : isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-stone-500'}`} />
+            <div className="min-w-0">
+              <span className="text-stone-300 font-medium block truncate">
+                {!isApproved ? 'Akaun Menunggu Kelulusan Admin' : isOnline ? 'Sedia menerima tugasan penghantaran' : 'Status: Sedang Berehat'}
+              </span>
+              {isWakeLockActive && (
+                <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1 mt-0.5">
+                  <Smartphone className="w-3 h-3 text-emerald-400 shrink-0" />
+                  <span>Skrin Sentiasa Menyala (Wake Lock ON)</span>
+                </span>
+              )}
+            </div>
           </div>
           <Button
             size="sm"
             onClick={fetchDeliveryOrders}
             disabled={loadingJobs}
-            className="bg-[#141211] border border-[#2e2a27] hover:bg-[#2b2724] text-stone-300 text-xs rounded-xl h-7 px-2.5 gap-1"
+            className="bg-[#141211] border border-[#2e2a27] hover:bg-[#2b2724] text-stone-300 text-xs rounded-xl h-7 px-2.5 gap-1 shrink-0"
           >
             <RefreshCw className={`w-3 h-3 ${loadingJobs ? 'animate-spin' : ''}`} />
             <span>Kemas Kini</span>
