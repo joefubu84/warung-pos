@@ -52,7 +52,9 @@ import {
   Utensils,
   Palette,
   ChevronRight,
-  Loader2
+  Loader2,
+  Pencil,
+  Trash2
 } from 'lucide-react';
 import {
   Dialog,
@@ -1433,6 +1435,25 @@ function AdminRiderManagementCard() {
   const [showForm, setShowForm] = useState(false);
   const [copiedBankId, setCopiedBankId] = useState<string | null>(null);
 
+  // Edit Rider State
+  const [editingRider, setEditingRider] = useState<RiderKYCRecord | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFullName, setEditFullName] = useState('');
+  const [editIcNumber, setEditIcNumber] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editBankName, setEditBankName] = useState('Maybank (Malayan Banking)');
+  const [editBankAccountNumber, setEditBankAccountNumber] = useState('');
+  const [editBankAccountHolder, setEditBankAccountHolder] = useState('');
+  const [editVehiclePlate, setEditVehiclePlate] = useState('');
+  const [editVehicleModel, setEditVehicleModel] = useState('');
+  const [editLicenseNumber, setEditLicenseNumber] = useState('');
+  const [editLicenseExpiry, setEditLicenseExpiry] = useState('');
+  const [editRoadtaxExpiry, setEditRoadtaxExpiry] = useState('');
+  const [editHomeAddress, setEditHomeAddress] = useState('');
+  const [editEmergencyContact, setEditEmergencyContact] = useState('');
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
   // Helper to handle camera/file uploads into Base64
   const handleFileCapture = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
     const file = e.target.files?.[0];
@@ -1586,6 +1607,137 @@ function AdminRiderManagementCard() {
       refetchRidersTable();
     } catch (err: any) {
       toast.error("Ralat membuka semula pesanan: " + err.message);
+    }
+  };
+
+  // Open Edit Modal with Pre-filled Rider Data
+  const handleOpenEditModal = (rider: RiderKYCRecord) => {
+    setEditingRider(rider);
+    setEditFullName(rider.fullName || '');
+    setEditIcNumber(rider.icNumber || '');
+    setEditPhone(rider.phone || '');
+    setEditEmail(rider.email || '');
+    setEditBankName(rider.bankName || 'Maybank (Malayan Banking)');
+    setEditBankAccountNumber(rider.bankAccountNumber || '');
+    setEditBankAccountHolder(rider.bankAccountHolder || rider.fullName || '');
+    setEditVehiclePlate(rider.vehiclePlate || '');
+    setEditVehicleModel(rider.vehicleModel || 'Motosikal');
+    setEditLicenseNumber(rider.licenseNumber || rider.icNumber || '');
+    setEditLicenseExpiry(rider.licenseExpiry || '');
+    setEditRoadtaxExpiry(rider.roadtaxExpiry || '');
+    setEditHomeAddress(rider.homeAddress || '');
+    setEditEmergencyContact(rider.emergencyContact || '');
+    setIsEditModalOpen(true);
+  };
+
+  // Save Edited Rider Data
+  const handleSaveEditRider = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRider) return;
+    if (!editFullName.trim() || !editPhone.trim() || !editVehiclePlate.trim() || !editBankAccountNumber.trim()) {
+      toast.error('Sila lengkapkan butiran wajib (Nama, Telefon, No. Plat Kenderaan & No. Akaun Bank).');
+      return;
+    }
+
+    setIsSavingEdit(true);
+    try {
+      const updatedRider: RiderKYCRecord = {
+        ...editingRider,
+        fullName: editFullName.trim(),
+        icNumber: editIcNumber.trim(),
+        phone: editPhone.trim(),
+        email: editEmail.trim(),
+        bankName: editBankName || 'Maybank',
+        bankAccountNumber: editBankAccountNumber.replace(/\s+/g, ''),
+        bankAccountHolder: editBankAccountHolder.trim() || editFullName.trim(),
+        vehiclePlate: editVehiclePlate.trim().toUpperCase(),
+        vehicleModel: editVehicleModel.trim() || 'Motosikal',
+        licenseNumber: editLicenseNumber.trim(),
+        licenseExpiry: editLicenseExpiry.trim(),
+        roadtaxExpiry: editRoadtaxExpiry.trim(),
+        homeAddress: editHomeAddress.trim(),
+        emergencyContact: editEmergencyContact.trim(),
+      };
+
+      // 1. Update in store settings verified_riders
+      if (storeData?.id) {
+        const existingSettings = (storeData.settings as any) || {};
+        const currentList: RiderKYCRecord[] = existingSettings.verified_riders || [];
+        const updatedList = currentList.map(r => r.id === editingRider.id ? updatedRider : r);
+
+        await supabase
+          .from('stores')
+          .update({
+            settings: {
+              ...existingSettings,
+              verified_riders: updatedList,
+            } as any,
+          })
+          .eq('id', storeData.id);
+      }
+
+      // 2. Update users table if userId exists
+      if (editingRider.userId) {
+        await supabase
+          .from('users')
+          .update({
+            name: editFullName.trim(),
+            phone: editPhone.trim(),
+          } as any)
+          .eq('id', editingRider.userId);
+      }
+
+      toast.success(`✅ Maklumat rakan penghantar "${editFullName}" berjaya dikemas kini!`);
+      setIsEditModalOpen(false);
+      setEditingRider(null);
+      refetchStore();
+      refetchUsers();
+      refetchRidersTable();
+    } catch (err: any) {
+      toast.error('Gagal mengemas kini maklumat rider: ' + err.message);
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  // Delete Rider from Fleet
+  const handleDeleteRider = async (rider: RiderKYCRecord) => {
+    const confirmDelete = window.confirm(`Adakah anda pasti mahu memadamkan profil rakan penghantar "${rider.fullName}" (${rider.vehiclePlate}) secara kekal?`);
+    if (!confirmDelete) return;
+
+    try {
+      // 1. Remove from store settings verified_riders
+      if (storeData?.id) {
+        const existingSettings = (storeData.settings as any) || {};
+        const currentList: RiderKYCRecord[] = existingSettings.verified_riders || [];
+        const filteredList = currentList.filter(r => r.id !== rider.id && r.userId !== rider.userId && r.email !== rider.email);
+
+        await supabase
+          .from('stores')
+          .update({
+            settings: {
+              ...existingSettings,
+              verified_riders: filteredList,
+            } as any,
+          })
+          .eq('id', storeData.id);
+      }
+
+      // 2. Delete from riders table
+      if (rider.userId || rider.id) {
+        await supabase
+          .from('riders')
+          .delete()
+          .or(`user_id.eq.${rider.userId || rider.id},id.eq.${rider.userId || rider.id}`);
+      }
+
+      toast.success(`🗑️ Rakan penghantar "${rider.fullName}" telah dipadamkan.`);
+      if (isDetailOpen) setIsDetailOpen(false);
+      refetchStore();
+      refetchUsers();
+      refetchRidersTable();
+    } catch (err: any) {
+      toast.error('Gagal memadamkan rakan penghantar: ' + err.message);
     }
   };
 
@@ -2187,8 +2339,8 @@ function AdminRiderManagementCard() {
                   </div>
 
                   {/* ACTION BUTTONS & 1-CLICK APPROVAL */}
-                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/80 text-xs">
-                    <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80 text-xs">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       {/* 1-CLICK APPROVE / REVOKE TOGGLE */}
                       <button
                         type="button"
@@ -2202,6 +2354,19 @@ function AdminRiderManagementCard() {
                         {isApproved ? '⏸️ Nyahaktif' : '✅ Luluskan (Approve)'}
                       </button>
 
+                      {/* EDIT RIDER BUTTON */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleOpenEditModal(rider)}
+                        className="bg-amber-600/20 border-amber-500/30 text-amber-300 hover:bg-amber-600/30 hover:text-white text-xs h-7 px-2 rounded-xl gap-1"
+                        title="Kemaskini Butiran Rider"
+                      >
+                        <Pencil className="w-3 h-3 text-amber-400" />
+                        <span>Edit</span>
+                      </Button>
+
+                      {/* DOSSIER BUTTON */}
                       <Button
                         size="sm"
                         variant="outline"
@@ -2210,6 +2375,17 @@ function AdminRiderManagementCard() {
                       >
                         <Eye className="w-3 h-3 text-sky-400" />
                         <span>Dossier</span>
+                      </Button>
+
+                      {/* DELETE RIDER BUTTON */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeleteRider(rider)}
+                        className="bg-rose-950/40 border-rose-900/60 text-rose-400 hover:bg-rose-900/60 hover:text-white text-xs h-7 px-2 rounded-xl gap-1"
+                        title="Padam Profil Rider"
+                      >
+                        <Trash2 className="w-3 h-3 text-rose-400" />
                       </Button>
                     </div>
 
@@ -2371,15 +2547,247 @@ function AdminRiderManagementCard() {
                 </div>
               </div>
 
-              <div className="pt-2 flex justify-end gap-2">
+              <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      const r = selectedRider;
+                      setIsDetailOpen(false);
+                      handleOpenEditModal(r);
+                    }}
+                    className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs h-9 px-3 rounded-xl gap-1.5 shadow-md"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    <span>Kemaskini / Edit Butiran</span>
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => handleDeleteRider(selectedRider)}
+                    className="bg-rose-950/40 border-rose-900 text-rose-400 hover:bg-rose-900/60 hover:text-white font-bold text-xs h-9 px-3 rounded-xl gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Padam Rider</span>
+                  </Button>
+                </div>
+
                 <Button
                   onClick={() => setIsDetailOpen(false)}
-                  className="bg-slate-800 hover:bg-slate-700 text-white text-xs rounded-xl"
+                  className="bg-slate-800 hover:bg-slate-700 text-white text-xs rounded-xl h-9 px-4"
                 >
                   Tutup
                 </Button>
               </div>
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL: EDIT RIDER INFORMATION */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="bg-slate-900 border border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto font-mono">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2 text-amber-400">
+              <Pencil className="w-5 h-5" />
+              <span>Kemaskini Maklumat Rakan Penghantar ({editFullName || 'Rider'})</span>
+            </DialogTitle>
+          </DialogHeader>
+
+          {editingRider && (
+            <form onSubmit={handleSaveEditRider} className="space-y-4 text-xs pt-2">
+              {/* SECTION 1: BUTIRAN PERIBADI */}
+              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+                <span className="font-bold text-amber-400 flex items-center gap-1.5 text-xs">
+                  <User className="w-4 h-4" /> 1. Butiran Peribadi & Log Masuk
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-[11px]">Nama Penuh Rider *</Label>
+                    <Input
+                      value={editFullName}
+                      onChange={(e) => setEditFullName(e.target.value)}
+                      placeholder="Nama penuh mengikut MyKad"
+                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-[11px]">No. Kad Pengenalan (MyKad)</Label>
+                    <Input
+                      value={editIcNumber}
+                      onChange={(e) => setEditIcNumber(e.target.value)}
+                      placeholder="Contoh: 980101-12-1234"
+                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-[11px]">No. Telefon (WhatsApp) *</Label>
+                    <Input
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      placeholder="Contoh: 0198887766"
+                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-[11px]">Emel Log Masuk</Label>
+                    <Input
+                      value={editEmail}
+                      onChange={(e) => setEditEmail(e.target.value)}
+                      placeholder="rider@warungjnj.online"
+                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-[11px]">Alamat Kediaman Semasa</Label>
+                  <Input
+                    value={editHomeAddress}
+                    onChange={(e) => setEditHomeAddress(e.target.value)}
+                    placeholder="Alamat tempat tinggal rider"
+                    className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-slate-400 text-[11px]">Hubungan / No. Kecemasan</Label>
+                  <Input
+                    value={editEmergencyContact}
+                    onChange={(e) => setEditEmergencyContact(e.target.value)}
+                    placeholder="Nama & No. Telefon Waris (cth: Isteri - 0123456789)"
+                    className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* SECTION 2: KENDERAAN & LESEN */}
+              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+                <span className="font-bold text-sky-400 flex items-center gap-1.5 text-xs">
+                  <Bike className="w-4 h-4" /> 2. Maklumat Motosikal & Lesen
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-[11px]">No. Plat Kenderaan *</Label>
+                    <Input
+                      value={editVehiclePlate}
+                      onChange={(e) => setEditVehiclePlate(e.target.value)}
+                      placeholder="Contoh: SAB 1234 A"
+                      className="bg-slate-900 border-slate-700 text-white uppercase rounded-xl h-9 text-xs"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-[11px]">Model Motosikal</Label>
+                    <Input
+                      value={editVehicleModel}
+                      onChange={(e) => setEditVehicleModel(e.target.value)}
+                      placeholder="Contoh: Yamaha Y15ZR / Honda Wave"
+                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-[11px]">Tarikh Sah Lesen Memandu</Label>
+                    <Input
+                      type="date"
+                      value={editLicenseExpiry}
+                      onChange={(e) => setEditLicenseExpiry(e.target.value)}
+                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-[11px]">Tarikh Luput Cukai Jalan (Roadtax)</Label>
+                    <Input
+                      type="date"
+                      value={editRoadtaxExpiry}
+                      onChange={(e) => setEditRoadtaxExpiry(e.target.value)}
+                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECTION 3: AKAUN BANK GAJI */}
+              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+                <span className="font-bold text-emerald-400 flex items-center gap-1.5 text-xs">
+                  <Landmark className="w-4 h-4" /> 3. Akaun Bank Untuk Pindahan Gaji / Upah
+                </span>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-[11px]">Nama Bank</Label>
+                    <select
+                      value={editBankName}
+                      onChange={(e) => setEditBankName(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl h-9 px-3 text-xs"
+                    >
+                      {MALAYSIAN_BANKS.map((b) => (
+                        <option key={b} value={b}>{b}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <Label className="text-slate-400 text-[11px]">No. Akaun Bank *</Label>
+                    <Input
+                      value={editBankAccountNumber}
+                      onChange={(e) => setEditBankAccountNumber(e.target.value)}
+                      placeholder="Nombor akaun bank tanpa sengkang"
+                      className="bg-slate-900 border-slate-700 text-white font-mono rounded-xl h-9 text-xs"
+                      required
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2 space-y-1">
+                    <Label className="text-slate-400 text-[11px]">Nama Pemegang Akaun</Label>
+                    <Input
+                      value={editBankAccountHolder}
+                      onChange={(e) => setEditBankAccountHolder(e.target.value)}
+                      placeholder="Nama pada akaun bank"
+                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* MODAL FOOTER BUTTONS */}
+              <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="text-slate-400 hover:text-white text-xs rounded-xl h-10 px-4"
+                >
+                  Batal
+                </Button>
+
+                <Button
+                  type="submit"
+                  disabled={isSavingEdit}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl h-10 px-6 shadow-lg shadow-emerald-600/30 gap-1.5"
+                >
+                  {isSavingEdit ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Simpan Perubahan</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
           )}
         </DialogContent>
       </Dialog>
