@@ -113,6 +113,40 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `
+              a[href*="lovable.dev"],
+              a[href*="lovable.app"],
+              [id*="lovable-badge"],
+              [id*="lovable_badge"],
+              [id*="lovable"],
+              [class*="lovable-badge"],
+              [class*="lovable_badge"],
+              [data-lovable-badge],
+              [aria-label*="Lovable" i],
+              [title*="Lovable" i],
+              div:has(> a[href*="lovable.dev"]),
+              div:has(> a[href*="lovable.app"]),
+              div:has(> [id*="lovable-badge"]),
+              div:has(> [class*="lovable-badge"]) {
+                display: none !important;
+                opacity: 0 !important;
+                visibility: hidden !important;
+                pointer-events: none !important;
+                position: absolute !important;
+                top: -9999px !important;
+                left: -9999px !important;
+                width: 0 !important;
+                height: 0 !important;
+                max-width: 0 !important;
+                max-height: 0 !important;
+                overflow: hidden !important;
+                z-index: -9999 !important;
+              }
+            `,
+          }}
+        />
       </head>
       <body>
         {children}
