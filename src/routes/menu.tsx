@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Edit2, Trash2, Plus, Image as ImageIcon, Loader2, UtensilsCrossed, Sparkles, Check, RefreshCw } from 'lucide-react';
+import { Edit2, Trash2, Plus, Image as ImageIcon, Loader2, UtensilsCrossed, Sparkles, Check, RefreshCw, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
   getAddonsConfig, 
@@ -46,6 +46,10 @@ function MenuPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [menuFilter, setMenuFilter] = useState<'all' | 'active' | 'archived'>('all');
   
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -214,18 +218,43 @@ function MenuPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this item?')) return;
-    
-    const { error } = await supabase
-      .from('menu_items')
-      .delete()
-      .eq('id', id);
+    const itemToDelete = items.find(item => item.id === id);
+    const itemName = itemToDelete?.name || 'Menu item';
 
-    if (error) {
-      alert('Error deleting item: ' + error.message);
-    } else {
-      toast.info("Dish deleted.");
+    if (!window.confirm(`Adakah anda pasti mahu memadam hidangan "${itemName}"?`)) return;
+    
+    try {
+      // 1. Cuba pemadaman terus (Hard Delete)
+      const { error } = await supabase
+        .from('menu_items')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        // 2. Jika ada sejarah pesanan lampau pada order_items (Foreign key constraint 23503)
+        if (error.message?.includes('foreign key constraint') || error.code === '23503') {
+          // Lakukan Soft-Delete / Arkib secara automatik untuk menjaga rekod resit lama
+          const { error: archiveError } = await supabase
+            .from('menu_items')
+            .update({ 
+              is_available: false,
+              stock_count: 0
+            })
+            .eq('id', id);
+
+          if (archiveError) throw archiveError;
+
+          toast.success(`"${itemName}" telah dinyahaktifkan (OFF Menu & Diarkibkan) kerana terdapat sejarah resit pesanan pelanggan terdahulu.`);
+          await fetchMenuItems();
+          return;
+        }
+        throw error;
+      }
+
+      toast.success(`Hidangan "${itemName}" telah berjaya dipadam.`);
       await fetchMenuItems();
+    } catch (err: any) {
+      toast.error('Gagal memadam menu: ' + err.message);
     }
   };
 
@@ -382,24 +411,21 @@ function MenuPage() {
                     </div>
                   </div>
 
-                  <div className="p-3.5 bg-slate-950 rounded-xl space-y-3 border border-slate-800">
+                  {/* INVENTORY / STOCK CONTROL */}
+                  <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2">
                     <div className="flex items-center justify-between">
-                      <div>
-                        <Label className="text-xs font-bold text-white block">Available for Ordering</Label>
-                        <p className="text-[10px] text-slate-400">Show on digital QR menu?</p>
-                      </div>
-                      <Switch checked={isAvailable} onCheckedChange={setIsAvailable} />
+                      <span className="text-xs font-bold text-slate-200">Stock Inventory Control</span>
+                      <span className="text-[10px] text-slate-400 font-mono">Leave empty for unlimited</span>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800">
+                    <div className="grid grid-cols-2 gap-2 font-mono">
                       <div className="space-y-1">
-                        <Label className="text-[10px] text-slate-400 uppercase">Stock Level</Label>
+                        <Label className="text-[10px] text-slate-400 uppercase">Stock Count</Label>
                         <Input 
                           type="number" 
                           value={stockCount} 
                           onChange={e => setStockCount(e.target.value)} 
                           placeholder="Unlimited" 
-                          className="bg-slate-900 border-slate-800 text-white text-xs"
+                          className="bg-slate-900 border-slate-800 text-white text-xs rounded-lg"
                         />
                       </div>
                       <div className="space-y-1">
@@ -409,20 +435,24 @@ function MenuPage() {
                           value={lowStockThreshold} 
                           onChange={e => setLowStockThreshold(e.target.value)} 
                           placeholder="5" 
-                          className="bg-slate-900 border-slate-800 text-white text-xs"
+                          className="bg-slate-900 border-slate-800 text-white text-xs rounded-lg"
                         />
                       </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-2">
+                      <Label className="text-xs font-bold text-white block">Available for Ordering</Label>
+                      <Switch checked={isAvailable} onCheckedChange={setIsAvailable} />
                     </div>
                   </div>
 
                   {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
                   
-                  <div className="flex gap-2 pt-1">
-                    <Button type="submit" disabled={isSubmitting || uploadingPhoto} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl">
+                  <div className="flex gap-2 pt-2">
+                    <Button type="submit" disabled={isSubmitting || uploadingPhoto} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl py-2">
                       {isSubmitting ? 'Saving...' : (editingId ? 'Save Changes' : '+ Add Dish to Menu')}
                     </Button>
                     {editingId && (
-                      <Button type="button" variant="outline" onClick={cancelEdit} className="border-slate-800 text-slate-300">
+                      <Button type="button" variant="outline" onClick={cancelEdit} className="border-slate-800 text-slate-300 rounded-xl">
                         Cancel
                       </Button>
                     )}
@@ -433,16 +463,68 @@ function MenuPage() {
           </div>
 
           {/* MENU DISHES GRID */}
-          <div className="lg:col-span-2">
-            {items.length === 0 ? (
-              <div className="text-center py-20 bg-slate-900 rounded-2xl border border-dashed border-slate-800 text-slate-500">
+          <div className="lg:col-span-2 space-y-4">
+            
+            {/* SEARCH & FILTER BAR */}
+            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-900/80 p-3 rounded-2xl border border-slate-800">
+              <div className="relative w-full sm:w-72">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Input
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Cari hidangan atau kategori..."
+                  className="bg-slate-950 border-slate-800 text-white text-xs pl-9 rounded-xl w-full"
+                />
+              </div>
+
+              <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
+                <button
+                  type="button"
+                  onClick={() => setMenuFilter('all')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all shrink-0 ${
+                    menuFilter === 'all'
+                      ? 'bg-emerald-600 text-white shadow-md'
+                      : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  Semua ({items.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMenuFilter('active')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all shrink-0 ${
+                    menuFilter === 'active'
+                      ? 'bg-emerald-600 text-white shadow-md'
+                      : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  ON Menu ({activeCount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMenuFilter('archived')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all shrink-0 ${
+                    menuFilter === 'archived'
+                      ? 'bg-amber-600 text-white shadow-md'
+                      : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  OFF Menu ({archivedCount})
+                </button>
+              </div>
+            </div>
+
+            {filteredItems.length === 0 ? (
+              <div className="text-center py-20 bg-slate-900 rounded-2xl border border-dashed border-slate-800 text-slate-500 space-y-2">
                 <UtensilsCrossed className="w-12 h-12 mx-auto text-slate-700 mb-3" />
-                <h3 className="text-lg font-bold text-white">Menu is Empty</h3>
-                <p className="text-xs font-mono text-slate-400">Add your first dish using the form on the left.</p>
+                <h3 className="text-lg font-bold text-white">Tiada Hidangan Dijumpai</h3>
+                <p className="text-xs font-mono text-slate-400">
+                  {searchQuery ? `Tiada padanan untuk "${searchQuery}".` : 'Sila tambah hidangan baharu atau tukar penapis.'}
+                </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {items.map((item) => {
+                {filteredItems.map((item) => {
                   const isLowStock = (item.stock_count ?? null) !== null && (item.low_stock_threshold ?? null) !== null && (item.stock_count ?? 0) <= (item.low_stock_threshold ?? 0);
                   const isOutOfStock = item.stock_count === 0 || !item.is_available;
 
