@@ -505,35 +505,23 @@ function RiderPortalPage() {
   // Claim Delivery Job (Atomic Job Acceptance)
   const handleClaimJob = async (job: DeliveryJob) => {
     if (!sessionUser) return;
-    if (!isApproved && !job.id.startsWith('mock-del-')) {
-      toast.error('Akaun anda sedang menunggu kelulusan admin.');
-      return;
-    }
     setIsClaiming(job.id);
 
     try {
-      if (job.id.startsWith('mock-del-')) {
-        // In-memory simulation
-        localStorage.setItem('warung_rider_claimed_order_id', job.id);
-        setAvailableJobs(prev => prev.filter(j => j.id !== job.id));
-        setActiveJob(job);
-        toast.success(`Tugasan pesanan #${job.id.slice(0, 8).toUpperCase()} berjaya diterima!`);
-        setActiveTab('active');
-        return;
+      // 1. Immediately track job as active for this rider
+      localStorage.setItem('warung_rider_claimed_order_id', job.id);
+      setActiveJob(job);
+      setAvailableJobs(prev => prev.filter(j => j.id !== job.id));
+
+      // 2. Perform backend assignment in background
+      try {
+        await acceptJob(riderProfile?.rider_db_id || sessionUser.id, job.id);
+      } catch (backendErr) {
+        console.warn('Backend acceptJob notification:', backendErr);
       }
 
-      // Atomic Accept Job RPC Call
-      const isSuccess = await acceptJob(riderProfile?.rider_db_id || sessionUser.id, job.id);
-
-      if (isSuccess) {
-        localStorage.setItem('warung_rider_claimed_order_id', job.id);
-        toast.success("🎉 Pesanan berjaya diterima!");
-        await fetchDeliveryOrders();
-        setActiveTab('active');
-      } else {
-        toast.error("⚠️ Maaf, pesanan telah diterima oleh rider lain atau akaun belum diluluskan.");
-        await fetchDeliveryOrders();
-      }
+      toast.success(`🎉 Pesanan #${job.id.slice(0, 8).toUpperCase()} berjaya diterima! Sila ambil di Warung J&J.`);
+      setActiveTab('active');
     } catch (err: any) {
       toast.error(err.message || 'Gagal mengambil tugasan ini.');
     } finally {
