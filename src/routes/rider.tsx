@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeliveryRouteMap, WARUNG_COORDS } from '@/components/DeliveryRouteMap';
+import { acceptJob } from '@/lib/riders';
 
 export const Route = createFileRoute('/rider')({
   component: RiderPortalPage,
@@ -49,67 +50,20 @@ interface DeliveryJob {
   delivery_service?: string | null;
 }
 
-const IS_RIDER_ENABLED = false;
+const IS_RIDER_ENABLED = true;
 
 function RiderPortalPage() {
   const navigate = useNavigate();
-
-  if (!IS_RIDER_ENABLED) {
-    return (
-      <div className="min-h-screen bg-[#1c1917] text-stone-100 flex flex-col items-center justify-center p-4 sm:p-6 text-center">
-        <div className="max-w-md w-full bg-[#292524] border border-stone-800 p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6">
-          <div className="w-20 h-20 bg-emerald-500/10 border-2 border-emerald-500/30 rounded-3xl flex items-center justify-center mx-auto text-emerald-400">
-            <Truck className="w-10 h-10 animate-pulse" />
-          </div>
-
-          <div className="space-y-2">
-            <h1 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-              Portal Rider Ditutup Buat Sementara Waktu
-            </h1>
-            <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
-              Sistem pengambilan job penghantaran & portal rider Warung JNJ sedang menjalani penyelarasan teknikal dan ditutup buat sementara waktu.
-            </p>
-          </div>
-
-          <div className="bg-stone-900/90 border border-stone-800 p-4 rounded-2xl text-xs text-stone-300 space-y-1.5 text-left">
-            <p className="font-bold text-emerald-400 flex items-center gap-1.5">
-              <Shield className="w-4 h-4" /> Makluman Pasukan Rider:
-            </p>
-            <p className="text-stone-400 text-[11px] leading-relaxed">
-              Sila hubungi pihak pengurusan Warung JNJ untuk sebarang urusan tugasan atau pengaktifan semula sistem.
-            </p>
-          </div>
-
-          <div className="space-y-2.5 pt-1">
-            <Button
-              onClick={() => window.open('https://wa.me/60172221784?text=Halo%20Warung%20JNJ,%20saya%20rider%20ingin%20bertanya%20mengenai%20portal%20rider.', '_blank')}
-              className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-2xl shadow-lg flex items-center justify-center gap-2 text-xs sm:text-sm active:scale-95 transition-all"
-            >
-              <MessageCircle className="w-4 h-4" />
-              <span>Hubungi Pengurusan (WhatsApp)</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => navigate({ to: '/' })}
-              className="w-full h-11 border-stone-700 bg-stone-800/80 hover:bg-stone-800 text-stone-300 font-bold rounded-2xl text-xs flex items-center justify-center gap-2"
-            >
-              <ArrowRight className="w-4 h-4 rotate-180" />
-              <span>Kembali ke Laman Utama</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   // Auth & Profile State
   const [sessionUser, setSessionUser] = useState<any>(null);
   const [riderProfile, setRiderProfile] = useState<{
     id: string;
+    rider_db_id?: string;
     name: string;
     phone_number?: string;
     role: string;
+    is_approved: boolean;
   } | null>(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
@@ -125,7 +79,7 @@ function RiderPortalPage() {
   const [isAuthSubmitting, setIsAuthSubmitting] = useState(false);
 
   // Portal States
-  const [isOnline, setIsOnline] = useState(true);
+  const [isOnline, setIsOnline] = useState(false);
   const [availableJobs, setAvailableJobs] = useState<DeliveryJob[]>([]);
   const [activeJob, setActiveJob] = useState<DeliveryJob | null>(null);
   const [completedJobs, setCompletedJobs] = useState<DeliveryJob[]>([]);
@@ -133,6 +87,9 @@ function RiderPortalPage() {
   const [activeTab, setActiveTab] = useState<'jobs' | 'active' | 'wallet'>('jobs');
   const [isClaiming, setIsClaiming] = useState<string | null>(null);
   const [previewRouteJobId, setPreviewRouteJobId] = useState<string | null>(null);
+
+  // Computed approval status
+  const isApproved = Boolean(riderProfile?.is_approved);
 
   // Initialize Session
   useEffect(() => {
@@ -171,36 +128,44 @@ function RiderPortalPage() {
       if (userId === 'rider-test-account-jnj') {
         setRiderProfile({
           id: 'rider-test-account-jnj',
+          rider_db_id: 'rider-test-account-jnj',
           name: 'Rider Test Warung J&J',
           phone_number: '0123456789',
           role: 'rider',
+          is_approved: true,
         });
+        setIsOnline(true);
         setIsLoadingAuth(false);
         return;
       }
 
-      const { data, error } = await supabase
+      // 1. Fetch user profile
+      const { data: userData } = await supabase
         .from('users')
         .select('id, name, phone, role')
         .eq('id', userId)
         .maybeSingle();
 
-      if (!error && data) {
-        setRiderProfile({
-          id: data.id,
-          name: data.name || 'Rider J&J',
-          phone_number: data.phone || '',
-          role: data.role,
-        });
-      } else {
-        // Safe fallback to auth user metadata if database row is not yet provisioned
-        setRiderProfile({
-          id: userId,
-          name: sessionUser?.user_metadata?.name || 'Rider J&J',
-          phone_number: sessionUser?.user_metadata?.phone_number || '',
-          role: sessionUser?.user_metadata?.role || 'rider',
-        });
-      }
+      // 2. Fetch rider table row for is_approved & status
+      const { data: riderRow } = await supabase
+        .from('riders')
+        .select('id, status, is_approved')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      const approved = riderRow ? Boolean(riderRow.is_approved) : false;
+      const initialOnline = approved && riderRow?.status === 'available';
+
+      setRiderProfile({
+        id: userData?.id || userId,
+        rider_db_id: riderRow?.id || userData?.id || userId,
+        name: userData?.name || sessionUser?.user_metadata?.name || 'Rider J&J',
+        phone_number: userData?.phone || sessionUser?.user_metadata?.phone_number || '',
+        role: userData?.role || 'rider',
+        is_approved: approved,
+      });
+
+      setIsOnline(initialOnline);
     } catch (e) {
       console.error('Error fetching rider profile:', e);
     } finally {
@@ -279,6 +244,63 @@ function RiderPortalPage() {
     }
   }, [sessionUser]);
 
+  // Realtime Live GPS Broadcast (Every 3-5 seconds without database writes)
+  useEffect(() => {
+    if (!sessionUser || !isOnline || !activeJob) return;
+
+    const locationChannel = supabase.channel('live-locations');
+    locationChannel.subscribe();
+
+    let watchId: number | null = null;
+    if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+      watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          locationChannel.send({
+            type: 'broadcast',
+            event: 'location-update',
+            payload: {
+              rider_id: riderProfile?.rider_db_id || sessionUser.id,
+              order_id: activeJob.id,
+              lat: latitude,
+              lng: longitude,
+              timestamp: Date.now()
+            }
+          });
+        },
+        (err) => console.warn('GPS Broadcast notice:', err),
+        { enableHighAccuracy: true, timeout: 6000, maximumAge: 4000 }
+      );
+    }
+
+    return () => {
+      if (watchId !== null && typeof navigator !== 'undefined') {
+        navigator.geolocation.clearWatch(watchId);
+      }
+      supabase.removeChannel(locationChannel);
+    };
+  }, [sessionUser, isOnline, activeJob, riderProfile]);
+
+  // Handle Online Toggle (Gated by is_approved)
+  const handleToggleOnline = async (val: boolean) => {
+    if (!isApproved) {
+      toast.error('Akaun anda belum diluluskan oleh admin.');
+      return;
+    }
+    setIsOnline(val);
+    try {
+      if (riderProfile?.rider_db_id && riderProfile.rider_db_id !== 'rider-test-account-jnj') {
+        await supabase
+          .from('riders')
+          .update({ status: val ? 'available' : 'offline', updated_at: new Date().toISOString() } as any)
+          .eq('id', riderProfile.rider_db_id);
+      }
+      toast.success(val ? '🟢 Status: ONLINE (Sedia menerima tugasan)' : '⏸️ Status: REHAT / OFFLINE');
+    } catch (err) {
+      console.warn('Update online status error:', err);
+    }
+  };
+
   // Handle Rider Register
   const handleRegisterRider = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -313,7 +335,15 @@ function RiderPortalPage() {
           store_id: storeRes?.id || '',
         });
 
-        toast.success('Pendaftaran Rakan Penghantar Berjaya! Selamat datang ke Warung J&J.');
+        // Create rider record with is_approved = false (Pending approval)
+        await supabase.from('riders').upsert({
+          user_id: authRes.user.id,
+          store_id: storeRes?.id || '',
+          status: 'offline' as any,
+          is_approved: false
+        } as any);
+
+        toast.success('Pendaftaran Rakan Penghantar Berjaya! Sila tunggu kelulusan admin.');
         setSessionUser(authRes.user);
         await fetchRiderProfile(authRes.user.id);
       }
@@ -349,10 +379,13 @@ function RiderPortalPage() {
         setSessionUser(testUser);
         setRiderProfile({
           id: 'rider-test-account-jnj',
+          rider_db_id: 'rider-test-account-jnj',
           name: 'Rider Test Warung J&J',
           phone_number: '0123456789',
           role: 'rider',
+          is_approved: true,
         });
+        setIsOnline(true);
         toast.success('Selamat bertugas, Rider Test Warung J&J!');
         await fetchDeliveryOrders();
         return;
@@ -395,10 +428,13 @@ function RiderPortalPage() {
       setSessionUser(testUser);
       setRiderProfile({
         id: testUserId,
+        rider_db_id: testUserId,
         name: 'Rider Test Warung J&J',
         phone_number: '0123456789',
         role: 'rider',
+        is_approved: true,
       });
+      setIsOnline(true);
       toast.success('⚡ Log Masuk Rider Ujian Berjaya! Selamat bertugas.');
       await fetchDeliveryOrders();
     } finally {
@@ -439,36 +475,38 @@ function RiderPortalPage() {
     toast.success('🧪 Pesanan penghantaran ujian berjaya dicipta! Sila klik "Terima Tugasan" untuk mencuba.');
   };
 
-  // Claim Delivery Job
+  // Claim Delivery Job (Atomic Job Acceptance)
   const handleClaimJob = async (job: DeliveryJob) => {
     if (!sessionUser) return;
+    if (!isApproved && !job.id.startsWith('mock-del-')) {
+      toast.error('Akaun anda sedang menunggu kelulusan admin.');
+      return;
+    }
     setIsClaiming(job.id);
 
     try {
-      localStorage.setItem('warung_rider_claimed_order_id', job.id);
-
       if (job.id.startsWith('mock-del-')) {
         // In-memory simulation
+        localStorage.setItem('warung_rider_claimed_order_id', job.id);
         setAvailableJobs(prev => prev.filter(j => j.id !== job.id));
         setActiveJob(job);
-        toast.success(`Tugasan pesanan #${job.id.slice(0, 8).toUpperCase()} berjaya diambil!`);
+        toast.success(`Tugasan pesanan #${job.id.slice(0, 8).toUpperCase()} berjaya diterima!`);
         setActiveTab('active');
         return;
       }
 
-      const { error } = await supabase
-        .from('orders')
-        .update({
-          delivery_service: 'jnj',
-          status: 'preparing',
-        })
-        .eq('id', job.id);
+      // Atomic Accept Job RPC Call
+      const isSuccess = await acceptJob(riderProfile?.rider_db_id || sessionUser.id, job.id);
 
-      if (error) throw error;
-
-      toast.success(`Tugasan pesanan berjaya diambil.`);
-      await fetchDeliveryOrders();
-      setActiveTab('active');
+      if (isSuccess) {
+        localStorage.setItem('warung_rider_claimed_order_id', job.id);
+        toast.success("🎉 Pesanan berjaya diterima!");
+        await fetchDeliveryOrders();
+        setActiveTab('active');
+      } else {
+        toast.error("⚠️ Maaf, pesanan telah diterima oleh rider lain atau akaun belum diluluskan.");
+        await fetchDeliveryOrders();
+      }
     } catch (err: any) {
       toast.error(err.message || 'Gagal mengambil tugasan ini.');
     } finally {
@@ -708,15 +746,16 @@ function RiderPortalPage() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            {/* ONLINE / OFFLINE TOGGLE */}
+            {/* ONLINE / OFFLINE TOGGLE (GATED BY is_approved) */}
             <div className="flex items-center gap-1.5 bg-[#141211] border border-[#2e2a27] px-2.5 py-1 rounded-xl">
-              <span className={`text-[10px] font-bold ${isOnline ? 'text-emerald-400' : 'text-stone-500'}`}>
-                {isOnline ? 'ONLINE' : 'REHAT'}
+              <span className={`text-[10px] font-bold ${!isApproved ? 'text-amber-500' : isOnline ? 'text-emerald-400' : 'text-stone-500'}`}>
+                {!isApproved ? 'PENDING' : isOnline ? 'ONLINE' : 'REHAT'}
               </span>
               <Switch
                 checked={isOnline}
-                onCheckedChange={setIsOnline}
-                className="data-[state=checked]:bg-emerald-600 scale-75"
+                disabled={!isApproved}
+                onCheckedChange={handleToggleOnline}
+                className="data-[state=checked]:bg-emerald-600 scale-75 disabled:opacity-40"
               />
             </div>
 
@@ -735,12 +774,25 @@ function RiderPortalPage() {
 
       <main className="max-w-md mx-auto px-4 py-4 space-y-4">
         
+        {/* PENDING APPROVAL ALERT BANNER */}
+        {!isApproved && (
+          <div className="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-2xl flex items-start gap-2.5 text-xs text-amber-200 shadow-md">
+            <Shield className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-amber-300">Akaun Menunggu Kelulusan Admin</p>
+              <p className="text-[11px] text-amber-400/80 mt-0.5 leading-relaxed">
+                Akaun rider anda belum diluluskan oleh pengurusan Warung J&J. Suis mod <strong>ONLINE</strong> akan dibuka secara automatik selepas kelulusan diberikan.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* STATUS CARD */}
         <div className="bg-[#1c1a18] border border-[#2e2a27] p-3.5 rounded-2xl flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
-            <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-stone-500'}`} />
+            <div className={`w-2.5 h-2.5 rounded-full ${!isApproved ? 'bg-amber-500' : isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-stone-500'}`} />
             <span className="text-stone-300 font-medium">
-              {isOnline ? 'Sedia menerima tugasan penghantaran' : 'Status: Sedang Berehat'}
+              {!isApproved ? 'Akaun Menunggu Kelulusan Admin' : isOnline ? 'Sedia menerima tugasan penghantaran' : 'Status: Sedang Berehat'}
             </span>
           </div>
           <Button

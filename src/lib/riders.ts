@@ -7,6 +7,51 @@ export interface ClaimJobResult {
   error?: string;
 }
 
+/**
+ * 1. ISU 3: Atomic Job Acceptance via accept_job RPC
+ */
+export async function acceptJob(riderId: string, orderId: string): Promise<boolean> {
+  try {
+    const { data: isSuccess, error } = await (supabase.rpc as any)('accept_job', {
+      p_rider_id: riderId,
+      p_order_id: orderId,
+    });
+
+    if (error) {
+      console.warn('accept_job RPC notice:', error);
+      // Fallback to claimDeliveryJob if accept_job is not defined
+      const fallback = await claimDeliveryJob(orderId, riderId);
+      return fallback.success;
+    }
+
+    return Boolean(isSuccess);
+  } catch (err) {
+    console.error('Failed to accept job atomically:', err);
+    return false;
+  }
+}
+
+/**
+ * 2. ISU 2: Auto-Dispatch Nearest Available Driver via get_nearest_available_rider RPC
+ */
+export async function getNearestAvailableRider(lat: number, lng: number): Promise<any | null> {
+  try {
+    const { data: nearestRiders, error } = await (supabase.rpc as any)('get_nearest_available_rider', {
+      p_lat: lat,
+      p_lng: lng,
+    });
+
+    if (error || !nearestRiders || nearestRiders.length === 0) {
+      return null;
+    }
+
+    return nearestRiders[0];
+  } catch (err) {
+    console.error('Failed to fetch nearest available rider:', err);
+    return null;
+  }
+}
+
 export interface RefundResult {
   success: boolean;
   refundAmount?: number;
