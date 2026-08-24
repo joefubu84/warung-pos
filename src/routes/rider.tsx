@@ -231,7 +231,11 @@ function RiderPortalPage() {
             completed.push(ord);
           } else if (isVerifiedPaid && !isUnverifiedPayment) {
             if (isClaimedByMe) {
-              active = ord;
+              const savedMilestone = localStorage.getItem('warung_rider_milestone_' + ord.id);
+              active = {
+                ...ord,
+                delivery_status: (savedMilestone as any) || 'dispatched'
+              };
             } else {
               // Verified paid orders are available for riders to pick up
               available.push(ord);
@@ -569,29 +573,33 @@ function RiderPortalPage() {
 
     try {
       if (newStatus === 'completed') {
+        localStorage.removeItem('warung_rider_milestone_' + activeJob.id);
         await handleCompleteJob(activeJob.id);
         sendRiderDeliveryWhatsAppNotification('completed', activeJob.customer_phone || '', activeJob.id);
         return;
       }
 
-      if (activeJob.id.startsWith('mock-del-')) {
-        setActiveJob(prev => prev ? { ...prev, delivery_status: newStatus } : null);
-        toast.success(newStatus === 'picked_up' ? '🍱 Pesanan telah diambil dari warung!' : '🛵 Anda telah tiba di lokasi pelanggan!');
-        sendRiderDeliveryWhatsAppNotification(newStatus, activeJob.customer_phone || '', activeJob.id);
-        return;
+      // Save milestone locally in state & browser storage
+      localStorage.setItem('warung_rider_milestone_' + activeJob.id, newStatus);
+      setActiveJob(prev => prev ? { ...prev, delivery_status: newStatus } : null);
+
+      if (!activeJob.id.startsWith('mock-del-')) {
+        // Safe backend sync using valid orders table schema
+        try {
+          if (newStatus === 'picked_up') {
+            await supabase
+              .from('orders')
+              .update({
+                status: 'ready',
+                ready_at: new Date().toISOString()
+              } as any)
+              .eq('id', activeJob.id);
+          }
+        } catch (dbErr) {
+          console.warn('Milestone database sync note:', dbErr);
+        }
       }
 
-      const { error } = await supabase
-        .from('orders')
-        .update({
-          delivery_status: newStatus,
-          updated_at: new Date().toISOString()
-        } as any)
-        .eq('id', activeJob.id);
-
-      if (error) throw error;
-
-      setActiveJob(prev => prev ? { ...prev, delivery_status: newStatus } : null);
       toast.success(newStatus === 'picked_up' ? '🍱 Pesanan telah diambil dari warung!' : '🛵 Anda telah tiba di lokasi pelanggan!');
       sendRiderDeliveryWhatsAppNotification(newStatus, activeJob.customer_phone || '', activeJob.id);
     } catch (err: any) {
