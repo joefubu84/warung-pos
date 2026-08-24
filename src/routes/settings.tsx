@@ -1505,20 +1505,66 @@ function AdminRiderManagementCard() {
   // 1-Click Approval Toggle for Rider Fleet
   const toggleRiderApproval = async (userId: string, currentApproved: boolean) => {
     try {
-      const { error } = await supabase
-        .from('riders')
-        .upsert({
-          user_id: userId,
-          store_id: storeData?.id || '',
-          is_approved: !currentApproved,
-          status: !currentApproved ? 'offline' : 'offline',
-          updated_at: new Date().toISOString()
-        } as any, { onConflict: 'user_id' });
+      const nextApproved = !currentApproved;
 
-      if (error) throw error;
-      toast.success(!currentApproved ? '✅ Rider berjaya diluluskan (APPROVED)!' : '⏸️ Kelulusan rider dinyahaktif (REVOKED).');
+      // 1. Update or Insert in 'riders' table
+      const { data: existingRows } = await supabase
+        .from('riders')
+        .select('id, user_id')
+        .or(`user_id.eq.${userId},id.eq.${userId}`);
+
+      if (existingRows && existingRows.length > 0) {
+        for (const row of existingRows) {
+          const { error } = await supabase
+            .from('riders')
+            .update({
+              is_approved: nextApproved,
+              status: 'offline',
+              updated_at: new Date().toISOString()
+            } as any)
+            .eq('id', row.id);
+          if (error) throw error;
+        }
+      } else {
+        const { error } = await supabase
+          .from('riders')
+          .insert({
+            user_id: userId,
+            store_id: storeData?.id || '',
+            is_approved: nextApproved,
+            status: 'offline',
+            updated_at: new Date().toISOString()
+          } as any);
+
+        if (error) throw error;
+      }
+
+      // 2. Synchronize with storeData.settings.verified_riders
+      if (storeData?.id) {
+        const existingSettings = (storeData.settings as any) || {};
+        const currentKyc: RiderKYCRecord[] = existingSettings.verified_riders || [];
+        const updatedKyc = currentKyc.map(r => {
+          if (r.userId === userId || r.id === userId) {
+            return { ...r, isVerified: nextApproved };
+          }
+          return r;
+        });
+
+        await supabase
+          .from('stores')
+          .update({
+            settings: {
+              ...existingSettings,
+              verified_riders: updatedKyc,
+            } as any,
+          })
+          .eq('id', storeData.id);
+      }
+
+      toast.success(nextApproved ? '✅ Rider berjaya diluluskan (APPROVED)!' : '⏸️ Kelulusan rider dinyahaktif (REVOKED).');
       refetchRidersTable();
       refetchUsers();
+      refetchStore();
     } catch (err: any) {
       toast.error('Gagal mengemas kini kelulusan rider: ' + err.message);
     }
