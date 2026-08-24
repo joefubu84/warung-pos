@@ -682,35 +682,6 @@ function RiderPortalPage() {
             </div>
           </div>
 
-          {/* 1-CLICK INSTANT TEST RIDER LOGIN CARD */}
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bike className="w-4 h-4 text-amber-400" />
-                <span className="text-xs font-bold text-amber-300">Akaun Ujian Rider Warung</span>
-              </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full font-bold">
-                KYC Sah
-              </span>
-            </div>
-
-            <div className="text-[11px] text-stone-300 font-mono space-y-1 bg-[#141211] p-2.5 rounded-xl border border-stone-800">
-              <p>👤 <strong>Nama:</strong> Rider Test Warung J&J</p>
-              <p>📧 <strong>Emel:</strong> rider.test@warungjnj.online</p>
-              <p>🛵 <strong>Motor:</strong> Honda Wave (SAB 8888 J)</p>
-              <p>💳 <strong>Bank:</strong> Maybank (164012345678)</p>
-            </div>
-
-            <Button
-              type="button"
-              onClick={handleTestRiderLogin}
-              disabled={isAuthSubmitting}
-              className="w-full h-10 bg-amber-600 hover:bg-amber-500 text-white font-black text-xs rounded-xl shadow-lg shadow-amber-600/30 flex items-center justify-center gap-2 active:scale-95 transition-all"
-            >
-              {isAuthSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : '⚡ Log Masuk Rider Ujian (1-Klik)'}
-            </Button>
-          </div>
-
           {/* MANUAL LOGIN FORM */}
           <form onSubmit={handleLoginRider} className="space-y-4">
             <div className="space-y-1.5">
@@ -719,7 +690,7 @@ function RiderPortalPage() {
                 <Mail className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <Input
                   type="email"
-                  placeholder="rider.test@warungjnj.online"
+                  placeholder="rider@warungjnj.online"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
                   className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
