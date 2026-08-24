@@ -47,7 +47,8 @@ import {
   UploadCloud,
   FileText,
   Bike,
-  Store
+  Store,
+  Eye
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createToyyibPayCheckout } from '@/lib/toyyibpay';
