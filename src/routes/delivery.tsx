@@ -67,6 +67,7 @@ import {
   verifyWhatsAppOtp, 
   sanitizePhone 
 } from '@/lib/whatsapp-otp';
+import { getAddonsConfig, CustomAddon } from '@/lib/addons-config';
 
 export const Route = createFileRoute('/delivery')({
   component: CustomerDeliveryPage,
@@ -445,6 +446,32 @@ function CustomerDeliveryPage() {
   const [showSuggestionsDropdown, setShowSuggestionsDropdown] = useState(false);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
   
+  const [availableAddons, setAvailableAddons] = useState<CustomAddon[]>([]);
+
+  useEffect(() => {
+    setAvailableAddons(getAddonsConfig());
+    const handleAddonsUpdate = () => setAvailableAddons(getAddonsConfig());
+    window.addEventListener('warung_addons_updated', handleAddonsUpdate);
+    return () => window.removeEventListener('warung_addons_updated', handleAddonsUpdate);
+  }, []);
+
+  const handleAddonDirectToCart = (addon: CustomAddon) => {
+    const newItem: CartItem = {
+      id: `addon_${addon.id}_${Date.now()}`,
+      menuItemId: addon.id,
+      name: addon.name,
+      price: addon.price,
+      quantity: 1,
+      containerCharge: 0.50,
+      notes: 'Add-on / Sampingan',
+      packNotes: [''],
+      selectedAddons: [],
+      spiceLevel: 'Medium'
+    };
+    setCart(prev => [...prev, newItem]);
+    toast.success(`🍱 Ditambah 1x ${addon.name} (+RM ${addon.price.toFixed(2)}) ke pesanan!`);
+  };
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [showDuitNowModal, setShowDuitNowModal] = useState(false);
@@ -1911,6 +1938,40 @@ function CustomerDeliveryPage() {
                 </div>
               </div>
 
+              {/* RECOMMENDED ADD-ONS UPSELL SECTION BEFORE CHECKOUT */}
+              {availableAddons.filter(a => a.available).length > 0 && (
+                <div className="p-4 rounded-2xl bg-stone-900/90 border border-stone-800 space-y-2.5 shadow-inner">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-xs sm:text-sm text-amber-400 flex items-center gap-1.5 font-heading">
+                      <Sparkles className="w-4 h-4 text-amber-400" /> Cadangan Lauk & Sampingan Tambahan (Add-ons)
+                    </h3>
+                    <span className="text-[10px] text-stone-500 font-mono">1-Klik Tambah</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {availableAddons.filter(a => a.available).map(addon => (
+                      <button
+                        key={addon.id}
+                        type="button"
+                        onClick={() => handleAddonDirectToCart(addon)}
+                        className="p-2.5 rounded-xl bg-stone-950/80 border border-stone-800 hover:border-amber-500/50 flex items-center justify-between gap-2 text-left text-xs transition-all active:scale-95 group shadow-sm"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <span className="font-bold text-stone-200 block text-xs truncate group-hover:text-amber-300">
+                            {addon.name}
+                          </span>
+                          <span className="text-[11px] text-emerald-400 font-mono font-bold">
+                            +RM {addon.price.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="w-6 h-6 rounded-lg bg-orange-600/20 text-orange-400 border border-orange-500/30 flex items-center justify-center shrink-0 group-hover:bg-orange-600 group-hover:text-white transition-colors text-xs font-black">
+                          +
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* PRICE SUMMARY CARD */}
               <div className="bg-stone-900/90 border border-stone-800 p-4 sm:p-5 rounded-2xl space-y-2.5 text-xs shadow-inner">
                 <div className="flex justify-between text-stone-400 text-xs sm:text-sm">
@@ -2122,6 +2183,40 @@ function CustomerDeliveryPage() {
                   );
                 })}
               </div>
+
+              {/* RECOMMENDED ADD-ONS UPSELL IN CART DRAWER */}
+              {availableAddons.filter(a => a.available).length > 0 && (
+                <div className="pt-3 pb-1 border-t border-stone-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5 font-heading">
+                      <Sparkles className="w-3.5 h-3.5" /> Cadangan Lauk & Sampingan Tambahan
+                    </span>
+                    <span className="text-[10px] text-stone-500 font-mono">1-Klik Tambah</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    {availableAddons.filter(a => a.available).map(addon => (
+                      <button
+                        key={addon.id}
+                        type="button"
+                        onClick={() => handleAddonDirectToCart(addon)}
+                        className="p-2 rounded-xl bg-stone-950 border border-stone-800 hover:border-amber-500/50 flex items-center justify-between gap-1 text-left text-xs transition-all active:scale-95 group shadow-sm"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <span className="font-bold text-stone-200 block text-[11px] truncate group-hover:text-amber-300">
+                            {addon.name}
+                          </span>
+                          <span className="text-[10px] text-emerald-400 font-mono font-bold">
+                            +RM {addon.price.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="w-6 h-6 rounded-lg bg-orange-600/20 text-orange-400 border border-orange-500/30 flex items-center justify-center shrink-0 group-hover:bg-orange-600 group-hover:text-white transition-colors text-xs font-black">
+                          +
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div className="pt-3 border-t border-stone-800 space-y-2.5 text-xs">
                 <div className="flex justify-between text-stone-400">

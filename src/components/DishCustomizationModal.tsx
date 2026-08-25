@@ -288,46 +288,11 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
             )}
           </div>
 
-          {/* 2. OPTIONAL ADD-ONS CHECKBOXES */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center justify-between">
-              <span>2. Tambahan Pilihan (Optional)</span>
-              <span className="text-[10px] text-slate-500 font-normal">Boleh Pilih Banyak</span>
-            </label>
-            <div className="space-y-1.5 font-mono">
-              {availableAddons.filter(a => a.available).map(addon => {
-                const isChecked = selectedAddonIds.includes(addon.id);
-                return (
-                  <button
-                    key={addon.id}
-                    type="button"
-                    onClick={() => toggleAddon(addon.id)}
-                    className={`w-full p-2.5 rounded-xl border text-xs flex items-center justify-between transition-all ${
-                      isChecked
-                        ? 'bg-slate-800 border-emerald-500/50 text-white'
-                        : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className={`w-4 h-4 rounded flex items-center justify-center border transition-colors ${
-                        isChecked ? 'bg-emerald-500 border-emerald-400 text-slate-950' : 'border-slate-700 bg-slate-900'
-                      }`}>
-                        {isChecked && <Check className="w-3 h-3 stroke-[3]" />}
-                      </div>
-                      <span>{addon.name}</span>
-                    </div>
-                    <span className="text-emerald-400 font-bold">+RM {addon.price.toFixed(2)}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 3. QUANTITY SELECTOR */}
+          {/* 2. QUANTITY SELECTOR */}
           <div className="p-3 bg-slate-950 rounded-2xl border border-slate-800 flex justify-between items-center font-mono">
             <div>
               <span className="text-xs text-slate-300 font-bold uppercase block">
-                3. Bilangan {isDeliveryMode || fulfillmentType !== 'dine_in' ? 'Bungkusan / Pek' : 'Pinggan'} (Kuantiti)
+                2. Bilangan {isDeliveryMode || fulfillmentType !== 'dine_in' ? 'Bungkusan / Pek' : 'Pinggan'} (Kuantiti)
               </span>
               <span className="text-[10px] text-slate-500">Pilih berapa kuantiti untuk hidangan ini</span>
             </div>
@@ -351,6 +316,31 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
               >
                 <Plus className="w-4 h-4" />
               </Button>
+            </div>
+          </div>
+
+          {/* 3. SPICE LEVEL SELECTOR */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center justify-between">
+              <span>3. Tahap Kepedasan</span>
+              <span className="text-[10px] text-amber-400 font-normal">Pilihan Rasa</span>
+            </label>
+            <div className="grid grid-cols-3 gap-2 font-mono">
+              {SPICE_LEVELS.map(lvl => (
+                <button
+                  key={lvl.id}
+                  type="button"
+                  onClick={() => setSpiceLevel(lvl.id as any)}
+                  className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                    spiceLevel === lvl.id
+                      ? 'bg-amber-500/20 border-amber-400 text-amber-300 ring-1 ring-amber-400 shadow-md'
+                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <span>{lvl.icon}</span>
+                  <span>{lvl.id}</span>
+                </button>
+              ))}
             </div>
           </div>
 

@@ -53,6 +53,7 @@ import {
 import { CustomerOrderTracker } from '@/components/CustomerOrderTracker';
 import { toast } from 'sonner';
 import { COMMON_MODIFIERS } from '@/lib/kitchen-checklist-config';
+import { getAddonsConfig, CustomAddon } from '@/lib/addons-config';
 
 export const Route = createFileRoute('/t/$token')({
   component: TableQRPage,
@@ -122,6 +123,32 @@ export function TableQRPage() {
   const [activePlacedOrderId, setActivePlacedOrderId] = useState<string | null>(null);
   const [mergedNotification, setMergedNotification] = useState<string | null>(null);
   const [globalFulfillmentType, setGlobalFulfillmentType] = useState<'dine_in' | 'takeaway'>('dine_in');
+
+  const [availableAddons, setAvailableAddons] = useState<CustomAddon[]>([]);
+
+  useEffect(() => {
+    setAvailableAddons(getAddonsConfig());
+    const handleAddonsUpdate = () => setAvailableAddons(getAddonsConfig());
+    window.addEventListener('warung_addons_updated', handleAddonsUpdate);
+    return () => window.removeEventListener('warung_addons_updated', handleAddonsUpdate);
+  }, []);
+
+  const handleAddonDirectToCart = (addon: CustomAddon) => {
+    const newItem: CartItem = {
+      id: `addon_${addon.id}_${Date.now()}`,
+      menuItemId: addon.id,
+      name: addon.name,
+      price: addon.price,
+      quantity: 1,
+      fulfillmentType: globalFulfillmentType,
+      notes: 'Add-on / Sampingan',
+      packNotes: [''],
+      spiceLevel: 'Medium',
+      selectedAddons: []
+    };
+    setCart(prev => [...prev, newItem]);
+    toast.success(`🍱 Ditambah 1x ${addon.name} (+RM ${addon.price.toFixed(2)}) ke pesanan meja!`);
+  };
 
   const toggleCartFulfillment = (itemId: string) => {
     setCart(prev => prev.map(item => {
@@ -975,6 +1002,40 @@ export function TableQRPage() {
                       );
                     })}
                   </div>
+
+                  {/* RECOMMENDED ADD-ONS UPSELL IN TABLE CART */}
+                  {availableAddons.filter(a => a.available).length > 0 && (
+                    <div className="pt-3 pb-1 border-t border-slate-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5 font-heading">
+                          <Sparkles className="w-3.5 h-3.5" /> Cadangan Lauk & Sampingan Ekstra
+                        </span>
+                        <span className="text-[10px] text-slate-500 font-mono">1-Klik Tambah</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {availableAddons.filter(a => a.available).map(addon => (
+                          <button
+                            key={addon.id}
+                            type="button"
+                            onClick={() => handleAddonDirectToCart(addon)}
+                            className="p-2 rounded-xl bg-slate-950 border border-slate-800 hover:border-amber-500/50 flex items-center justify-between gap-1 text-left text-xs transition-all active:scale-95 group shadow-sm"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <span className="font-bold text-slate-200 block text-[11px] truncate group-hover:text-amber-300">
+                                {addon.name}
+                              </span>
+                              <span className="text-[10px] text-emerald-400 font-mono font-bold">
+                                +RM {addon.price.toFixed(2)}
+                              </span>
+                            </div>
+                            <div className="w-6 h-6 rounded-lg bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0 group-hover:bg-emerald-600 group-hover:text-white transition-colors text-xs font-black">
+                              +
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   <div className="pt-3 border-t border-slate-800 space-y-2 text-xs">
                     <div className="flex justify-between text-slate-400">
