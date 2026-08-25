@@ -27,6 +27,7 @@ import {
   Sparkles, 
   Pencil, 
   Image as ImageIcon, 
+  Camera,
   Loader2, 
   Check 
 } from 'lucide-react';
@@ -302,27 +303,59 @@ export function DishAddonsCustomizer() {
               <Plus className="w-4 h-4" /> Tambah Add-on / Sampingan Baharu
             </span>
 
-            {/* PHOTO PREVIEW & UPLOAD */}
-            <div className="flex items-center gap-3 p-2 bg-slate-900/60 rounded-xl border border-slate-800">
-              <div className="w-14 h-14 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+            {/* PHOTO PREVIEW & UPLOAD (DIRECT CAMERA OR GALLERY) */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-slate-900/70 rounded-xl border border-slate-800">
+              <div className="w-16 h-16 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
                 {newImageUrl ? (
                   <img src={newImageUrl} alt="Addon Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <ImageIcon className="w-6 h-6 text-slate-700" />
+                  <ImageIcon className="w-7 h-7 text-slate-700" />
                 )}
               </div>
-              <div className="flex-1 space-y-1">
-                <label className="cursor-pointer inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-2.5 py-1 rounded-lg text-xs font-bold transition-all">
-                  {uploadingNewPhoto ? <Loader2 className="w-3 h-3 animate-spin" /> : <ImageIcon className="w-3 h-3" />}
-                  <span>{uploadingNewPhoto ? 'Memuat naik...' : (newImageUrl ? 'Tukar Foto' : '+ Muat Naik Foto')}</span>
-                  <input type="file" accept="image/*" onChange={handleUploadNewPhoto} disabled={uploadingNewPhoto} className="hidden" />
-                </label>
-                {newImageUrl && (
-                  <button type="button" onClick={() => setNewImageUrl('')} className="block text-[10px] text-rose-400 hover:underline">
-                    Buang foto
-                  </button>
-                )}
-                <p className="text-[10px] text-slate-500">Foto akan dipaparkan pada kad menu pelanggan di /delivery & QR.</p>
+
+              <div className="flex-1 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* DIRECT CAMERA SNAP BUTTON */}
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 active:scale-95 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md">
+                    {uploadingNewPhoto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                    <span>{uploadingNewPhoto ? 'Memproses...' : '📸 Ambil Gambar Terus (Kamera)'}</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      capture="environment" 
+                      onChange={handleUploadNewPhoto} 
+                      disabled={uploadingNewPhoto} 
+                      className="hidden" 
+                    />
+                  </label>
+
+                  {/* GALLERY / FILE PICKER BUTTON */}
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all">
+                    <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Pilih dari Galeri / Fail</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleUploadNewPhoto} 
+                      disabled={uploadingNewPhoto} 
+                      className="hidden" 
+                    />
+                  </label>
+
+                  {newImageUrl && (
+                    <button 
+                      type="button" 
+                      onClick={() => setNewImageUrl('')} 
+                      className="text-xs text-rose-400 hover:underline px-2 py-1"
+                    >
+                      Buang foto
+                    </button>
+                  )}
+                </div>
+
+                <p className="text-[10px] text-slate-400 font-mono">
+                  💡 Ambil gambar guna kamera telefon secara terus atau pilih gambar makanan yang sedia ada dari galeri.
+                </p>
               </div>
             </div>
 
@@ -489,26 +522,59 @@ export function DishAddonsCustomizer() {
           </DialogHeader>
 
           <form onSubmit={handleSaveEdit} className="space-y-4 pt-2">
-            {/* PHOTO UPLOAD IN MODAL */}
-            <div className="flex items-center gap-3 p-3 bg-slate-950 rounded-xl border border-slate-800">
+            {/* PHOTO UPLOAD IN MODAL (DIRECT CAMERA OR GALLERY) */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-slate-950 rounded-xl border border-slate-800">
               <div className="w-16 h-16 bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
                 {editImageUrl ? (
                   <img src={editImageUrl} alt="Addon Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <ImageIcon className="w-6 h-6 text-slate-700" />
+                  <ImageIcon className="w-7 h-7 text-slate-700" />
                 )}
               </div>
-              <div className="flex-1 space-y-1.5">
-                <label className="cursor-pointer inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all">
-                  {uploadingEditPhoto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ImageIcon className="w-3.5 h-3.5" />}
-                  <span>{uploadingEditPhoto ? 'Memuat naik...' : (editImageUrl ? 'Tukar Foto' : '+ Muat Naik Foto')}</span>
-                  <input type="file" accept="image/*" onChange={handleUploadEditPhoto} disabled={uploadingEditPhoto} className="hidden" />
-                </label>
-                {editImageUrl && (
-                  <button type="button" onClick={() => setEditImageUrl('')} className="block text-[10px] text-rose-400 hover:underline">
-                    Buang foto
-                  </button>
-                )}
+
+              <div className="flex-1 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* DIRECT CAMERA SNAP BUTTON */}
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 active:scale-95 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md">
+                    {uploadingEditPhoto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                    <span>{uploadingEditPhoto ? 'Memproses...' : '📸 Kamera Terus'}</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      capture="environment" 
+                      onChange={handleUploadEditPhoto} 
+                      disabled={uploadingEditPhoto} 
+                      className="hidden" 
+                    />
+                  </label>
+
+                  {/* GALLERY / FILE PICKER BUTTON */}
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all">
+                    <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Galeri / Fail</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleUploadEditPhoto} 
+                      disabled={uploadingEditPhoto} 
+                      className="hidden" 
+                    />
+                  </label>
+
+                  {editImageUrl && (
+                    <button 
+                      type="button" 
+                      onClick={() => setEditImageUrl('')} 
+                      className="text-xs text-rose-400 hover:underline px-2 py-1"
+                    >
+                      Buang foto
+                    </button>
+                  )}
+                </div>
+
+                <p className="text-[10px] text-slate-400 font-mono">
+                  💡 Ambil foto makanan terus menggunakan kamera peranti atau muat naik dari storan fail.
+                </p>
               </div>
             </div>
 
