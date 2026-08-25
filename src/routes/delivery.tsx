@@ -2240,124 +2240,105 @@ function CustomerDeliveryPage() {
           </DialogContent>
         </Dialog>
 
-        {/* 3-IN-1 MALAYSIAN PAYMENT MODAL */}
+        {/* EXCLUSIVE DUITNOW QR PAYMENT MODAL */}
         <Dialog open={showDuitNowModal} onOpenChange={setShowDuitNowModal}>
           <DialogContent className="sm:max-w-[420px] bg-[#292524] text-stone-100 border-stone-800 p-5 rounded-3xl max-h-[92vh] overflow-y-auto shadow-2xl">
             <DialogHeader className="text-center sm:text-center pb-1">
               <DialogTitle className="text-xl font-bold flex items-center justify-center gap-2 text-white font-heading">
-                <CreditCard className="w-5 h-5 text-orange-500" /> Kaedah Pembayaran
+                <QrCode className="w-5 h-5 text-orange-500" /> Bayaran DuitNow QR
               </DialogTitle>
+              <DialogDescription className="text-xs text-stone-400">
+                Imbas kod QR di bawah dengan mana-mana aplikasi Bank / e-Wallet (Touch 'n Go, MAE, CIMB, dsb.)
+              </DialogDescription>
             </DialogHeader>
 
-            <Tabs defaultValue="duitnow" className="w-full">
-              {/* PAYMENT TABS SELECTOR */}
-              <TabsList className="grid grid-cols-2 bg-stone-900 p-1 rounded-2xl border border-stone-800 h-11 w-full mb-4">
-                <TabsTrigger value="duitnow" className="text-xs font-bold rounded-xl data-[state=active]:bg-orange-600 data-[state=active]:text-white transition-all font-heading">
-                  <QrCode className="w-3.5 h-3.5 mr-1.5" /> DuitNow QR
-                </TabsTrigger>
-                <TabsTrigger value="fpx" className="text-xs font-bold rounded-xl data-[state=active]:bg-orange-600 data-[state=active]:text-white transition-all font-heading">
-                  <Globe className="w-3.5 h-3.5 mr-1.5" /> FPX Online
-                </TabsTrigger>
-              </TabsList>
+            <div className="space-y-4 mt-2">
+              <div className="bg-stone-900/90 border border-stone-800 p-4 rounded-2xl flex flex-col items-center text-center space-y-3 shadow-inner">
+                <div className="flex items-center justify-between w-full border-b border-stone-800 pb-2">
+                  <span className="text-xs text-stone-400 font-medium">Jumlah Perlu Dibayar:</span>
+                  <span className="text-lg font-black text-emerald-400 font-mono">RM {grandTotal.toFixed(2)}</span>
+                </div>
 
-              {/* TAB 1: DUITNOW QR PAYMENT */}
-              <TabsContent value="duitnow" className="space-y-4 mt-0 focus-visible:outline-none">
-                <div className="bg-stone-900/90 border border-stone-800 p-4 rounded-2xl flex flex-col items-center text-center space-y-3 shadow-inner">
-                  <div className="flex items-center justify-between w-full border-b border-stone-800 pb-2">
-                    <span className="text-xs text-stone-400 font-medium">Jumlah Perlu Dibayar:</span>
-                    <span className="text-lg font-black text-emerald-400 font-mono">RM {grandTotal.toFixed(2)}</span>
+                <div className="p-3 bg-white rounded-2xl shadow-xl border-4 border-orange-500/30">
+                  <img 
+                    src="/duitnow-qr.png" 
+                    alt="Warung JNJ DuitNow QR" 
+                    className="w-48 h-48 object-contain rounded-lg"
+                    onError={(e) => {
+                      e.currentTarget.src = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=DuitNow-Warung-JNJ";
+                    }}
+                  />
+                </div>
+
+                <div className="w-full space-y-1.5 bg-stone-950/80 p-3 rounded-xl border border-stone-800 text-left text-xs">
+                  <div className="flex justify-between items-center text-stone-400">
+                    <span>Nama Penerima:</span>
+                    <span className="font-bold text-white">WARUNG JNJ</span>
                   </div>
-
-                  <div className="p-3 bg-white rounded-2xl shadow-xl border-4 border-orange-500/30">
-                    <img 
-                      src="/duitnow-qr.png" 
-                      alt="Warung JNJ DuitNow QR" 
-                      className="w-48 h-48 object-contain rounded-lg"
-                      onError={(e) => {
-                        e.currentTarget.src = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=DuitNow-Warung-JNJ";
-                      }}
-                    />
-                  </div>
-
-                  <div className="w-full space-y-1.5 bg-stone-950/80 p-3 rounded-xl border border-stone-800 text-left text-xs">
-                    <div className="flex justify-between items-center text-stone-400">
-                      <span>Nama Penerima:</span>
-                      <span className="font-bold text-white">WARUNG JNJ</span>
-                    </div>
-                    <div className="flex justify-between items-center text-stone-400">
-                      <span>Bank Penerima:</span>
-                      <span className="font-bold text-white">Maybank / CIMB / Touch n Go</span>
-                    </div>
+                  <div className="flex justify-between items-center text-stone-400">
+                    <span>Bank Penerima:</span>
+                    <span className="font-bold text-white">Maybank / CIMB / Touch n Go / Alliance</span>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
-                    <UploadCloud className="w-4 h-4 text-orange-400" /> Muat Naik Resit Bukti Bayaran (Wajib)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="file"
-                      accept="image/*,application/pdf"
-                      onChange={handleReceiptUpload}
-                      disabled={isUploadingReceipt}
-                      className="w-full text-xs text-stone-300 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-orange-600 file:text-white hover:file:bg-orange-500 file:cursor-pointer cursor-pointer bg-stone-900 border border-stone-800 rounded-2xl p-2"
-                    />
-                    {isUploadingReceipt && (
-                      <div className="absolute inset-0 bg-stone-900/80 rounded-2xl flex items-center justify-center gap-2 text-xs text-orange-400">
-                        <Loader2 className="w-4 h-4 animate-spin" /> Memuat naik resit...
-                      </div>
-                    )}
-                  </div>
-                  {receiptProofUrl && (
-                    <p className="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Resit berjaya dimuat naik!
-                    </p>
-                  )}
-                </div>
-              </TabsContent>
-
-              {/* TAB 2: FPX ONLINE BANKING */}
-              <TabsContent value="fpx" className="space-y-4 mt-0 focus-visible:outline-none">
-                <div className="bg-stone-900/90 border border-stone-800 p-4 rounded-2xl text-center space-y-3 shadow-inner">
-                  <div className="w-12 h-12 rounded-2xl bg-orange-500/20 text-orange-400 flex items-center justify-center mx-auto border border-orange-500/30">
-                    <Globe className="w-6 h-6" />
-                  </div>
-                  <div className="space-y-1">
-                    <h4 className="font-bold text-sm text-white">ToyyibPay FPX Online Banking</h4>
-                    <p className="text-xs text-stone-400">
-                      Bayar terus secara online melalui Maybank2u, CIMB Clicks, Bank Islam, RHB, dsb.
-                    </p>
-                  </div>
-                  <div className="p-3 bg-stone-950 rounded-xl border border-stone-800 flex justify-between items-center text-xs">
-                    <span className="text-stone-400">Jumlah Bayaran:</span>
-                    <span className="font-bold text-emerald-400 font-mono text-base">RM {grandTotal.toFixed(2)}</span>
-                  </div>
-
+                <div className="flex items-center gap-2 w-full pt-1">
                   <Button
                     type="button"
-                    onClick={handleToyyibPayCheckout}
-                    disabled={isFPXLoading}
-                    className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold h-12 rounded-xl shadow-lg flex items-center justify-center gap-2 text-xs active:scale-95 transition-all font-heading"
+                    variant="outline"
+                    onClick={handleDownloadQR}
+                    className="flex-1 border-stone-700 bg-stone-800/80 hover:bg-stone-700 text-stone-200 text-xs h-9 rounded-xl font-heading"
                   >
-                    {isFPXLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
-                    <span>Buka Portal Pembayaran FPX</span>
+                    <Download className="w-3.5 h-3.5 mr-1.5 text-orange-400" /> Muat Turun QR
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCopyAmount}
+                    className="flex-1 border-stone-700 bg-stone-800/80 hover:bg-stone-700 text-stone-200 text-xs h-9 rounded-xl font-heading"
+                  >
+                    {copiedAmount ? <Check className="w-3.5 h-3.5 mr-1.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 mr-1.5 text-orange-400" />}
+                    {copiedAmount ? 'Disalin!' : 'Salin RM'}
                   </Button>
                 </div>
-              </TabsContent>
-            </Tabs>
+              </div>
 
-            <div className="pt-3 border-t border-stone-800 flex flex-col gap-2">
-              <Button
-                type="button"
-                onClick={() => {
-                  setShowDuitNowModal(false);
-                  toast.success('Pesanan anda telah direkodkan. Admin sedang menyemak bayaran.');
-                }}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-11 rounded-xl text-xs active:scale-95 transition-all font-heading"
-              >
-                ✅ Saya Dah Selesai Bayar & Hantar Resit
-              </Button>
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
+                  <UploadCloud className="w-4 h-4 text-orange-400" /> Muat Naik Resit Bukti Bayaran (Wajib)
+                </label>
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*,application/pdf"
+                    onChange={handleReceiptUpload}
+                    disabled={isUploadingReceipt}
+                    className="w-full text-xs text-stone-300 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-orange-600 file:text-white hover:file:bg-orange-500 file:cursor-pointer cursor-pointer bg-stone-900 border border-stone-800 rounded-2xl p-2"
+                  />
+                  {isUploadingReceipt && (
+                    <div className="absolute inset-0 bg-stone-900/80 rounded-2xl flex items-center justify-center gap-2 text-xs text-orange-400">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Memuat naik resit...
+                    </div>
+                  )}
+                </div>
+                {receiptProofUrl && (
+                  <p className="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Resit berjaya dimuat naik!
+                  </p>
+                )}
+              </div>
+
+              <div className="pt-2 border-t border-stone-800 flex flex-col gap-2">
+                <Button
+                  type="button"
+                  onClick={() => {
+                    setShowDuitNowModal(false);
+                    toast.success('Pesanan anda telah direkodkan. Admin sedang menyemak bayaran.');
+                  }}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-11 rounded-xl text-xs active:scale-95 transition-all font-heading"
+                >
+                  <CheckCircle2 className="w-4 h-4 mr-1.5" /> Saya Dah Selesai Bayar & Hantar Resit
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
