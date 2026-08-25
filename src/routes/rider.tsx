@@ -679,15 +679,22 @@ function RiderPortalPage() {
     }
   };
 
-  // 3-Step Milestone Progression Handler (with zero-cost WhatsApp notification)
+  // 3-Step Milestone Progression Handler (with zero-cost WhatsApp notification & live tracking)
   const handleUpdateMilestone = async (newStatus: 'picked_up' | 'arrived' | 'completed') => {
     if (!activeJob) return;
 
     try {
+      const extraInfo = {
+        customerName: activeJob.customer_name || 'Pelanggan',
+        riderName: riderProfile?.name || 'Rider Warung J&J',
+        riderPhone: riderProfile?.phone_number || '',
+        address: getCleanDeliveryAddress(activeJob.delivery_address)
+      };
+
       if (newStatus === 'completed') {
         localStorage.removeItem('warung_rider_milestone_' + activeJob.id);
         await handleCompleteJob(activeJob.id);
-        sendRiderDeliveryWhatsAppNotification('completed', activeJob.customer_phone || '', activeJob.id);
+        sendRiderDeliveryWhatsAppNotification('completed', activeJob.customer_phone || '', activeJob.id, extraInfo);
         return;
       }
 
@@ -713,7 +720,7 @@ function RiderPortalPage() {
       }
 
       toast.success(newStatus === 'picked_up' ? '🍱 Pesanan telah diambil dari warung!' : '🛵 Anda telah tiba di lokasi pelanggan!');
-      sendRiderDeliveryWhatsAppNotification(newStatus, activeJob.customer_phone || '', activeJob.id);
+      sendRiderDeliveryWhatsAppNotification(newStatus, activeJob.customer_phone || '', activeJob.id, extraInfo);
     } catch (err: any) {
       toast.error('Gagal mengemas kini status: ' + err.message);
     }
@@ -742,12 +749,14 @@ function RiderPortalPage() {
     }
   };
 
-  // WhatsApp
+  // WhatsApp with Live Tracking Link
   const contactWhatsApp = (phone: string, customerName: string, orderId: string) => {
-    const cleanPhone = phone.replace(/\D/g, '');
-    const validPhone = cleanPhone.startsWith('60') ? cleanPhone : cleanPhone.startsWith('0') ? '6' + cleanPhone : '60' + cleanPhone;
-    const msg = `Salam ${customerName}, saya penghantar makanan dari Warung J&J (#${orderId.slice(0, 8).toUpperCase()}). Saya sedang menuju ke lokasi anda ya. Terima kasih!`;
-    window.open(`https://wa.me/${validPhone}?text=${encodeURIComponent(msg)}`, '_blank');
+    sendRiderDeliveryWhatsAppNotification('contact_customer', phone, orderId, {
+      customerName,
+      riderName: riderProfile?.name || 'Rider Warung J&J',
+      riderPhone: riderProfile?.phone_number || '',
+      address: getCleanDeliveryAddress(activeJob?.delivery_address || '')
+    });
   };
 
   // Accurate Delivery Fee Resolver (From actual map road distance tag or DB or live coordinates)

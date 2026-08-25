@@ -47,8 +47,13 @@ import {
   UploadCloud,
   FileText,
   Bike,
-  Store,
-  Eye
+  Eye,
+  ChevronLeft,
+  Gift,
+  ChefHat,
+  X,
+  Percent,
+  Star
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createToyyibPayCheckout } from '@/lib/toyyibpay';
@@ -291,6 +296,79 @@ function CustomerDeliveryPage() {
   const [copiedAmount, setCopiedAmount] = useState(false);
   const [copiedBankAcc, setCopiedBankAcc] = useState(false);
   const [isFPXLoading, setIsFPXLoading] = useState(false);
+
+  // Promo Banner Carousel State
+  const [promoSlideIndex, setPromoSlideIndex] = useState(0);
+  const [isPromoPaused, setIsPromoPaused] = useState(false);
+
+  // Live Order Tracking State
+  const [trackedOrder, setTrackedOrder] = useState<any | null>(null);
+  const [isTrackLoading, setIsTrackLoading] = useState(false);
+  const [showTrackModal, setShowTrackModal] = useState(false);
+
+  // Helper to lookup order for live tracking
+  const fetchTrackedOrder = async (orderId: string) => {
+    if (!orderId) return;
+    setIsTrackLoading(true);
+    try {
+      const cleanId = orderId.trim();
+      const { data } = await supabase
+        .from('orders')
+        .select('*')
+        .or(`id.eq.${cleanId},id.ilike.${cleanId}%`)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (data) {
+        setTrackedOrder(data);
+        setShowTrackModal(true);
+        toast.info(`Status langsung pesanan #${data.id.slice(0, 8).toUpperCase()} dimuatkan! 🛵`);
+      } else {
+        toast.error('Pesanan tidak dijumpai. Sila pastikan pautan atau ID pesanan adalah tepat.');
+      }
+    } catch (e: any) {
+      console.warn('Track lookup error:', e);
+      toast.error('Ralat mencari pesanan: ' + e?.message);
+    } finally {
+      setIsTrackLoading(false);
+    }
+  };
+
+  // Auto advance promo carousel every 5s unless hovered
+  useEffect(() => {
+    if (isPromoPaused) return;
+    const interval = setInterval(() => {
+      setPromoSlideIndex(prev => (prev + 1) % 3);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [isPromoPaused]);
+
+  // Realtime subscription for tracked order updates
+  useEffect(() => {
+    if (!trackedOrder?.id) return;
+    const trackSub = supabase.channel(`track_order_${trackedOrder.id}_${Date.now()}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'orders',
+        filter: `id=eq.${trackedOrder.id}`
+      }, (payload: any) => {
+        if (payload.new) {
+          setTrackedOrder(payload.new);
+          if (payload.new.status === 'ready' || payload.new.status === 'on_the_way') {
+            toast.info('🛵 Rider kini dalam perjalanan menghantar pesanan anda!');
+          } else if (payload.new.status === 'completed') {
+            toast.success('✅ Pesanan anda telah selamat diserahkan!');
+          }
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(trackSub);
+    };
+  }, [trackedOrder?.id]);
 
   // Calculate actual road distance via OSRM Routing Engine
   const fetchRoadRoute = async (destLat: number, destLng: number) => {
@@ -626,6 +704,15 @@ function CustomerDeliveryPage() {
       } else if (statusId === '3') {
         toast.error('❌ Pembayaran FPX tidak berjaya atau dibatalkan. Sila cuba lagi.');
         window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+
+    // 4. Check for ?track=ORDER_ID param in URL
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const trackId = searchParams.get('track');
+      if (trackId) {
+        fetchTrackedOrder(trackId);
       }
     }
 
@@ -1330,6 +1417,16 @@ function CustomerDeliveryPage() {
       setIsCartDrawerOpen(false);
       setShowDuitNowModal(true);
 
+      // Auto-populate trackedOrder for live status banner
+      setTrackedOrder({
+        id: newOrderId,
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        delivery_address: addressWithFeeTag,
+        total_amount: grandTotal,
+        status: 'pending_payment'
+      });
+
       // Sync and award loyalty points
       try {
         const pointsToAward = Math.max(1, Math.floor(foodSubtotal));
@@ -1439,6 +1536,120 @@ function CustomerDeliveryPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-5 space-y-6">
+        {/* LIVE ORDER TRACKING BANNER & CARD */}
+        {trackedOrder && (
+          <div className="bg-gradient-to-r from-stone-900 via-[#1e1c1a] to-stone-900 border-2 border-emerald-500/50 p-4 sm:p-5 rounded-3xl shadow-2xl space-y-4 animate-fade-in relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+            
+            <div className="flex items-center justify-between flex-wrap gap-2 border-b border-stone-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                  <Truck className="w-5 h-5 animate-bounce" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
+                      🛵 Penjejakan Langsung Pesanan (Live Tracking)
+                    </span>
+                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 font-mono text-[10px] rounded-full font-bold">
+                      #{trackedOrder.id.slice(0, 8).toUpperCase()}
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-300 font-medium">
+                    Penerima: <strong className="text-white">{trackedOrder.customer_name || 'Pelanggan'}</strong> • RM {Number(trackedOrder.total_amount || 0).toFixed(2)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => {
+                    const clean = sanitizePhone(storePhone);
+                    const msg = `Salam Warung J&J, saya ingin bertanya status pesanan saya #${trackedOrder.id.slice(0, 8).toUpperCase()}`;
+                    window.open(`https://wa.me/${clean}?text=${encodeURIComponent(msg)}`, '_blank');
+                  }}
+                  className="bg-stone-800 border-stone-700 text-emerald-400 hover:text-emerald-300 h-8 px-2.5 rounded-xl text-[11px] flex items-center gap-1.5"
+                >
+                  <MessageCircle className="w-3.5 h-3.5" />
+                  <span>WhatsApp Kedai</span>
+                </Button>
+                <button
+                  type="button"
+                  onClick={() => setTrackedOrder(null)}
+                  className="w-7 h-7 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white flex items-center justify-center"
+                  title="Tutup penjejakan"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            {/* 4-STEP LIVE PROGRESSION TRACKER */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+              {/* Step 1 */}
+              <div className={`p-2.5 rounded-2xl border text-center transition-all ${
+                trackedOrder.status === 'pending_payment'
+                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-md animate-pulse'
+                  : 'bg-stone-900/60 border-stone-800 text-stone-400'
+              }`}>
+                <div className="text-sm mb-0.5">🕒</div>
+                <div className="text-[11px] font-bold leading-tight">1. Menunggu Bayaran</div>
+                <div className="text-[9px] text-stone-500">DuitNow / Resit</div>
+              </div>
+
+              {/* Step 2 */}
+              <div className={`p-2.5 rounded-2xl border text-center transition-all ${
+                trackedOrder.status === 'preparing'
+                  ? 'bg-orange-500/15 border-orange-500/40 text-orange-300 shadow-md animate-pulse'
+                  : (trackedOrder.status === 'ready' || trackedOrder.status === 'on_the_way' || trackedOrder.status === 'completed')
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                    : 'bg-stone-900/60 border-stone-800 text-stone-400'
+              }`}>
+                <div className="text-sm mb-0.5">👨‍🍳</div>
+                <div className="text-[11px] font-bold leading-tight">2. Sedang Dimasak</div>
+                <div className="text-[9px] text-stone-500">Dapur Warung J&J</div>
+              </div>
+
+              {/* Step 3 */}
+              <div className={`p-2.5 rounded-2xl border text-center transition-all ${
+                (trackedOrder.status === 'ready' || trackedOrder.status === 'on_the_way' || trackedOrder.delivery_status === 'picked_up' || trackedOrder.delivery_status === 'arrived')
+                  ? 'bg-sky-500/15 border-sky-500/40 text-sky-300 shadow-md animate-pulse'
+                  : trackedOrder.status === 'completed'
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                    : 'bg-stone-900/60 border-stone-800 text-stone-400'
+              }`}>
+                <div className="text-sm mb-0.5">🛵</div>
+                <div className="text-[11px] font-bold leading-tight">3. Rider Menghantar</div>
+                <div className="text-[9px] text-stone-500">Dalam Perjalanan</div>
+              </div>
+
+              {/* Step 4 */}
+              <div className={`p-2.5 rounded-2xl border text-center transition-all ${
+                trackedOrder.status === 'completed'
+                  ? 'bg-emerald-600/20 border-emerald-500/50 text-emerald-300 shadow-lg'
+                  : 'bg-stone-900/60 border-stone-800 text-stone-400'
+              }`}>
+                <div className="text-sm mb-0.5">✨</div>
+                <div className="text-[11px] font-bold leading-tight">4. Selesai Diserah</div>
+                <div className="text-[9px] text-stone-500">Selamat Menjamu!</div>
+              </div>
+            </div>
+
+            {/* ADDRESS & DETAILS */}
+            <div className="bg-stone-950/60 p-3 rounded-2xl border border-stone-800/80 flex items-start gap-2.5 text-xs text-stone-300">
+              <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div className="space-y-0.5">
+                <span className="text-[10px] text-stone-500 uppercase font-bold tracking-wider block">Destinasi Penghantaran:</span>
+                <p className="text-stone-200 leading-relaxed font-medium">
+                  {trackedOrder.delivery_address?.replace(/\[TAMBANG:.*?\]/g, '').trim() || 'Penampang, Sabah'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ONLINE ORDERING CLOSED BANNER */}
         {!isOnlineOrderingEnabled && (
           <div className="bg-gradient-to-r from-rose-950/90 via-red-950/90 to-stone-900 border-2 border-rose-600/80 p-4 sm:p-5 rounded-3xl shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in text-rose-200">
@@ -1631,6 +1842,136 @@ function CustomerDeliveryPage() {
               <span>2. Pilihan Menu Makanan 🍜</span>
             </h2>
             <span className="text-xs text-stone-400 font-medium">{filteredMenuItems.length} hidangan sedia dipesan</span>
+          </div>
+
+          {/* DYNAMIC PROMOTIONAL BANNER SLIDER */}
+          <div 
+            className="relative rounded-3xl overflow-hidden shadow-2xl border border-stone-800/80 transition-all duration-300"
+            onMouseEnter={() => setIsPromoPaused(true)}
+            onMouseLeave={() => setIsPromoPaused(false)}
+          >
+            {/* SLIDE 1: COMBO JIMAT */}
+            {promoSlideIndex === 0 && (
+              <div className="bg-gradient-to-r from-amber-700 via-orange-600 to-rose-700 p-5 sm:p-6 text-white animate-fade-in relative flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="space-y-1.5 max-w-xl text-center sm:text-left">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-black/25 backdrop-blur-md rounded-full text-[10px] sm:text-xs font-bold text-amber-200 uppercase tracking-wider border border-amber-300/30">
+                    <Flame className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Tawaran Kombo Mingguan</span>
+                  </div>
+                  <h3 className="text-base sm:text-xl font-extrabold tracking-tight text-white drop-shadow-md">
+                    🍗 Kombo Ayam Penyet Crispy + Sambal Berapi!
+                  </h3>
+                  <p className="text-xs sm:text-sm text-orange-100/90 leading-relaxed">
+                    Percuma <strong>Teh Tarik Kaw / Sirap Bandung</strong> dengan setiap pesanan delivery melebihi <strong>RM 25.00</strong>.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => {
+                    setSelectedCategory('chicken');
+                    toast.success('Kategori Ayam dibuka! Sila pilih hidangan kombo kegemaran anda.');
+                  }}
+                  className="bg-white hover:bg-stone-100 text-stone-950 font-bold px-4 py-2 rounded-2xl text-xs sm:text-sm shadow-xl active:scale-95 transition-all shrink-0"
+                >
+                  <span>Pesan Sekarang</span>
+                  <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                </Button>
+              </div>
+            )}
+
+            {/* SLIDE 2: LOYALTY 50 PTS */}
+            {promoSlideIndex === 1 && (
+              <div className="bg-gradient-to-r from-emerald-800 via-teal-700 to-cyan-800 p-5 sm:p-6 text-white animate-fade-in relative flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="space-y-1.5 max-w-xl text-center sm:text-left">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-black/25 backdrop-blur-md rounded-full text-[10px] sm:text-xs font-bold text-emerald-200 uppercase tracking-wider border border-emerald-300/30">
+                    <Gift className="w-3.5 h-3.5 text-emerald-300" />
+                    <span>Ganjaran Keahlian VIP</span>
+                  </div>
+                  <h3 className="text-base sm:text-xl font-extrabold tracking-tight text-white drop-shadow-md">
+                    💎 Bonus 50 Mata Ganjaran Percuma untuk Pelanggan Baru!
+                  </h3>
+                  <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
+                    Log masuk dengan <strong>Akaun Google</strong> hari ini & kumpul mata pada setiap pesanan untuk tebus potongan diskaun tunai.
+                  </p>
+                </div>
+                {!currentUser ? (
+                  <Button
+                    onClick={handleGoogleLogin}
+                    className="bg-white hover:bg-stone-100 text-stone-950 font-bold px-4 py-2 rounded-2xl text-xs sm:text-sm shadow-xl active:scale-95 transition-all shrink-0"
+                  >
+                    <span>Daftar & Tebus 50 Pts</span>
+                    <Sparkles className="w-3.5 h-3.5 ml-1.5 text-amber-600" />
+                  </Button>
+                ) : (
+                  <div className="px-4 py-2 bg-emerald-950/80 border border-emerald-400/40 rounded-2xl text-center shrink-0">
+                    <span className="text-xs font-bold text-emerald-200 block font-mono">
+                      💎 {loyaltyMember?.points || 50} Mata Dimiliki
+                    </span>
+                    <span className="text-[10px] text-emerald-300/80">Ahli {loyaltyMember?.tier || 'Bronze'}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* SLIDE 3: SABAH FAST DELIVERY */}
+            {promoSlideIndex === 2 && (
+              <div className="bg-gradient-to-r from-purple-800 via-indigo-700 to-blue-800 p-5 sm:p-6 text-white animate-fade-in relative flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="space-y-1.5 max-w-xl text-center sm:text-left">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-black/25 backdrop-blur-md rounded-full text-[10px] sm:text-xs font-bold text-indigo-200 uppercase tracking-wider border border-indigo-300/30">
+                    <Truck className="w-3.5 h-3.5 text-indigo-300" />
+                    <span>Kadar Tambang Jimat Sabah</span>
+                  </div>
+                  <h3 className="text-base sm:text-xl font-extrabold tracking-tight text-white drop-shadow-md">
+                    🛵 Penghantaran Pantas Donggongon & Penampang!
+                  </h3>
+                  <p className="text-xs sm:text-sm text-indigo-100/90 leading-relaxed">
+                    Tambang bermula serendah <strong>RM 3.00</strong> dengan pengiraan jarak jalan raya GPS sebenar & penjejakan masa-nyata.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => {
+                    window.scrollTo({ top: 300, behavior: 'smooth' });
+                    toast.info('Sila sahkan lokasi anda di Peta Jalan Raya untuk mengira tambang.');
+                  }}
+                  className="bg-white hover:bg-stone-100 text-stone-950 font-bold px-4 py-2 rounded-2xl text-xs sm:text-sm shadow-xl active:scale-95 transition-all shrink-0"
+                >
+                  <span>Semak Zon Peta</span>
+                  <Navigation className="w-3.5 h-3.5 ml-1.5 text-sky-600" />
+                </Button>
+              </div>
+            )}
+
+            {/* SLIDER NAVIGATION ARROWS & DOTS */}
+            <button
+              type="button"
+              onClick={() => setPromoSlideIndex(prev => (prev === 0 ? 2 : prev - 1))}
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 border border-white/10"
+              title="Slaid Sebelumnya"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setPromoSlideIndex(prev => (prev + 1) % 3)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 border border-white/10"
+              title="Slaid Seterusnya"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            {/* INDICATOR DOTS */}
+            <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/30 backdrop-blur-md px-2.5 py-1 rounded-full">
+              {[0, 1, 2].map((idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setPromoSlideIndex(idx)}
+                  className={`w-2 h-2 rounded-full transition-all ${
+                    promoSlideIndex === idx ? 'bg-white w-5' : 'bg-white/40 hover:bg-white/70'
+                  }`}
+                  title={`Slaid ${idx + 1}`}
+                />
+              ))}
+            </div>
           </div>
 
           <div className="relative">
