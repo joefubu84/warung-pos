@@ -52,6 +52,8 @@ import {
   Utensils,
   Palette,
   ChevronRight,
+  ChevronDown,
+  Menu,
   Loader2,
   Pencil,
   Trash2
@@ -220,6 +222,7 @@ function SettingsPage() {
     | 'security';
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('riders');
+  const [showMobileModules, setShowMobileModules] = useState(false);
 
   const [storeForm, setStoreForm] = useState({ name: '', address: '', logo_url: '', phone_number: '', phone_number_2: '' });
 
@@ -467,19 +470,123 @@ function SettingsPage() {
           </div>
         </div>
 
+        {/* MOBILE MODULE QUICK SWITCHER BAR (Visible on Mobile / Small Screens) */}
+        <div className="block lg:hidden space-y-3">
+          {/* ACTIVE MODULE CARD & TOGGLE BUTTON */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-xl flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              {(() => {
+                const currentItem = SIDEBAR_ITEMS.find(i => i.id === activeSection) || SIDEBAR_ITEMS[0];
+                const CurrentIcon = currentItem.icon;
+                return (
+                  <>
+                    <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 shrink-0">
+                      <CurrentIcon className={`w-4 h-4 ${currentItem.color}`} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="text-[10px] uppercase font-mono text-slate-500 font-bold block">Modul Tetapan Semasa</span>
+                      <h3 className="text-sm font-bold text-white truncate flex items-center gap-1.5">
+                        <span>{currentItem.label}</span>
+                        {currentItem.badge && (
+                          <span className="text-[9px] px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded font-mono">
+                            {currentItem.badge}
+                          </span>
+                        )}
+                      </h3>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowMobileModules(!showMobileModules)}
+              className="border-slate-700 bg-slate-800 hover:bg-slate-750 text-emerald-400 font-bold text-xs shrink-0 flex items-center gap-1.5 h-9"
+            >
+              <Menu className="w-3.5 h-3.5" />
+              <span>{showMobileModules ? 'Tutup Menu' : 'Pilih Modul (9)'}</span>
+              <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showMobileModules ? 'rotate-180' : ''}`} />
+            </Button>
+          </div>
+
+          {/* EXPANDABLE 2-COLUMN MOBILE GRID OF ALL 9 MODULES */}
+          {showMobileModules && (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="text-[10px] font-mono uppercase text-slate-400 font-bold mb-2 px-1">
+                Pilih Modul Konfigurasi:
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {SIDEBAR_ITEMS.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeSection === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveSection(item.id);
+                        setShowMobileModules(false);
+                      }}
+                      className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all ${
+                        isActive
+                          ? 'bg-slate-800 border-emerald-500/50 text-white shadow-md ring-1 ring-emerald-500/30'
+                          : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-800/40'
+                      }`}
+                    >
+                      <div className={`p-1.5 rounded-lg shrink-0 ${
+                        isActive ? 'bg-slate-950 text-emerald-400 border border-slate-700' : 'bg-slate-900 text-slate-400'
+                      }`}>
+                        <Icon className={`w-3.5 h-3.5 ${isActive ? item.color : ''}`} />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-xs font-bold truncate">{item.label}</div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* HORIZONTAL SWIPEABLE PILLS FOR FAST ONE-TAP SWITCHING ON PHONE */}
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none scroll-smooth">
+            {SIDEBAR_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = activeSection === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => setActiveSection(item.id)}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
+                    isActive
+                      ? 'bg-emerald-600 text-white shadow-md border border-emerald-400'
+                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  }`}
+                >
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : item.color}`} />
+                  <span className="whitespace-nowrap">{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         {/* MAIN SIDEBAR + CONTENT GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
-          {/* LEFT SIDEBAR NAVIGATION */}
-          <aside className="lg:col-span-4 xl:col-span-3 lg:sticky lg:top-4 z-20 space-y-3">
+          {/* LEFT SIDEBAR NAVIGATION (Desktop) */}
+          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 lg:sticky lg:top-4 z-20 space-y-3">
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-3 shadow-2xl space-y-1">
               <div className="px-3 py-2 text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/80 mb-2 flex items-center justify-between">
                 <span>Menu Tetapan</span>
                 <span className="text-[10px] text-slate-500 font-mono">{SIDEBAR_ITEMS.length} Modul</span>
               </div>
               
-              {/* MOBILE HORIZONTAL SCROLL / DESKTOP VERTICAL STACK */}
-              <div className="flex lg:flex-col gap-1.5 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0 scrollbar-none">
+              <div className="flex flex-col gap-1.5">
                 {SIDEBAR_ITEMS.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeSection === item.id;
@@ -488,7 +595,7 @@ function SettingsPage() {
                       key={item.id}
                       onClick={() => setActiveSection(item.id)}
                       type="button"
-                      className={`w-full text-left flex items-center justify-between p-2.5 sm:p-3 rounded-2xl transition-all shrink-0 lg:shrink ${
+                      className={`w-full text-left flex items-center justify-between p-2.5 sm:p-3 rounded-2xl transition-all ${
                         isActive
                           ? 'bg-slate-800 text-white shadow-lg border border-slate-700 font-bold'
                           : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent font-medium'
@@ -511,12 +618,12 @@ function SettingsPage() {
                               </span>
                             )}
                           </div>
-                          <div className="text-[10px] text-slate-400 truncate font-mono mt-0.5 hidden sm:block">
+                          <div className="text-[10px] text-slate-400 truncate font-mono mt-0.5">
                             {item.subtitle}
                           </div>
                         </div>
                       </div>
-                      <ChevronRight className={`w-4 h-4 shrink-0 hidden lg:block transition-transform ${
+                      <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${
                         isActive ? 'text-white translate-x-0.5' : 'text-slate-600 opacity-60'
                       }`} />
                     </button>
