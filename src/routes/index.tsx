@@ -127,12 +127,12 @@ function LandingPage() {
 
           {/* CTAs */}
           <div className="flex items-center gap-2 pr-1">
-            <Link to="/delivery">
+            <a href="#menu">
               <Button className="rounded-full px-5 h-9 bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs tracking-tight transition-all shadow-[0_0_15px_rgba(234,88,12,0.4)] flex items-center gap-1.5">
-                <Bike className="w-3.5 h-3.5" />
-                <span>Pesan Delivery</span>
+                <UtensilsCrossed className="w-3.5 h-3.5" />
+                <span>Lihat Menu</span>
               </Button>
-            </Link>
+            </a>
           </div>
         </motion.nav>
       </div>
@@ -156,9 +156,9 @@ function LandingPage() {
                 <Flame className="w-3.5 h-3.5" />
                 <span>Sambal Gesek & Rempah Asli Sabah</span>
               </div>
-              <div className="inline-flex items-center gap-1.5 py-1 px-3.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-bold text-emerald-300">
-                <Bike className="w-3.5 h-3.5" />
-                <span>Delivery (Penampang & KK)</span>
+              <div className="inline-flex items-center gap-1.5 py-1 px-3.5 rounded-full bg-stone-800/80 border border-stone-700 text-xs font-bold text-stone-300">
+                <QrCode className="w-3.5 h-3.5 text-amber-400" />
+                <span>Dine-In & Takeaway Penampang</span>
               </div>
             </motion.div>
 
@@ -183,19 +183,19 @@ function LandingPage() {
 
             {/* Call to Actions */}
             <motion.div variants={item} className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
-              <Link to="/delivery" className="w-full sm:w-auto">
+              <a href="#menu" className="w-full sm:w-auto">
                 <Button size="lg" className="h-13 px-7 rounded-full text-base font-bold bg-orange-600 hover:bg-orange-500 text-white shadow-[0_8px_25px_rgba(234,88,12,0.35)] transition-all w-full flex items-center justify-center gap-2">
-                  <Bike className="w-5 h-5" />
-                  <span>Pesan Penghantaran (Delivery)</span>
+                  <UtensilsCrossed className="w-5 h-5" />
+                  <span>Pilihan Menu Warung</span>
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Button>
-              </Link>
-              <a href="#menu" className="w-full sm:w-auto">
-                <Button size="lg" variant="outline" className="h-13 px-7 rounded-full text-base font-bold border-stone-700 text-stone-300 hover:text-white hover:bg-stone-800 transition-all w-full bg-stone-900/60">
-                  <UtensilsCrossed className="w-4 h-4 mr-2 text-amber-400" />
-                  <span>Pilihan Menu</span>
-                </Button>
               </a>
+              <Link to="/delivery" className="w-full sm:w-auto">
+                <Button size="lg" variant="outline" className="h-13 px-7 rounded-full text-base font-bold border-stone-700 text-stone-400 hover:text-white hover:bg-stone-800 transition-all w-full bg-stone-900/60">
+                  <Bike className="w-4 h-4 mr-2 text-stone-500" />
+                  <span>Delivery (Ditutup Sementara)</span>
+                </Button>
+              </Link>
             </motion.div>
 
             {/* 3 Core Services Icons */}

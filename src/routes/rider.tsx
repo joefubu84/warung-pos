@@ -1,5 +1,4 @@
-// src/routes/rider.tsx
-import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -71,10 +70,40 @@ interface DeliveryJob {
   order_items?: any[];
 }
 
-const IS_RIDER_ENABLED = true;
+const IS_RIDER_ENABLED = false;
 
 function RiderPortalPage() {
   const navigate = useNavigate();
+
+  // Maintenance screen if rider portal is temporarily closed
+  if (!IS_RIDER_ENABLED) {
+    return (
+      <div className="min-h-screen bg-[#121110] text-[#f5f5f4] flex flex-col justify-center items-center p-4 sm:p-6 font-sans selection:bg-amber-500/30">
+        <div className="w-full max-w-md bg-[#1c1a18] border border-[#2e2a27] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-center">
+          <div className="w-20 h-20 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border-2 border-amber-500/40 shadow-inner">
+            <Truck className="w-10 h-10" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              Portal Rider Ditutup Sementara
+            </h1>
+            <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
+              Perkhidmatan penghantaran dan sistem penugasan rakan rider Warung J&J sedang ditutup buat sementara waktu untuk penambahbaikan & penyelenggaraan sistem.
+            </p>
+          </div>
+          <div className="p-3.5 bg-stone-900/80 border border-stone-800 rounded-2xl text-xs text-stone-400 space-y-1">
+            <p className="font-bold text-amber-400">Warung J&J • Penampang, Sabah</p>
+            <p className="text-[11px]">Sila hubungi pihak pengurusan warung untuk sebarang maklumat lanjut.</p>
+          </div>
+          <Link to="/">
+            <Button variant="outline" className="w-full h-11 rounded-2xl border-stone-700 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold">
+              Kembali ke Laman Utama
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // Auth & Profile State
   const [sessionUser, setSessionUser] = useState<any>(null);

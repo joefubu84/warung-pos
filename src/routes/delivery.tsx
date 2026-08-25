@@ -292,7 +292,7 @@ function CustomerDeliveryPage() {
 
   const [storeId, setStoreId] = useState<string | null>(null);
   const [storePhone, setStorePhone] = useState<string>('60172221784');
-  const [isOnlineOrderingEnabled, setIsOnlineOrderingEnabled] = useState<boolean>(true);
+  const [isOnlineOrderingEnabled, setIsOnlineOrderingEnabled] = useState<boolean>(false);
   const [loyaltyMember, setLoyaltyMember] = useState<LoyaltyMember | null>(null);
   const [copiedAmount, setCopiedAmount] = useState(false);
   const [copiedBankAcc, setCopiedBankAcc] = useState(false);
@@ -771,8 +771,8 @@ function CustomerDeliveryPage() {
     if (data) {
       setStoreId(data.id);
       if (data.phone_number) setStorePhone(data.phone_number);
-      const settings = (data.settings as any) || {};
-      setIsOnlineOrderingEnabled(settings.online_ordering_enabled !== false);
+      // Temporarily closed upon user request
+      setIsOnlineOrderingEnabled(false);
     }
   };
 
@@ -1734,15 +1734,15 @@ function CustomerDeliveryPage() {
               </div>
               <div className="space-y-0.5">
                 <h3 className="font-bold text-sm sm:text-base text-white flex items-center gap-2">
-                  ⛔ Dapur / Pesanan Online Ditutup Buat Sementara Waktu
+                  ⛔ Perkhidmatan Penghantaran (Delivery) Ditutup Buat Sementara Waktu
                 </h3>
                 <p className="text-xs text-rose-300/90 leading-relaxed">
-                  Pihak Warung J&J sedang menghentikan seketika penerimaan pesanan baru untuk menyusun giliran hidangan di dapur. Anda boleh meneliti menu terlebih dahulu.
+                  Pihak pengurusan Warung J&J menutup pesanan online & penghantaran rider buat sementara waktu untuk penambahbaikan sistem. Pelanggan dialu-alukan untuk menikmati hidangan secara <strong>Dine-in / Bungkus Terus di Warung J&J Penampang</strong>.
                 </p>
               </div>
             </div>
             <span className="px-3.5 py-1.5 bg-rose-600/30 border border-rose-500/50 rounded-xl text-xs font-bold text-rose-200 uppercase tracking-wider shrink-0 font-mono">
-              Pesanan Disekat
+              Ditutup Sementara
             </span>
           </div>
         )}
