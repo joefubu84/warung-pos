@@ -2,7 +2,9 @@
   "name": "Warung J&J Delivery & POS",
   "short_name": "Warung J&J",
   "description": "Penghantaran Makanan Panas & Segar Warung J&J Penampang Sabah",
-  "start_url": "/delivery",
+  "id": "https://warungjnj.online/delivery",
+  "start_url": "https://warungjnj.online/delivery",
+  "scope": "https://warungjnj.online/",
   "display": "standalone",
   "background_color": "#1c1917",
   "theme_color": "#ea580c",
@@ -24,12 +26,12 @@
   "shortcuts": [
     {
       "name": "Pesan Delivery",
-      "url": "/delivery",
+      "url": "https://warungjnj.online/delivery",
       "description": "Pesan makanan panas untuk dihantar ke rumah"
     },
     {
       "name": "Portal Rider",
-      "url": "/rider",
+      "url": "https://warungjnj.online/rider",
       "description": "Portal tugasan rakan penghantar rider"
     }
   ]

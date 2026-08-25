@@ -133,6 +133,22 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  if (typeof window !== 'undefined' && window.location) {
+                    var h = window.location.hostname;
+                    if (h.indexOf('lovable.app') !== -1 || h.indexOf('lovableproject.com') !== -1 || h.indexOf('lovable.dev') !== -1) {
+                      window.location.replace('https://warungjnj.online' + window.location.pathname + window.location.search + window.location.hash);
+                    }
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
         <style
           dangerouslySetInnerHTML={{
             __html: `
