@@ -220,6 +220,7 @@ function CustomerDeliveryPage() {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [deliveryAddress, setDeliveryAddress] = useState('');
+  const [specificUnitNote, setSpecificUnitNote] = useState('');
   const [custLat, setCustLat] = useState<number>(5.9141659);
   const [custLng, setCustLng] = useState<number>(116.085516);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
@@ -1041,12 +1042,16 @@ function CustomerDeliveryPage() {
   const handleSendWhatsAppProof = () => {
     const cleanPhone = (storePhone || '60172221784').replace(/\D/g, '');
     const shortId = activeOrderId ? activeOrderId.slice(0, 8).toUpperCase() : 'NEW';
+    const finalFullAddress = specificUnitNote.trim()
+      ? `${specificUnitNote.trim()} - ${deliveryAddress.trim()}`
+      : deliveryAddress.trim();
+
     const message = `*HALO WARUNG J&J, SAYA TELAH MEMBUAT BAYARAN DELIVERY:*
 
 🆔 *Order ID:* #${shortId}
 👤 *Nama:* ${customerName}
 📞 *Telefon:* ${customerPhone}
-📍 *Alamat:* ${deliveryAddress}
+📍 *Alamat:* ${finalFullAddress}
 💰 *Jumlah Bayaran:* RM ${grandTotal.toFixed(2)}
 
 (Sila semak resit pembayaran yang saya lampirkan ini 🙏)`;
@@ -1197,7 +1202,11 @@ function CustomerDeliveryPage() {
 
     setIsSubmitting(true);
     try {
-      const addressWithFeeTag = `${deliveryAddress.trim()} [TAMBANG:RM${deliveryFee.toFixed(2)}|JARAK:${roadDistanceKm.toFixed(1)}KM]`;
+      const finalFullAddress = specificUnitNote.trim()
+        ? `${specificUnitNote.trim()} - ${deliveryAddress.trim()}`
+        : deliveryAddress.trim();
+
+      const addressWithFeeTag = `${finalFullAddress} [TAMBANG:RM${deliveryFee.toFixed(2)}|JARAK:${roadDistanceKm.toFixed(1)}KM]`;
 
       const { data: rpcRes, error: rpcErr } = await supabase.rpc('place_order', {
         p_order: {
@@ -1459,6 +1468,22 @@ function CustomerDeliveryPage() {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* DEDICATED PREMISE / UNIT / WAITING SPOT NOTE FOR RIDER */}
+              <div className="space-y-1.5 pt-1">
+                <label className="text-xs font-bold text-stone-300 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-amber-400">
+                    <Building2 className="w-3.5 h-3.5" /> No. Lot / Tingkat / Nama Kedai / Tempat Menunggu (Untuk Rider)
+                  </span>
+                  <span className="text-[10px] text-stone-400">Pilihan</span>
+                </label>
+                <Input
+                  placeholder="Cth: Unit T10 (Tingkat Bawah) / Kedai Niyocha / Depan Restoran Mari Mari / Blok A"
+                  value={specificUnitNote}
+                  onChange={(e) => setSpecificUnitNote(e.target.value)}
+                  className="bg-stone-900 border-stone-800 text-white placeholder:text-stone-500 rounded-xl text-xs h-10"
+                />
               </div>
             </div>
 

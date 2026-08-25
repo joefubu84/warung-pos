@@ -14,10 +14,9 @@ export const LOCAL_SABAH_LANDMARKS: SabahLocationItem[] = [
   // 0. WARUNG JNJ & KEY PENAMPANG HUBS
   // ==========================================
   { name: 'Warung JNJ Penampang', lat: 5.9284153, lng: 116.1146463, desc: 'a17, Jln Datuk Panglima Banting, Penampang', category: 'shoplot' },
-  { name: 'Padimas Point Commercial Centre', lat: 5.9142, lng: 116.0856, desc: 'Lorong Padimas / Jln Liana, Donggongon / Penampang', category: 'shoplot' },
-  { name: 'Padimas Point Shoplot (Mari Mari Steamboat / Niyocha)', lat: 5.9141, lng: 116.0854, desc: 'Lorong Padimas, Donggongon, Penampang', category: 'shoplot' },
-  { name: 'Niyocha Matcha @ Padimas Point', lat: 5.9143, lng: 116.0857, desc: 'Padimas Point, Penampang', category: 'shoplot' },
-  { name: 'Mari Mari Steamboat Buffet @ Padimas Point', lat: 5.9140, lng: 116.0852, desc: 'Lorong Padimas, Donggongon', category: 'shoplot' },
+  { name: 'Padimas Point Commercial Centre', lat: 5.9142, lng: 116.0856, desc: 'Lorong Padimas, Donggongon, Penampang', category: 'shoplot' },
+  { name: 'Mari Mari Steamboat Buffet, Padimas Point', lat: 5.9140, lng: 116.0852, desc: 'Lorong Padimas, Penampang', category: 'shoplot' },
+  { name: 'Niyocha Matcha, Padimas Point', lat: 5.9143, lng: 116.0857, desc: 'Padimas Point, Penampang', category: 'shoplot' },
   { name: 'Plaza 333 Kobusak Commercial', lat: 5.9320, lng: 116.0880, desc: 'Jalan Pintas Penampang', category: 'shoplot' },
   { name: 'Grand Millennium Plaza', lat: 5.9340, lng: 116.0890, desc: 'Kobusak, Penampang', category: 'shoplot' },
   { name: 'Pintas Avenue Commercial', lat: 5.9360, lng: 116.0830, desc: 'Jalan Pintas, Penampang', category: 'shoplot' },
@@ -333,17 +332,10 @@ export async function reverseGeocodeSabahCoordinates(lat: number, lng: number): 
       const postcode = addr.postcode || '89500';
 
       // If we found a curated high-confidence local landmark within proximity (e.g. Padimas Point)
-      // and the Nominatim returned a residential address across the street, prioritize the Landmark!
-      if (nearest && nearest.distanceMeters <= 100) {
-        const parts = [
-          nearest.landmark.name,
-          houseNo ? `Unit/Lot ${houseNo}` : '',
-          road || nearest.landmark.desc,
-          city,
-          postcode,
-          state
-        ].filter(Boolean);
-        return parts.join(', ');
+      // prioritize the Landmark cleanly without confusing cross-street mixups
+      if (nearest && nearest.distanceMeters <= 120) {
+        const prefix = houseNo ? `Unit/Lot ${houseNo}, ` : '';
+        return `${prefix}${nearest.landmark.name}, ${nearest.landmark.desc}, Sabah`;
       }
 
       const parts = [
