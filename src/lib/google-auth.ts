@@ -43,16 +43,26 @@ export function clearStoredGoogleUser(): void {
   } catch (err) {}
 }
 
+export function getAppBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return window.location.origin;
+    }
+  }
+  return 'https://warungjnj.online';
+}
+
 /**
  * Handle Supabase Google OAuth Provider Login
  * Triggers native OAuth flow or OAuth pop-up/redirect
  */
 export async function signInWithGoogleOAuth(): Promise<{ success: boolean; message: string; isNotConfigured?: boolean }> {
   try {
-    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const currentPath = typeof window !== 'undefined' ? (window.location.pathname || '/delivery') : '/delivery';
+    const redirectTo = `${getAppBaseUrl()}${currentPath}`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: currentUrl ? { redirectTo: currentUrl } : {}
+      options: { redirectTo }
     });
 
     if (error) {

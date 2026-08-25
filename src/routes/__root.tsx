@@ -87,12 +87,12 @@ export const Route = createRootRouteWithContext<{
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Warung J&J POS | Enterprise Restaurant Management" },
       { name: "description", content: "Professional multi-store POS ecosystem for modern Malaysian hospitality. Scale your culinary empire with zero-trust data isolation." },
-      { name: "author", content: "Lovable" },
+      { name: "author", content: "Warung J&J" },
       { property: "og:title", content: "Warung J&J POS | Enterprise Restaurant Management" },
       { property: "og:description", content: "Professional multi-store POS ecosystem for modern Malaysian hospitality." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:site", content: "@WarungJnJ" },
     ],
     links: [
       {
@@ -176,6 +176,20 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const location = useLocation();
   
+  // Enforce production custom domain (warungjnj.online) when opened outside the Lovable editor iframe
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname;
+      if (host.includes('lovable.app') || host.includes('lovableproject.com')) {
+        try {
+          if (window.self === window.top) {
+            window.location.replace(`https://warungjnj.online${window.location.pathname}${window.location.search}${window.location.hash}`);
+          }
+        } catch {}
+      }
+    }
+  }, []);
+
   // Hide the POS admin header on customer and rider portal pages
   const isCustomerFacing = 
     location.pathname === '/' || 
