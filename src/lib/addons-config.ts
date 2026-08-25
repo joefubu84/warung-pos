@@ -5,6 +5,7 @@ export interface CustomAddon {
   name: string;
   price: number;
   available: boolean;
+  imageUrl?: string | null;
 }
 
 export interface PromoConfig {
@@ -59,18 +60,24 @@ export async function syncAddonsToDatabase(addons: CustomAddon[]) {
     // 2. Sync to menu_items table under category 'Add-ons / Sampingan'
     const { data: existingMenuItems } = await supabase
       .from('menu_items')
-      .select('id, name, price, is_available')
+      .select('id, name, price, is_available, image_url')
       .eq('category', 'Add-ons / Sampingan');
 
     const existingMap = new Map((existingMenuItems || []).map(m => [m.name.trim().toLowerCase(), m]));
+    const activeAddonNames = new Set(addons.map(a => a.name.trim().toLowerCase()));
 
     for (const addon of addons) {
       const match = existingMap.get(addon.name.trim().toLowerCase());
       if (match) {
-        if (match.price !== addon.price || match.is_available !== addon.available) {
+        if (
+          match.price !== addon.price || 
+          match.is_available !== addon.available ||
+          (addon.imageUrl && match.image_url !== addon.imageUrl)
+        ) {
           await supabase.from('menu_items').update({
             price: addon.price,
-            is_available: addon.available
+            is_available: addon.available,
+            ...(addon.imageUrl ? { image_url: addon.imageUrl } : {})
           } as any).eq('id', match.id);
         }
       } else {
@@ -79,8 +86,16 @@ export async function syncAddonsToDatabase(addons: CustomAddon[]) {
           category: 'Add-ons / Sampingan',
           price: addon.price,
           is_available: addon.available,
+          image_url: addon.imageUrl || null,
           store_id: storeId
         } as any);
+      }
+    }
+
+    // Deactivate removed addons from menu_items
+    for (const oldItem of (existingMenuItems || [])) {
+      if (!activeAddonNames.has(oldItem.name.trim().toLowerCase()) && oldItem.is_available) {
+        await supabase.from('menu_items').update({ is_available: false } as any).eq('id', oldItem.id);
       }
     }
   } catch (e) {
