@@ -302,12 +302,36 @@ const addSplitPayment = () => {
   };
 
 
-  const categories = ['All', ...Array.from(new Set(menuItems.map(m => m.category || 'Uncategorized')))];
+  const getCategoryPriority = (category: string): number => {
+    const cat = (category || '').toLowerCase().trim();
+    if (cat === 'all') return 0;
+    if (cat.includes('chicken') || cat.includes('ayam')) return 1;
+    if (cat.includes('fish') || cat.includes('ikan')) return 2;
+    if (cat.includes('special') || cat.includes('today')) return 3;
+    if (cat.includes('food') || cat.includes('main') || cat.includes('makanan')) return 4;
+    if (cat.includes('new') || cat.includes('baru')) return 5;
+    if (cat.includes('drink') || cat.includes('minum') || cat.includes('beverage')) return 8;
+    if (cat.includes('addon') || cat.includes('add-on') || cat.includes('sampingan') || cat.includes('extra')) return 9;
+    return 6;
+  };
+
+  const rawCats = Array.from(new Set(menuItems.map(m => m.category || 'Uncategorized'))).sort((a, b) => {
+    const prioA = getCategoryPriority(a);
+    const prioB = getCategoryPriority(b);
+    if (prioA !== prioB) return prioA - prioB;
+    return a.localeCompare(b);
+  });
+  const categories = ['All', ...rawCats];
 
   const filteredMenu = menuItems.filter(item => {
     if (selectedCategory !== 'All' && (item.category || 'Uncategorized') !== selectedCategory) return false;
     if (searchMenuQuery && !item.name.toLowerCase().includes(searchMenuQuery.toLowerCase())) return false;
     return true;
+  }).sort((a, b) => {
+    const prioA = getCategoryPriority(a.category || '');
+    const prioB = getCategoryPriority(b.category || '');
+    if (prioA !== prioB) return prioA - prioB;
+    return a.name.localeCompare(b.name);
   });
 
 const handlePlaceOrderClick = () => {

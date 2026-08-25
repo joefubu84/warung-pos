@@ -295,20 +295,47 @@ export function TableQRPage() {
     fetchData();
   }, [token]);
 
-  // Unique categories list
+  // Category Priority: Chicken -> Fish -> Main Food -> Drinks -> Add-ons / Sampingan
+  const getCategoryPriority = (category: string): number => {
+    const cat = (category || '').toLowerCase().trim();
+    if (cat === 'all') return 0;
+    if (cat.includes('chicken') || cat.includes('ayam')) return 1;
+    if (cat.includes('fish') || cat.includes('ikan')) return 2;
+    if (cat.includes('special') || cat.includes('today')) return 3;
+    if (cat.includes('food') || cat.includes('main') || cat.includes('makanan')) return 4;
+    if (cat.includes('new') || cat.includes('baru')) return 5;
+    if (cat.includes('drink') || cat.includes('minum') || cat.includes('beverage')) return 8;
+    if (cat.includes('addon') || cat.includes('add-on') || cat.includes('sampingan') || cat.includes('extra')) return 9;
+    return 6;
+  };
+
+  // Unique categories list (Main dishes first, Add-ons last)
   const categories = useMemo(() => {
     const set = new Set<string>();
     menuItems.forEach(i => i.category && set.add(i.category));
-    return ['All', ...Array.from(set)];
+    const sortedList = Array.from(set).sort((a, b) => {
+      const prioA = getCategoryPriority(a);
+      const prioB = getCategoryPriority(b);
+      if (prioA !== prioB) return prioA - prioB;
+      return a.localeCompare(b);
+    });
+    return ['All', ...sortedList];
   }, [menuItems]);
 
-  // Filtered menu items
+  // Filtered menu items (Main dishes first, Add-ons / Sampingan at bottom)
   const filteredMenuItems = useMemo(() => {
-    return menuItems.filter(item => {
+    const items = menuItems.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            item.category.toLowerCase().includes(searchQuery.toLowerCase());
+                            (item.category && item.category.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesCat = selectedCategory === 'All' || item.category === selectedCategory;
       return matchesSearch && matchesCat;
+    });
+
+    return items.sort((a, b) => {
+      const prioA = getCategoryPriority(a.category || '');
+      const prioB = getCategoryPriority(b.category || '');
+      if (prioA !== prioB) return prioA - prioB;
+      return a.name.localeCompare(b.name);
     });
   }, [menuItems, searchQuery, selectedCategory]);
 
