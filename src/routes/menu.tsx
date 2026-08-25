@@ -224,37 +224,43 @@ function MenuPage() {
     if (!window.confirm(`Adakah anda pasti mahu memadam hidangan "${itemName}"?`)) return;
     
     try {
-      // 1. Cuba pemadaman terus (Hard Delete)
-      const { error } = await supabase
+      // 1. Bersihkan rujukan child records dalam order_items jika ada
+      try {
+        await supabase
+          .from('order_items')
+          .delete()
+          .eq('menu_item_id', id);
+      } catch (childErr) {
+        console.warn('Child order_items clean note:', childErr);
+      }
+
+      // 2. Padam menu_items terus dari pangkalan data
+      const { error: deleteError } = await supabase
         .from('menu_items')
         .delete()
         .eq('id', id);
 
-      if (error) {
-        // 2. Jika ada sejarah pesanan lampau pada order_items (Foreign key constraint 23503)
-        if (error.message?.includes('foreign key constraint') || error.code === '23503') {
-          // Lakukan Soft-Delete / Arkib secara automatik untuk menjaga rekod resit lama
-          const { error: archiveError } = await supabase
-            .from('menu_items')
-            .update({ 
-              is_available: false,
-              stock_count: 0
-            })
-            .eq('id', id);
+      if (deleteError) {
+        // 3. Fallback: Jika pemadaman disekat oleh RLS/Kekangan lain, nyahaktifkan status (OFF Menu)
+        const { error: archiveError } = await supabase
+          .from('menu_items')
+          .update({ 
+            is_available: false,
+            ...(itemToDelete?.store_id ? { store_id: itemToDelete.store_id } : {})
+          })
+          .eq('id', id);
 
-          if (archiveError) throw archiveError;
+        if (archiveError) throw deleteError;
 
-          toast.success(`"${itemName}" telah dinyahaktifkan (OFF Menu & Diarkibkan) kerana terdapat sejarah resit pesanan pelanggan terdahulu.`);
-          await fetchMenuItems();
-          return;
-        }
-        throw error;
+        toast.success(`"${itemName}" telah dinyahaktifkan (OFF Menu & Disembunyikan).`);
+        await fetchMenuItems();
+        return;
       }
 
       toast.success(`Hidangan "${itemName}" telah berjaya dipadam.`);
       await fetchMenuItems();
     } catch (err: any) {
-      toast.error('Gagal memadam menu: ' + err.message);
+      toast.error('Gagal memadam menu: ' + (err.message || 'Sila cuba lagi'));
     }
   };
 
