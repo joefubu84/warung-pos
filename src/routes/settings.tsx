@@ -244,11 +244,11 @@ function SettingsPage() {
 
   const [homepageForm, setHomepageForm] = useState({
     hero_item_id: '',
-    hero_title: 'Taste the Soul of Malaysia',
+    hero_title: 'Rasa Asli, Sambal Padu — Dapur Warung J&J',
     bento_1_item_id: '',
-    bento_1_title: 'The Perfect Atmosphere',
+    bento_1_title: 'Ruang Santai & Mesra Keluarga',
     bento_2_item_id: '',
-    bento_2_title: 'Uncompromised Spices',
+    bento_2_title: 'Pilihan Tambahan & Lauk Sampingan',
   });
 
   useEffect(() => {
@@ -264,11 +264,11 @@ function SettingsPage() {
       const hp = (store as any).settings?.homepage || {};
       setHomepageForm({
         hero_item_id: hp.hero_item_id || '',
-        hero_title: hp.hero_title || 'Taste the Soul of Malaysia',
+        hero_title: hp.hero_title || 'Rasa Asli, Sambal Padu — Dapur Warung J&J',
         bento_1_item_id: hp.bento_1_item_id || '',
-        bento_1_title: hp.bento_1_title || 'The Perfect Atmosphere',
+        bento_1_title: hp.bento_1_title || 'Ruang Santai & Mesra Keluarga',
         bento_2_item_id: hp.bento_2_item_id || '',
-        bento_2_title: hp.bento_2_title || 'Uncompromised Spices',
+        bento_2_title: hp.bento_2_title || 'Pilihan Tambahan & Lauk Sampingan',
       });
     }
   }, [store]);
