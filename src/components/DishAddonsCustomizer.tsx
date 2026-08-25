@@ -7,9 +7,10 @@ import { toast } from 'sonner';
 import { 
   CustomAddon, 
   getAddonsConfig, 
-  saveAddonsConfig 
+  saveAddonsConfig,
+  syncAddonsToDatabase
 } from '@/lib/addons-config';
-import { Plus, Trash2, RotateCcw, Utensils } from 'lucide-react';
+import { Plus, Trash2, RotateCcw, Utensils, RefreshCw, Sparkles, CheckCircle2 } from 'lucide-react';
 
 const PRESET_ADDONS = [
   { name: 'Telur Mata (Fried Egg)', price: 1.50 },
@@ -26,14 +27,30 @@ export function DishAddonsCustomizer() {
   const [addons, setAddons] = useState<CustomAddon[]>([]);
   const [newName, setNewName] = useState('');
   const [newPrice, setNewPrice] = useState('1.50');
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    setAddons(getAddonsConfig());
+    const current = getAddonsConfig();
+    setAddons(current);
+    // Auto-sync existing addons to database menu_items
+    syncAddonsToDatabase(current);
 
     const handleUpdate = () => setAddons(getAddonsConfig());
     window.addEventListener('warung_addons_updated', handleUpdate);
     return () => window.removeEventListener('warung_addons_updated', handleUpdate);
   }, []);
+
+  const handleManualSync = async () => {
+    setIsSyncing(true);
+    try {
+      await syncAddonsToDatabase(addons);
+      toast.success(`🎉 Berjaya menyegerakkan ${addons.length} add-on ke menu utama! Pelanggan kini boleh membeli terus dari menu.`);
+    } catch (e: any) {
+      toast.error('Gagal menyegerakkan: ' + e.message);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleAddAddon = (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,16 +129,29 @@ export function DishAddonsCustomizer() {
               Urus dan tetapkan senarai add-ons (contoh: Telur Mata, Nasi Tambah, Sambal Ekstra) yang muncul di pop-up pesanan QR meja & troli pelanggan.
             </p>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleResetDefaults}
-            className="border-slate-800 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white text-xs self-start sm:self-auto flex items-center gap-1.5"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset Asal</span>
-          </Button>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              disabled={isSyncing}
+              onClick={handleManualSync}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md"
+            >
+              {isSyncing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+              <span>{isSyncing ? 'Sedang Selaras...' : 'Selaraskan ke Menu Utama'}</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleResetDefaults}
+              className="border-slate-800 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white text-xs flex items-center gap-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset Asal</span>
+            </Button>
+          </div>
         </div>
       </CardHeader>
 

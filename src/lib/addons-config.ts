@@ -1,3 +1,5 @@
+import { supabase } from '@/integrations/supabase/client';
+
 export interface CustomAddon {
   id: string;
   name: string;
@@ -39,11 +41,60 @@ export function getAddonsConfig(): CustomAddon[] {
   return DEFAULT_ADDONS;
 }
 
+export async function syncAddonsToDatabase(addons: CustomAddon[]) {
+  try {
+    const { data: storeData } = await supabase.from('stores').select('id, settings').limit(1).maybeSingle();
+    const storeId = storeData?.id;
+    if (!storeId) return;
+
+    // 1. Save in store settings
+    const currentSettings = (storeData.settings as any) || {};
+    await supabase.from('stores').update({
+      settings: {
+        ...currentSettings,
+        addons
+      }
+    } as any).eq('id', storeId);
+
+    // 2. Sync to menu_items table under category 'Add-ons / Sampingan'
+    const { data: existingMenuItems } = await supabase
+      .from('menu_items')
+      .select('id, name, price, is_available')
+      .eq('category', 'Add-ons / Sampingan');
+
+    const existingMap = new Map((existingMenuItems || []).map(m => [m.name.trim().toLowerCase(), m]));
+
+    for (const addon of addons) {
+      const match = existingMap.get(addon.name.trim().toLowerCase());
+      if (match) {
+        if (match.price !== addon.price || match.is_available !== addon.available) {
+          await supabase.from('menu_items').update({
+            price: addon.price,
+            is_available: addon.available
+          } as any).eq('id', match.id);
+        }
+      } else {
+        await supabase.from('menu_items').insert({
+          name: addon.name.trim(),
+          category: 'Add-ons / Sampingan',
+          price: addon.price,
+          is_available: addon.available,
+          store_id: storeId
+        } as any);
+      }
+    }
+  } catch (e) {
+    console.warn('Sync addons to database note:', e);
+  }
+}
+
 export function saveAddonsConfig(addons: CustomAddon[]) {
   if (typeof localStorage === 'undefined') return;
   try {
     localStorage.setItem(ADDONS_STORAGE_KEY, JSON.stringify(addons));
     if (typeof window !== 'undefined') window.dispatchEvent(new Event('warung_addons_updated'));
+    // Asynchronously push to database & sync with menu_items
+    syncAddonsToDatabase(addons);
   } catch (e) {
     console.error("Failed to save addons config:", e);
   }
