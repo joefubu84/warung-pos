@@ -324,7 +324,8 @@ function CustomerDeliveryPage() {
       if (data) {
         setTrackedOrder(data);
         setShowTrackModal(true);
-        toast.info(`Status langsung pesanan #${data.id.slice(0, 8).toUpperCase()} dimuatkan! 🛵`);
+        const orderShort = data.id ? data.id.slice(0, 8).toUpperCase() : 'DELIVERY';
+        toast.info(`Status langsung pesanan #${orderShort} dimuatkan! 🛵`);
       } else {
         toast.error('Pesanan tidak dijumpai. Sila pastikan pautan atau ID pesanan adalah tepat.');
       }
@@ -1431,10 +1432,11 @@ function CustomerDeliveryPage() {
       // Sync and award loyalty points
       try {
         const pointsToAward = Math.max(1, Math.floor(foodSubtotal));
+        const orderShort = newOrderId ? String(newOrderId).slice(-6) : 'ORD';
         const updatedMember = addMemberPoints(
           customerPhone, 
           pointsToAward, 
-          `Pesanan Delivery #${newOrderId.slice(-6)} (RM ${grandTotal.toFixed(2)})`
+          `Pesanan Delivery #${orderShort} (RM ${grandTotal.toFixed(2)})`
         );
         setLoyaltyMember(updatedMember);
       } catch (e) {
@@ -1553,7 +1555,7 @@ function CustomerDeliveryPage() {
                       🛵 Penjejakan Langsung Pesanan (Live Tracking)
                     </span>
                     <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 font-mono text-[10px] rounded-full font-bold">
-                      #{trackedOrder.id.slice(0, 8).toUpperCase()}
+                      #{trackedOrder?.id ? String(trackedOrder.id).slice(0, 8).toUpperCase() : 'DELIVERY'}
                     </span>
                   </div>
                   <p className="text-xs text-stone-300 font-medium">
@@ -1568,7 +1570,8 @@ function CustomerDeliveryPage() {
                   variant="outline"
                   onClick={() => {
                     const clean = sanitizePhone(storePhone);
-                    const msg = `Salam Warung J&J, saya ingin bertanya status pesanan saya #${trackedOrder.id.slice(0, 8).toUpperCase()}`;
+                    const shortId = trackedOrder?.id ? String(trackedOrder.id).slice(0, 8).toUpperCase() : 'DELIVERY';
+                    const msg = `Salam Warung J&J, saya ingin bertanya status pesanan saya #${shortId}`;
                     window.open(`https://wa.me/${clean}?text=${encodeURIComponent(msg)}`, '_blank');
                   }}
                   className="bg-stone-800 border-stone-700 text-emerald-400 hover:text-emerald-300 h-8 px-2.5 rounded-xl text-[11px] flex items-center gap-1.5"
@@ -2008,7 +2011,7 @@ function CustomerDeliveryPage() {
                       : 'bg-[#292524] text-stone-400 border-stone-800 hover:text-white hover:border-stone-700'
                   }`}
                 >
-                  {cat === 'all' ? '🍽️ Semua Menu' : `🥘 ${cat.charAt(0).toUpperCase() + cat.slice(1)}`}
+                  {cat === 'all' ? '🍽️ Semua Menu' : `🥘 ${cat ? (cat.charAt(0).toUpperCase() + cat.slice(1)) : 'Menu'}`}
                 </button>
               );
             })}
