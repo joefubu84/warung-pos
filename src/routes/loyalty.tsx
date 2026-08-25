@@ -44,6 +44,7 @@ import {
 import { getWhatsAppWebUrl, sanitizePhone } from '@/lib/whatsapp-otp';
 import { MessageSquare, Send, Share2, Trash2, Pencil, RotateCcw, Tag } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 export const Route = createFileRoute('/loyalty')({
   ssr: false,
@@ -91,10 +92,24 @@ function LoyaltyPage() {
     };
     window.addEventListener('warung_loyalty_updated', handleUpdate);
     window.addEventListener('warung_rewards_catalog_updated', handleUpdate);
+    
+    // Initial fetch from cloud/DB
     fetchMembersFromSupabase().then(loaded => setMembers(loaded));
+
+    // Realtime Supabase Subscription on stores and members
+    const loyaltyChannel = supabase.channel(`loyalty_live_${Date.now()}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'stores' }, () => {
+        fetchMembersFromSupabase().then(loaded => setMembers(loaded));
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, () => {
+        fetchMembersFromSupabase().then(loaded => setMembers(loaded));
+      })
+      .subscribe();
+
     return () => {
       window.removeEventListener('warung_loyalty_updated', handleUpdate);
       window.removeEventListener('warung_rewards_catalog_updated', handleUpdate);
+      supabase.removeChannel(loyaltyChannel);
     };
   }, []);
 

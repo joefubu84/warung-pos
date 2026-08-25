@@ -561,10 +561,20 @@ function CustomerDeliveryPage() {
     if (stored) {
       setCurrentUser(stored);
       setCustomerName(prev => prev || stored.name);
+      let phone = '';
       if (stored.email && typeof window !== 'undefined') {
-        const savedPhone = localStorage.getItem(`warung_phone_${stored.email}`) || localStorage.getItem('warung_customer_phone');
-        if (savedPhone) setCustomerPhone(savedPhone);
+        phone = localStorage.getItem(`warung_phone_${stored.email}`) || localStorage.getItem('warung_customer_phone') || '';
+        if (phone) setCustomerPhone(phone);
       }
+      try {
+        const mem = getOrCreateMemberFromGoogle({
+          email: stored.email || '',
+          name: stored.name,
+          id: stored.id,
+          phoneLink: phone
+        });
+        setLoyaltyMember(mem);
+      } catch (e) {}
     }
 
     const checkAuth = async () => {

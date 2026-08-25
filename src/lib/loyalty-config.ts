@@ -116,38 +116,53 @@ export function saveLoyaltyMembers(members: LoyaltyMember[]): void {
 export async function syncMembersToSupabase(members: LoyaltyMember[]): Promise<void> {
   if (typeof window === 'undefined') return;
   try {
-    const { data: storeRow } = await supabase.from('stores').select('id').limit(1).maybeSingle();
+    const { data: storeRow } = await supabase.from('stores').select('id, settings').limit(1).maybeSingle();
     const defaultStoreId = storeRow?.id || '1094d737-8104-4a55-b678-0fe9097beba0';
 
+    // 1. Persist to authoritative store settings JSONB
+    if (storeRow) {
+      const existingSettings = (storeRow.settings as any) || {};
+      await supabase
+        .from('stores')
+        .update({
+          settings: {
+            ...existingSettings,
+            loyalty_members: members
+          }
+        })
+        .eq('id', defaultStoreId);
+    }
+
+    // 2. Attempt relational sync for UUID-compatible members
     for (const m of members) {
       const cleanPhone = m.phone.replace(/\D/g, '');
       const formatted = cleanPhone.startsWith('0') ? '60' + cleanPhone.slice(1) : cleanPhone;
 
-      // 1. Upsert into Supabase `users` table
-      const { data: userRow } = await supabase
-        .from('users')
-        .upsert({
-          id: m.id,
-          name: m.name,
-          phone: formatted,
-          role: 'member',
-          store_id: defaultStoreId
-        } as any, { onConflict: 'id' })
-        .select()
-        .maybeSingle();
+      // Only attempt user table upsert if ID is valid UUID
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(m.id);
+      if (isUUID) {
+        try {
+          await supabase
+            .from('users')
+            .upsert({
+              id: m.id,
+              name: m.name,
+              phone: formatted,
+              role: 'member',
+              store_id: defaultStoreId
+            } as any, { onConflict: 'id' });
 
-      const userId = userRow?.id || m.id;
-
-      // 2. Upsert into Supabase `members` table
-      await supabase
-        .from('members')
-        .upsert({
-          id: `mem-row-${m.id}`,
-          user_id: userId,
-          store_id: defaultStoreId,
-          loyalty_points: m.points,
-          kyc_status: 'verified'
-        } as any, { onConflict: 'id' });
+          await supabase
+            .from('members')
+            .upsert({
+              id: m.id,
+              user_id: m.id,
+              store_id: defaultStoreId,
+              loyalty_points: m.points,
+              kyc_status: 'verified'
+            } as any, { onConflict: 'id' });
+        } catch {}
+      }
     }
   } catch (err) {
     console.warn('Supabase loyalty persistence notice:', err);
@@ -165,6 +180,14 @@ export function clearAllLoyaltyMembers(): void {
     localStorage.removeItem('warung_loyalty_members_v1');
     window.dispatchEvent(new Event('warung_loyalty_updated'));
 
+    // Clear cloud store settings
+    supabase.from('stores').select('id, settings').limit(1).maybeSingle().then(({ data }) => {
+      if (data) {
+        const existing = (data.settings as any) || {};
+        supabase.from('stores').update({ settings: { ...existing, loyalty_members: [] } }).eq('id', data.id).then(() => {});
+      }
+    });
+
     // Purge demo members from Supabase
     supabase.from('members').delete().in('id', ['mem-row-mem-user', 'mem-row-mem-1', 'mem-row-mem-2', 'mem-row-mem-3']).then(() => {}).catch(() => {});
     supabase.from('users').delete().in('id', ['mem-user', 'mem-1', 'mem-2', 'mem-3']).then(() => {}).catch(() => {});
@@ -174,25 +197,22 @@ export function clearAllLoyaltyMembers(): void {
 }
 
 /**
- * Fetches members live from Supabase DB
+ * Fetches members live from Supabase DB & Cloud Settings
  */
 export async function fetchMembersFromSupabase(): Promise<LoyaltyMember[]> {
   try {
-    // Purge demo members in background
-    try {
-      supabase.from('members').delete().in('id', ['mem-row-mem-user', 'mem-row-mem-1', 'mem-row-mem-2', 'mem-row-mem-3']).then(() => {}).catch(() => {});
-      supabase.from('users').delete().in('id', ['mem-user', 'mem-1', 'mem-2', 'mem-3']).then(() => {}).catch(() => {});
-    } catch {}
+    const local = getLoyaltyMembers();
 
-    const { data: memberRows, error } = await supabase
+    // 1. Fetch Cloud Store Members
+    const { data: storeRow } = await supabase.from('stores').select('id, settings').limit(1).maybeSingle();
+    const cloudMembers: LoyaltyMember[] = (storeRow?.settings as any)?.loyalty_members || [];
+
+    // 2. Fetch Relational Members Table
+    const { data: memberRows } = await supabase
       .from('members')
       .select('*, users!inner(*)');
 
-    if (error || !memberRows || memberRows.length === 0) {
-      return getLoyaltyMembers();
-    }
-
-    const loaded: LoyaltyMember[] = memberRows
+    const dbMembers: LoyaltyMember[] = (memberRows || [])
       .filter((r: any) => {
         const id = r.user_id || r.id;
         const name = r.users?.name || '';
@@ -205,15 +225,41 @@ export async function fetchMembersFromSupabase(): Promise<LoyaltyMember[]> {
         points: r.loyalty_points || 0,
         totalSpent: r.loyalty_points ? r.loyalty_points * 1.5 : 0,
         tier: calculateTier(r.loyalty_points || 0),
-        joinedAt: r.created_at?.split('T')[0] || new Date().toISOString().split('T')[0] || '2026-08-15',
-        lastVisitAt: new Date().toISOString().split('T')[0] || '2026-08-15'
+        joinedAt: r.created_at?.split('T')[0] || new Date().toISOString().split('T')[0] || '2026-08-25',
+        lastVisitAt: new Date().toISOString().split('T')[0] || '2026-08-25'
       }));
 
-    localStorage.setItem(MEMBERS_STORAGE_KEY, JSON.stringify(loaded));
-    if (typeof window !== 'undefined') {
-      window.dispatchEvent(new Event('warung_loyalty_updated'));
-    }
-    return loaded;
+    // 3. Deduplicate and Merge All
+    const memberMap = new Map<string, LoyaltyMember>();
+
+    const addOrMerge = (m: LoyaltyMember) => {
+      if (!m || !m.name) return;
+      if (DEMO_MEMBER_IDS.includes(m.id) || DEMO_MEMBER_NAMES.includes(m.name)) return;
+      const key = (m.phone ? m.phone.replace(/\D/g, '') : m.id) || m.id;
+      if (!key) return;
+      
+      const existing = memberMap.get(key);
+      if (!existing) {
+        memberMap.set(key, m);
+      } else {
+        memberMap.set(key, {
+          ...existing,
+          name: m.name || existing.name,
+          points: Math.max(existing.points || 0, m.points || 0),
+          totalSpent: Math.max(existing.totalSpent || 0, m.totalSpent || 0),
+          tier: calculateTier(Math.max(existing.points || 0, m.points || 0)),
+          lastVisitAt: m.lastVisitAt || existing.lastVisitAt
+        });
+      }
+    };
+
+    cloudMembers.forEach(addOrMerge);
+    local.forEach(addOrMerge);
+    dbMembers.forEach(addOrMerge);
+
+    const merged = Array.from(memberMap.values());
+    localStorage.setItem(MEMBERS_STORAGE_KEY, JSON.stringify(merged));
+    return merged;
   } catch (err) {
     return getLoyaltyMembers();
   }
