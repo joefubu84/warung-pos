@@ -1285,6 +1285,61 @@ function CustomerDeliveryPage() {
     setTimeout(() => setCopiedBankAcc(false), 2000);
   };
 
+  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Saiz fail melebihi 10MB. Sila muat naik imej yang lebih kecil.');
+      return;
+    }
+
+    setIsUploadingReceipt(true);
+    try {
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `delivery_receipt_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `receipts/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('receipts')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      let finalUrl = '';
+      if (!error && data) {
+        const { data: urlData } = supabase.storage.from('receipts').getPublicUrl(filePath);
+        finalUrl = urlData.publicUrl;
+      } else {
+        finalUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(file);
+        });
+      }
+
+      setReceiptProofUrl(finalUrl);
+
+      if (activeOrderId) {
+        await supabase
+          .from('orders')
+          .update({
+            payment_proof_url: finalUrl,
+            status: 'pending_verification'
+          })
+          .eq('id', activeOrderId);
+      }
+
+      toast.success('🎉 Resit bayaran berjaya dimuat naik!');
+    } catch (err: any) {
+      console.error('Receipt upload error:', err);
+      toast.error(err.message || 'Gagal memuat naik resit. Sila cuba lagi.');
+    } finally {
+      setIsUploadingReceipt(false);
+    }
+  };
+
   const handleProceedToFPX = async () => {
     setIsFPXLoading(true);
     try {
@@ -1309,6 +1364,8 @@ function CustomerDeliveryPage() {
       setIsFPXLoading(false);
     }
   };
+
+  const handleToyyibPayCheckout = handleProceedToFPX;
 
   const handlePlaceDeliveryOrder = async () => {
     // 1. MUST LOGIN WITH GOOGLE FIRST
