@@ -1451,15 +1451,84 @@ function CustomerDeliveryPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold text-xs px-3 py-1 rounded-full animate-pulse">
-              🟢 Delivery & Online Dibuka
+          <div className="flex items-center gap-2.5">
+            {currentUser ? (
+              <div className="flex items-center gap-2 bg-stone-900/90 border border-stone-700/80 px-2.5 py-1 rounded-2xl">
+                {currentUser.avatarUrl ? (
+                  <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-6 h-6 rounded-full object-cover border border-emerald-500/60 shrink-0" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-[10px] flex items-center justify-center shrink-0">
+                    {currentUser.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <span className="text-xs font-bold text-stone-200 hidden sm:inline max-w-[120px] truncate">
+                  {currentUser.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="text-[10px] text-stone-400 hover:text-rose-400 font-medium ml-1"
+                  title="Log Keluar"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleGoogleLogin}
+                className="bg-white hover:bg-stone-100 text-stone-900 font-bold h-9 px-3.5 rounded-xl flex items-center gap-1.5 text-xs shadow-md active:scale-95 transition-all"
+              >
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span>Log Masuk Google</span>
+              </Button>
+            )}
+            <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold text-xs px-2.5 py-1 rounded-full hidden sm:inline-flex animate-pulse">
+              🟢 Dibuka
             </Badge>
           </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-5 space-y-6">
+        {/* GOOGLE SIGN IN MANDATORY FILTER BANNER */}
+        {!currentUser && (
+          <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-red-500/10 border-2 border-amber-500/40 p-4 sm:p-5 rounded-3xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <div className="space-y-0.5">
+                <h3 className="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                  🔒 Wajib Log Masuk Google untuk Delivery
+                </h3>
+                <p className="text-xs text-stone-300 leading-relaxed">
+                  Bagi mengelakkan pesanan palsu / scam, semua pesanan delivery perlu didaftarkan melalui akaun Google sahaja.
+                </p>
+              </div>
+            </div>
+            <Button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="w-full sm:w-auto bg-white hover:bg-stone-100 text-stone-900 font-bold px-6 h-12 rounded-2xl shadow-xl flex items-center justify-center gap-2.5 text-xs sm:text-sm active:scale-95 transition-all shrink-0 font-heading"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>Log Masuk Google (1-Klik)</span>
+            </Button>
+          </div>
+        )}
+
         {/* STEP 1: DELIVERY ADDRESS & REAL-ROAD ROUTE MAP CARD */}
         <Card className="bg-[#292524] border border-stone-800 text-stone-100 rounded-3xl shadow-xl overflow-hidden">
           <CardContent className="p-4 sm:p-5 space-y-4">
@@ -1713,10 +1782,10 @@ function CustomerDeliveryPage() {
             <CardContent className="p-5 sm:p-6 space-y-5">
               <div className="flex items-center justify-between border-b border-stone-800 pb-3.5">
                 <div className="space-y-0.5">
-                  <h2 className="font-bold text-base sm:text-lg tracking-tight text-white flex items-center gap-2">
+                  <h2 className="font-bold text-base sm:text-lg tracking-tight text-white flex items-center gap-2 font-heading">
                     <User className="w-4 h-4 text-orange-500" /> 3. Maklumat Penerima & Keselamatan
                   </h2>
-                  <p className="text-[11px] text-stone-400">Pengesahan akaun Google & No. Telefon WhatsApp untuk keselamatan pesanan</p>
+                  <p className="text-[11px] text-stone-400">Pendaftaran rasmi akaun Google & No. WhatsApp untuk dihubungi oleh rider</p>
                 </div>
                 <Badge className="bg-orange-500/20 text-orange-300 border-orange-500/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
                   Wajib Diisi
@@ -1725,47 +1794,56 @@ function CustomerDeliveryPage() {
 
               {/* GOOGLE ACCOUNT REQUIREMENT BANNER */}
               {!currentUser ? (
-                <div className="bg-amber-500/10 border-2 border-amber-500/40 p-4 rounded-2xl space-y-2.5 shadow-lg">
-                  <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
-                    <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Wajib Log Masuk Google untuk Buat Pesanan:</span>
+                <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-red-500/10 border-2 border-amber-500/50 p-5 rounded-3xl space-y-3.5 shadow-lg text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/40">
+                    <ShieldCheck className="w-6 h-6" />
                   </div>
-                  <p className="text-xs text-stone-300 leading-relaxed">
-                    Bagi mengelakkan pesanan palsu/scam, sila log masuk dengan akaun Google anda sebelum meneruskan pesanan delivery.
-                  </p>
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-sm sm:text-base text-white font-heading">
+                      🔒 Wajib Log Masuk Google untuk Delivery
+                    </h4>
+                    <p className="text-xs text-stone-300 max-w-md mx-auto leading-relaxed">
+                      Bagi mengelakkan pesanan palsu / scam, semua pesanan delivery perlu didaftarkan melalui akaun Google sahaja.
+                    </p>
+                  </div>
                   <Button
                     type="button"
-                    onClick={() => setShowAuthModal(true)}
-                    className="w-full bg-amber-600 hover:bg-amber-500 text-white font-bold h-10 rounded-xl flex items-center justify-center gap-2 text-xs shadow-md active:scale-95 transition-all"
+                    onClick={handleGoogleLogin}
+                    className="w-full sm:w-auto px-8 bg-white hover:bg-stone-100 text-stone-900 font-bold h-12 rounded-2xl shadow-xl flex items-center justify-center gap-2.5 text-xs sm:text-sm active:scale-95 transition-all mx-auto font-heading"
                   >
-                    <LogIn className="w-4 h-4" />
-                    <span>Log Masuk Pantas dengan Google</span>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                    </svg>
+                    <span>Log Masuk Google (1-Klik)</span>
                   </Button>
                 </div>
               ) : (
-                <div className="bg-emerald-500/10 border border-emerald-500/30 p-3 rounded-2xl flex items-center justify-between gap-2 shadow-inner">
-                  <div className="flex items-center gap-2.5 min-w-0">
+                <div className="bg-emerald-500/10 border border-emerald-500/30 p-3.5 rounded-2xl flex items-center justify-between gap-2 shadow-inner">
+                  <div className="flex items-center gap-3 min-w-0">
                     {currentUser.avatarUrl ? (
-                      <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-7 h-7 rounded-full object-cover border border-emerald-500/60 shrink-0" />
+                      <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-8 h-8 rounded-full object-cover border border-emerald-500/60 shrink-0" />
                     ) : (
-                      <div className="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
                         {currentUser.name.charAt(0).toUpperCase()}
                       </div>
                     )}
                     <div className="min-w-0">
                       <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Akaun Google Disahkan
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Akaun Google Disahkan
                       </p>
-                      <p className="text-xs font-bold text-white truncate">{currentUser.name}</p>
-                      <p className="text-[10px] text-stone-400 truncate">{currentUser.email}</p>
+                      <p className="text-xs sm:text-sm font-bold text-white truncate">{currentUser.name}</p>
+                      <p className="text-[11px] text-stone-400 truncate">{currentUser.email}</p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="text-[11px] text-stone-400 hover:text-rose-400 underline shrink-0 px-2"
+                    className="text-xs text-stone-400 hover:text-rose-400 underline shrink-0 px-2 py-1"
                   >
-                    Tukar
+                    Tukar Akaun
                   </button>
                 </div>
               )}
@@ -1773,7 +1851,7 @@ function CustomerDeliveryPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="space-y-1.5">
                   <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-orange-400" /> Nama Penuh Penerima
+                    <User className="w-3.5 h-3.5 text-orange-400" /> Nama Penerima
                   </label>
                   <Input
                     placeholder="Contoh: Farhan / Siti / John"
@@ -1791,15 +1869,15 @@ function CustomerDeliveryPage() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5 text-emerald-400" /> No. Telefon Bimbit (WhatsApp)
+                      <Phone className="w-3.5 h-3.5 text-emerald-400" /> No. Telefon WhatsApp (Untuk Rider Hubungi)
                     </label>
                     {customerPhone.replace(/\D/g, '').startsWith('01') && customerPhone.replace(/\D/g, '').length >= 10 && customerPhone.replace(/\D/g, '').length <= 11 ? (
                       <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-500/30 flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Format Sah (01X) ✓
+                        <CheckCircle2 className="w-3 h-3" /> Format Sah ✓
                       </span>
                     ) : (
                       <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
-                        ⚠️ Masukkan No. 01X (10-11 digit)
+                        ⚠️ 01X (10-11 digit)
                       </span>
                     )}
                   </div>
@@ -2005,22 +2083,37 @@ function CustomerDeliveryPage() {
                 </div>
               </div>
 
-              <Button 
-                className="w-full h-14 text-sm sm:text-base font-bold bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-2xl shadow-[0_8px_25px_rgba(234,88,12,0.4)] flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all"
-                onClick={handlePlaceDeliveryOrder}
-                disabled={isSubmitting || cart.length === 0 || isOutOfZone || foodSubtotal < 15.00}
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" /> Memproses Pesanan...
-                  </>
-                ) : (
-                  <>
-                    <span>TERUSKAN KE BAYARAN QR / FPX (RM {grandTotal.toFixed(2)})</span>
-                    <ArrowRight className="w-5 h-5" />
-                  </>
-                )}
-              </Button>
+              {!currentUser ? (
+                <Button 
+                  className="w-full h-14 text-sm sm:text-base font-bold bg-white hover:bg-stone-100 text-stone-900 rounded-2xl shadow-xl flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all font-heading"
+                  onClick={handleGoogleLogin}
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                  </svg>
+                  <span>Wajib Log Masuk Google Sebelum Memesan</span>
+                </Button>
+              ) : (
+                <Button 
+                  className="w-full h-14 text-sm sm:text-base font-bold bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-2xl shadow-[0_8px_25px_rgba(234,88,12,0.4)] flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all font-heading"
+                  onClick={handlePlaceDeliveryOrder}
+                  disabled={isSubmitting || cart.length === 0 || isOutOfZone || foodSubtotal < 15.00}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" /> Memproses Pesanan...
+                    </>
+                  ) : (
+                    <>
+                      <span>TERUSKAN KE BAYARAN QR / FPX (RM {grandTotal.toFixed(2)})</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </>
+                  )}
+                </Button>
+              )}
             </CardContent>
           </Card>
         )}
@@ -2041,24 +2134,32 @@ function CustomerDeliveryPage() {
                   onClick={() => setIsCartDrawerOpen(true)}
                   className="bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold px-3.5 py-2.5 rounded-2xl text-xs border border-stone-700 flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
                 >
-                  <ShoppingBag className="w-4 h-4 text-orange-400" />
-                  <span className="hidden sm:inline">Semak Troli</span>
+                  <Eye className="w-3.5 h-3.5" /> Semak ({totalCartCount})
                 </Button>
 
-                <Button 
-                  onClick={handlePlaceDeliveryOrder}
-                  disabled={isSubmitting || isOutOfZone || foodSubtotal < 15.00}
-                  className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold px-5 sm:px-6 py-2.5 rounded-2xl text-xs sm:text-sm shadow-[0_4px_20px_rgba(234,88,12,0.4)] flex items-center gap-2 active:scale-95 transition-all"
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <span>Bayar Sekarang</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </Button>
+                {!currentUser ? (
+                  <Button
+                    onClick={handleGoogleLogin}
+                    className="bg-white hover:bg-stone-100 text-stone-900 font-bold px-5 py-2.5 rounded-2xl text-xs shadow-lg flex items-center gap-2 active:scale-95 transition-all font-heading"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                    </svg>
+                    <span>Log Masuk Google</span>
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handlePlaceDeliveryOrder}
+                    disabled={isSubmitting || isOutOfZone || foodSubtotal < 15.00}
+                    className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold px-5 py-2.5 rounded-2xl text-xs shadow-lg flex items-center gap-1.5 active:scale-95 transition-all font-heading"
+                  >
+                    <span>Teruskan Pesanan</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>
@@ -2078,7 +2179,7 @@ function CustomerDeliveryPage() {
         <Dialog open={isCartDrawerOpen} onOpenChange={setIsCartDrawerOpen}>
           <DialogContent className="bg-[#292524] text-stone-100 border-stone-800 max-w-lg max-h-[85vh] overflow-y-auto p-5 sm:p-6 rounded-3xl shadow-2xl">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-lg font-bold text-orange-400">
+              <DialogTitle className="flex items-center gap-2 text-lg font-bold text-orange-400 font-heading">
                 <ShoppingBag className="w-5 h-5 text-orange-500" /> Troli Pesanan Delivery ({totalCartCount} Pek)
               </DialogTitle>
               <DialogDescription className="text-stone-400 text-xs">
@@ -2232,16 +2333,34 @@ function CustomerDeliveryPage() {
                   <span className="font-mono">RM {grandTotal.toFixed(2)}</span>
                 </div>
 
-                <Button
-                  onClick={() => {
-                    setIsCartDrawerOpen(false);
-                    handlePlaceDeliveryOrder();
-                  }}
-                  disabled={isSubmitting || cart.length === 0 || foodSubtotal < 15.00}
-                  className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold py-3.5 rounded-2xl shadow-xl flex items-center justify-center gap-2 text-xs sm:text-sm mt-3 active:scale-95 transition-all"
-                >
-                  <Check className="w-4 h-4" /> {isSubmitting ? 'Memproses...' : 'Teruskan ke Pembayaran'}
-                </Button>
+                {!currentUser ? (
+                  <Button
+                    onClick={() => {
+                      setIsCartDrawerOpen(false);
+                      handleGoogleLogin();
+                    }}
+                    className="w-full bg-white hover:bg-stone-100 text-stone-900 font-bold py-3.5 rounded-2xl shadow-xl flex items-center justify-center gap-2 text-xs sm:text-sm mt-3 active:scale-95 transition-all font-heading"
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                    </svg>
+                    <span>Log Masuk Google untuk Bayar</span>
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      setIsCartDrawerOpen(false);
+                      handlePlaceDeliveryOrder();
+                    }}
+                    disabled={isSubmitting || cart.length === 0 || foodSubtotal < 15.00}
+                    className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold py-3.5 rounded-2xl shadow-xl flex items-center justify-center gap-2 text-xs sm:text-sm mt-3 active:scale-95 transition-all font-heading"
+                  >
+                    <Check className="w-4 h-4" /> {isSubmitting ? 'Memproses...' : 'Teruskan ke Pembayaran'}
+                  </Button>
+                )}
               </div>
             </div>
           </DialogContent>
@@ -2251,407 +2370,169 @@ function CustomerDeliveryPage() {
         <Dialog open={showDuitNowModal} onOpenChange={setShowDuitNowModal}>
           <DialogContent className="sm:max-w-[420px] bg-[#292524] text-stone-100 border-stone-800 p-5 rounded-3xl max-h-[92vh] overflow-y-auto shadow-2xl">
             <DialogHeader className="text-center sm:text-center pb-1">
-              <DialogTitle className="text-xl font-bold flex items-center justify-center gap-2 text-white">
+              <DialogTitle className="text-xl font-bold flex items-center justify-center gap-2 text-white font-heading">
                 <CreditCard className="w-5 h-5 text-orange-500" /> Kaedah Pembayaran
               </DialogTitle>
             </DialogHeader>
 
             <Tabs defaultValue="duitnow" className="w-full">
               {/* PAYMENT TABS SELECTOR */}
-              <TabsList className="grid grid-cols-3 bg-stone-900 p-1 rounded-2xl border border-stone-800 h-11 w-full mb-3.5">
-                <TabsTrigger value="duitnow" className="text-xs font-bold rounded-xl data-[state=active]:bg-rose-600 data-[state=active]:text-white transition-all">
-                  📱 DuitNow
+              <TabsList className="grid grid-cols-2 bg-stone-900 p-1 rounded-2xl border border-stone-800 h-11 w-full mb-4">
+                <TabsTrigger value="duitnow" className="text-xs font-bold rounded-xl data-[state=active]:bg-orange-600 data-[state=active]:text-white transition-all font-heading">
+                  <QrCode className="w-3.5 h-3.5 mr-1.5" /> DuitNow QR
                 </TabsTrigger>
-                <TabsTrigger value="bank" className="text-xs font-bold rounded-xl data-[state=active]:bg-sky-600 data-[state=active]:text-white transition-all">
-                  🏦 Transfer
-                </TabsTrigger>
-                <TabsTrigger value="fpx" className="text-xs font-bold rounded-xl data-[state=active]:bg-emerald-600 data-[state=active]:text-white transition-all">
-                  🌐 FPX Pay
+                <TabsTrigger value="fpx" className="text-xs font-bold rounded-xl data-[state=active]:bg-orange-600 data-[state=active]:text-white transition-all font-heading">
+                  <Globe className="w-3.5 h-3.5 mr-1.5" /> FPX Online
                 </TabsTrigger>
               </TabsList>
 
-              {/* TAB 1: DUITNOW QR */}
-              <TabsContent value="duitnow" className="space-y-3.5 mt-0 focus-visible:outline-none">
-                <div className="flex flex-col items-center justify-center space-y-3">
-                  <div className="relative group bg-white p-3 rounded-2xl shadow-2xl border-4 border-[#a6192e] w-full max-w-[240px] flex flex-col items-center text-center">
-                    {/* Header */}
-                    <div className="w-full bg-[#a6192e] text-white text-[10px] font-black py-1 px-2.5 rounded-lg tracking-wider uppercase flex items-center justify-between mb-1.5">
-                      <span className="font-sans font-bold">WARUNG JNJ</span>
-                      <span className="text-[9px] font-mono bg-white/20 px-1.5 py-0.5 rounded-full">DuitNow QR</span>
-                    </div>
-
-                    {/* QR Code with Centered Warung Logo */}
-                    <div className="relative w-full flex items-center justify-center">
-                      <img 
-                        src="/duitnow-qr.png" 
-                        alt="Warung JNJ DuitNow QR" 
-                        className="w-full h-auto rounded-lg object-contain max-h-[160px]"
-                      />
-                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="bg-white p-0.5 rounded-lg shadow-md border-2 border-[#a6192e]">
-                          <img src="/warung-logo.png" alt="Warung JNJ Logo" className="w-7 h-7 object-contain rounded-md" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="w-full mt-1.5 pt-1.5 border-t border-gray-100 font-mono text-center">
-                      <p className="text-[10px] font-black text-[#a6192e] uppercase tracking-wide">Alliance Bank</p>
-                      <p className="text-[8px] text-gray-500 font-semibold leading-none">Alliance Bank Malaysia Berhad</p>
-                    </div>
+              {/* TAB 1: DUITNOW QR PAYMENT */}
+              <TabsContent value="duitnow" className="space-y-4 mt-0 focus-visible:outline-none">
+                <div className="bg-stone-900/90 border border-stone-800 p-4 rounded-2xl flex flex-col items-center text-center space-y-3 shadow-inner">
+                  <div className="flex items-center justify-between w-full border-b border-stone-800 pb-2">
+                    <span className="text-xs text-stone-400 font-medium">Jumlah Perlu Dibayar:</span>
+                    <span className="text-lg font-black text-emerald-400 font-mono">RM {grandTotal.toFixed(2)}</span>
                   </div>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDownloadQR}
-                    className="bg-stone-800 border-stone-700 text-stone-200 hover:bg-stone-700 hover:text-white rounded-xl text-xs gap-1.5 h-8 px-3.5 shadow-sm active:scale-95 transition-all"
-                  >
-                    <Download className="w-3.5 h-3.5 text-rose-400" />
-                    Simpan / Download QR
-                  </Button>
-                </div>
-              </TabsContent>
-
-              {/* TAB 2: DIRECT BANK TRANSFER (ALLIANCE BANK) */}
-              <TabsContent value="bank" className="space-y-3 mt-0 focus-visible:outline-none">
-                <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 space-y-3 text-left">
-                  <div className="flex items-center gap-2.5 border-b border-stone-800 pb-2.5">
-                    <div className="bg-sky-500/20 p-2 rounded-xl text-sky-400">
-                      <Building2 className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-white">Alliance Bank Malaysia</h4>
-                      <p className="text-[11px] text-stone-400 font-mono">Instant Online Transfer (Free)</p>
-                    </div>
+                  <div className="p-3 bg-white rounded-2xl shadow-xl border-4 border-orange-500/30">
+                    <img 
+                      src="/duitnow-qr.png" 
+                      alt="Warung JNJ DuitNow QR" 
+                      className="w-48 h-48 object-contain rounded-lg"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=DuitNow-Warung-JNJ";
+                      }}
+                    />
                   </div>
 
-                  <div className="space-y-2 text-xs">
-                    <div className="bg-stone-950 p-2.5 rounded-xl border border-stone-800/80">
-                      <span className="text-stone-400 block text-[10px]">Nama Pemegang Akaun:</span>
-                      <span className="text-white font-bold text-xs">J&J CAFE & CATERING</span>
+                  <div className="w-full space-y-1.5 bg-stone-950/80 p-3 rounded-xl border border-stone-800 text-left text-xs">
+                    <div className="flex justify-between items-center text-stone-400">
+                      <span>Nama Penerima:</span>
+                      <span className="font-bold text-white">WARUNG JNJ</span>
                     </div>
-
-                    <div className="bg-stone-950 p-2.5 rounded-xl border border-stone-800/80 flex items-center justify-between">
-                      <div>
-                        <span className="text-stone-400 block text-[10px]">No. Akaun Alliance Bank:</span>
-                        <span className="text-sky-300 font-mono font-bold text-sm">101960010088888</span>
-                      </div>
-                      <Button
-                        size="sm"
-                        onClick={() => handleCopyBankAcc('101960010088888')}
-                        className="bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 rounded-xl text-xs gap-1 h-8 px-3 active:scale-95 transition-all"
-                      >
-                        {copiedBankAcc ? <Check className="w-3 h-3 text-sky-400" /> : <Copy className="w-3 h-3" />}
-                        {copiedBankAcc ? 'Disalin!' : 'Salin No'}
-                      </Button>
+                    <div className="flex justify-between items-center text-stone-400">
+                      <span>Bank Penerima:</span>
+                      <span className="font-bold text-white">Maybank / CIMB / Touch n Go</span>
                     </div>
                   </div>
                 </div>
-              </TabsContent>
 
-              {/* TAB 3: TOYYIBPAY FPX ONLINE BANKING */}
-              <TabsContent value="fpx" className="space-y-3 mt-0 focus-visible:outline-none">
-                <div className="bg-stone-900 border border-stone-800 rounded-2xl p-4 space-y-3 text-center">
-                  <div className="flex items-center justify-center gap-2 text-emerald-400">
-                    <Globe className="w-6 h-6 animate-pulse" />
-                    <span className="font-bold text-sm">FPX Online Banking Malaysia</span>
-                  </div>
-                  
-                  <p className="text-xs text-stone-300 leading-relaxed">
-                    Bayar terus melalui portal perbankan rasmi (Maybank2u, CIMB Clicks, Bank Islam, RHB, Public Bank, dll).
-                  </p>
-
-                  <Button
-                    onClick={handleProceedToFPX}
-                    disabled={isFPXLoading}
-                    className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-emerald-600/30 gap-2 flex items-center justify-center active:scale-95 transition-all"
-                  >
-                    {isFPXLoading ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" /> Membuka FPX...
-                      </>
-                    ) : (
-                      `Buka FPX Gateway (RM ${grandTotal.toFixed(2)}) 🌐`
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
+                    <UploadCloud className="w-4 h-4 text-orange-400" /> Muat Naik Resit Bukti Bayaran (Wajib)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*,application/pdf"
+                      onChange={handleReceiptUpload}
+                      disabled={isUploadingReceipt}
+                      className="w-full text-xs text-stone-300 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-orange-600 file:text-white hover:file:bg-orange-500 file:cursor-pointer cursor-pointer bg-stone-900 border border-stone-800 rounded-2xl p-2"
+                    />
+                    {isUploadingReceipt && (
+                      <div className="absolute inset-0 bg-stone-900/80 rounded-2xl flex items-center justify-center gap-2 text-xs text-orange-400">
+                        <Loader2 className="w-4 h-4 animate-spin" /> Memuat naik resit...
+                      </div>
                     )}
+                  </div>
+                  {receiptProofUrl && (
+                    <p className="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
+                      <CheckCircle2 className="w-3.5 h-3.5" /> Resit berjaya dimuat naik!
+                    </p>
+                  )}
+                </div>
+              </TabsContent>
+
+              {/* TAB 2: FPX ONLINE BANKING */}
+              <TabsContent value="fpx" className="space-y-4 mt-0 focus-visible:outline-none">
+                <div className="bg-stone-900/90 border border-stone-800 p-4 rounded-2xl text-center space-y-3 shadow-inner">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-500/20 text-orange-400 flex items-center justify-center mx-auto border border-orange-500/30">
+                    <Globe className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-sm text-white">ToyyibPay FPX Online Banking</h4>
+                    <p className="text-xs text-stone-400">
+                      Bayar terus secara online melalui Maybank2u, CIMB Clicks, Bank Islam, RHB, dsb.
+                    </p>
+                  </div>
+                  <div className="p-3 bg-stone-950 rounded-xl border border-stone-800 flex justify-between items-center text-xs">
+                    <span className="text-stone-400">Jumlah Bayaran:</span>
+                    <span className="font-bold text-emerald-400 font-mono text-base">RM {grandTotal.toFixed(2)}</span>
+                  </div>
+
+                  <Button
+                    type="button"
+                    onClick={handleToyyibPayCheckout}
+                    disabled={isFPXLoading}
+                    className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold h-12 rounded-xl shadow-lg flex items-center justify-center gap-2 text-xs active:scale-95 transition-all font-heading"
+                  >
+                    {isFPXLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CreditCard className="w-4 h-4" />}
+                    <span>Buka Portal Pembayaran FPX</span>
                   </Button>
                 </div>
               </TabsContent>
             </Tabs>
 
-            {/* TOTAL AMOUNT BAR */}
-            <div className="w-full bg-stone-900 border border-stone-800 rounded-2xl p-3 px-4 flex items-center justify-between mt-1 shadow-inner">
-              <div>
-                <p className="text-[11px] text-stone-400 font-medium">Jumlah Perlu Dibayar</p>
-                <p className="text-xl font-black text-orange-400 tracking-tight font-mono">
-                  RM {grandTotal.toFixed(2)}
-                </p>
-              </div>
+            <div className="pt-3 border-t border-stone-800 flex flex-col gap-2">
               <Button
-                size="sm"
-                onClick={handleCopyAmount}
-                className="bg-orange-500/20 hover:bg-orange-500/30 text-orange-300 border border-orange-500/30 rounded-xl text-xs gap-1 h-8 px-3 active:scale-95 transition-all"
-              >
-                {copiedAmount ? <Check className="w-3 h-3 text-orange-400" /> : <Copy className="w-3 h-3" />}
-                {copiedAmount ? 'Tersalin!' : 'Salin RM'}
-              </Button>
-            </div>
-
-            {/* ACTIONS */}
-            <div className="w-full space-y-2 pt-1.5">
-              {/* WHATSAPP SEND PROOF BUTTON */}
-              {/* ANTI-SCAM VERIFICATION BANNER */}
-              <div className="bg-amber-500/10 border border-amber-500/30 p-3 rounded-2xl flex items-start gap-2.5 text-xs text-amber-200 shadow-inner">
-                <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                <div className="space-y-0.5 text-[11px] leading-relaxed">
-                  <span className="font-bold text-amber-300 block">🛡️ Polisi Anti-Scam Warung JNJ:</span>
-                  <span>
-                    Sila hantar / tunjukkan resit bayaran. Pesanan anda akan disahkan oleh juruwang Warung JNJ sebelum hidangan dimasak & diserahkan kepada rider untuk penghantaran.
-                  </span>
-                </div>
-              </div>
-
-              {/* WHATSAPP SEND PROOF BUTTON */}
-              <Button 
-                className="w-full h-12 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-lg shadow-emerald-600/30 gap-2 flex items-center justify-center transition-all active:scale-[0.98]"
-                onClick={handleSendWhatsAppProof}
-              >
-                <MessageCircle className="w-4 h-4 fill-current" />
-                Hantar Resit Bayaran via WhatsApp 💬
-              </Button>
-
-              {/* I HAVE PAID CONFIRMATION BUTTON */}
-              <Button 
-                variant="outline"
-                className="w-full h-11 bg-stone-800 hover:bg-stone-700 text-stone-200 hover:text-white font-semibold text-xs border-stone-700 rounded-2xl active:scale-[0.98] transition-all"
-                onClick={async () => {
-                  if (activeOrderId) {
-                    await supabase
-                      .from('orders')
-                      .update({
-                        status: 'pending_verification',
-                      })
-                      .eq('id', activeOrderId);
-                  }
+                type="button"
+                onClick={() => {
                   setShowDuitNowModal(false);
-                  toast.success('🎉 Resit direkodkan! Pihak Warung JNJ sedang menyemak bayaran anda sebelum job diserahkan kepada rider.', { duration: 6000 });
-                  setCart([]);
+                  toast.success('Pesanan anda telah direkodkan. Admin sedang menyemak bayaran.');
                 }}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-11 rounded-xl text-xs active:scale-95 transition-all font-heading"
               >
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mr-1.5" />
                 ✅ Saya Dah Selesai Bayar & Hantar Resit
               </Button>
             </div>
           </DialogContent>
         </Dialog>
 
-        {/* CUSTOMER AUTHENTICATION MODAL (DUAL MODE: PHONE+NAME & GOOGLE) */}
+        {/* CUSTOMER AUTHENTICATION MODAL (100% GOOGLE OAUTH EXCLUSIVE) */}
         <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
-          <DialogContent className="sm:max-w-[420px] bg-[#292524] text-stone-100 border-stone-800 p-6 rounded-3xl shadow-2xl">
-            <DialogHeader className="text-center sm:text-center space-y-2 pb-1">
-              <div className="w-12 h-12 rounded-2xl bg-orange-500/20 text-orange-400 flex items-center justify-center mx-auto border border-orange-500/30">
-                <ShieldCheck className="w-6 h-6" />
+          <DialogContent className="sm:max-w-[400px] bg-[#292524] text-stone-100 border-stone-800 p-6 rounded-3xl shadow-2xl">
+            <DialogHeader className="text-center sm:text-center space-y-2.5 pb-1">
+              <div className="w-14 h-14 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/30 shadow-inner">
+                <ShieldCheck className="w-7 h-7" />
               </div>
-              <DialogTitle className="text-lg font-bold text-white">
+              <DialogTitle className="text-lg font-bold text-white font-heading">
                 Pengesahan Pelanggan Delivery
               </DialogTitle>
-              <DialogDescription className="text-xs text-stone-400 leading-relaxed">
-                Untuk keselamatan pesanan & mengelakkan pesanan palsu/scam, sila sahkan maklumat diri anda:
+              <DialogDescription className="text-xs text-stone-300 leading-relaxed">
+                Untuk keselamatan pesanan & perlindungan daripada pesanan palsu / scam, sila log masuk menggunakan akaun Google anda:
               </DialogDescription>
             </DialogHeader>
 
-            <Tabs defaultValue="phone" className="w-full pt-1">
-              <TabsList className="grid grid-cols-2 bg-stone-900 p-1 rounded-2xl border border-stone-800 h-10 w-full mb-3.5">
-                <TabsTrigger value="phone" className="text-xs font-bold rounded-xl data-[state=active]:bg-orange-600 data-[state=active]:text-white transition-all">
-                  📱 No. Telefon (Pantas)
-                </TabsTrigger>
-                <TabsTrigger value="google" className="text-xs font-bold rounded-xl data-[state=active]:bg-white data-[state=active]:text-stone-900 transition-all">
-                  🔴 Akaun Google
-                </TabsTrigger>
-              </TabsList>
-
-              {/* TAB 1: QUICK PHONE & NAME REGISTRATION */}
-              <TabsContent value="phone" className="space-y-3.5 mt-0 focus-visible:outline-none">
-                <div className="space-y-3 bg-stone-900/90 border border-stone-800 p-4 rounded-2xl">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
-                      <User className="w-3.5 h-3.5 text-orange-400" /> Nama Penuh Anda
-                    </label>
-                    <Input
-                      placeholder="Contoh: Farhan / Siti / John"
-                      value={authNameInput || customerName}
-                      onChange={(e) => {
-                        setAuthNameInput(e.target.value);
-                        setCustomerName(e.target.value);
-                      }}
-                      className="bg-stone-950 border-stone-800 text-white placeholder:text-stone-500 rounded-xl text-xs h-10 shadow-inner"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5 text-emerald-400" /> No. Telefon WhatsApp
-                    </label>
-                    <Input
-                      placeholder="Contoh: 0198887766"
-                      value={authPhoneInput || customerPhone}
-                      onChange={(e) => {
-                        setAuthPhoneInput(e.target.value);
-                        setCustomerPhone(e.target.value);
-                      }}
-                      className="bg-stone-950 border-stone-800 text-white placeholder:text-stone-500 rounded-xl text-xs h-10 shadow-inner"
-                    />
-                  </div>
-
-                  <Button
-                    type="button"
-                    onClick={handleQuickPhoneRegister}
-                    className="w-full h-11 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2 text-xs active:scale-95 transition-all mt-1"
-                  >
-                    <Check className="w-4 h-4" />
-                    <span>Sahkan & Teruskan Pesanan 🚀</span>
-                  </Button>
-                </div>
-              </TabsContent>
-
-              {/* TAB 2: GOOGLE AUTH */}
-              <TabsContent value="google" className="space-y-3.5 mt-0 focus-visible:outline-none">
-                <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl space-y-2 text-xs text-stone-300">
-                  <p className="font-bold text-amber-400 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5" /> Kelebihan Akaun Google:
-                  </p>
-                  <ul className="space-y-1 text-[11px] text-stone-400">
-                    <li className="flex items-center gap-1.5">✓ Pengesahan automatik akaun rasmi Google</li>
-                    <li className="flex items-center gap-1.5">✓ Simpan sejarah & alamat penghantaran</li>
-                  </ul>
-                </div>
-
-                <Button
-                  type="button"
-                  onClick={handleGoogleLogin}
-                  className="w-full h-12 bg-white hover:bg-stone-100 text-stone-900 font-bold rounded-2xl shadow-lg flex items-center justify-center gap-2.5 active:scale-95 transition-all text-xs"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                  </svg>
-                  <span>Log Masuk dengan Akaun Google</span>
-                </Button>
-              </TabsContent>
-            </Tabs>
-
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setShowAuthModal(false)}
-              className="w-full text-xs text-stone-500 hover:text-stone-400 h-8 mt-1"
-            >
-              Tutup
-            </Button>
-          </DialogContent>
-        </Dialog>
-
-        {/* WHATSAPP OTP VERIFICATION DIALOG */}
-        <Dialog open={showOtpModal} onOpenChange={setShowOtpModal}>
-          <DialogContent className="sm:max-w-[420px] bg-[#292524] text-stone-100 border-stone-800 p-6 rounded-3xl shadow-2xl">
-            <DialogHeader className="text-center sm:text-center space-y-2 pb-1">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30">
-                <MessageCircle className="w-6 h-6" />
-              </div>
-              <DialogTitle className="text-lg font-bold text-white">
-                Pengesahan No. Telefon WhatsApp
-              </DialogTitle>
-              <DialogDescription className="text-xs text-stone-400 leading-relaxed">
-                Sila sahkan bahawa nombor <span className="font-bold text-emerald-400 font-mono">{customerPhone}</span> adalah nombor WhatsApp aktif anda:
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-4 pt-1">
-              {/* OPTION 1: 1-CLICK OFFICIAL WHATSAPP HANDSHAKE */}
-              <div className="bg-emerald-950/40 border border-emerald-500/40 p-3.5 rounded-2xl space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-bold text-emerald-300 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" /> Cara Pantas (1-Klik Sah):
-                  </span>
-                  <Badge className="bg-emerald-500/20 text-emerald-300 border-0 text-[10px]">
-                    Disyorkan
-                  </Badge>
-                </div>
-                <p className="text-[11px] text-stone-300 leading-relaxed">
-                  Buka WhatsApp dan hantar mesej pengesahan ke nombor rasmi Warung JNJ.
+            <div className="space-y-4 pt-2">
+              <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl space-y-2 text-xs text-stone-300">
+                <p className="font-bold text-amber-400 flex items-center gap-1.5 font-heading">
+                  <Sparkles className="w-3.5 h-3.5" /> Jaminan Keselamatan Warung:
                 </p>
-                <Button
-                  type="button"
-                  onClick={handleOpenWhatsAppDirectVerification}
-                  className="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-md flex items-center justify-center gap-2 text-xs active:scale-95 transition-all"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  <span>Buka WhatsApp Warung (Sahkan Serta-Merta) 🚀</span>
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-3 text-stone-600">
-                <div className="h-px bg-stone-800 flex-1" />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-stone-400">Atau Masukkan Kod</span>
-                <div className="h-px bg-stone-800 flex-1" />
-              </div>
-
-              {/* OPTION 2: ENTER 6-DIGIT OTP */}
-              <div className="space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <label className="font-bold text-stone-300">
-                    Kod Keselamatan 6-Digit:
-                  </label>
-                  {currentOtpCode && (
-                    <button
-                      type="button"
-                      onClick={() => setOtpInput(currentOtpCode)}
-                      className="text-[11px] text-orange-400 hover:text-orange-300 underline font-mono"
-                    >
-                      Isi Kod ({currentOtpCode})
-                    </button>
-                  )}
-                </div>
-                <Input
-                  type="text"
-                  maxLength={6}
-                  placeholder="Contoh: 123456"
-                  value={otpInput}
-                  onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
-                  className="bg-stone-950 border-stone-700 text-white text-center text-2xl font-mono tracking-widest h-12 rounded-2xl focus:border-emerald-500 shadow-inner"
-                />
-
-                <Button
-                  type="button"
-                  onClick={handleVerifyOtp}
-                  disabled={isVerifyingOtp || otpInput.length < 6}
-                  className="w-full h-11 bg-stone-800 hover:bg-stone-700 text-white font-bold rounded-xl shadow border border-stone-700 flex items-center justify-center gap-2 text-xs active:scale-95 transition-all"
-                >
-                  {isVerifyingOtp ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                  <span>Sahkan Kod & Teruskan</span>
-                </Button>
-              </div>
-
-              <div className="flex items-center justify-between text-xs text-stone-400 pt-1">
-                <span>Perlukan kod baharu?</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={otpCooldown > 0 || isSendingOtp}
-                  onClick={() => handleRequestOtp(customerPhone)}
-                  className="text-xs text-orange-400 hover:text-orange-300 p-0 h-auto font-bold"
-                >
-                  {otpCooldown > 0 ? `Tunggu (${otpCooldown}s)` : 'Jana Kod Baru'}
-                </Button>
+                <ul className="space-y-1.5 text-[11px] text-stone-400">
+                  <li className="flex items-center gap-2">✓ Pengesahan 1-Klik melalui akaun Google rasmi</li>
+                  <li className="flex items-center gap-2">✓ Simpan alamat & sejarah pesanan secara automatik</li>
+                  <li className="flex items-center gap-2">✓ Tiada kod OTP nombor telefon diperlukan</li>
+                </ul>
               </div>
 
               <Button
                 type="button"
+                onClick={handleGoogleLogin}
+                className="w-full h-13 bg-white hover:bg-stone-100 text-stone-900 font-bold rounded-2xl shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all text-xs sm:text-sm font-heading"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                </svg>
+                <span>Log Masuk dengan Google (1-Klik)</span>
+              </Button>
+
+              <Button
+                type="button"
                 variant="ghost"
-                onClick={() => setShowOtpModal(false)}
+                onClick={() => setShowAuthModal(false)}
                 className="w-full text-xs text-stone-500 hover:text-stone-400 h-8"
               >
                 Tutup
