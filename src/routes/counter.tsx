@@ -17,8 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Minus, Search, Trash2, ShoppingCart, CheckCircle2, Lock, Unlock, AlertTriangle, Split } from "lucide-react";
+import { Plus, Minus, Search, Trash2, ShoppingCart, CheckCircle2, Lock, Unlock, AlertTriangle, Split, Globe, Radio } from "lucide-react";
 import { COMMON_MODIFIERS, detectModifierBadges } from "@/lib/kitchen-checklist-config";
+import { toast } from 'sonner';
 
 export const Route = createFileRoute('/counter')({
   ssr: false,
@@ -120,6 +121,8 @@ const addSplitPayment = () => {
   const [closedAtTime, setClosedAtTime] = useState<string | null>(null);
   const [isReopenModalOpen, setIsReopenModalOpen] = useState(false);
   const [showDuitNowModal, setShowDuitNowModal] = useState(false);
+  const [isOnlineOrderingEnabled, setIsOnlineOrderingEnabled] = useState<boolean>(true);
+  const [isUpdatingOnlineStatus, setIsUpdatingOnlineStatus] = useState<boolean>(false);
 
   const fetchCashStatus = useCallback(async () => {
     const res = await getTodayCashStatus(storeId);
@@ -127,21 +130,83 @@ const addSplitPayment = () => {
     setClosedAtTime(res.closedAt);
   }, [storeId]);
 
+  const fetchStoreSettings = useCallback(async () => {
+    try {
+      const { data } = await supabase
+        .from('stores')
+        .select('id, settings')
+        .eq('id', storeId)
+        .maybeSingle();
+
+      if (data) {
+        const settings = (data.settings as any) || {};
+        setIsOnlineOrderingEnabled(settings.online_ordering_enabled !== false);
+      }
+    } catch (e) {
+      console.warn('Failed to fetch store settings:', e);
+    }
+  }, [storeId]);
+
+  const handleToggleOnlineOrders = async () => {
+    if (!storeId) return;
+    setIsUpdatingOnlineStatus(true);
+    const newStatus = !isOnlineOrderingEnabled;
+    try {
+      const { data: currentStore } = await supabase
+        .from('stores')
+        .select('settings')
+        .eq('id', storeId)
+        .single();
+
+      const existingSettings = (currentStore?.settings as any) || {};
+      const { error } = await supabase
+        .from('stores')
+        .update({
+          settings: {
+            ...existingSettings,
+            online_ordering_enabled: newStatus
+          }
+        })
+        .eq('id', storeId);
+
+      if (error) throw error;
+      setIsOnlineOrderingEnabled(newStatus);
+      if (newStatus) {
+        toast.success('🟢 Pesanan Online kini DIBUKA (Delivery & Meja QR Aktif)!');
+      } else {
+        toast.error('🔴 Pesanan Online kini DITUTUP (Pesanan pelanggan disekat).');
+      }
+    } catch (err: any) {
+      console.error('Failed to toggle online ordering status:', err);
+      toast.error('Gagal mengemas kini status pesanan online.');
+    } finally {
+      setIsUpdatingOnlineStatus(false);
+    }
+  };
+
   useEffect(() => {
     fetchInitialData();
     fetchCashStatus();
+    fetchStoreSettings();
     beepAudio.current = new Audio('https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3');
 
-    const channel = supabase.channel(`counter_cash_guard_${Date.now()}`)
+    const cashChannel = supabase.channel(`counter_cash_guard_${Date.now()}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_cash' }, () => {
         fetchCashStatus();
       })
       .subscribe();
 
+    const storeChannel = supabase.channel(`counter_store_settings_${Date.now()}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'stores' }, () => {
+        fetchStoreSettings();
+      })
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(cashChannel);
+      supabase.removeChannel(storeChannel);
     };
-  }, [fetchCashStatus]);
+  }, [fetchCashStatus, fetchStoreSettings]);
 
   const fetchInitialData = async () => {
     setIsLoading(true);
@@ -493,6 +558,24 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
             </div>
           </div>
           <div className="flex items-center gap-3">
+            {/* ONLINE ORDERS LIVE TOGGLE */}
+            <button
+              type="button"
+              onClick={handleToggleOnlineOrders}
+              disabled={isUpdatingOnlineStatus}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border shadow-sm active:scale-95 cursor-pointer ${
+                isOnlineOrderingEnabled
+                  ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/70 hover:bg-emerald-900/90'
+                  : 'bg-rose-950/90 text-rose-300 border-rose-500/70 hover:bg-rose-900/90 ring-2 ring-rose-500/50'
+              }`}
+              title="Klik untuk Buka atau Tutup Pesanan Online (Delivery & QR Order)"
+            >
+              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isOnlineOrderingEnabled ? 'bg-emerald-400' : 'bg-rose-500'}`} />
+              <span className="font-heading tracking-tight">
+                {isOnlineOrderingEnabled ? '🟢 Pesanan Online: BUKA' : '🔴 Pesanan Online: TUTUP'}
+              </span>
+            </button>
+
             <button 
               onClick={clearCart}
               disabled={cart.length === 0}

@@ -280,6 +280,7 @@ function CustomerDeliveryPage() {
 
   const [storeId, setStoreId] = useState<string | null>(null);
   const [storePhone, setStorePhone] = useState<string>('60172221784');
+  const [isOnlineOrderingEnabled, setIsOnlineOrderingEnabled] = useState<boolean>(true);
   const [copiedAmount, setCopiedAmount] = useState(false);
   const [copiedBankAcc, setCopiedBankAcc] = useState(false);
   const [isFPXLoading, setIsFPXLoading] = useState(false);
@@ -587,16 +588,25 @@ function CustomerDeliveryPage() {
       }
     }
 
+    const storeSub = supabase.channel(`delivery_store_status_${Date.now()}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'stores' }, () => {
+        fetchStore();
+      })
+      .subscribe();
+
     return () => {
       authListener.subscription.unsubscribe();
+      supabase.removeChannel(storeSub);
     };
   }, []);
 
   const fetchStore = async () => {
-    const { data } = await supabase.from('stores').select('id, phone_number, phone_number_2').limit(1).single();
+    const { data } = await supabase.from('stores').select('id, phone_number, phone_number_2, settings').limit(1).maybeSingle();
     if (data) {
       setStoreId(data.id);
       if (data.phone_number) setStorePhone(data.phone_number);
+      const settings = (data.settings as any) || {};
+      setIsOnlineOrderingEnabled(settings.online_ordering_enabled !== false);
     }
   };
 
@@ -1165,6 +1175,12 @@ function CustomerDeliveryPage() {
   const handleToyyibPayCheckout = handleProceedToFPX;
 
   const handlePlaceDeliveryOrder = async () => {
+    // 0. CHECK IF ONLINE ORDERING IS OPEN
+    if (!isOnlineOrderingEnabled) {
+      toast.error('⛔ Maaf, pesanan online sedang ditutup oleh pihak kedai buat sementara waktu.');
+      return;
+    }
+
     // 1. MUST LOGIN WITH GOOGLE FIRST
     if (!currentUser) {
       setShowAuthModal(true);
@@ -1347,14 +1363,42 @@ function CustomerDeliveryPage() {
                 <span>Log Masuk Google</span>
               </Button>
             )}
-            <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold text-xs px-2.5 py-1 rounded-full hidden sm:inline-flex animate-pulse">
-              🟢 Dibuka
-            </Badge>
+            {isOnlineOrderingEnabled ? (
+              <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold text-xs px-2.5 py-1 rounded-full hidden sm:inline-flex animate-pulse">
+                🟢 Dibuka
+              </Badge>
+            ) : (
+              <Badge className="bg-rose-500/15 text-rose-300 border border-rose-500/30 font-bold text-xs px-2.5 py-1 rounded-full hidden sm:inline-flex">
+                🔴 Ditutup
+              </Badge>
+            )}
           </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-5 space-y-6">
+        {/* ONLINE ORDERING CLOSED BANNER */}
+        {!isOnlineOrderingEnabled && (
+          <div className="bg-gradient-to-r from-rose-950/90 via-red-950/90 to-stone-900 border-2 border-rose-600/80 p-4 sm:p-5 rounded-3xl shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in text-rose-200">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0">
+                <AlertCircle className="w-6 h-6" />
+              </div>
+              <div className="space-y-0.5">
+                <h3 className="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                  ⛔ Dapur / Pesanan Online Ditutup Buat Sementara Waktu
+                </h3>
+                <p className="text-xs text-rose-300/90 leading-relaxed">
+                  Pihak Warung J&J sedang menghentikan seketika penerimaan pesanan baru untuk menyusun giliran hidangan di dapur. Anda boleh meneliti menu terlebih dahulu.
+                </p>
+              </div>
+            </div>
+            <span className="px-3.5 py-1.5 bg-rose-600/30 border border-rose-500/50 rounded-xl text-xs font-bold text-rose-200 uppercase tracking-wider shrink-0 font-mono">
+              Pesanan Disekat
+            </span>
+          </div>
+        )}
+
         {/* GOOGLE SIGN IN MANDATORY FILTER BANNER */}
         {!currentUser && (
           <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-red-500/10 border-2 border-amber-500/40 p-4 sm:p-5 rounded-3xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in">
@@ -1972,17 +2016,26 @@ function CustomerDeliveryPage() {
                 </Button>
               ) : (
                 <Button 
-                  className="w-full h-14 text-sm sm:text-base font-bold bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-2xl shadow-[0_8px_25px_rgba(234,88,12,0.4)] flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all font-heading"
+                  className={`w-full h-14 text-sm sm:text-base font-bold rounded-2xl flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all font-heading ${
+                    !isOnlineOrderingEnabled
+                      ? 'bg-rose-950/80 border border-rose-700/80 text-rose-300 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white shadow-[0_8px_25px_rgba(234,88,12,0.4)]'
+                  }`}
                   onClick={handlePlaceDeliveryOrder}
-                  disabled={isSubmitting || cart.length === 0 || isOutOfZone || foodSubtotal < 15.00}
+                  disabled={isSubmitting || cart.length === 0 || isOutOfZone || foodSubtotal < 15.00 || !isOnlineOrderingEnabled}
                 >
                   {isSubmitting ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" /> Memproses Pesanan...
                     </>
+                  ) : !isOnlineOrderingEnabled ? (
+                    <>
+                      <AlertCircle className="w-5 h-5 text-rose-400" />
+                      <span>⛔ PESANAN ONLINE DITUTUP BUAT SEMENTARA WAKTU</span>
+                    </>
                   ) : (
                     <>
-                      <span>TERUSKAN KE BAYARAN QR / FPX (RM {grandTotal.toFixed(2)})</span>
+                      <span>TERUSKAN KE BAYARAN QR (RM {grandTotal.toFixed(2)})</span>
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}
@@ -2027,11 +2080,21 @@ function CustomerDeliveryPage() {
                 ) : (
                   <Button
                     onClick={handlePlaceDeliveryOrder}
-                    disabled={isSubmitting || isOutOfZone || foodSubtotal < 15.00}
-                    className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold px-5 py-2.5 rounded-2xl text-xs shadow-lg flex items-center gap-1.5 active:scale-95 transition-all font-heading"
+                    disabled={isSubmitting || isOutOfZone || foodSubtotal < 15.00 || !isOnlineOrderingEnabled}
+                    className={`font-bold px-5 py-2.5 rounded-2xl text-xs shadow-lg flex items-center gap-1.5 active:scale-95 transition-all font-heading ${
+                      !isOnlineOrderingEnabled
+                        ? 'bg-rose-950/80 text-rose-300 border border-rose-700/80 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white'
+                    }`}
                   >
-                    <span>Teruskan Pesanan</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
+                    {!isOnlineOrderingEnabled ? (
+                      <span>⛔ Pesanan Ditutup</span>
+                    ) : (
+                      <>
+                        <span>Teruskan Pesanan</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </>
+                    )}
                   </Button>
                 )}
               </div>

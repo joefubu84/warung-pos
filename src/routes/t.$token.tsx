@@ -266,7 +266,7 @@ export function TableQRPage() {
         // 1. Look up table by qr_token
         const { data: tableData, error: tableError } = await supabase
           .from('tables')
-          .select('id, table_number, store_id, stores(name)')
+          .select('id, table_number, store_id, stores(name, settings)')
           .eq('qr_token', token)
           .single();
 
@@ -284,6 +284,13 @@ export function TableQRPage() {
         // @ts-ignore - Supabase type for joined relation
         const name = tableData.stores?.name || 'Warung J&J';
         setStoreName(name);
+
+        // Check store online ordering toggle
+        // @ts-ignore
+        const storeSettings = (tableData.stores as any)?.settings || {};
+        if (storeSettings.online_ordering_enabled === false) {
+          setIsClosedForDay(true);
+        }
 
         // Validate Device + GPS Table Session
         const sessionRes = await validateAndStartTableSession(tableData.table_number.toString());

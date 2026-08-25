@@ -210,6 +210,32 @@ function SettingsPage() {
     onError: (error) => toast.error(error.message),
   });
 
+  const updateOnlineOrderingMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const currentSettings = (store as any)?.settings || {};
+      const { error } = await supabase
+        .from('stores')
+        .update({
+          settings: {
+            ...currentSettings,
+            online_ordering_enabled: enabled
+          }
+        })
+        .eq('id', storeId);
+      if (error) throw error;
+      return enabled;
+    },
+    onSuccess: (enabled) => {
+      queryClient.invalidateQueries({ queryKey: ['store', storeId] });
+      if (enabled) {
+        toast.success('🟢 Pesanan Online kini DIBUKA (Delivery & Meja QR Aktif)!');
+      } else {
+        toast.error('🔴 Pesanan Online kini DITUTUP.');
+      }
+    },
+    onError: (error) => toast.error(error.message),
+  });
+
   type SettingsSection = 
     | 'riders' 
     | 'payments' 
@@ -920,6 +946,50 @@ function SettingsPage() {
                       <p className="text-sm font-bold text-emerald-400">POS Single-Tenant Proprietary License</p>
                       <span className="text-[10px] text-slate-400 font-mono">ID: {storeId || '1094d737-8104-4a55-b678-0fe9097beba0'}</span>
                     </div>
+                  </div>
+                </div>
+
+                {/* ONLINE ORDERING TOGGLE CARD */}
+                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                    <div className="space-y-1">
+                      <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                        <Globe className="w-5 h-5 text-emerald-400" /> Kawalan Status Pesanan Online
+                      </h2>
+                      <p className="text-xs text-slate-400">
+                        Buka atau tutup kebenaran pesanan online (Laman Penghantaran / Delivery & Imbas Meja QR) secara langsung.
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold font-mono border ${
+                        ((store as any)?.settings?.online_ordering_enabled !== false)
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                          : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                      }`}>
+                        {((store as any)?.settings?.online_ordering_enabled !== false) ? '🟢 DIBUKA' : '🔴 DITUTUP'}
+                      </span>
+
+                      <Switch
+                        checked={(store as any)?.settings?.online_ordering_enabled !== false}
+                        disabled={updateOnlineOrderingMutation.isPending}
+                        onCheckedChange={(checked) => updateOnlineOrderingMutation.mutate(checked)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 text-xs text-slate-300 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-white">Status Pesanan Pelanggan Saat Ini:</span>
+                      <span className="font-bold font-mono">
+                        {((store as any)?.settings?.online_ordering_enabled !== false)
+                          ? '✅ Pelanggan boleh membuat pesanan online'
+                          : '⛔ Pesanan pelanggan disekat sementara waktu'}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      💡 <strong>Tip POS:</strong> Anda juga boleh membuka/menutup pesanan online bila-bila masa dengan 1-klik terus dari butang bar atas pada skrin <strong>Counter POS</strong>.
+                    </p>
                   </div>
                 </div>
               </div>
