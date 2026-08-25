@@ -84,7 +84,12 @@ export const Route = createRootRouteWithContext<{
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" },
+      { name: "theme-color", content: "#ea580c" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Warung J&J" },
       { title: "Warung J&J POS | Enterprise Restaurant Management" },
       { name: "description", content: "Professional multi-store POS ecosystem for modern Malaysian hospitality. Scale your culinary empire with zero-trust data isolation." },
       { name: "author", content: "Warung J&J" },
@@ -113,6 +118,8 @@ export const Route = createRootRouteWithContext<{
         href: appCss,
       },
       { rel: "icon", href: "/favicon.png", type: "image/png" },
+      { rel: "apple-touch-icon", href: "/favicon.png" },
+      { rel: "manifest", href: "/manifest.json" },
     ],
   }),
   shellComponent: RootShell,
@@ -176,7 +183,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const location = useLocation();
   
-  // Enforce production custom domain (warungjnj.online) when opened outside the Lovable editor iframe
+  // Enforce production custom domain (warungjnj.online) and register Service Worker
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const host = window.location.hostname;
@@ -186,6 +193,11 @@ function RootComponent() {
             window.location.replace(`https://warungjnj.online${window.location.pathname}${window.location.search}${window.location.hash}`);
           }
         } catch {}
+      }
+
+      // Register PWA Service Worker
+      if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+        navigator.serviceWorker.register('/sw.js').then(() => {}).catch(() => {});
       }
     }
   }, []);

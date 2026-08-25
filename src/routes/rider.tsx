@@ -8,6 +8,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription 
+} from "@/components/ui/dialog";
+import { 
   Truck, 
   MapPin, 
   Phone, 
@@ -35,7 +42,8 @@ import {
   Landmark,
   ArrowUpRight,
   Receipt,
-  CreditCard
+  CreditCard,
+  Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DeliveryRouteMap, WARUNG_COORDS } from '@/components/DeliveryRouteMap';
@@ -112,6 +120,32 @@ function RiderPortalPage() {
   // Screen Wake Lock State (Keeps screen awake during active delivery/online mode)
   const wakeLockRef = useRef<any>(null);
   const [isWakeLockActive, setIsWakeLockActive] = useState(false);
+
+  // PWA / APK Install Prompt State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallModal, setShowInstallModal] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        toast.success('🎉 Aplikasi Warung J&J Rider berjaya dipasang pada telefon anda!');
+      }
+      setDeferredPrompt(null);
+    } else {
+      setShowInstallModal(true);
+    }
+  };
 
   // Computed approval status
   const isApproved = Boolean(riderProfile?.is_approved);
@@ -904,7 +938,58 @@ function RiderPortalPage() {
             >
               {isAuthSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Log Masuk Rider'}
             </Button>
+
+            <div className="pt-2 text-center">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleInstallApp}
+                className="text-stone-400 hover:text-emerald-400 text-xs flex items-center gap-1.5 mx-auto"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Pasang Aplikasi Rider (APK / Telefon)</span>
+              </Button>
+            </div>
           </form>
+
+          {/* INSTALL APP MODAL ON LOGIN */}
+          <Dialog open={showInstallModal} onOpenChange={setShowInstallModal}>
+            <DialogContent className="sm:max-w-[420px] bg-[#1c1a18] text-stone-100 border-[#2e2a27] p-6 rounded-3xl shadow-2xl">
+              <DialogHeader className="text-center space-y-2.5 pb-1">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30 shadow-inner">
+                  <Download className="w-7 h-7" />
+                </div>
+                <DialogTitle className="text-lg font-bold text-white">
+                  Pasang Aplikasi Rider J&J 📲
+                </DialogTitle>
+                <DialogDescription className="text-xs text-stone-300 leading-relaxed">
+                  Pasang portal rider terus ke skrin utama telefon anda untuk menerima tugasan penghantaran serta-merta!
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 pt-2 text-xs">
+                <div className="bg-[#141211] border border-[#2e2a27] p-4 rounded-2xl space-y-3">
+                  <p className="font-bold text-emerald-400 flex items-center gap-1.5">
+                    <span>📱 Android / Chrome:</span>
+                  </p>
+                  <ol className="space-y-2 text-stone-300 list-decimal list-inside text-[11px] leading-relaxed">
+                    <li>Tekan butang menu <strong>(Titik Tiga ⋮)</strong> di bahagian atas kanan Chrome.</li>
+                    <li>Pilih <strong>"Install app"</strong> atau <strong>"Add to Home screen" (Tambah ke skrin utama)</strong>.</li>
+                    <li>Ikon <strong>Warung J&J Rider</strong> akan muncul seperti aplikasi native di telefon anda!</li>
+                  </ol>
+                </div>
+
+                <Button
+                  type="button"
+                  onClick={() => setShowInstallModal(false)}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-11 rounded-2xl shadow-lg active:scale-95 transition-all text-xs"
+                >
+                  Faham & Tutup
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     );
@@ -946,6 +1031,18 @@ function RiderPortalPage() {
                 className="data-[state=checked]:bg-emerald-600 scale-75 disabled:opacity-40"
               />
             </div>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleInstallApp}
+              className="bg-[#141211] border-[#2e2a27] text-emerald-400 hover:text-white hover:bg-[#2e2a27] h-8 px-2.5 rounded-xl flex items-center gap-1.5 text-[11px] shadow-inner"
+              title="Pasang Aplikasi Warung J&J Rider"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-400" />
+              <span>App</span>
+            </Button>
 
             <Button
               size="icon"
@@ -1461,6 +1558,44 @@ function RiderPortalPage() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* INSTALL APP / APK GUIDE MODAL FOR LOGGED IN RIDER */}
+        <Dialog open={showInstallModal} onOpenChange={setShowInstallModal}>
+          <DialogContent className="sm:max-w-[420px] bg-[#1c1a18] text-stone-100 border-[#2e2a27] p-6 rounded-3xl shadow-2xl">
+            <DialogHeader className="text-center space-y-2.5 pb-1">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30 shadow-inner">
+                <Download className="w-7 h-7" />
+              </div>
+              <DialogTitle className="text-lg font-bold text-white">
+                Pasang Aplikasi Rider J&J 📲
+              </DialogTitle>
+              <DialogDescription className="text-xs text-stone-300 leading-relaxed">
+                Pasang portal rider terus ke skrin utama telefon anda untuk menerima tugasan penghantaran serta-merta!
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 pt-2 text-xs">
+              <div className="bg-[#141211] border border-[#2e2a27] p-4 rounded-2xl space-y-3">
+                <p className="font-bold text-emerald-400 flex items-center gap-1.5">
+                  <span>📱 Android / Chrome:</span>
+                </p>
+                <ol className="space-y-2 text-stone-300 list-decimal list-inside text-[11px] leading-relaxed">
+                  <li>Tekan butang menu <strong>(Titik Tiga ⋮)</strong> di bahagian atas kanan Chrome.</li>
+                  <li>Pilih <strong>"Install app"</strong> atau <strong>"Add to Home screen" (Tambah ke skrin utama)</strong>.</li>
+                  <li>Ikon <strong>Warung J&J Rider</strong> akan muncul seperti aplikasi native di telefon anda!</li>
+                </ol>
+              </div>
+
+              <Button
+                type="button"
+                onClick={() => setShowInstallModal(false)}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-11 rounded-2xl shadow-lg active:scale-95 transition-all text-xs"
+              >
+                Faham & Tutup
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   );

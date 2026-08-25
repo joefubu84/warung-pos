@@ -307,6 +307,32 @@ function CustomerDeliveryPage() {
   const [isTrackLoading, setIsTrackLoading] = useState(false);
   const [showTrackModal, setShowTrackModal] = useState(false);
 
+  // PWA / APK Install Prompt State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallModal, setShowInstallModal] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        toast.success('🎉 Aplikasi Warung J&J Delivery berjaya dipasang pada telefon anda!');
+      }
+      setDeferredPrompt(null);
+    } else {
+      setShowInstallModal(true);
+    }
+  };
+
   // Helper to lookup order for live tracking
   const fetchTrackedOrder = async (orderId: string) => {
     if (!orderId) return;
@@ -1542,6 +1568,20 @@ function CustomerDeliveryPage() {
                 <span>Log Masuk Google</span>
               </Button>
             )}
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleInstallApp}
+              className="bg-stone-900 border-stone-700 text-orange-400 hover:text-white hover:bg-stone-800 h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs shadow-inner"
+              title="Pasang Aplikasi Warung J&J Delivery (Android / iOS)"
+            >
+              <Download className="w-3.5 h-3.5 text-orange-400" />
+              <span className="hidden sm:inline">Pasang App</span>
+              <span className="sm:hidden">App</span>
+            </Button>
+
             {isOnlineOrderingEnabled ? (
               <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold text-xs px-2.5 py-1 rounded-full hidden sm:inline-flex animate-pulse">
                 🟢 Dibuka
@@ -2904,6 +2944,54 @@ function CustomerDeliveryPage() {
                 className="w-full text-xs text-stone-500 hover:text-stone-400 h-8"
               >
                 Tutup
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* INSTALL APP / APK GUIDE MODAL */}
+        <Dialog open={showInstallModal} onOpenChange={setShowInstallModal}>
+          <DialogContent className="sm:max-w-[420px] bg-[#292524] text-stone-100 border-stone-800 p-6 rounded-3xl shadow-2xl">
+            <DialogHeader className="text-center sm:text-center space-y-2.5 pb-1">
+              <div className="w-14 h-14 rounded-2xl bg-orange-500/20 text-orange-400 flex items-center justify-center mx-auto border border-orange-500/30 shadow-inner">
+                <Download className="w-7 h-7" />
+              </div>
+              <DialogTitle className="text-lg font-bold text-white font-heading">
+                Pasang Aplikasi Warung J&J Delivery 📲
+              </DialogTitle>
+              <DialogDescription className="text-xs text-stone-300 leading-relaxed">
+                Nikmati pengalaman memesan makanan yang pantas terus dari skrin utama telefon anda tanpa perlu membuka browser berulang kali!
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 pt-2 text-xs">
+              <div className="bg-stone-900/90 border border-stone-800 p-4 rounded-2xl space-y-3">
+                <p className="font-bold text-orange-400 flex items-center gap-1.5 font-heading">
+                  <span>📱 Cara 1: Pasang Terus (Android / Chrome)</span>
+                </p>
+                <ol className="space-y-2 text-stone-300 list-decimal list-inside text-[11px] leading-relaxed">
+                  <li>Tekan butang menu <strong>(Titik Tiga ⋮)</strong> di bahagian atas kanan browser Chrome.</li>
+                  <li>Pilih <strong>"Install app"</strong> atau <strong>"Add to Home screen" (Tambah ke skrin utama)</strong>.</li>
+                  <li>Ikon <strong>Warung J&J Delivery</strong> akan muncul seperti aplikasi APK di telefon anda!</li>
+                </ol>
+              </div>
+
+              <div className="bg-stone-900/90 border border-stone-800 p-4 rounded-2xl space-y-3">
+                <p className="font-bold text-sky-400 flex items-center gap-1.5 font-heading">
+                  <span>🍏 Cara 2: iPhone / Safari (iOS)</span>
+                </p>
+                <ol className="space-y-2 text-stone-300 list-decimal list-inside text-[11px] leading-relaxed">
+                  <li>Buka di Safari dan tekan butang <strong>Share (Kongsi)</strong> di bawah skrin.</li>
+                  <li>Skrol dan tekan <strong>"Add to Home Screen" (+)</strong>.</li>
+                </ol>
+              </div>
+
+              <Button
+                type="button"
+                onClick={() => setShowInstallModal(false)}
+                className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold h-11 rounded-2xl shadow-lg active:scale-95 transition-all text-xs font-heading"
+              >
+                Faham & Tutup
               </Button>
             </div>
           </DialogContent>

@@ -1,0 +1,24 @@
+{
+  "name": "Warung J&J Rider (Rakan Penghantar)",
+  "short_name": "J&J Rider",
+  "description": "Aplikasi Tugasan Penghantaran Rider Warung J&J Sabah",
+  "start_url": "/rider",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#059669",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/warung-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
