@@ -32,33 +32,50 @@ function AuthPage() {
     setLoading(true);
     setError(null);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
       password,
     });
 
     if (signInError) {
       setError(signInError.message || 'Log masuk gagal. Sila periksa emel dan kata laluan.');
       setLoading(false);
-    } else {
-      // Check user role for proper routing
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: userProfile } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', user.id)
-          .single();
+      return;
+    }
 
-        if (userProfile?.role === 'rider') {
-          navigate({ to: '/rider' });
-          return;
-        }
+    const user = signInData?.user;
+    if (user) {
+      // 1. Fetch store id
+      const { data: storeData } = await supabase.from('stores').select('id').limit(1).maybeSingle();
+      const storeId = storeData?.id || '';
+
+      // 2. Fetch existing user profile
+      const { data: userProfile } = await supabase
+        .from('users')
+        .select('id, role, store_id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (userProfile?.role === 'rider') {
+        navigate({ to: '/rider' });
+        return;
       }
 
-      const destination = redirectPath || '/counter';
-      navigate({ to: destination });
+      // If user profile is missing or not a staff role, upsert staff/admin profile
+      if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'cashier' && userProfile.role !== 'chef' && userProfile.role !== 'staff')) {
+        const assignedRole = user.email?.includes('admin') || user.email === 'joefubu84@gmail.com' ? 'admin' : 'staff';
+        await supabase.from('users').upsert({
+          id: user.id,
+          name: user.user_metadata?.name || user.email?.split('@')[0] || 'Staff Warung',
+          email: user.email,
+          role: assignedRole as any,
+          store_id: storeId
+        } as any);
+      }
     }
+
+    const destination = redirectPath || '/counter';
+    navigate({ to: destination });
   };
 
   return (

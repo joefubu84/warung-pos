@@ -27,7 +27,31 @@ async function getUserProfile(session: any) {
     }
   }
 
-  // 3. Admin fallback for store owner / admin accounts
+  // 3. Check metadata role from Supabase auth
+  const metaRole = session.user.user_metadata?.role || session.user.app_metadata?.role;
+  if (!userProfile && metaRole) {
+    userProfile = {
+      id: session.user.id,
+      role: metaRole,
+      store_id: null,
+      email: session.user.email
+    };
+    error = null;
+  }
+
+  // 4. Fallback for authenticated email/password users (who login via /auth)
+  const isEmailAuth = session.user.app_metadata?.provider === 'email' || !session.user.app_metadata?.provider;
+  if (!userProfile && isEmailAuth && session.user.email) {
+    userProfile = {
+      id: session.user.id,
+      role: 'admin',
+      store_id: null,
+      email: session.user.email
+    };
+    error = null;
+  }
+
+  // 5. Admin fallback for store owner / admin accounts
   if (!userProfile && session.user.email) {
     const emailLower = session.user.email.toLowerCase();
     if (emailLower.includes('admin') || emailLower === 'joefubu84@gmail.com' || emailLower.endsWith('@warungjnj.online')) {
