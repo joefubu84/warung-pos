@@ -60,6 +60,7 @@ import { createToyyibPayCheckout } from '@/lib/toyyibpay';
 import { COMMON_MODIFIERS } from '@/lib/kitchen-checklist-config';
 import { DishCustomizationModal, CustomizedCartItem } from '@/components/DishCustomizationModal';
 import { DeliveryRouteMap, WARUNG_COORDS, isWithinSabah } from '@/components/DeliveryRouteMap';
+import { FoodDeliveryAnimation } from '@/components/FoodDeliveryAnimation';
 import { 
   signInWithGoogleOAuth, 
   getStoredGoogleUser, 
@@ -1584,6 +1585,14 @@ function CustomerDeliveryPage() {
                   <X className="w-4 h-4" />
                 </button>
               </div>
+            </div>
+
+            {/* INTERACTIVE FOOD DELIVERY RIVE/SVG ANIMATION HERO */}
+            <div className="pt-1">
+              <FoodDeliveryAnimation 
+                status={trackedOrder.delivery_status || trackedOrder.status} 
+                size="standard" 
+              />
             </div>
 
             {/* 4-STEP LIVE PROGRESSION TRACKER */}
