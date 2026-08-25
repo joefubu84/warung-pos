@@ -4,11 +4,43 @@ import type { AuthState } from '@/lib/auth-state';
 import { getTodayCashStatus } from '@/lib/cash-guard';
 
 async function getUserProfile(session: any) {
-  const { data: userProfile, error } = await supabase
+  if (!session?.user) return { userProfile: null, error: null };
+
+  // 1. Try lookup by user ID
+  let { data: userProfile, error } = await supabase
     .from('users')
-    .select('role, store_id')
+    .select('id, role, store_id, email')
     .eq('id', session.user.id)
-    .single();
+    .maybeSingle();
+
+  // 2. If not found by ID, try matching by email
+  if (!userProfile && session.user.email) {
+    const { data: byEmail } = await supabase
+      .from('users')
+      .select('id, role, store_id, email')
+      .eq('email', session.user.email)
+      .maybeSingle();
+
+    if (byEmail) {
+      userProfile = byEmail;
+      error = null;
+    }
+  }
+
+  // 3. Admin fallback for store owner / admin accounts
+  if (!userProfile && session.user.email) {
+    const emailLower = session.user.email.toLowerCase();
+    if (emailLower.includes('admin') || emailLower === 'joefubu84@gmail.com' || emailLower.endsWith('@warungjnj.online')) {
+      userProfile = {
+        id: session.user.id,
+        role: 'admin',
+        store_id: null,
+        email: session.user.email
+      };
+      error = null;
+    }
+  }
+
   return { userProfile, error };
 }
 
@@ -31,7 +63,20 @@ export async function requireAuth(location: { pathname: string }, auth: AuthStat
         to: '/rider',
       });
     }
-    throw new Error(`Access Denied: Requires one of [${allowedRoles.join(', ')}]`);
+
+    if (userProfile?.role === 'customer') {
+      throw redirect({
+        to: '/delivery',
+      });
+    }
+
+    throw redirect({
+      to: '/auth',
+      search: { 
+        redirect: location.pathname,
+        reason: 'unauthorized'
+      },
+    });
   }
 
   return { session, role: userProfile.role, storeId: userProfile.store_id };

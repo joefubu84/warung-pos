@@ -8,6 +8,7 @@ import { Lock, Mail, Store, AlertCircle, ArrowLeft, Loader2, Eye, EyeOff } from 
 
 const authSearchSchema = z.object({
   redirect: z.string().optional(),
+  reason: z.string().optional(),
 });
 
 export const Route = createFileRoute('/auth')({
@@ -16,11 +17,13 @@ export const Route = createFileRoute('/auth')({
 });
 
 function AuthPage() {
-  const { redirect: redirectPath } = Route.useSearch();
+  const { redirect: redirectPath, reason } = Route.useSearch();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(
+    reason === 'unauthorized' ? 'Akaun anda memerlukan kebenaran Staf/Admin untuk mengakses halaman tersebut.' : null
+  );
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
