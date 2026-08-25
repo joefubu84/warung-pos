@@ -11,9 +11,10 @@ export const FoodDeliveryAnimation: React.FC<FoodDeliveryAnimationProps> = ({
   size = 'standard',
   className = ''
 }) => {
-  const isDriving = status === 'ready' || status === 'picked_up' || status === 'on_the_way';
   const isCompleted = status === 'completed' || status === 'delivered';
-  const isPreparing = status === 'preparing';
+  const isDriving = !isCompleted && (status === 'ready' || status === 'picked_up' || status === 'on_the_way' || status === 'arrived');
+  const isPreparing = !isCompleted && !isDriving && status === 'preparing';
+  const isPending = !isCompleted && !isDriving && !isPreparing;
 
   const heightClass = size === 'compact' ? 'h-28' : size === 'hero' ? 'h-52 sm:h-64' : 'h-36 sm:h-44';
 

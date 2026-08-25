@@ -358,19 +358,36 @@ function CustomerDeliveryPage() {
       }, (payload: any) => {
         if (payload.new) {
           setTrackedOrder(payload.new);
-          if (payload.new.status === 'ready' || payload.new.status === 'on_the_way') {
+          if (payload.new.status === 'ready' || payload.new.status === 'on_the_way' || payload.new.delivery_status === 'picked_up' || payload.new.delivery_status === 'arrived') {
             toast.info('🛵 Rider kini dalam perjalanan menghantar pesanan anda!');
-          } else if (payload.new.status === 'completed') {
+          } else if (payload.new.status === 'completed' || payload.new.delivery_status === 'delivered') {
             toast.success('✅ Pesanan anda telah selamat diserahkan!');
           }
         }
       })
       .subscribe();
 
+    // Polling fallback to guarantee instant status sync even if realtime WS is slow/blocked
+    const pollInterval = setInterval(async () => {
+      try {
+        const { data } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', trackedOrder.id)
+          .maybeSingle();
+        if (data && (data.status !== trackedOrder.status || data.delivery_status !== trackedOrder.delivery_status)) {
+          setTrackedOrder(data);
+        }
+      } catch (e) {
+        console.warn('Tracked order poll note:', e);
+      }
+    }, 2500);
+
     return () => {
       supabase.removeChannel(trackSub);
+      clearInterval(pollInterval);
     };
-  }, [trackedOrder?.id]);
+  }, [trackedOrder?.id, trackedOrder?.status, trackedOrder?.delivery_status]);
 
   // Calculate actual road distance via OSRM Routing Engine
   const fetchRoadRoute = async (destLat: number, destLng: number) => {
@@ -1603,49 +1620,67 @@ function CustomerDeliveryPage() {
               {/* Step 1 */}
               <div className={`p-2.5 rounded-2xl border text-center transition-all ${
                 trackedOrder.status === 'pending_payment'
-                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-md animate-pulse'
-                  : 'bg-stone-900/60 border-stone-800 text-stone-400'
+                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-md animate-pulse font-bold'
+                  : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 font-bold'
               }`}>
-                <div className="text-sm mb-0.5">🕒</div>
-                <div className="text-[11px] font-bold leading-tight">1. Menunggu Bayaran</div>
-                <div className="text-[9px] text-stone-500">DuitNow / Resit</div>
+                <div className="text-sm mb-0.5">{trackedOrder.status === 'pending_payment' ? '🕒' : '✅'}</div>
+                <div className="text-[11px] font-bold leading-tight">
+                  {trackedOrder.status === 'pending_payment' ? '1. Menunggu Bayaran' : '1. Bayaran Sah'}
+                </div>
+                <div className="text-[9px] text-stone-400">
+                  {trackedOrder.status === 'pending_payment' ? 'DuitNow / Resit' : 'Diterima Warung'}
+                </div>
               </div>
 
               {/* Step 2 */}
               <div className={`p-2.5 rounded-2xl border text-center transition-all ${
                 trackedOrder.status === 'preparing'
-                  ? 'bg-orange-500/15 border-orange-500/40 text-orange-300 shadow-md animate-pulse'
-                  : (trackedOrder.status === 'ready' || trackedOrder.status === 'on_the_way' || trackedOrder.status === 'completed')
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                  ? 'bg-orange-500/20 border-orange-500/50 text-orange-300 shadow-md animate-pulse font-bold'
+                  : (trackedOrder.status === 'ready' || trackedOrder.status === 'on_the_way' || trackedOrder.delivery_status === 'picked_up' || trackedOrder.delivery_status === 'arrived' || trackedOrder.status === 'completed')
+                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 font-bold'
                     : 'bg-stone-900/60 border-stone-800 text-stone-400'
               }`}>
-                <div className="text-sm mb-0.5">👨‍🍳</div>
-                <div className="text-[11px] font-bold leading-tight">2. Sedang Dimasak</div>
-                <div className="text-[9px] text-stone-500">Dapur Warung J&J</div>
+                <div className="text-sm mb-0.5">
+                  {(trackedOrder.status === 'ready' || trackedOrder.status === 'on_the_way' || trackedOrder.delivery_status === 'picked_up' || trackedOrder.delivery_status === 'arrived' || trackedOrder.status === 'completed') ? '✅' : '👨‍🍳'}
+                </div>
+                <div className="text-[11px] font-bold leading-tight">
+                  {trackedOrder.status === 'preparing' ? '2. Sedang Dimasak' : (trackedOrder.status === 'ready' || trackedOrder.status === 'on_the_way' || trackedOrder.delivery_status === 'picked_up' || trackedOrder.delivery_status === 'arrived' || trackedOrder.status === 'completed') ? '2. Siap Dimasak' : '2. Menunggu Dapur'}
+                </div>
+                <div className="text-[9px] text-stone-400">Dapur Warung J&J</div>
               </div>
 
               {/* Step 3 */}
               <div className={`p-2.5 rounded-2xl border text-center transition-all ${
-                (trackedOrder.status === 'ready' || trackedOrder.status === 'on_the_way' || trackedOrder.delivery_status === 'picked_up' || trackedOrder.delivery_status === 'arrived')
-                  ? 'bg-sky-500/15 border-sky-500/40 text-sky-300 shadow-md animate-pulse'
-                  : trackedOrder.status === 'completed'
-                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                (trackedOrder.status === 'ready' || trackedOrder.status === 'on_the_way' || trackedOrder.delivery_status === 'picked_up' || trackedOrder.delivery_status === 'arrived') && trackedOrder.status !== 'completed'
+                  ? 'bg-sky-500/20 border-sky-500/50 text-sky-300 shadow-lg animate-pulse font-bold'
+                  : (trackedOrder.status === 'completed' || trackedOrder.delivery_status === 'delivered')
+                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 font-bold'
                     : 'bg-stone-900/60 border-stone-800 text-stone-400'
               }`}>
-                <div className="text-sm mb-0.5">🛵</div>
-                <div className="text-[11px] font-bold leading-tight">3. Rider Menghantar</div>
-                <div className="text-[9px] text-stone-500">Dalam Perjalanan</div>
+                <div className="text-sm mb-0.5">
+                  {(trackedOrder.status === 'completed' || trackedOrder.delivery_status === 'delivered') ? '✅' : '🛵'}
+                </div>
+                <div className="text-[11px] font-bold leading-tight">
+                  {(trackedOrder.status === 'completed' || trackedOrder.delivery_status === 'delivered') 
+                    ? '3. Telah Sampai' 
+                    : (trackedOrder.delivery_status === 'arrived' ? '3. Rider Tiba' : '3. Rider Menghantar')}
+                </div>
+                <div className="text-[9px] text-stone-400">
+                  {trackedOrder.delivery_status === 'arrived' ? 'Di Pagar / Lokasi' : (trackedOrder.status === 'completed' ? 'Lokasi Destinasi' : 'Dalam Perjalanan')}
+                </div>
               </div>
 
               {/* Step 4 */}
               <div className={`p-2.5 rounded-2xl border text-center transition-all ${
-                trackedOrder.status === 'completed'
-                  ? 'bg-emerald-600/20 border-emerald-500/50 text-emerald-300 shadow-lg'
+                trackedOrder.status === 'completed' || trackedOrder.delivery_status === 'delivered'
+                  ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.35)] animate-pulse font-bold'
                   : 'bg-stone-900/60 border-stone-800 text-stone-400'
               }`}>
                 <div className="text-sm mb-0.5">✨</div>
                 <div className="text-[11px] font-bold leading-tight">4. Selesai Diserah</div>
-                <div className="text-[9px] text-stone-500">Selamat Menjamu!</div>
+                <div className="text-[9px] text-stone-400">
+                  {trackedOrder.status === 'completed' ? 'Selamat Menjamu!' : 'Pesanan Lengkap'}
+                </div>
               </div>
             </div>
 

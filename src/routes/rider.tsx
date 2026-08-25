@@ -700,7 +700,7 @@ function RiderPortalPage() {
 
       // Save milestone locally in state & browser storage
       localStorage.setItem('warung_rider_milestone_' + activeJob.id, newStatus);
-      setActiveJob(prev => prev ? { ...prev, delivery_status: newStatus } : null);
+      setActiveJob(prev => prev ? { ...prev, delivery_status: newStatus, status: 'ready' } : null);
 
       if (!activeJob.id.startsWith('mock-del-')) {
         // Safe backend sync using valid orders table schema
@@ -710,7 +710,18 @@ function RiderPortalPage() {
               .from('orders')
               .update({
                 status: 'ready',
-                ready_at: new Date().toISOString()
+                delivery_status: 'picked_up',
+                ready_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              } as any)
+              .eq('id', activeJob.id);
+          } else if (newStatus === 'arrived') {
+            await supabase
+              .from('orders')
+              .update({
+                status: 'ready',
+                delivery_status: 'arrived',
+                updated_at: new Date().toISOString()
               } as any)
               .eq('id', activeJob.id);
           }
