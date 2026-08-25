@@ -60,8 +60,14 @@ import {
   getStoredGoogleUser, 
   saveStoredGoogleUser, 
   clearStoredGoogleUser, 
+  getOrCreateMemberFromGoogle,
   GoogleAuthUser 
 } from '@/lib/google-auth';
+import { 
+  addMemberPoints, 
+  findMemberByPhone, 
+  LoyaltyMember 
+} from '@/lib/loyalty-config';
 import { 
   requestWhatsAppOtp, 
   verifyWhatsAppOtp, 
@@ -281,6 +287,7 @@ function CustomerDeliveryPage() {
   const [storeId, setStoreId] = useState<string | null>(null);
   const [storePhone, setStorePhone] = useState<string>('60172221784');
   const [isOnlineOrderingEnabled, setIsOnlineOrderingEnabled] = useState<boolean>(true);
+  const [loyaltyMember, setLoyaltyMember] = useState<LoyaltyMember | null>(null);
   const [copiedAmount, setCopiedAmount] = useState(false);
   const [copiedBankAcc, setCopiedBankAcc] = useState(false);
   const [isFPXLoading, setIsFPXLoading] = useState(false);
@@ -447,6 +454,17 @@ function CustomerDeliveryPage() {
       localStorage.setItem('warung_customer_phone', phone);
       localStorage.setItem(`warung_verified_phone_${clean}`, 'true');
     }
+
+    try {
+      const mem = getOrCreateMemberFromGoogle({
+        email: `${clean}@warungjnj.online`,
+        name: name,
+        id: `user-phone-${clean}`,
+        phoneLink: clean
+      });
+      setLoyaltyMember(mem);
+    } catch (e) {}
+
     setShowAuthModal(false);
     toast.success(`Akaun disahkan! Selamat datang, ${name} 🎉`);
   };
@@ -522,6 +540,19 @@ function CustomerDeliveryPage() {
           localStorage.setItem('warung_customer_phone', detectedPhone);
           if (u.email) localStorage.setItem(`warung_phone_${u.email}`, detectedPhone);
         }
+      }
+
+      // Automatically register/sync Google user into Loyalty System (and grant 50 welcome points)
+      try {
+        const mem = getOrCreateMemberFromGoogle({
+          email: u.email || '',
+          name: gName,
+          id: u.id,
+          phoneLink: detectedPhone
+        });
+        setLoyaltyMember(mem);
+      } catch (e) {
+        console.warn('Loyalty sync on Google login:', e);
       }
     };
 
@@ -1288,6 +1319,20 @@ function CustomerDeliveryPage() {
       setActiveOrderId(newOrderId);
       setIsCartDrawerOpen(false);
       setShowDuitNowModal(true);
+
+      // Sync and award loyalty points
+      try {
+        const pointsToAward = Math.max(1, Math.floor(foodSubtotal));
+        const updatedMember = addMemberPoints(
+          customerPhone, 
+          pointsToAward, 
+          `Pesanan Delivery #${newOrderId.slice(-6)} (RM ${grandTotal.toFixed(2)})`
+        );
+        setLoyaltyMember(updatedMember);
+      } catch (e) {
+        console.warn('Loyalty points addition notice:', e);
+      }
+
       toast.success('Pesanan disimpan! Sila buat bayaran & hantar resit untuk pengesahan.');
     } catch (err: any) {
       toast.error(`Pesanan Gagal: ${err.message}`);
@@ -1335,9 +1380,16 @@ function CustomerDeliveryPage() {
                     {currentUser.name.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <span className="text-xs font-bold text-stone-200 hidden sm:inline max-w-[120px] truncate">
-                  {currentUser.name}
-                </span>
+                <div className="flex flex-col text-left">
+                  <span className="text-xs font-bold text-stone-200 max-w-[110px] truncate leading-tight">
+                    {currentUser.name}
+                  </span>
+                  {loyaltyMember && (
+                    <span className="text-[9px] font-bold font-mono text-amber-400">
+                      💎 {loyaltyMember.points} Pts ({loyaltyMember.tier})
+                    </span>
+                  )}
+                </div>
                 <button
                   type="button"
                   onClick={handleLogout}

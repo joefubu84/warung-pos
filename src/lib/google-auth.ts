@@ -85,31 +85,41 @@ export function getOrCreateMemberFromGoogle(googleUser: {
 }): LoyaltyMember {
   const members = getLoyaltyMembers();
   
-  // 1. Check if linked via phone or email
+  // 1. Check if linked via phone or email or ID
   let existing: LoyaltyMember | undefined;
 
   if (googleUser.phoneLink) {
     const cleanPhone = googleUser.phoneLink.replace(/\D/g, '');
     const formatted = cleanPhone.startsWith('0') ? '60' + cleanPhone.slice(1) : cleanPhone;
-    existing = members.find(m => m.phone === formatted || m.phone === cleanPhone);
+    existing = members.find(m => m.phone === formatted || m.phone === cleanPhone || (cleanPhone.length >= 8 && m.phone.endsWith(cleanPhone.slice(-8))));
   }
 
   // Check email-based ID link
-  if (!existing) {
-    existing = members.find(m => m.id === `mem-google-${googleUser.email.toLowerCase()}` || m.name === googleUser.name);
+  if (!existing && googleUser.email) {
+    const emailKey = googleUser.email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    existing = members.find(m => 
+      m.id === `mem-google-${emailKey}` || 
+      m.id === `mem-google-${googleUser.email.toLowerCase()}` ||
+      (m.name && googleUser.name && m.name.toLowerCase() === googleUser.name.toLowerCase())
+    );
   }
 
-  const todayStr = new Date().toISOString().split('T')[0] || '2026-08-15';
+  const todayStr = new Date().toISOString().split('T')[0] || '2026-08-25';
   let memberToReturn: LoyaltyMember;
 
   if (!existing) {
     // Auto-create new Google member & credit 50 welcome points!
-    const syntheticPhone = googleUser.phoneLink ? googleUser.phoneLink.replace(/\D/g, '') : `601${Math.floor(10000000 + Math.random()*90000000)}`;
+    const cleanPhone = googleUser.phoneLink ? googleUser.phoneLink.replace(/\D/g, '') : '';
+    const formattedPhone = cleanPhone 
+      ? (cleanPhone.startsWith('0') ? '60' + cleanPhone.slice(1) : cleanPhone)
+      : `601${Math.floor(10000000 + Math.random()*90000000)}`;
+
+    const emailKey = (googleUser.email || 'user').toLowerCase().replace(/[^a-z0-9]/g, '_');
     
     memberToReturn = {
-      id: `mem-google-${googleUser.email.toLowerCase()}`,
-      phone: syntheticPhone,
-      name: googleUser.name || googleUser.email.split('@')[0] || 'Google User',
+      id: `mem-google-${emailKey}`,
+      phone: formattedPhone,
+      name: googleUser.name || googleUser.email?.split('@')[0] || 'Pelanggan Google',
       points: 50, // 50 FREE Welcome Points
       totalSpent: 0,
       tier: calculateTier(50),
@@ -121,9 +131,14 @@ export function getOrCreateMemberFromGoogle(googleUser: {
     saveLoyaltyMembers(members);
     logMembershipTransaction(memberToReturn.phone, 'welcome_bonus', 50, 'Google OAuth Welcome 50 Bonus Points');
   } else {
-    // Update visit timestamp & name
+    // Update visit timestamp, name & update linked phone if provided
     if (googleUser.name && !existing.name.includes('Boss')) {
       existing.name = googleUser.name;
+    }
+    if (googleUser.phoneLink) {
+      const cleanPhone = googleUser.phoneLink.replace(/\D/g, '');
+      const formatted = cleanPhone.startsWith('0') ? '60' + cleanPhone.slice(1) : cleanPhone;
+      existing.phone = formatted;
     }
     existing.lastVisitAt = todayStr;
     saveLoyaltyMembers(members);

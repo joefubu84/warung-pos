@@ -116,7 +116,8 @@ export function saveLoyaltyMembers(members: LoyaltyMember[]): void {
 export async function syncMembersToSupabase(members: LoyaltyMember[]): Promise<void> {
   if (typeof window === 'undefined') return;
   try {
-    const defaultStoreId = 'store-jnj-main';
+    const { data: storeRow } = await supabase.from('stores').select('id').limit(1).maybeSingle();
+    const defaultStoreId = storeRow?.id || '1094d737-8104-4a55-b678-0fe9097beba0';
 
     for (const m of members) {
       const cleanPhone = m.phone.replace(/\D/g, '');
