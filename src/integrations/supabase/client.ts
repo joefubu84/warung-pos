@@ -37,7 +37,7 @@ function createSupabaseClient() {
   const SUPABASE_PUBLISHABLE_KEY = 
     (typeof import.meta !== 'undefined' && import.meta.env?.['VITE_SUPABASE_PUBLISHABLE_KEY']) || 
     (typeof process !== 'undefined' && (process.env?.['SUPABASE_PUBLISHABLE_KEY'] || process.env?.['VITE_SUPABASE_PUBLISHABLE_KEY'])) ||
-    'sb_publishable_W1moaaZz9eXPPPjQOf0e2g_YcIbl0e7';
+    'sb_publishable_m0I3z41KlguoyAcf1VM53Q_cuJgYe_Q';
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {
