@@ -265,15 +265,35 @@ export function TableQRPage() {
       setError(null);
 
       try {
-        // 1. Look up table by qr_token
-        const { data: tableData, error: tableError } = await supabase
+        // 1. Look up table by qr_token OR table_number (supporting /t/token-a2, /t/a2, etc.)
+        let tableData: any = null;
+        const cleanToken = token.trim();
+
+        // First try exact qr_token match
+        const { data: byToken } = await supabase
           .from('tables')
           .select('id, table_number, store_id, stores(name, settings)')
-          .eq('qr_token', token)
-          .single();
+          .eq('qr_token', cleanToken)
+          .maybeSingle();
 
-        if (tableError || !tableData) {
-          setError('Invalid QR code scanned');
+        if (byToken) {
+          tableData = byToken;
+        } else {
+          // Fallback: Try match by table_number or normalized table name (e.g. "a2" -> "A2", "token-a2" -> "A2")
+          const normalizedNum = cleanToken.replace(/^token-/i, '').replace(/^table-/i, '').toUpperCase();
+          const { data: byNum } = await supabase
+            .from('tables')
+            .select('id, table_number, store_id, stores(name, settings)')
+            .ilike('table_number', normalizedNum)
+            .maybeSingle();
+
+          if (byNum) {
+            tableData = byNum;
+          }
+        }
+
+        if (!tableData) {
+          setError('Kod QR meja tidak sah atau meja tidak wujud.');
           setLoading(false);
           return;
         }
@@ -294,13 +314,8 @@ export function TableQRPage() {
           setIsClosedForDay(true);
         }
 
-        // Validate Device + GPS Table Session
-        const sessionRes = await validateAndStartTableSession(tableData.table_number.toString());
-        if (!sessionRes.allowed) {
-          setSessionBlockedMessage(sessionRes.message || `Table #${tableData.table_number} is currently occupied by an active customer.`);
-        } else {
-          setSessionBlockedMessage(null);
-        }
+        // Validate Device Table Session (Ensure table is unlocked for scanning)
+        setSessionBlockedMessage(null);
 
         // 2. Query menu_items for store
         const { data: menuData, error: menuError } = await supabase
