@@ -8,7 +8,7 @@ interface StockItem {
   name: string;
   category: string;
   price: number;
-  available: boolean;
+  is_available: boolean;
   stock_count: number | null;
   image_url: string | null;
 }
@@ -27,7 +27,7 @@ export function QuickStockBar({ onItemUpdated }: { onItemUpdated?: () => void })
     try {
       const { data, error } = await supabase
         .from('menu_items')
-        .select('id, name, category, price, available, stock_count, image_url')
+        .select('id, name, category, price, is_available, stock_count, image_url')
         .order('name', { ascending: true });
 
       if (!error && data) {
@@ -44,17 +44,17 @@ export function QuickStockBar({ onItemUpdated }: { onItemUpdated?: () => void })
     return items.filter(it => it.name.toLowerCase().includes(q) || (it.category && it.category.toLowerCase().includes(q)));
   }, [items, searchTerm]);
 
-  const soldOutCount = items.filter(it => !it.available || it.stock_count === 0).length;
+  const soldOutCount = items.filter(it => !it.is_available || it.stock_count === 0).length;
 
   const toggleAvailability = async (item: StockItem) => {
-    const newAvailable = !item.available;
+    const newAvailable = !item.is_available;
     setUpdatingId(item.id);
 
     try {
       const { error } = await supabase
         .from('menu_items')
         .update({ 
-          available: newAvailable,
+          is_available: newAvailable,
           stock_count: newAvailable ? (item.stock_count === 0 ? null : item.stock_count) : 0
         })
         .eq('id', item.id);
@@ -63,7 +63,7 @@ export function QuickStockBar({ onItemUpdated }: { onItemUpdated?: () => void })
 
       setItems(prev => prev.map(it => it.id === item.id ? { 
         ...it, 
-        available: newAvailable,
+        is_available: newAvailable,
         stock_count: newAvailable ? (it.stock_count === 0 ? null : it.stock_count) : 0 
       } : it));
 
@@ -125,7 +125,7 @@ export function QuickStockBar({ onItemUpdated }: { onItemUpdated?: () => void })
       {/* QUICK ITEMS ROW */}
       <div className="mt-3 flex flex-wrap gap-2 max-h-36 overflow-y-auto pr-1">
         {filteredItems.map(item => {
-          const isSoldOut = !item.available || item.stock_count === 0;
+          const isSoldOut = !item.is_available || item.stock_count === 0;
           const isUpdating = updatingId === item.id;
 
           return (
