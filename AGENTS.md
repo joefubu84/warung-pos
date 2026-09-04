@@ -45,3 +45,9 @@ RULE: If a page blinks, it's not done. Must be smooth, responsive, professional.
 ## LOVABLE BADGE SUPPRESSION RULE
 - **CRITICAL**: Always maintain and enforce global and shell CSS rules to completely hide the Lovable badge (the 'Made with Lovable' floating element) across ALL pages without breaking page layout.
 - Ensure `a[href*="lovable.dev"]`, `a[href*="lovable.app"]`, `[id*="lovable"]`, `[class*="lovable-badge"]`, and related wrapper selectors are permanently hidden (`display: none !important; opacity: 0 !important; visibility: hidden !important; pointer-events: none !important; position: absolute !important; top: -9999px !important; z-index: -9999 !important;`).
+
+## MANDATORY SYNCHRONIZATION: GITHUB & SUPABASE
+- **CRITICAL**: For EVERY update, bug fix, or feature addition:
+  1. **GitHub**: Must commit and push immediately to the `main` branch on GitHub repository (`joefubu84/warung-pos`) after validating with `npm run build`.
+  2. **Supabase**: Ensure all database schemas, table records, migrations, and Supabase client configs remain in 100% active synchronization with the live database (`gtmzzblomcvgmwzjalja.supabase.co`). Never hardcode mock items that disconnect from Supabase.
+
