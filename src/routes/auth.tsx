@@ -66,7 +66,7 @@ function AuthPage() {
         const assignedRole = user.email?.includes('admin') || user.email === 'joefubu84@gmail.com' ? 'admin' : 'staff';
         await supabase.from('users').upsert({
           id: user.id,
-          name: user.user_metadata?.name || user.email?.split('@')[0] || 'Staff Warung',
+          name: user.user_metadata?.['name'] || user.email?.split('@')[0] || 'Staff Warung',
           email: user.email,
           role: assignedRole as any,
           store_id: storeId

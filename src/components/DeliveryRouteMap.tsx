@@ -406,7 +406,7 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
       }).addTo(map);
       originMarkerRef.current.bindPopup(`
         <div style="font-family: inherit; font-size: 11px; padding: 2px;">
-          <strong style="color: #f59e0b; display: block; font-size: 12px;">🏪 ${origin.title || origin.name || 'Warung J&J'}</strong>
+          <strong style="color: #f59e0b; display: block; font-size: 12px;">🏪 ${(origin as { title?: string; name?: string }).title || (origin as { title?: string; name?: string }).name || 'Warung J&J'}</strong>
           <span style="color: #94a3b8;">Pusat Masakan & Pengambilan Makanan</span>
         </div>
       `);

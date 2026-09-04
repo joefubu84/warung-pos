@@ -1,3 +1,12 @@
+
+function calculateHaversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const toRad = (v: number) => (v * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
+}
 import { createFileRoute, useNavigate, Link } from '@tanstack/react-router';
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -257,7 +266,7 @@ function RiderPortalPage() {
             is_approved: true,
             status: 'available',
             updated_at: new Date().toISOString()
-          } as any).select('id, status, is_approved').maybeSingle();
+          } as any).select('id, status, is_approved, user_id').maybeSingle();
           if (inserted) {
             riderRow = inserted;
           }
@@ -389,6 +398,7 @@ function RiderPortalPage() {
         supabase.removeChannel(channel);
       };
     }
+    return undefined;
   }, [sessionUser]);
 
   // Realtime Live GPS Broadcast (Every 3-5 seconds without database writes)
@@ -810,7 +820,7 @@ function RiderPortalPage() {
   const getDistanceBadge = (address: string | null): string | null => {
     if (!address) return null;
     const match = address.match(/JARAK:\s*([0-9.]+\s*KM)/i);
-    return match ? match[1] : null;
+    return match?.[1] ?? null;
   };
 
   // Navigation

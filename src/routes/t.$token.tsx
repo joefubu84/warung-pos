@@ -441,7 +441,7 @@ export function TableQRPage() {
         ...target,
         id: `${target.menuItemId}_${Date.now()}_${idx}`,
         quantity: 1,
-        notes: packNotes[idx] ? `Pinggan #${idx+1}: ${packNotes[idx]}` : target.notes,
+        notes: packNotes[idx] ? `Pinggan #${idx+1}: ${packNotes[idx]}` : (target.notes ?? ''),
         packNotes: [packNotes[idx] || '']
       }));
       const nextCart = [...prev];
@@ -996,7 +996,7 @@ export function TableQRPage() {
                                               : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
                                           }`}
                                         >
-                                          {mod.icon} {mod.label.split('/')[0].trim()}
+                                          {mod.icon} {(mod.label.split('/')[0] ?? mod.label).trim()}
                                         </button>
                                       );
                                     })}
@@ -1198,7 +1198,7 @@ export function TableQRPage() {
                                         : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
                                     }`}
                                   >
-                                    {mod.icon} {mod.label.split('/')[0].trim()}
+                                    {mod.icon} {(mod.label.split('/')[0] ?? mod.label).trim()}
                                   </button>
                                 );
                               })}
