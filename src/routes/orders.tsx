@@ -22,7 +22,7 @@ export const Route = createFileRoute('/orders')({
   component: OrdersPage,
 });
 
-type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled' | 'pending_payment' | 'pending_verification';
 
 interface OrderItem {
   id: string;

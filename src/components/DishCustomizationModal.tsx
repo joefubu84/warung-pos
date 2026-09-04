@@ -47,8 +47,8 @@ export interface DishCustomizationModalProps {
     name: string;
     category: string;
     price: number;
-    image_url: string | null;
-    description?: string;
+    image_url?: string | null;
+    description?: string | null;
   } | null;
   mode?: 'delivery' | 'dine_in' | 'table';
   isViewOnly?: boolean;
@@ -396,7 +396,7 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                               }`}
                             >
                               <span>{mod.icon}</span>
-                              <span>{mod.label.split('/')[0].trim()}</span>
+                              <span>{(mod.label.split('/')[0] ?? mod.label).trim()}</span>
                             </button>
                           );
                         })}

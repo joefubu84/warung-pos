@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 
 interface AuditLogItem {
   id: string;
-  daily_cash_id: string;
+  daily_cash_id?: string | null;
   edited_by?: string | null;
   edited_by_name?: string | null;
   previous_values?: any;

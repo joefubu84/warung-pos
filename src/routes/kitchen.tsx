@@ -13,7 +13,7 @@ export const Route = createFileRoute('/kitchen')({
   component: KitchenPage,
 });
 
-type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled' | 'pending_payment' | 'pending_verification';
 
 interface OrderItem {
   id: string;

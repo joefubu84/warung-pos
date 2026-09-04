@@ -51,7 +51,7 @@ async function getUserProfile(session: any) {
     userProfile = {
       id: session.user.id,
       role: metaRole,
-      store_id: null,
+      store_id: null as unknown as string,
       email: session.user.email
     };
     error = null;
@@ -63,7 +63,7 @@ async function getUserProfile(session: any) {
     userProfile = {
       id: session.user.id,
       role: 'admin',
-      store_id: null,
+      store_id: null as unknown as string,
       email: session.user.email
     };
     error = null;
@@ -76,7 +76,7 @@ async function getUserProfile(session: any) {
       userProfile = {
         id: session.user.id,
         role: 'admin',
-        store_id: null,
+        store_id: null as unknown as string,
         email: session.user.email
       };
       error = null;

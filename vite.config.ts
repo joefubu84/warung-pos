@@ -12,7 +12,7 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
-  nitro: {
+  nitro: ({
     rollupConfig: {
       output: {
         inlineDynamicImports: true,
@@ -22,7 +22,7 @@ export default defineConfig({
       __dirname: '""',
       __filename: '""',
     },
-  },
+  } as never),
   vite: {
     define: {
       __dirname: '""',

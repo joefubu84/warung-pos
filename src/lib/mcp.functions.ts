@@ -1,6 +1,6 @@
 import { supabase } from '@/integrations/supabase/client';
 
-export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled' | 'pending_payment' | 'pending_verification';
 
 /**
  * Retrieves full details for a specific order.

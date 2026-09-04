@@ -798,7 +798,7 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
                                 : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700'
                             }`}
                           >
-                            {mod.icon} {mod.label.split('/')[0].trim()}
+                            {mod.icon} {(mod.label.split('/')[0] ?? mod.label).trim()}
                           </button>
                         );
                       })}
