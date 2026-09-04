@@ -69,6 +69,13 @@
 * **Pengurusan Proses:** PM2 (`pm2 start "bun run dev" --name "warung-pos"`)
 * **Port Aktif:** `5173` (Vite Web App) & `3000`
 
+### C. Pangkalan Data Supabase (Standalone Baru - Tanpa Lovable)
+* **Project ID:** `gtmzzblomcvgmwzjalja`
+* **Project URL:** `https://gtmzzblomcvgmwzjalja.supabase.co`
+* **Publishable / Anon Key:** `sb_publishable_m0I3z41KlguoyAcf1VM53Q_cuJgYe_Q`
+* **Region:** `aws-0-ap-southeast-1` (Singapore)
+* **Status Migrasi:** Selesai 100% (Semua 71 menu, meja A1–A4, RLS realtime, dan fungsi atomik place_order / get_kitchen_orders telah aktif).
+
 ---
 
 ## 🗄️ 5. Skrip SQL Pangkalan Data (Supabase Migration)
