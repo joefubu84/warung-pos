@@ -485,6 +485,7 @@ export function TableQRPage() {
 
         if (existingData) {
           setExistingOrder(existingData);
+          setIsMobileCartOpen(false); // Close cart dialog so confirmation dialog is visible!
           setShowOrderDialog(true);
           setIsSubmitting(false);
           return;
@@ -494,7 +495,7 @@ export function TableQRPage() {
       // 1. Rate Limiting per Device / Session (Max 5 orders per minute)
       const rateLimitRes = checkOrderRateLimit(getOrCreateDeviceId());
       if (!rateLimitRes.allowed) {
-        toast.error(`⚠️ Rate Limit Exceeded: Max 5 orders/min. Please wait ${rateLimitRes.remainingSeconds}s.`);
+        toast.error(`⚠️ Had Laju: Sila tunggu ${rateLimitRes.remainingSeconds} saat sebelum memesan semula.`);
         setIsSubmitting(false);
         return;
       }
@@ -502,17 +503,77 @@ export function TableQRPage() {
       // 2. Authoritative Database Price & Stock Re-Validation
       const priceVal = await validateOrderPricesAgainstDB(storeId, cart);
       if (!priceVal.isValid) {
-        toast.error(`⛔ Order Rejected: ${priceVal.message || 'Menu price or stock mismatch.'}`);
+        toast.error(`⛔ Pesanan Disekat: ${priceVal.message || 'Harga atau stok tidak sepadan.'}`);
         setIsSubmitting(false);
         return;
       }
 
       const finalTotalAmount = Math.max(0, priceVal.expectedTotal - (isRm8DiscountApplied ? 8.00 : 0));
 
-      // 3. Create order
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
+      // 3. Prepare order items
+      const orderItemsToPlace = cart.flatMap(item => {
+        if (item.quantity > 1 && item.packNotes && item.packNotes.length > 0) {
+          return item.packNotes.slice(0, item.quantity).map((pNote, pIdx) => ({
+            menu_item_id: item.menuItemId,
+            quantity: 1,
+            price: item.price,
+            price_at_order: item.price,
+            fulfillment_type: item.fulfillmentType || 'dine_in',
+            container_size: item.containerSize || null,
+            container_charge: item.containerCharge || 0,
+            notes: pNote ? `Pinggan #${pIdx + 1}: ${pNote}` : (item.notes ? `${item.notes} (Pinggan #${pIdx + 1})` : '')
+          }));
+        }
+        return [{
+          menu_item_id: item.menuItemId,
+          quantity: item.quantity,
+          price: item.price,
+          price_at_order: item.price,
+          fulfillment_type: item.fulfillmentType || 'dine_in',
+          container_size: item.containerSize || null,
+          container_charge: item.containerCharge || 0,
+          notes: item.notes || ''
+        }];
+      });
+
+      let placedOrderId: string | null = null;
+
+      // 4. Try atomic place_order RPC first (SECURITY DEFINER)
+      try {
+        const { data: rpcRes, error: rpcErr } = await supabase.rpc('place_order', {
+          p_order: {
+            store_id: storeId,
+            type: 'dine_in',
+            table_id: tableId,
+            customer_phone: customerPhone || null,
+            discount_type: 'fixed',
+            discount_value: isRm8DiscountApplied ? 8.00 : 0,
+          },
+          p_items: orderItemsToPlace.map(it => ({
+            menu_item_id: it.menu_item_id,
+            quantity: it.quantity,
+            fulfillment_type: it.fulfillment_type,
+            container_size: it.container_size,
+            container_charge: it.container_charge,
+            notes: it.notes
+          })),
+          p_payments: []
+        });
+
+        if (!rpcErr && rpcRes) {
+          const resObj = rpcRes as any;
+          if (resObj?.success !== false) {
+            placedOrderId = resObj?.order_id || resObj?.id;
+          }
+        }
+      } catch (rpcCatch) {
+        console.warn('RPC place_order fallback to direct insert:', rpcCatch);
+      }
+
+      // 5. Fallback to direct insert if RPC did not return ID
+      if (!placedOrderId) {
+        const newTempId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : undefined;
+        const insertPayload: any = {
           store_id: storeId,
           type: 'dine_in',
           status: 'pending',
@@ -522,72 +583,68 @@ export function TableQRPage() {
           delivery_service: null,
           customer_phone: customerPhone || null,
           delivery_address: null,
-        } as any)
-        .select()
-        .single();
+        };
+        if (newTempId) insertPayload.id = newTempId;
 
-      if (orderError) throw orderError;
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .insert(insertPayload)
+          .select('id')
+          .maybeSingle();
+
+        if (orderError) throw orderError;
+        placedOrderId = orderData?.id || newTempId || 'new_order';
+
+        const orderItemsToInsert = orderItemsToPlace.map(it => ({
+          order_id: placedOrderId,
+          menu_item_id: it.menu_item_id,
+          quantity: it.quantity,
+          price_at_order: it.price,
+          fulfillment_type: it.fulfillment_type,
+          container_size: it.container_size,
+          container_charge: it.container_charge,
+          notes: it.notes
+        }));
+
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(orderItemsToInsert);
+
+        if (itemsError) throw itemsError;
+      }
 
       // Auto credit 1 point per dish + handle RM 8 discount deduction
-      if (customerPhone) {
+      if (customerPhone && placedOrderId) {
         const totalDishes = cart.reduce((sum, item) => sum + item.quantity, 0);
         
         if (isRm8DiscountApplied) {
-          deductMemberPoints(customerPhone, 60, `RM 8.00 Discount used on Order #${orderData.id.slice(0, 6)}`);
+          deductMemberPoints(customerPhone, 60, `RM 8.00 Discount used on Order #${placedOrderId.slice(0, 6)}`);
         }
 
-        const updatedMem = addMemberPoints(customerPhone, totalDishes, `Earned ${totalDishes} pts (1 pt/dish) on Order #${orderData.id.slice(0, 6)}`);
+        const updatedMem = addMemberPoints(customerPhone, totalDishes, `Earned ${totalDishes} pts (1 pt/dish) on Order #${placedOrderId.slice(0, 6)}`);
         setMemberData(updatedMem);
         toast.success(`💎 +${totalDishes} Member Point${totalDishes > 1 ? 's' : ''} Earned! Total: ${updatedMem.points} pts`);
       }
 
-      // 2. Insert order items (Flattened per plate so kitchen receives individual numbered plates)
-      const orderItemsToInsert = cart.flatMap(item => {
-        if (item.quantity > 1 && item.packNotes && item.packNotes.length > 0) {
-          return item.packNotes.slice(0, item.quantity).map((pNote, pIdx) => ({
-            order_id: orderData.id,
-            menu_item_id: item.menuItemId,
-            quantity: 1,
-            price_at_order: item.price,
-            fulfillment_type: item.fulfillmentType,
-            container_size: item.containerSize || null,
-            container_charge: item.containerCharge || 0,
-            notes: pNote ? `Pinggan #${pIdx + 1}: ${pNote}` : (item.notes ? `${item.notes} (Pinggan #${pIdx + 1})` : '')
-          }));
-        }
-        return [{
-          order_id: orderData.id,
-          menu_item_id: item.menuItemId,
-          quantity: item.quantity,
-          price_at_order: item.price,
-          fulfillment_type: item.fulfillmentType,
-          container_size: item.containerSize || null,
-          container_charge: item.containerCharge || 0,
-          notes: item.notes || ''
-        }];
-      });
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItemsToInsert);
-
-      if (itemsError) throw itemsError;
-
-      // 3. Update active table session order timestamp
+      // Update active table session order timestamp
       if (tableNumber) {
         await updateTableSessionOrderTime(tableNumber.toString());
       }
 
-      // 4. Clear cart & set active order tracker ID
+      // Clear cart & set active order tracker ID
       setCart([]);
-      setActivePlacedOrderId(orderData.id);
+      if (placedOrderId) {
+        setActivePlacedOrderId(placedOrderId);
+      }
       setShowOrderDialog(false);
       setIsMobileCartOpen(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      toast.success("🎉 Order placed successfully! Live progress tracker active.");
+      toast.success("🎉 Pesanan berjaya dihantar ke dapur! Status sedang diproses.");
     } catch (err: any) {
       console.error('Error placing order:', err);
-      setError(err.message || 'Failed to place order. Please ask staff for assistance.');
+      const errMsg = err.message || 'Gagal menghantar pesanan. Sila panggil staf atau cuba sebentar lagi.';
+      setError(errMsg);
+      toast.error(`⛔ ${errMsg}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -606,7 +663,7 @@ export function TableQRPage() {
             menu_item_id: item.menuItemId,
             quantity: 1,
             price_at_order: item.price,
-            fulfillment_type: item.fulfillmentType,
+            fulfillment_type: item.fulfillmentType || 'dine_in',
             container_size: item.containerSize || null,
             container_charge: item.containerCharge || 0,
             notes: pNote ? `Pinggan #${pIdx + 1}: ${pNote}` : (item.notes ? `${item.notes} (Pinggan #${pIdx + 1})` : '')
@@ -617,7 +674,7 @@ export function TableQRPage() {
           menu_item_id: item.menuItemId,
           quantity: item.quantity,
           price_at_order: item.price,
-          fulfillment_type: item.fulfillmentType,
+          fulfillment_type: item.fulfillmentType || 'dine_in',
           container_size: item.containerSize || null,
           container_charge: item.containerCharge || 0,
           notes: item.notes || ''
@@ -630,13 +687,23 @@ export function TableQRPage() {
 
       if (itemsError) throw itemsError;
 
-      const newTotal = existingOrder.total_amount + cartSubtotal;
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({ total_amount: newTotal })
-        .eq('id', existingOrder.id);
-      
-      if (updateError) throw updateError;
+      // Safe update order total if permitted
+      const newTotal = (Number(existingOrder.total_amount) || 0) + cartSubtotal;
+      try {
+        await supabase
+          .from('orders')
+          .update({ total_amount: newTotal })
+          .eq('id', existingOrder.id);
+      } catch (updateErr) {
+        console.warn('Could not update total on orders (cashier will compute from items):', updateErr);
+      }
+
+      // Auto credit member points
+      if (customerPhone) {
+        const totalDishes = cart.reduce((sum, item) => sum + item.quantity, 0);
+        const updatedMem = addMemberPoints(customerPhone, totalDishes, `Added ${totalDishes} items to Order #${existingOrder.id.slice(0, 6)}`);
+        setMemberData(updatedMem);
+      }
 
       setCart([]);
       setActivePlacedOrderId(existingOrder.id);
@@ -644,10 +711,12 @@ export function TableQRPage() {
       setShowOrderDialog(false);
       setIsMobileCartOpen(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      toast.success("🎉 Items added to your active bill!");
+      toast.success("🎉 Tambahan hidangan berjaya dihantar ke dapur!");
     } catch (err: any) {
       console.error('Error adding to order:', err);
-      setError(err.message || 'Failed to add to existing order.');
+      const errMsg = err.message || 'Gagal menambah hidangan ke pesanan sedia ada.';
+      setError(errMsg);
+      toast.error(`⛔ ${errMsg}`);
     } finally {
       setIsSubmitting(false);
     }
