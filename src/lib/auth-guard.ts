@@ -47,11 +47,13 @@ async function getUserProfile(session: any) {
 
   // 3. Check metadata role from Supabase auth
   const metaRole = session.user.user_metadata?.role || session.user.app_metadata?.role;
+const DEFAULT_STORE_ID = '1094d737-8104-4a55-b678-0fe9097beba0';
+
   if (!userProfile && metaRole) {
     userProfile = {
       id: session.user.id,
       role: metaRole,
-      store_id: null as unknown as string,
+      store_id: DEFAULT_STORE_ID,
       email: session.user.email
     };
     error = null;
@@ -63,7 +65,7 @@ async function getUserProfile(session: any) {
     userProfile = {
       id: session.user.id,
       role: 'admin',
-      store_id: null as unknown as string,
+      store_id: DEFAULT_STORE_ID,
       email: session.user.email
     };
     error = null;
@@ -76,11 +78,16 @@ async function getUserProfile(session: any) {
       userProfile = {
         id: session.user.id,
         role: 'admin',
-        store_id: null as unknown as string,
+        store_id: DEFAULT_STORE_ID,
         email: session.user.email
       };
       error = null;
     }
+  }
+
+  // Ensure store_id is never empty or null
+  if (userProfile && !userProfile.store_id) {
+    userProfile.store_id = DEFAULT_STORE_ID;
   }
 
   return { userProfile, error };
@@ -121,7 +128,7 @@ export async function requireAuth(location: { pathname: string }, auth: AuthStat
     });
   }
 
-  return { session, role: userProfile.role, storeId: userProfile.store_id };
+  return { session, role: userProfile.role, storeId: userProfile.store_id || DEFAULT_STORE_ID };
 }
 
 export async function requireAdminAuth(location: { pathname: string }, auth: AuthState) {

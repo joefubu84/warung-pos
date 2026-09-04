@@ -154,39 +154,60 @@ function SettingsPage() {
       sound_file_url: string | null;
       badge_colors: Record<string, string>;
     }) => {
+      const activeStoreId = storeId || '1094d737-8104-4a55-b678-0fe9097beba0';
+      const packedBadgeColors = {
+        ...values.badge_colors,
+        __printer_name: values.printer_name,
+        __print_on_status: values.print_on_status,
+        __auto_print: values.print_on_status.length > 0
+      };
+
+      const payload: any = {
+        store_id: activeStoreId,
+        sound_choice: values.sound_choice,
+        sound_file_url: values.sound_file_url,
+        badge_colors: packedBadgeColors
+      };
+
       if (printerSettings) {
         const { error } = await supabase
           .from('printer_settings')
-          .update({
-            printer_name: values.printer_name,
-            print_on_status: values.print_on_status,
-            auto_print: values.print_on_status.length > 0,
-            sound_choice: values.sound_choice,
-            sound_file_url: values.sound_file_url,
-            badge_colors: values.badge_colors
-          })
-          .eq('store_id', storeId);
+          .update(payload)
+          .eq('store_id', activeStoreId);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('printer_settings')
-          .insert({
-            store_id: storeId,
-            printer_name: values.printer_name,
-            print_on_status: values.print_on_status,
-            auto_print: values.print_on_status.length > 0,
-            sound_choice: values.sound_choice,
-            sound_file_url: values.sound_file_url,
-            badge_colors: values.badge_colors
-          });
+          .insert(payload);
         if (error) throw error;
+      }
+
+      // Also mirror to stores.settings for multi-client persistence
+      try {
+        const currentStoreSettings = (store as any)?.settings || {};
+        await supabase
+          .from('stores')
+          .update({
+            settings: {
+              ...currentStoreSettings,
+              printer: {
+                printer_name: values.printer_name,
+                print_on_status: values.print_on_status,
+                auto_print: values.print_on_status.length > 0,
+                sound_choice: values.sound_choice
+              }
+            }
+          })
+          .eq('id', activeStoreId);
+      } catch (storeSetErr) {
+        console.warn('Could not mirror printer to stores.settings:', storeSetErr);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['printer-settings', storeId] });
-      toast.success('Printer and Kitchen settings updated');
+      toast.success('Tetapan Dapur & Pencetak Berjaya Disimpan');
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => toast.error(`Ralat menyimpan tetapan dapur: ${error.message}`),
   });
 
   const updateHomepageMutation = useMutation({
@@ -300,21 +321,24 @@ function SettingsPage() {
   }, [store]);
 
   useEffect(() => {
-    if (printerSettings) {
+    if (printerSettings || store) {
+      const badgeData = (printerSettings?.badge_colors as any) || {};
+      const storePrinter = (store as any)?.settings?.printer || {};
+
       setPrinterForm({
-        printer_name: printerSettings.printer_name || '',
-        print_on_status: printerSettings.print_on_status || [],
-        sound_choice: printerSettings.sound_choice || 'kitchen_bell',
-        sound_file_url: printerSettings.sound_file_url || null,
-        badge_colors: (printerSettings.badge_colors as Record<string, string>) || {
-          dineIn: '#3B82F6',
-          takeaway: '#F97316',
-          delivery: '#8B5CF6',
-          specialRequests: '#EC4899'
+        printer_name: printerSettings?.printer_name || badgeData.__printer_name || storePrinter.printer_name || '',
+        print_on_status: printerSettings?.print_on_status || badgeData.__print_on_status || storePrinter.print_on_status || ['pending', 'preparing'],
+        sound_choice: printerSettings?.sound_choice || storePrinter.sound_choice || 'kitchen_bell',
+        sound_file_url: printerSettings?.sound_file_url || null,
+        badge_colors: {
+          dineIn: badgeData.dineIn || '#3B82F6',
+          takeaway: badgeData.takeaway || '#F97316',
+          delivery: badgeData.delivery || '#8B5CF6',
+          specialRequests: badgeData.specialRequests || '#EC4899'
         }
       });
     }
-  }, [printerSettings]);
+  }, [printerSettings, store]);
 
   if (storeLoading || printerLoading || menuLoading) return <div className="p-8 text-center">Loading settings...</div>;
 

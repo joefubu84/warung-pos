@@ -558,11 +558,12 @@ function KitchenPage() {
   const isInitialLoad = useRef(true);
 
   const fetchPrinterSettings = useCallback(async () => {
-    if (!storeId) return;
+    const DEFAULT_STORE_ID = '1094d737-8104-4a55-b678-0fe9097beba0';
+    const activeStoreId = storeId || DEFAULT_STORE_ID;
     const { data } = await supabase
       .from('printer_settings')
       .select('*')
-      .eq('store_id', storeId)
+      .eq('store_id', activeStoreId)
       .maybeSingle();
     if (data) {
       setPrinterSettings(data);
@@ -618,13 +619,16 @@ function KitchenPage() {
     if (!isSilent) setIsLoading(true);
     setFetchError(null);
 
+    const DEFAULT_STORE_ID = '1094d737-8104-4a55-b678-0fe9097beba0';
+    const activeStoreId = storeId || DEFAULT_STORE_ID;
+
     try {
       let ordersData: any = null;
 
       // 1. Try atomic get_kitchen_orders RPC first (SECURITY DEFINER - bypasses RLS)
       try {
         const { data: rpcData, error: rpcErr } = await supabase.rpc('get_kitchen_orders', {
-          p_store_id: storeId || null
+          p_store_id: activeStoreId
         });
         if (!rpcErr && Array.isArray(rpcData)) {
           ordersData = rpcData;
@@ -664,9 +668,8 @@ function KitchenPage() {
           .in('status', ['pending', 'preparing'])
           .order('created_at', { ascending: true });
 
-        if (storeId) {
-          query = query.eq('store_id', storeId);
-        }
+        // Retrieve orders matching active store_id or with null store_id to prevent any dropped orders
+        query = query.or(`store_id.eq.${activeStoreId},store_id.is.null`);
 
         const { data, error } = await query;
         if (error) {
@@ -775,14 +778,24 @@ function KitchenPage() {
       })
       .subscribe();
 
-    // 5-second high-reliability background synchronization
+    // Instant Customer Order Broadcast Channel for Zero-Delay Notification
+    const broadcastChannel = supabase.channel('kitchen_realtime_broadcast')
+      .on('broadcast', { event: 'new_order_placed' }, (msg) => {
+        console.log('⚡ Instant Kitchen broadcast received: new order placed!', msg);
+        fetchActiveOrders(true);
+        playKitchenSound('kitchen_bell');
+      })
+      .subscribe();
+
+    // 4-second high-reliability background synchronization
     const intervalId = setInterval(() => {
       fetchActiveOrders(true);
-    }, 5000);
+    }, 4000);
 
     return () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(buzzerChannel);
+      supabase.removeChannel(broadcastChannel);
       clearInterval(intervalId);
     };
   }, [fetchPrinterSettings, fetchActiveOrders, fetchLookupData]);

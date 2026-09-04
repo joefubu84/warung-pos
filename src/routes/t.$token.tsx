@@ -298,7 +298,8 @@ export function TableQRPage() {
           return;
         }
 
-        const sId = tableData.store_id;
+        const DEFAULT_STORE_ID = '1094d737-8104-4a55-b678-0fe9097beba0';
+        const sId = tableData.store_id || DEFAULT_STORE_ID;
         setStoreId(sId);
         setTableId(tableData.id);
         setTableNumber(tableData.table_number);
@@ -476,7 +477,17 @@ export function TableQRPage() {
   const pointsEarned = Math.floor(cartSubtotal * 2);
 
   const handlePlaceOrder = async (forceNew: boolean = false) => {
-    if (cart.length === 0 || !storeId || !tableId) return;
+    const DEFAULT_STORE_ID = '1094d737-8104-4a55-b678-0fe9097beba0';
+    const effectiveStoreId = storeId || DEFAULT_STORE_ID;
+    
+    if (!tableId) {
+      toast.error('Kod meja tidak sah. Sila imbas semula kod QR meja anda.');
+      return;
+    }
+    if (cart.length === 0) {
+      toast.error('Troli pesanan kosong. Sila pilih hidangan terlebih dahulu.');
+      return;
+    }
     
     setIsSubmitting(true);
     setError(null);
@@ -518,7 +529,7 @@ export function TableQRPage() {
       }
 
       // 2. Authoritative Database Price & Stock Re-Validation
-      const priceVal = await validateOrderPricesAgainstDB(storeId, cart);
+      const priceVal = await validateOrderPricesAgainstDB(effectiveStoreId, cart);
       if (!priceVal.isValid) {
         toast.error(`⛔ Pesanan Disekat: ${priceVal.message || 'Harga atau stok tidak sepadan.'}`);
         setIsSubmitting(false);
@@ -559,7 +570,7 @@ export function TableQRPage() {
       try {
         const { data: rpcRes, error: rpcErr } = await supabase.rpc('place_order', {
           p_order: {
-            store_id: storeId,
+            store_id: effectiveStoreId,
             type: 'dine_in',
             table_id: tableId,
             customer_phone: customerPhone || null,
@@ -579,7 +590,7 @@ export function TableQRPage() {
 
         if (!rpcErr && rpcRes) {
           const resObj = rpcRes as any;
-          if (resObj?.success !== false) {
+          if (resObj?.success !== false && (resObj?.order_id || resObj?.id)) {
             placedOrderId = resObj?.order_id || resObj?.id;
           }
         }
@@ -589,9 +600,8 @@ export function TableQRPage() {
 
       // 5. Fallback to direct insert if RPC did not return ID
       if (!placedOrderId) {
-        const newTempId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : undefined;
         const insertPayload: any = {
-          store_id: storeId,
+          store_id: effectiveStoreId,
           type: 'dine_in',
           status: 'pending',
           table_id: tableId,
@@ -601,16 +611,16 @@ export function TableQRPage() {
           customer_phone: customerPhone || null,
           delivery_address: null,
         };
-        if (newTempId) insertPayload.id = newTempId;
 
         const { data: orderData, error: orderError } = await supabase
           .from('orders')
           .insert(insertPayload)
           .select('id')
-          .maybeSingle();
+          .single();
 
         if (orderError) throw orderError;
-        placedOrderId = orderData?.id || newTempId || 'new_order';
+        if (!orderData?.id) throw new Error('Pengkalan data tidak memulangkan pengesahan ID pesanan.');
+        placedOrderId = orderData.id;
 
         const orderItemsToInsert = orderItemsToPlace.map(it => ({
           order_id: placedOrderId,
@@ -628,6 +638,27 @@ export function TableQRPage() {
           .insert(orderItemsToInsert);
 
         if (itemsError) throw itemsError;
+      }
+
+      // 6. Absolute verification check
+      if (!placedOrderId) {
+        throw new Error('Pesanan gagal disahkan oleh pelayan pengkalan data. Sila cuba sebentar lagi.');
+      }
+
+      // 7. Instant Realtime Kitchen Broadcast Notification
+      try {
+        const realtimeChannel = supabase.channel('kitchen_realtime_broadcast');
+        realtimeChannel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            realtimeChannel.send({
+              type: 'broadcast',
+              event: 'new_order_placed',
+              payload: { order_id: placedOrderId, table_number: tableNumber, store_id: effectiveStoreId }
+            });
+          }
+        });
+      } catch (broadcastErr) {
+        console.warn('Realtime broadcast warning:', broadcastErr);
       }
 
       // Auto credit 1 point per dish + handle RM 8 discount deduction
@@ -650,13 +681,11 @@ export function TableQRPage() {
 
       // Clear cart & set active order tracker ID
       setCart([]);
-      if (placedOrderId) {
-        setActivePlacedOrderId(placedOrderId);
-      }
+      setActivePlacedOrderId(placedOrderId);
       setShowOrderDialog(false);
       setIsMobileCartOpen(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      toast.success("🎉 Pesanan berjaya dihantar ke dapur! Status sedang diproses.");
+      toast.success("🎉 Pesanan berjaya dihantar terus ke dapur! Loceng dapur telah dibunyikan.");
     } catch (err: any) {
       console.error('Error placing order:', err);
       const errMsg = err.message || 'Gagal menghantar pesanan. Sila panggil staf atau cuba sebentar lagi.';
@@ -720,6 +749,22 @@ export function TableQRPage() {
         const totalDishes = cart.reduce((sum, item) => sum + item.quantity, 0);
         const updatedMem = addMemberPoints(customerPhone, totalDishes, `Added ${totalDishes} items to Order #${existingOrder.id.slice(0, 6)}`);
         setMemberData(updatedMem);
+      }
+
+      // Instant Realtime Kitchen Broadcast Notification for Added Items
+      try {
+        const realtimeChannel = supabase.channel('kitchen_realtime_broadcast');
+        realtimeChannel.subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            realtimeChannel.send({
+              type: 'broadcast',
+              event: 'new_order_placed',
+              payload: { order_id: existingOrder.id, table_number: tableNumber, is_addon: true }
+            });
+          }
+        });
+      } catch (broadcastErr) {
+        console.warn('Realtime broadcast warning:', broadcastErr);
       }
 
       setCart([]);

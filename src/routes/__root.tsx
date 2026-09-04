@@ -207,9 +207,11 @@ function RootComponent() {
         } catch {}
       }
 
-      // Register PWA Service Worker
+      // Register PWA Service Worker with immediate update check
       if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
-        navigator.serviceWorker.register('/sw.js').then(() => {}).catch(() => {});
+        navigator.serviceWorker.register('/sw.js').then((reg) => {
+          reg.update().catch(() => {});
+        }).catch(() => {});
       }
     }
   }, []);
