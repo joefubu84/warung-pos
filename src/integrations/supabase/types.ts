@@ -498,6 +498,7 @@ export type Database = {
           notes: string | null
           paid: boolean | null
           payment_method: string | null
+          payment_proof_url: string | null
           payment_reference: string | null
           payment_status: string | null
           phone_number: string | null
@@ -530,6 +531,7 @@ export type Database = {
           notes?: string | null
           paid?: boolean | null
           payment_method?: string | null
+          payment_proof_url?: string | null
           payment_reference?: string | null
           payment_status?: string | null
           phone_number?: string | null
@@ -562,6 +564,7 @@ export type Database = {
           notes?: string | null
           paid?: boolean | null
           payment_method?: string | null
+          payment_proof_url?: string | null
           payment_reference?: string | null
           payment_status?: string | null
           phone_number?: string | null
