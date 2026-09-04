@@ -17,8 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Minus, Search, Trash2, ShoppingCart, CheckCircle2, Lock, Unlock, AlertTriangle, Split, Globe, Radio } from "lucide-react";
+import { Plus, Minus, Search, Trash2, ShoppingCart, CheckCircle2, Lock, Unlock, AlertTriangle, Split, Globe, Radio, Bell } from "lucide-react";
 import { COMMON_MODIFIERS, detectModifierBadges } from "@/lib/kitchen-checklist-config";
+import { QuickStockBar } from "@/components/QuickStockBar";
 import { toast } from 'sonner';
 
 export const Route = createFileRoute('/counter')({
@@ -202,9 +203,36 @@ const addSplitPayment = () => {
       })
       .subscribe();
 
+    // Table Service Buzzer Channel
+    const buzzerChannel = supabase.channel('warung_table_buzzer')
+      .on('broadcast', { event: 'call_waiter' }, (payload: any) => {
+        const detail = payload?.payload;
+        if (detail) {
+          playBeep();
+          toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, {
+            duration: 8000,
+          });
+        }
+      })
+      .subscribe();
+
+    const handleLocalBuzzer = (e: any) => {
+      const detail = e?.detail;
+      if (detail) {
+        playBeep();
+        toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, {
+          duration: 8000,
+        });
+      }
+    };
+
+    window.addEventListener('warung_call_waiter_alert', handleLocalBuzzer);
+
     return () => {
       supabase.removeChannel(cashChannel);
       supabase.removeChannel(storeChannel);
+      supabase.removeChannel(buzzerChannel);
+      window.removeEventListener('warung_call_waiter_alert', handleLocalBuzzer);
     };
   }, [fetchCashStatus, fetchStoreSettings]);
 
@@ -593,7 +621,7 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
           <div className="w-[60%] bg-slate-950 flex flex-col border-r border-slate-800 relative">
             
             {/* STICKY SEARCH BAR CONTAINER */}
-            <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 p-3 shrink-0 shadow-md">
+            <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 p-3 shrink-0 shadow-md space-y-2.5">
               <div className="relative w-full">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                 <input 
@@ -603,6 +631,9 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 text-white placeholder-slate-500 rounded-xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
                 />
               </div>
+
+              {/* QUICK STOCK 86 / SOLD OUT ACCORDION */}
+              <QuickStockBar onItemUpdated={fetchMenuItems} />
             </div>
 
             {/* Category Tabs */}

@@ -768,6 +768,13 @@ function KitchenPage() {
         console.log('📡 Kitchen Realtime Status:', status, err);
       });
 
+    // Table Service Buzzer Channel for Kitchen Display
+    const buzzerChannel = supabase.channel('kitchen_table_buzzer')
+      .on('broadcast', { event: 'call_waiter' }, () => {
+        playKitchenSound('kitchen_bell');
+      })
+      .subscribe();
+
     // 5-second high-reliability background synchronization
     const intervalId = setInterval(() => {
       fetchActiveOrders(true);
@@ -775,6 +782,7 @@ function KitchenPage() {
 
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(buzzerChannel);
       clearInterval(intervalId);
     };
   }, [fetchPrinterSettings, fetchActiveOrders, fetchLookupData]);

@@ -3,6 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { requireStaffAuth } from '@/lib/auth-guard';
 
+import { RestaurantSetupCard } from '@/components/RestaurantSetupCard';
+import { QuickStockBar } from '@/components/QuickStockBar';
+
 export const Route = createFileRoute('/dashboard')({
   ssr: false,
   beforeLoad: async ({ context, location }) => {
@@ -199,6 +202,12 @@ function DashboardPage() {
             🖨️ Print Executive Report
           </button>
         </div>
+
+        {/* RESTAURANT SETUP CHECKLIST & ONBOARDING */}
+        <RestaurantSetupCard />
+
+        {/* QUICK STOCK MANAGEMENT (86 / SOLD OUT) */}
+        <QuickStockBar onItemUpdated={fetchTodayData} />
 
         {/* YESTERDAY'S REGISTER CLOSING SUMMARY */}
         <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-4">

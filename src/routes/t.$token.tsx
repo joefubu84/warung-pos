@@ -41,8 +41,9 @@ import {
   LoyaltyMember 
 } from '@/lib/loyalty-config';
 import { sanitizePhone } from '@/lib/whatsapp-otp';
-import { Phone, UserCheck, ShieldCheck, ShieldAlert, Gift, History, Percent, LogOut, RefreshCw, Split, CreditCard, Moon, Menu } from 'lucide-react';
+import { Phone, UserCheck, ShieldCheck, ShieldAlert, Gift, History, Percent, LogOut, RefreshCw, Split, CreditCard, Moon, Menu, Bell } from 'lucide-react';
 import { DishCustomizationModal, CustomizedCartItem } from '@/components/DishCustomizationModal';
+import { CallWaiterModal } from '@/components/CallWaiterModal';
 import { 
   validateAndStartTableSession, 
   updateTableSessionOrderTime, 
@@ -118,6 +119,7 @@ export function TableQRPage() {
 
   // Customization & Ordering state
   const [customizingItem, setCustomizingItem] = useState<MenuItem | null>(null);
+  const [isCallWaiterOpen, setIsCallWaiterOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activePlacedOrderId, setActivePlacedOrderId] = useState<string | null>(null);
@@ -786,6 +788,14 @@ export function TableQRPage() {
           {/* RIGHT SIDE UTILITY PILL */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-1 shadow-sm flex items-center gap-1">
             <button
+              onClick={() => setIsCallWaiterOpen(true)}
+              className="px-2.5 py-1.5 text-xs font-black bg-orange-50 hover:bg-orange-100 text-orange-600 rounded-xl transition-all flex items-center gap-1 active:scale-95 border border-orange-200"
+              title="Panggil Pelayan / Minta Bil"
+            >
+              <Bell className="w-3.5 h-3.5 animate-bounce" />
+              <span>Panggil</span>
+            </button>
+            <button
               onClick={() => setIsMobileCartOpen(true)}
               className="relative p-2 text-slate-700 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-colors"
               title="View Cart / Payment"
@@ -1351,6 +1361,14 @@ export function TableQRPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* CALL WAITER & SERVICE BUZZER MODAL */}
+      <CallWaiterModal
+        isOpen={isCallWaiterOpen}
+        onClose={() => setIsCallWaiterOpen(false)}
+        tableNumber={tableNumber || '01'}
+        storeId={storeId || undefined}
+      />
     </div>
   );
 }
