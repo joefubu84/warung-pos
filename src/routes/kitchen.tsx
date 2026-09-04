@@ -619,46 +619,66 @@ function KitchenPage() {
     setFetchError(null);
 
     try {
-      let query = supabase
-        .from('orders')
-        .select(`
-          id,
-          store_id,
-          status,
-          type,
-          delivery_service,
-          customer_name,
-          table_id,
-          paid,
-          payment_status,
-          payment_method,
-          customer_phone,
-          delivery_address,
-          created_at,
-          ready_at,
-          order_items (
-            id,
-            menu_item_id,
-            quantity,
-            fulfillment_type,
-            notes,
-            menu_items (name)
-          )
-        `)
-        .in('status', ['pending', 'preparing'])
-        .order('created_at', { ascending: true });
+      let ordersData: any = null;
 
-      if (storeId) {
-        query = query.eq('store_id', storeId);
+      // 1. Try atomic get_kitchen_orders RPC first (SECURITY DEFINER - bypasses RLS)
+      try {
+        const { data: rpcData, error: rpcErr } = await supabase.rpc('get_kitchen_orders', {
+          p_store_id: storeId || null
+        });
+        if (!rpcErr && Array.isArray(rpcData)) {
+          ordersData = rpcData;
+        }
+      } catch (rpcCatch) {
+        console.warn('RPC get_kitchen_orders fallback to direct query:', rpcCatch);
       }
 
-      const { data, error } = await query;
+      // 2. Direct orders table query fallback
+      if (!ordersData) {
+        let query = supabase
+          .from('orders')
+          .select(`
+            id,
+            store_id,
+            status,
+            type,
+            delivery_service,
+            customer_name,
+            table_id,
+            paid,
+            payment_status,
+            payment_method,
+            customer_phone,
+            delivery_address,
+            created_at,
+            ready_at,
+            order_items (
+              id,
+              menu_item_id,
+              quantity,
+              fulfillment_type,
+              notes,
+              menu_items (name)
+            )
+          `)
+          .in('status', ['pending', 'preparing'])
+          .order('created_at', { ascending: true });
 
-      if (error) {
-        console.error('Error fetching kitchen orders:', error);
-        setFetchError(error.message);
-      } else if (data) {
-        const newOrdersData = data as unknown as Order[];
+        if (storeId) {
+          query = query.eq('store_id', storeId);
+        }
+
+        const { data, error } = await query;
+        if (error) {
+          console.error('Error fetching kitchen orders:', error);
+          setFetchError(error.message);
+        } else if (data) {
+          ordersData = data;
+        }
+      }
+
+      if (ordersData) {
+        const newOrdersData = ordersData as unknown as Order[];
         const now = Date.now();
         let hasNewOrder = false;
         let hasUpdatedOrder = false;
@@ -779,22 +799,37 @@ function KitchenPage() {
       return newOrders;
     });
 
-    const payload: any = { status: nextStatus };
-    if (nextStatus === 'ready') payload.ready_at = new Date().toISOString();
-    if (nextStatus === ('completed' as any)) payload.completed_at = new Date().toISOString();
-
-    const { error } = await supabase
-      .from('orders')
-      .update(payload)
-      .eq('id', orderId);
-
-    if (error) {
-      console.error('Error updating status:', error);
-      alert('Failed to update status');
-      // Revert optimistic update by fully fetching
-      fetchActiveOrders(true);
+    let updateSuccess = false;
+    try {
+      const { data: rpcRes, error: rpcErr } = await supabase.rpc('update_kitchen_order_status', {
+        p_order_id: orderId,
+        p_status: nextStatus
+      });
+      if (!rpcErr && (rpcRes as any)?.success) {
+        updateSuccess = true;
+      }
+    } catch (rpcCatch) {
+      console.warn('update_kitchen_order_status fallback to direct table update:', rpcCatch);
     }
-  }, []);
+
+    if (!updateSuccess) {
+      const payload: any = { status: nextStatus };
+      if (nextStatus === 'ready') payload.ready_at = new Date().toISOString();
+      if (nextStatus === ('completed' as any)) payload.completed_at = new Date().toISOString();
+
+      const { error } = await supabase
+        .from('orders')
+        .update(payload)
+        .eq('id', orderId);
+
+      if (error) {
+        console.error('Error updating status:', error);
+        alert('Failed to update status');
+        // Revert optimistic update by fully fetching
+        fetchActiveOrders(true);
+      }
+    }
+  }, [fetchActiveOrders]);
 
   if (isLoading) return <div className="p-8">Loading Kitchen...</div>;
 
