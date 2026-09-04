@@ -189,8 +189,8 @@ export function clearAllLoyaltyMembers(): void {
     });
 
     // Purge demo members from Supabase
-    supabase.from('members').delete().in('id', ['mem-row-mem-user', 'mem-row-mem-1', 'mem-row-mem-2', 'mem-row-mem-3']).then(() => {}).catch(() => {});
-    supabase.from('users').delete().in('id', ['mem-user', 'mem-1', 'mem-2', 'mem-3']).then(() => {}).catch(() => {});
+    supabase.from('members').delete().in('id', ['mem-row-mem-user', 'mem-row-mem-1', 'mem-row-mem-2', 'mem-row-mem-3']).then(() => {}, () => {});
+    supabase.from('users').delete().in('id', ['mem-user', 'mem-1', 'mem-2', 'mem-3']).then(() => {}, () => {});
   } catch (err) {
     console.error('Failed to clear loyalty members:', err);
   }

@@ -502,7 +502,7 @@ function SettingsPage() {
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-xl flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
               {(() => {
-                const currentItem = SIDEBAR_ITEMS.find(i => i.id === activeSection) || SIDEBAR_ITEMS[0];
+                const currentItem = SIDEBAR_ITEMS.find(i => i.id === activeSection) || SIDEBAR_ITEMS[0]!;
                 const CurrentIcon = currentItem.icon;
                 return (
                   <>

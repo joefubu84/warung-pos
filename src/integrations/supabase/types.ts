@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -177,7 +177,6 @@ export type Database = {
           new_values?: Json | null
           previous_values?: Json | null
         }
-        }
         Relationships: [
           {
             foreignKeyName: "daily_cash_edit_logs_daily_cash_id_fkey"
@@ -185,7 +184,14 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "daily_cash"
             referencedColumns: ["id"]
-          }
+          },
+          {
+            foreignKeyName: "daily_cash_edit_logs_edited_by_fkey"
+            columns: ["edited_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       deliveries: {
@@ -414,8 +420,10 @@ export type Database = {
           menu_item_id: string
           notes: string | null
           order_id: string
+          price: number | null
           price_at_order: number
           quantity: number
+          unit_price: number | null
         }
         Insert: {
           container_charge?: number | null
@@ -429,8 +437,10 @@ export type Database = {
           menu_item_id: string
           notes?: string | null
           order_id: string
+          price?: number | null
           price_at_order: number
           quantity?: number
+          unit_price?: number | null
         }
         Update: {
           container_charge?: number | null
@@ -444,8 +454,10 @@ export type Database = {
           menu_item_id?: string
           notes?: string | null
           order_id?: string
+          price?: number | null
           price_at_order?: number
           quantity?: number
+          unit_price?: number | null
         }
         Relationships: [
           {
@@ -468,19 +480,26 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string
+          customer_email: string | null
           customer_name: string | null
           customer_phone: string | null
           delivery_address: string | null
           delivery_fee: number | null
+          delivery_lat: number | null
+          delivery_lng: number | null
           delivery_service:
             | Database["public"]["Enums"]["delivery_service_enum"]
             | null
+          delivery_status: string | null
           discount_amount: number | null
           discount_type: string | null
           id: string
           member_id: string | null
+          notes: string | null
           paid: boolean | null
           payment_method: string | null
+          payment_reference: string | null
+          payment_status: string | null
           phone_number: string | null
           ready_at: string | null
           status: Database["public"]["Enums"]["order_status"]
@@ -488,23 +507,31 @@ export type Database = {
           table_id: string | null
           total_amount: number
           type: Database["public"]["Enums"]["order_type"]
+          updated_at: string | null
         }
         Insert: {
           completed_at?: string | null
           created_at?: string
+          customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
           delivery_address?: string | null
           delivery_fee?: number | null
+          delivery_lat?: number | null
+          delivery_lng?: number | null
           delivery_service?:
             | Database["public"]["Enums"]["delivery_service_enum"]
             | null
+          delivery_status?: string | null
           discount_amount?: number | null
           discount_type?: string | null
           id?: string
           member_id?: string | null
+          notes?: string | null
           paid?: boolean | null
           payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string | null
           phone_number?: string | null
           ready_at?: string | null
           status?: Database["public"]["Enums"]["order_status"]
@@ -512,23 +539,31 @@ export type Database = {
           table_id?: string | null
           total_amount?: number
           type: Database["public"]["Enums"]["order_type"]
+          updated_at?: string | null
         }
         Update: {
           completed_at?: string | null
           created_at?: string
+          customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
           delivery_address?: string | null
           delivery_fee?: number | null
+          delivery_lat?: number | null
+          delivery_lng?: number | null
           delivery_service?:
             | Database["public"]["Enums"]["delivery_service_enum"]
             | null
+          delivery_status?: string | null
           discount_amount?: number | null
           discount_type?: string | null
           id?: string
           member_id?: string | null
+          notes?: string | null
           paid?: boolean | null
           payment_method?: string | null
+          payment_reference?: string | null
+          payment_status?: string | null
           phone_number?: string | null
           ready_at?: string | null
           status?: Database["public"]["Enums"]["order_status"]
@@ -536,6 +571,7 @@ export type Database = {
           table_id?: string | null
           total_amount?: number
           type?: Database["public"]["Enums"]["order_type"]
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -569,6 +605,7 @@ export type Database = {
           order_id: string
           paid_by: string | null
           payment_method: Database["public"]["Enums"]["payment_method_enum"]
+          status: string | null
         }
         Insert: {
           amount: number
@@ -577,6 +614,7 @@ export type Database = {
           order_id: string
           paid_by?: string | null
           payment_method: Database["public"]["Enums"]["payment_method_enum"]
+          status?: string | null
         }
         Update: {
           amount?: number
@@ -585,6 +623,7 @@ export type Database = {
           order_id?: string
           paid_by?: string | null
           payment_method?: Database["public"]["Enums"]["payment_method_enum"]
+          status?: string | null
         }
         Relationships: [
           {
@@ -642,21 +681,33 @@ export type Database = {
       }
       riders: {
         Row: {
+          current_lat: number | null
+          current_lng: number | null
           id: string
+          is_approved: boolean
           status: Database["public"]["Enums"]["rider_status"]
           store_id: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
+          current_lat?: number | null
+          current_lng?: number | null
           id?: string
+          is_approved?: boolean
           status?: Database["public"]["Enums"]["rider_status"]
           store_id: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
+          current_lat?: number | null
+          current_lng?: number | null
           id?: string
+          is_approved?: boolean
           status?: Database["public"]["Enums"]["rider_status"]
           store_id?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -676,12 +727,48 @@ export type Database = {
           },
         ]
       }
+      store_payment_config: {
+        Row: {
+          created_at: string | null
+          store_id: string
+          toyyibpay_category: string | null
+          toyyibpay_secret: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          store_id: string
+          toyyibpay_category?: string | null
+          toyyibpay_secret?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          store_id?: string
+          toyyibpay_category?: string | null
+          toyyibpay_secret?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_payment_config_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: true
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
           address: string | null
           created_at: string
+          delivery_rate: number | null
           id: string
+          is_active: boolean | null
+          latitude: number | null
           logo_url: string | null
+          longitude: number | null
           name: string
           phone_number: string | null
           phone_number_2: string | null
@@ -690,8 +777,12 @@ export type Database = {
         Insert: {
           address?: string | null
           created_at?: string
+          delivery_rate?: number | null
           id?: string
+          is_active?: boolean | null
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
           name: string
           phone_number?: string | null
           phone_number_2?: string | null
@@ -700,8 +791,12 @@ export type Database = {
         Update: {
           address?: string | null
           created_at?: string
+          delivery_rate?: number | null
           id?: string
+          is_active?: boolean | null
+          latitude?: number | null
           logo_url?: string | null
+          longitude?: number | null
           name?: string
           phone_number?: string | null
           phone_number_2?: string | null
@@ -747,6 +842,7 @@ export type Database = {
       users: {
         Row: {
           created_at: string
+          email: string | null
           id: string
           name: string
           phone: string | null
@@ -755,6 +851,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          email?: string | null
           id: string
           name: string
           phone?: string | null
@@ -763,6 +860,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          email?: string | null
           id?: string
           name?: string
           phone?: string | null
@@ -814,6 +912,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      accept_job: {
+        Args: { p_order_id: string; p_rider_id: string }
+        Returns: boolean
+      }
+      confirm_payment: {
+        Args: { p_order_id: string; p_payment_method?: string }
+        Returns: Json
+      }
+      confirm_payment_webhook: {
+        Args: { p_order_id: string; p_reference: string }
+        Returns: undefined
+      }
       get_auth_member_id: { Args: never; Returns: string }
       get_auth_rider_id: { Args: never; Returns: string }
       get_auth_role: {
@@ -821,17 +931,40 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_auth_store_id: { Args: never; Returns: string }
-      place_order: {
-        Args: {
-          p_order: Json
-          p_items: Json
-          p_payments: Json
+      get_nearest_available_rider: {
+        Args: { p_lat: number; p_lng: number }
+        Returns: {
+          current_lat: number | null
+          current_lng: number | null
+          id: string
+          is_approved: boolean
+          status: Database["public"]["Enums"]["rider_status"]
+          store_id: string
+          updated_at: string | null
+          user_id: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "riders"
+          isOneToOne: false
+          isSetofReturn: true
         }
-        Returns: string
+      }
+      get_order_status: { Args: { p_order_id: string }; Returns: Json }
+      place_order: {
+        Args: { p_items: Json; p_order: Json; p_payments?: Json }
+        Returns: Json
       }
     }
     Enums: {
-      app_role: "staff" | "member" | "rider" | "admin"
+      app_role:
+        | "staff"
+        | "member"
+        | "rider"
+        | "admin"
+        | "cashier"
+        | "chef"
+        | "customer"
       container_size_enum: "small" | "large"
       delivery_service_enum: "jnj" | "grabfood" | "shopeefood" | "custom"
       fulfillment_type_enum: "dine_in" | "takeaway"
@@ -842,6 +975,8 @@ export type Database = {
         | "ready"
         | "completed"
         | "cancelled"
+        | "pending_payment"
+        | "pending_verification"
       order_type: "dine_in" | "online" | "delivery" | "takeaway"
       payment_method_enum: "cash" | "card" | "qr" | "bank_transfer"
       rider_status: "available" | "busy" | "offline"
@@ -860,12 +995,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -889,11 +1024,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -914,11 +1049,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -939,11 +1074,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -956,11 +1091,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -972,12 +1107,28 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["staff", "member", "rider", "admin"],
+      app_role: [
+        "staff",
+        "member",
+        "rider",
+        "admin",
+        "cashier",
+        "chef",
+        "customer",
+      ],
       container_size_enum: ["small", "large"],
       delivery_service_enum: ["jnj", "grabfood", "shopeefood", "custom"],
       fulfillment_type_enum: ["dine_in", "takeaway"],
       kyc_status: ["pending", "verified", "rejected"],
-      order_status: ["pending", "preparing", "ready", "completed", "cancelled"],
+      order_status: [
+        "pending",
+        "preparing",
+        "ready",
+        "completed",
+        "cancelled",
+        "pending_payment",
+        "pending_verification",
+      ],
       order_type: ["dine_in", "online", "delivery", "takeaway"],
       payment_method_enum: ["cash", "card", "qr", "bank_transfer"],
       rider_status: ["available", "busy", "offline"],

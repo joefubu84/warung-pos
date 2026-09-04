@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface FoodDeliveryAnimationProps {
-  status?: 'pending_payment' | 'preparing' | 'ready' | 'picked_up' | 'on_the_way' | 'completed' | 'delivered';
+  status?: 'pending_payment' | 'preparing' | 'ready' | 'picked_up' | 'on_the_way' | 'arrived' | 'completed' | 'delivered';
   size?: 'compact' | 'standard' | 'hero';
   className?: string;
 }

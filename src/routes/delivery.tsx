@@ -460,6 +460,7 @@ function CustomerDeliveryPage() {
       const timer = setInterval(() => setOtpCooldown(prev => prev - 1), 1000);
       return () => clearInterval(timer);
     }
+    return undefined;
   }, [otpCooldown]);
 
   const handleRequestOtp = (phoneToVerify?: string) => {
@@ -962,10 +963,10 @@ function CustomerDeliveryPage() {
         price: target.price,
         quantity: 1,
         containerCharge: target.containerCharge || 1.00,
-        notes: packNotes[idx] ? `Pek #${idx+1}: ${packNotes[idx]}` : target.notes,
+        notes: packNotes[idx] ? `Pek #${idx+1}: ${packNotes[idx]}` : (target.notes ?? ''),
         packNotes: [packNotes[idx] || ''],
-        selectedAddons: target.selectedAddons,
-        spiceLevel: target.spiceLevel
+        selectedAddons: target.selectedAddons ?? [],
+        spiceLevel: target.spiceLevel ?? ''
       }));
       const nextCart = [...prev];
       nextCart.splice(targetIndex, 1, ...individualItems);
@@ -1013,7 +1014,7 @@ function CustomerDeliveryPage() {
 
       setIsLoadingSuggestions(true);
       try {
-        const queryToUse = searchTerms[0];
+        const queryToUse = searchTerms[0] ?? '';
 
         // Query Photon (fast OSM autocomplete biased around Penampang/KK: 5.928, 116.114)
         const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(queryToUse)}&lat=5.9284&lon=116.1145&limit=6`;
@@ -1113,7 +1114,7 @@ function CustomerDeliveryPage() {
       // 1. Check local Sabah database first (0ms instant match!)
       const localMatches = searchLocalSabahLandmarks(textToSearch);
       if (localMatches.length > 0) {
-        const best = localMatches[0];
+        const best = localMatches[0]!;
         setCustLat(best.lat);
         setCustLng(best.lng);
         await fetchRoadRoute(best.lat, best.lng);
@@ -2387,7 +2388,7 @@ function CustomerDeliveryPage() {
                                             : 'bg-stone-900 text-stone-400 border-stone-800 hover:text-stone-200'
                                         }`}
                                       >
-                                        {mod.icon} {mod.label.split('/')[0].trim()}
+                                        {mod.icon} {(mod.label.split('/')[0] ?? mod.label).trim()}
                                       </button>
                                     );
                                   })}
@@ -2666,7 +2667,7 @@ function CustomerDeliveryPage() {
                                           : 'bg-stone-950 text-stone-400 border-stone-800 hover:text-stone-200'
                                       }`}
                                     >
-                                      {mod.icon} {mod.label.split('/')[0].trim()}
+                                      {mod.icon} {(mod.label.split('/')[0] ?? mod.label).trim()}
                                     </button>
                                   );
                                 })}
