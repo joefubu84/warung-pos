@@ -71,6 +71,9 @@ export function NavigationHeader() {
             {/* STAFF LOGOUT BUTTON */}
             <button
               onClick={async () => {
+                try {
+                  localStorage.removeItem('warung_emergency_staff_session');
+                } catch (e) {}
                 await supabase.auth.signOut();
                 window.location.href = '/auth';
               }}

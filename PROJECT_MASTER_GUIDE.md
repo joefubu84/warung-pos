@@ -1,4 +1,4 @@
-﻿# 🍜 Warung J&J POS & Delivery — Master Architecture & Deployment Guide
+# 🍜 Warung J&J POS & Delivery — Master Architecture & Deployment Guide
 > **Dokumentasi Lengkap Sistem Pengurusan Restoran & POS Multi-Store**  
 > *Versi: 1.0.0 | Terakhir Dikemaskini: 20 Ogos 2026*
 
@@ -23,6 +23,7 @@
 * **Lokasi GPS:** Penampang, Sabah (`5.918, 116.082`)
 * **Kadar Penghantaran:** RM 1.00 / km (Caj minimum: RM 2.00, Radius maksimum: 15.0 km, Pesanan Min: RM 15.00)
 * **Admin Staff Email:** `teststaffa@test.com` (`0f81ea5a-e622-4343-a188-62f90dc1ef14`)
+* **Kata Laluan (Password):** `warungjnj2026`
 * **Akaun Bank:** Alliance Bank (`101960010088888` / `J&J CAFE & CATERING`)
 
 ### 🏪 Cawangan Tambahan (Store B — Expansion Branch)
