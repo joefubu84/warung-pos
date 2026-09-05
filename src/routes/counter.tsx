@@ -514,22 +514,29 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
   };
 
   if (isLoading) return (
-    <div className="flex h-screen items-center justify-center bg-gray-100">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+    <div className="flex h-screen items-center justify-center bg-[#f8fafc]">
+      <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center shadow-xs border border-orange-200">
+        <ShoppingCart className="w-7 h-7 text-orange-500 animate-bounce" />
+      </div>
     </div>
   );
 
   return (
-    <div className="h-screen w-full bg-gray-100 overflow-hidden flex flex-col font-sans">
+    <div className="h-screen w-full bg-[#f8fafc] text-slate-900 overflow-hidden flex flex-col font-sans selection:bg-orange-500 selection:text-white">
       
       {/* MOBILE WARNING OVERLAY */}
-      <div className="md:hidden fixed inset-0 bg-red-600 text-white z-50 flex flex-col items-center justify-center p-8 text-center">
-        <h1 className="text-2xl font-black mb-4">Tablet Required</h1>
-        <p className="text-lg mb-8">The POS interface requires a larger screen (8+ inches) and landscape orientation to prevent ordering mistakes.</p>
-        <a href="/orders" className="bg-white text-red-600 px-6 py-3 rounded-full font-bold text-lg shadow-lg">Go to Order Management</a>
+      <div className="md:hidden fixed inset-0 bg-slate-900/95 backdrop-blur-md text-white z-50 flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-16 h-16 rounded-3xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center mb-4 text-orange-400">
+          <ShoppingCart className="w-8 h-8" />
+        </div>
+        <h1 className="text-2xl font-black mb-2 tracking-tight">Peranti Tablet Diperlukan</h1>
+        <p className="text-sm text-slate-300 mb-8 max-w-xs leading-relaxed">Antaramuka POS Kaunter memerlukan skrin bersaiz 8 inci ke atas dalam mod melintang (landscape) bagi operasi pantas juruwang.</p>
+        <a href="/orders" className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-2xl font-black text-sm shadow-lg shadow-orange-500/30 transition-all">
+          Buka Pengurusan Pesanan (/orders)
+        </a>
       </div>
 
-      {/* PORTRAIT WARNING (via CSS Media Query approach but done in JS logic below for simplicity, or we rely on the above if they flip a tablet? Actually, we'll just use a pure CSS portrait blocker) */}
+      {/* PORTRAIT WARNING */}
       <style dangerouslySetInnerHTML={{__html: `
         @media screen and (orientation: portrait) and (min-width: 768px) {
           #portrait-blocker { display: flex !important; }
@@ -537,9 +544,12 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
         }
       `}} />
 
-      <div id="portrait-blocker" className="hidden fixed inset-0 bg-gray-900 text-white z-50 flex-col items-center justify-center p-8 text-center">
-        <h1 className="text-3xl font-black mb-4">Please Rotate Device</h1>
-        <p className="text-xl text-gray-300">The POS interface is locked to landscape mode.</p>
+      <div id="portrait-blocker" className="hidden fixed inset-0 bg-slate-900/95 backdrop-blur-md text-white z-50 flex-col items-center justify-center p-8 text-center">
+        <div className="w-16 h-16 rounded-3xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center mb-4 text-orange-400">
+          <Radio className="w-8 h-8 animate-pulse" />
+        </div>
+        <h1 className="text-2xl font-black mb-2 tracking-tight">Sila Putar Peranti (Landscape)</h1>
+        <p className="text-sm text-slate-300">Sistem POS Kaunter direka khas untuk paparan melintang.</p>
       </div>
 
       {/* POS LAYOUT (LANDSCAPE ONLY) */}
@@ -547,42 +557,42 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
         
         {/* COUNTER CLOSED BANNER */}
         {cashStatus === 'CLOSED' && (
-          <div className="bg-rose-950 border-b border-rose-800 p-4 shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-lg z-30">
+          <div className="bg-rose-50 border-b border-rose-200 p-4 shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs z-30">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-rose-600 rounded-lg text-white">
-                <Lock className="w-6 h-6" />
+              <div className="p-2.5 bg-rose-500 rounded-2xl text-white shadow-xs">
+                <Lock className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-lg font-black text-white flex items-center gap-2">
-                  ⛔ COUNTER IS CLOSED FOR THE DAY
+                <h2 className="text-sm sm:text-base font-black text-rose-950 flex items-center gap-2">
+                  ⛔ KAUNTER DITUTUP HARI INI (COUNTER CLOSED)
                   {closedAtTime && (
-                    <span className="text-xs font-mono bg-rose-900 text-rose-200 px-2.5 py-0.5 rounded border border-rose-700">
-                      Closed at {new Date(closedAtTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    <span className="text-xs font-mono bg-rose-100 text-rose-700 px-2.5 py-0.5 rounded-full border border-rose-200 font-bold">
+                      Ditutup jam {new Date(closedAtTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   )}
                 </h2>
-                <p className="text-xs text-rose-300">
-                  The cash register shift is closed. Placing new orders is locked across all devices.
+                <p className="text-xs text-rose-700 font-medium">
+                  Sif daftar tunai hari ini telah ditutup. Pesanan baharu dikunci untuk mengelakkan ralat imbangan tunai.
                 </p>
               </div>
             </div>
             
             <button
               onClick={() => setIsReopenModalOpen(true)}
-              className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-sm whitespace-nowrap active:scale-95 transition-all"
+              className="bg-orange-500 hover:bg-orange-600 text-white font-black px-4 py-2 rounded-xl shadow-xs flex items-center gap-2 text-xs whitespace-nowrap active:scale-95 transition-all cursor-pointer"
             >
-              <Unlock className="w-4 h-4" /> Reopen Register for Corrections
+              <Unlock className="w-4 h-4" /> Buka Semula Daftar Tunai
             </button>
           </div>
         )}
 
         {/* TOP ACTION BAR */}
-        <div className={`h-16 bg-slate-900 border-b border-slate-800 px-4 flex justify-between items-center shadow-sm z-20 shrink-0 ${cashStatus === 'CLOSED' ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`h-16 bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-5 flex justify-between items-center shadow-2xs z-20 shrink-0 ${cashStatus === 'CLOSED' ? 'opacity-50 pointer-events-none' : ''}`}>
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Warung J&J Logo" className="w-9 h-9 rounded-full object-cover border border-amber-500 shadow-sm" />
+            <img src="/logo.png" alt="Warung J&J Logo" className="w-9 h-9 rounded-full object-cover border-2 border-orange-500 shadow-2xs" />
             <div>
-              <h1 className="text-xl font-black text-white tracking-tight leading-none">Warung J&J POS</h1>
-              <span className="text-[10px] text-slate-400 font-mono">Counter Register System</span>
+              <h1 className="text-lg font-black text-slate-900 tracking-tight leading-none">Warung J&J POS</h1>
+              <span className="text-[11px] text-slate-400 font-semibold">Sistem Kaunter & Daftar Pesanan</span>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -591,15 +601,15 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
               type="button"
               onClick={handleToggleOnlineOrders}
               disabled={isUpdatingOnlineStatus}
-              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all border shadow-sm active:scale-95 cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-black transition-all border shadow-2xs active:scale-95 cursor-pointer ${
                 isOnlineOrderingEnabled
-                  ? 'bg-emerald-950/90 text-emerald-300 border-emerald-500/70 hover:bg-emerald-900/90'
-                  : 'bg-rose-950/90 text-rose-300 border-rose-500/70 hover:bg-rose-900/90 ring-2 ring-rose-500/50'
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100'
+                  : 'bg-rose-50 text-rose-800 border-rose-300 hover:bg-rose-100 ring-2 ring-rose-300/50'
               }`}
               title="Klik untuk Buka atau Tutup Pesanan Online (Delivery & QR Order)"
             >
-              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isOnlineOrderingEnabled ? 'bg-emerald-400' : 'bg-rose-500'}`} />
-              <span className="font-heading tracking-tight">
+              <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${isOnlineOrderingEnabled ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+              <span className="tracking-tight">
                 {isOnlineOrderingEnabled ? '🟢 Pesanan Online: BUKA' : '🔴 Pesanan Online: TUTUP'}
               </span>
             </button>
@@ -607,9 +617,9 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
             <button 
               onClick={clearCart}
               disabled={cart.length === 0}
-              className="flex items-center gap-2 px-4 py-2 text-rose-400 bg-rose-950/60 hover:bg-rose-900/80 border border-rose-800 rounded-full text-xs font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-3.5 py-1.5 text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-full text-xs font-extrabold transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs cursor-pointer"
             >
-              <Trash2 className="w-3.5 h-3.5" /> Clear Cart
+              <Trash2 className="w-3.5 h-3.5" /> Kosongkan Bakul
             </button>
           </div>
         </div>
@@ -618,17 +628,17 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
         <div className={`flex-1 flex overflow-hidden ${cashStatus === 'CLOSED' ? 'opacity-50 pointer-events-none select-none' : ''}`}>
           
           {/* LEFT: MENU GRID (60%) */}
-          <div className="w-[60%] bg-slate-950 flex flex-col border-r border-slate-800 relative">
+          <div className="w-[60%] bg-[#f8fafc] flex flex-col border-r border-slate-200/90 relative">
             
             {/* STICKY SEARCH BAR CONTAINER */}
-            <div className="sticky top-0 z-10 bg-slate-900/95 backdrop-blur border-b border-slate-800 p-3 shrink-0 shadow-md space-y-2.5">
+            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-slate-200/90 p-3 shrink-0 shadow-2xs space-y-2.5">
               <div className="relative w-full">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                 <input 
-                  placeholder="Search menu items by name..."
+                  placeholder="Cari hidangan (cth: Ayam Penyet, Ikan Tausi, Kopi...)"
                   value={searchMenuQuery}
                   onChange={(e) => setSearchMenuQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-slate-950 border border-slate-800 text-white placeholder-slate-500 rounded-xl text-sm font-medium focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl text-sm font-medium focus:border-orange-500 focus:bg-white focus:ring-1 focus:ring-orange-500 outline-none transition-all shadow-2xs"
                 />
               </div>
 
@@ -637,12 +647,16 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
             </div>
 
             {/* Category Tabs */}
-            <div className="flex gap-2 overflow-x-auto p-3 scrollbar-hide shrink-0 border-b border-slate-800 bg-slate-900">
+            <div className="flex gap-2 overflow-x-auto p-3 scrollbar-hide shrink-0 border-b border-slate-200/80 bg-white/80 backdrop-blur-xs">
               {categories.map(cat => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`whitespace-nowrap px-4 py-2 rounded-full text-xs font-bold transition-all ${selectedCategory === cat ? 'bg-emerald-600 text-white shadow-md ring-1 ring-emerald-400' : 'bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-white border border-slate-800'}`}
+                  className={`whitespace-nowrap px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
+                    selectedCategory === cat 
+                      ? 'bg-[#fed7aa] text-orange-900 shadow-2xs border border-orange-300' 
+                      : 'bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-slate-200/90'
+                  }`}
                 >
                   {cat}
                 </button>
@@ -652,13 +666,13 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
             {/* Menu Grid Scrollable */}
             <div className="flex-1 overflow-y-auto p-4 content-start">
               {successMsg && (
-                <div className="bg-emerald-950 border-l-4 border-emerald-500 text-emerald-200 p-4 mb-4 rounded-xl shadow-sm flex items-center gap-2 font-bold text-sm">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                <div className="bg-emerald-50 border-l-4 border-emerald-500 text-emerald-800 p-4 mb-4 rounded-2xl shadow-2xs flex items-center gap-2 font-bold text-sm">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                   <span>{successMsg}</span>
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 pb-24">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3.5 pb-24">
                 {filteredMenu.map(item => {
                   const isSoldOut = item.stock_count !== undefined && item.stock_count !== null && item.stock_count <= 0;
                   return (
@@ -666,37 +680,39 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
                       key={item.id}
                       onClick={() => handleAddToCart(item)}
                       disabled={isSoldOut}
-                      className={`group relative flex flex-col rounded-2xl border transition-all active:scale-95 text-left overflow-hidden shadow-md hover:shadow-2xl ${
-                        isSoldOut ? 'border-slate-800 bg-slate-900/40 opacity-50 cursor-not-allowed' : 'border-slate-800 bg-slate-900 hover:border-emerald-500/60 active:border-emerald-500'
+                      className={`group relative flex flex-col rounded-2xl border transition-all active:scale-[0.98] text-left overflow-hidden shadow-2xs hover:shadow-md cursor-pointer ${
+                        isSoldOut 
+                          ? 'border-slate-200 bg-slate-100/60 opacity-50 cursor-not-allowed' 
+                          : 'border-slate-200/90 bg-white hover:border-orange-300 hover:shadow-orange-500/5'
                       }`}
                     >
                       {/* BRIGHT FULL UNCROPPED DISH IMAGE */}
                       {item.image_url ? (
-                        <div className="w-full h-48 md:h-52 bg-slate-950 relative overflow-hidden flex items-center justify-center p-2 border-b border-slate-800/60">
+                        <div className="w-full h-44 sm:h-48 bg-slate-50 relative overflow-hidden flex items-center justify-center p-2.5 border-b border-slate-100">
                           <img 
                             src={item.image_url} 
                             alt={item.name} 
-                            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 rounded-xl"
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-xl"
                           />
                           {isSoldOut && (
-                            <div className="absolute inset-0 bg-slate-950/85 flex items-center justify-center backdrop-blur-sm">
-                              <span className="text-xs font-black bg-rose-600 text-white px-3 py-1.5 rounded-full shadow-lg tracking-wider uppercase font-mono">SOLD OUT</span>
+                            <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center backdrop-blur-xs">
+                              <span className="text-xs font-black bg-rose-600 text-white px-3 py-1.5 rounded-full shadow-lg tracking-wider uppercase font-mono">HABIS (86)</span>
                             </div>
                           )}
                         </div>
                       ) : (
-                        <div className="w-full h-36 bg-slate-950/80 flex items-center justify-center text-slate-600 font-mono text-xs border-b border-slate-800">
-                          NO DISH IMAGE AVAILABLE
+                        <div className="w-full h-36 bg-slate-100 flex items-center justify-center text-slate-400 font-medium text-xs border-b border-slate-100">
+                          TIADA GAMBAR HIDANGAN
                         </div>
                       )}
 
-                      {/* DISH TITLE & MONOSPACE PRICE */}
-                      <div className="p-4 flex flex-col justify-between flex-1 space-y-3 bg-slate-900">
-                        <span className="font-bold text-white text-base leading-snug line-clamp-2">{item.name}</span>
-                        <div className="flex justify-between items-center pt-2 border-t border-slate-800">
-                          <span className="font-black text-emerald-400 font-mono text-lg sm:text-xl">RM{item.price.toFixed(2)}</span>
-                          <span className="text-xs font-black bg-emerald-950 text-emerald-300 border border-emerald-800/80 px-3 py-1 rounded-lg uppercase font-mono shadow-sm group-hover:bg-emerald-600 group-hover:text-white transition-colors">
-                            + ADD
+                      {/* DISH TITLE & ORANGE PRICE */}
+                      <div className="p-3.5 flex flex-col justify-between flex-1 space-y-2.5 bg-white">
+                        <span className="font-extrabold text-slate-900 text-sm sm:text-base leading-snug line-clamp-2">{item.name}</span>
+                        <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                          <span className="font-black text-orange-600 font-mono text-lg sm:text-xl">RM {item.price.toFixed(2)}</span>
+                          <span className="text-xs font-black bg-orange-50 text-orange-600 border border-orange-200 group-hover:bg-orange-500 group-hover:text-white group-hover:border-orange-500 px-3 py-1 rounded-xl uppercase font-mono shadow-2xs transition-colors">
+                            + TAMBAH
                           </span>
                         </div>
                       </div>
@@ -708,22 +724,22 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
           </div>
 
           {/* RIGHT: CART & ACTIONS (40%) */}
-          <div className="w-[40%] bg-slate-900 flex flex-col h-full overflow-hidden">
+          <div className="w-[40%] bg-white flex flex-col h-full overflow-hidden border-l border-slate-200/90 shadow-xl">
             
             {/* Order Configuration */}
-            <div className="p-4 border-b border-slate-800 bg-slate-950/60 shrink-0">
-              <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 mb-3">
+            <div className="p-4 border-b border-slate-200/90 bg-[#fafaf9] shrink-0">
+              <div className="flex bg-slate-200/80 p-1 rounded-xl mb-3">
                 <button
                   onClick={() => setOrderType('dine_in')}
-                  className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${orderType === 'dine_in' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                  className={`flex-1 py-2 text-xs sm:text-sm font-black rounded-lg transition-all cursor-pointer ${orderType === 'dine_in' ? 'bg-white text-orange-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                 >
-                  Dine-in
+                  🍽️ Makan Sini (Dine-in)
                 </button>
                 <button
                   onClick={() => setOrderType('takeaway')}
-                  className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${orderType === 'takeaway' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'}`}
+                  className={`flex-1 py-2 text-xs sm:text-sm font-black rounded-lg transition-all cursor-pointer ${orderType === 'takeaway' ? 'bg-white text-orange-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                 >
-                  Takeaway
+                  🥡 Bungkus (Takeaway)
                 </button>
               </div>
 
@@ -732,74 +748,82 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
                   <select 
                     value={selectedTableId}
                     onChange={(e) => setSelectedTableId(e.target.value)}
-                    className="flex-1 bg-slate-950 border border-slate-800 text-white rounded-xl px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="flex-1 bg-white border border-slate-200 text-slate-900 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 shadow-2xs"
                   >
-                    <option value="">Select Table *</option>
-                    {tables.map(t => <option key={t.id} value={t.id}>Table {t.table_number}</option>)}
+                    <option value="">Pilih Meja *</option>
+                    {tables.map(t => <option key={t.id} value={t.id}>Meja {t.table_number}</option>)}
                   </select>
                 )}
                 <input 
-                  placeholder="Customer Name (Opt)"
+                  placeholder="Nama Pelanggan (Pilihan)"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="flex-1 bg-slate-950 border border-slate-800 text-white placeholder-slate-500 rounded-xl px-3 py-2 text-sm font-medium outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="flex-1 bg-white border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl px-3 py-2 text-sm font-semibold outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 shadow-2xs"
                 />
               </div>
             </div>
 
             {/* Cart Items List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#f8fafc]/50">
               {cart.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-slate-500 space-y-4">
-                  <ShoppingCart className="w-16 h-16 opacity-20" />
-                  <p className="text-base font-bold">Cart is empty</p>
+                <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-3">
+                  <div className="w-16 h-16 rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-300">
+                    <ShoppingCart className="w-8 h-8" />
+                  </div>
+                  <p className="text-sm font-extrabold text-slate-600">Bakul pesanan kosong</p>
+                  <p className="text-xs text-slate-400">Pilih hidangan dari menu di sebelah kiri</p>
                 </div>
               ) : (
                 cart.map(item => (
-                  <div key={item.id} className="bg-slate-950 border border-slate-800 rounded-xl p-3 shadow-md flex flex-col gap-2">
+                  <div key={item.id} className="bg-white border border-slate-200/90 rounded-2xl p-3.5 shadow-2xs flex flex-col gap-2.5 hover:border-orange-200 transition-colors">
                     <div className="flex justify-between items-start">
                       <div className="pr-2">
                         <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 mb-1">
-                          <h4 className="font-bold text-white leading-tight text-sm">{item.name}</h4>
+                          <h4 className="font-extrabold text-slate-900 leading-tight text-sm">{item.name}</h4>
                           <button 
                             onClick={() => toggleCartItemFulfillment(item.id)}
-                            className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase transition-colors self-start sm:self-auto active:scale-95 ${item.fulfillmentType === 'takeaway' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}
+                            className={`text-[10px] px-2.5 py-0.5 rounded-full font-black uppercase transition-colors self-start sm:self-auto active:scale-95 cursor-pointer ${
+                              item.fulfillmentType === 'takeaway' 
+                                ? 'bg-orange-50 text-orange-700 border border-orange-200' 
+                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            }`}
                           >
-                            {item.fulfillmentType === 'takeaway' ? '🥡 Takeaway' : '🍽️ Dine-in'}
+                            {item.fulfillmentType === 'takeaway' ? '🥡 Bungkus' : '🍽️ Makan Sini'}
                           </button>
                         </div>
-                        <p className="text-sm font-black text-emerald-400 font-mono">RM{((item.price + (item.containerCharge || 0)) * item.quantity).toFixed(2)}</p>
+                        <p className="text-sm font-black text-orange-600 font-mono">RM {((item.price + (item.containerCharge || 0)) * item.quantity).toFixed(2)}</p>
                       </div>
                       
                       {/* Qty Controls */}
-                      <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-1 shrink-0">
+                      <div className="flex items-center bg-slate-100 border border-slate-200 rounded-xl p-0.5 shrink-0 shadow-2xs">
                         <button 
                           onClick={() => updateQuantity(item.id, -1)}
-                          className="w-7 h-7 flex items-center justify-center bg-slate-800 text-slate-200 rounded hover:bg-slate-700 active:scale-95"
+                          className="w-7 h-7 flex items-center justify-center bg-white text-slate-700 hover:text-orange-600 rounded-lg shadow-2xs active:scale-95 font-bold cursor-pointer"
                         >
                           <Minus className="w-3.5 h-3.5" />
                         </button>
-                        <span className="w-8 text-center font-bold text-white font-mono text-sm">{item.quantity}</span>
+                        <span className="w-8 text-center font-black text-slate-900 font-mono text-sm">{item.quantity}</span>
                         <button 
                           onClick={() => updateQuantity(item.id, 1)}
-                          className="w-7 h-7 flex items-center justify-center bg-slate-800 text-slate-200 rounded hover:bg-slate-700 active:scale-95"
+                          className="w-7 h-7 flex items-center justify-center bg-white text-slate-700 hover:text-orange-600 rounded-lg shadow-2xs active:scale-95 font-bold cursor-pointer"
                         >
                           <Plus className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
+
                     <div className="flex gap-2 items-center">
                       <input 
-                        placeholder="Nota pinggan (cth: Tak nak lada, ekstra pedas)"
+                        placeholder="Nota pinggan (cth: Kurang manis, kuah asing...)"
                         value={item.notes || ''}
                         onChange={(e) => updateCartItemNotes(item.id, e.target.value)}
-                        className="flex-1 bg-slate-900 border border-slate-800 rounded p-2 text-xs text-white placeholder-slate-500 outline-none focus:border-emerald-500 font-medium"
+                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-2 text-xs text-slate-900 placeholder:text-slate-400 outline-none focus:border-orange-500 focus:bg-white font-medium transition-all shadow-2xs"
                       />
                       {item.quantity > 1 && (
                         <button
                           type="button"
                           onClick={() => splitCartItem(item.id)}
-                          className="px-2 py-1.5 bg-sky-500/20 text-sky-300 hover:bg-sky-500/30 border border-sky-500/40 rounded text-[10px] font-bold flex items-center gap-1 shrink-0"
+                          className="px-2.5 py-1.5 bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 rounded-xl text-[10px] font-black flex items-center gap-1 shrink-0 active:scale-95 transition-all shadow-2xs cursor-pointer"
                           title="Pecahkan kepada pinggan berasingan untuk letak nota berbeza"
                         >
                           <Split className="w-3 h-3" />
@@ -808,14 +832,15 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
                       )}
                       <button 
                         onClick={() => removeFromCart(item.id)}
-                        className="w-8 h-8 flex items-center justify-center text-slate-500 hover:text-rose-400 hover:bg-rose-950/60 rounded transition-colors shrink-0"
+                        className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors shrink-0 cursor-pointer"
+                        title="Padam item"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
 
                     {/* QUICK MODIFIER CHIPS (TAK NAK LADA, PEDAS, TIMUN, KANGKUNG) */}
-                    <div className="flex flex-wrap gap-1 pt-1">
+                    <div className="flex flex-wrap gap-1.5 pt-0.5">
                       {COMMON_MODIFIERS.slice(0, 5).map(mod => {
                         const isSelected = (item.notes || '').toLowerCase().includes(mod.tag);
                         return (
@@ -823,10 +848,10 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
                             key={mod.id}
                             type="button"
                             onClick={() => toggleQuickModifier(item.id, mod.tag)}
-                            className={`text-[10px] px-2 py-0.5 rounded-md font-bold transition-all border ${
+                            className={`text-[10px] px-2.5 py-1 rounded-lg font-bold transition-all border shadow-2xs active:scale-95 cursor-pointer ${
                               isSelected 
-                                ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-sm' 
-                                : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200 hover:border-slate-700'
+                                ? 'bg-amber-100 text-amber-900 border-amber-300 font-black shadow-xs' 
+                                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-white hover:text-slate-900 hover:border-slate-300'
                             }`}
                           >
                             {mod.icon} {(mod.label.split('/')[0] ?? mod.label).trim()}
@@ -834,19 +859,20 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
                         );
                       })}
                     </div>
+
                     {item.fulfillmentType === 'takeaway' && (
-                      <div className="flex bg-slate-900 p-1 rounded-lg border border-slate-800">
+                      <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
                         <button
                           onClick={() => updateCartItemContainerSize(item.id, 'small')}
-                          className={`flex-1 text-[10px] py-1 rounded font-bold transition-colors ${item.containerSize !== 'large' ? 'bg-amber-500 text-slate-950 shadow-sm font-black' : 'text-slate-400 hover:text-white'}`}
+                          className={`flex-1 text-[10px] py-1 rounded-lg font-black transition-all cursor-pointer ${item.containerSize !== 'large' ? 'bg-white text-orange-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                         >
-                          Small (+RM0)
+                          Bekas Kecil (+RM0)
                         </button>
                         <button
                           onClick={() => updateCartItemContainerSize(item.id, 'large')}
-                          className={`flex-1 text-[10px] py-1 rounded font-bold transition-colors ${item.containerSize === 'large' ? 'bg-amber-500 text-slate-950 shadow-sm font-black' : 'text-slate-400 hover:text-white'}`}
+                          className={`flex-1 text-[10px] py-1 rounded-lg font-black transition-all cursor-pointer ${item.containerSize === 'large' ? 'bg-white text-orange-600 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                         >
-                          Large (+RM1)
+                          Bekas Besar (+RM1)
                         </button>
                       </div>
                     )}
@@ -856,26 +882,29 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
             </div>
 
             {/* Total & Checkout Area */}
-            <div className="p-4 bg-slate-950 border-t border-slate-800 text-white shadow-2xl shrink-0 z-20">
-              {error && <p className="text-rose-400 text-xs font-bold mb-2 bg-rose-950/60 border border-rose-800 p-2 rounded-lg">{error}</p>}
+            <div className="p-5 bg-white border-t border-slate-200/90 text-slate-900 shadow-[0_-8px_30px_rgba(0,0,0,0.03)] shrink-0 z-20 space-y-3">
+              {error && <p className="text-rose-600 text-xs font-bold bg-rose-50 border border-rose-200 p-2.5 rounded-xl">{error}</p>}
               
-              <div className="flex justify-between items-center mb-4">
-                <span className="text-slate-400 text-lg font-medium">Total</span>
-                <span className="text-3xl font-black text-emerald-400 font-mono">RM {cartTotal.toFixed(2)}</span>
+              <div className="flex justify-between items-center">
+                <div>
+                  <span className="text-slate-400 text-xs font-extrabold uppercase tracking-wider block">Jumlah Keseluruhan</span>
+                  <span className="text-slate-500 text-sm font-medium">{cart.reduce((s, i) => s + i.quantity, 0)} item dipilih</span>
+                </div>
+                <span className="text-3xl font-black text-slate-900 font-mono">RM {cartTotal.toFixed(2)}</span>
               </div>
               
               <button
                 onClick={handlePlaceOrderClick}
                 disabled={cart.length === 0 || cashStatus === 'CLOSED'}
-                className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:bg-slate-800 disabled:text-slate-500 text-white rounded-xl text-lg font-black tracking-wide transition-all flex items-center justify-center gap-2 shadow-lg"
+                className="w-full h-14 bg-orange-500 hover:bg-orange-600 active:scale-98 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-2xl text-base sm:text-lg font-black tracking-wide transition-all flex items-center justify-center gap-2.5 shadow-lg shadow-orange-500/25 cursor-pointer disabled:cursor-not-allowed"
               >
                 {cashStatus === 'CLOSED' ? (
                   <>
-                    <Lock className="w-5 h-5 text-rose-400" /> COUNTER CLOSED
+                    <Lock className="w-5 h-5 text-rose-500" /> KAUNTER DITUTUP
                   </>
                 ) : (
                   <>
-                    <ShoppingCart className="w-5 h-5" /> PLACE ORDER
+                    <ShoppingCart className="w-5 h-5" /> HANTAR PESANAN & BAYAR →
                   </>
                 )}
               </button>
@@ -888,43 +917,43 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
       
       {/* CONFIRMATION DIALOG */}
       <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-        <DialogContent className="sm:max-w-xl font-sans max-h-[90vh] overflow-y-auto bg-slate-900 border-slate-800 text-white">
+        <DialogContent className="sm:max-w-xl font-sans max-h-[90vh] overflow-y-auto bg-white border border-slate-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black text-white">Confirm Order & Payment</DialogTitle>
+            <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">Pengesahan Pesanan & Bayaran</DialogTitle>
           </DialogHeader>
           
           <div className="py-2 space-y-4">
             
             {/* 1. ORDER SUMMARY */}
-            <div className="bg-slate-950 border border-slate-800 rounded-xl p-4">
-              <h3 className="font-bold text-slate-300 mb-2">Order Summary</h3>
-              <div className="max-h-[25vh] overflow-y-auto mb-3 pr-2">
+            <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4">
+              <h3 className="font-extrabold text-slate-900 text-sm mb-3">Ringkasan Pesanan</h3>
+              <div className="max-h-[25vh] overflow-y-auto mb-3 pr-2 space-y-2">
                 {cart.map(item => (
-                  <div key={item.id} className="flex justify-between items-start mb-2 last:mb-0 text-sm">
+                  <div key={item.id} className="flex justify-between items-start text-sm">
                     <div>
-                      <span className="font-bold">{item.name}</span> <span className="text-gray-500">x{item.quantity}</span>
-                      {item.containerSize && <span className="ml-1 text-xs px-1 bg-orange-100 text-orange-700 rounded-sm">🥡 {item.containerSize} (+RM{item.containerCharge})</span>}
-                      {item.notes && <p className="text-xs text-red-500 italic mt-0.5">Notes: {item.notes}</p>}
+                      <span className="font-extrabold text-slate-800">{item.name}</span> <span className="text-slate-400 font-bold">x{item.quantity}</span>
+                      {item.containerSize && <span className="ml-1 text-[10px] px-1.5 py-0.5 bg-orange-100 text-orange-800 font-black rounded-md">🥡 {item.containerSize} (+RM{item.containerCharge})</span>}
+                      {item.notes && <p className="text-xs text-orange-600 italic mt-0.5 font-medium">Nota: {item.notes}</p>}
                     </div>
-                    <span className="font-bold">RM{((item.price + (item.containerCharge || 0)) * item.quantity).toFixed(2)}</span>
+                    <span className="font-mono font-black text-slate-900">RM {((item.price + (item.containerCharge || 0)) * item.quantity).toFixed(2)}</span>
                   </div>
                 ))}
               </div>
               
-              <div className="border-t border-gray-300 pt-2 flex justify-between items-center">
-                <span className="text-gray-500">Subtotal:</span>
-                <span className="font-bold text-gray-700">RM {cartTotal.toFixed(2)}</span>
+              <div className="border-t border-slate-200 pt-2 flex justify-between items-center text-sm">
+                <span className="text-slate-500 font-medium">Jumlah Kasar (Subtotal):</span>
+                <span className="font-mono font-bold text-slate-700">RM {cartTotal.toFixed(2)}</span>
               </div>
               
               {/* 2. DISCOUNT MODULE */}
-              <div className="border-t border-gray-300 mt-2 pt-2 pb-1">
+              <div className="border-t border-slate-200 mt-2 pt-2 pb-1">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="text-gray-500 w-20">Discount:</span>
+                  <span className="text-slate-500 text-xs font-bold w-20">Diskaun:</span>
                   <Select 
                     value={discount.type} 
                     onValueChange={(val: 'fixed'|'percentage') => setDiscount({ ...discount, type: val })}
                   >
-                    <SelectTrigger className="w-24 h-8 text-sm">
+                    <SelectTrigger className="w-24 h-8 text-xs font-bold bg-white border-slate-200">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -936,22 +965,22 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
                     type="number" 
                     min="0"
                     step="0.1"
-                    className="h-8 w-24 text-right"
+                    className="h-8 w-24 text-right bg-white border-slate-200 font-mono font-bold"
                     value={discount.value || ''}
                     onChange={(e) => setDiscount({ ...discount, value: parseFloat(e.target.value) || 0 })}
                   />
                 </div>
                 {effectiveDiscount > 0 && (
-                  <div className="flex justify-between items-center text-green-600">
-                    <span>Discount Applied:</span>
-                    <span>- RM {effectiveDiscount.toFixed(2)}</span>
+                  <div className="flex justify-between items-center text-emerald-600 text-sm font-bold">
+                    <span>Diskaun Ditolak:</span>
+                    <span className="font-mono">- RM {effectiveDiscount.toFixed(2)}</span>
                   </div>
                 )}
               </div>
 
-              <div className="border-t border-gray-300 mt-2 pt-2 flex justify-between items-center text-xl">
-                <span className="font-black text-gray-900">FINAL TOTAL:</span>
-                <span className="font-black text-blue-600">RM {finalTotal.toFixed(2)}</span>
+              <div className="border-t-2 border-slate-200 mt-3 pt-3 flex justify-between items-center text-lg">
+                <span className="font-black text-slate-900">JUMLAH PERLU BAYAR:</span>
+                <span className="font-black text-orange-600 font-mono text-2xl">RM {finalTotal.toFixed(2)}</span>
               </div>
             </div>
 
@@ -960,114 +989,115 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
               setPaymentMode(v as 'full'|'split');
               if (v === 'full') setSplitPayments([]);
             }} className="w-full">
-              <TabsList className="w-full grid grid-cols-2">
-                <TabsTrigger value="full" className="font-bold">Full Payment</TabsTrigger>
-                <TabsTrigger value="split" className="font-bold">Split Payment</TabsTrigger>
+              <TabsList className="w-full grid grid-cols-2 bg-slate-100 p-1 rounded-xl">
+                <TabsTrigger value="full" className="font-black text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-xs rounded-lg">Bayaran Penuh</TabsTrigger>
+                <TabsTrigger value="split" className="font-black text-xs sm:text-sm data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-xs rounded-lg">Bayaran Asing (Split)</TabsTrigger>
               </TabsList>
 
               <TabsContent value="full" className="mt-4 space-y-3">
-                <p className="font-bold text-gray-900">Select Payment Method:</p>
-                <div className="grid grid-cols-2 gap-2">
+                <p className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Pilih Kaedah Pembayaran:</p>
+                <div className="grid grid-cols-2 gap-2.5">
                   <Button 
                     variant="outline" 
-                    className="h-14 font-bold border-2 border-green-200 bg-green-50 text-green-700 hover:bg-green-100 hover:text-green-800"
+                    className="h-14 font-black border-2 border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:text-emerald-900 rounded-2xl shadow-2xs active:scale-95 transition-all cursor-pointer"
                     onClick={() => handleSubmitOrder('cash')}
                     disabled={isSubmitting}
                   >
-                    💵 PAID CASH
+                    💵 TUNAI (CASH)
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="h-14 font-bold border-2 border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 hover:text-rose-800"
+                    className="h-14 font-black border-2 border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100 hover:text-rose-900 rounded-2xl shadow-2xs active:scale-95 transition-all cursor-pointer"
                     onClick={() => setShowDuitNowModal(true)}
                     disabled={isSubmitting}
                   >
                     📱 DUITNOW QR
                   </Button>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2.5">
                   <Button 
                     variant="outline" 
-                    className="h-12 font-bold border border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100"
+                    className="h-12 font-black border border-purple-200 bg-purple-50 text-purple-800 hover:bg-purple-100 rounded-2xl shadow-2xs active:scale-95 transition-all cursor-pointer"
                     onClick={() => handleSubmitOrder('card')}
                     disabled={isSubmitting}
                   >
-                    💳 PAID CARD
+                    💳 KAD (DEBIT/CREDIT)
                   </Button>
                   <Button 
                     variant="outline" 
-                    className="h-12 font-bold bg-gray-100 hover:bg-gray-200 text-gray-600"
+                    className="h-12 font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl shadow-2xs active:scale-95 transition-all cursor-pointer"
                     onClick={() => handleSubmitOrder('unpaid')}
                     disabled={isSubmitting}
                   >
-                    PAY LATER (Unpaid)
+                    BAYAR NANTI (Belum Bayar)
                   </Button>
                 </div>
               </TabsContent>
 
               <TabsContent value="split" className="mt-4">
-                <div className="bg-white border border-gray-200 rounded-lg p-3">
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
                   <div className="flex justify-between items-center mb-3">
-                    <span className="font-bold">Split Breakdown</span>
-                    <Button variant="outline" size="sm" onClick={addSplitPayment}>+ Add Person</Button>
+                    <span className="font-extrabold text-slate-900 text-sm">Pecahan Bayaran (Split)</span>
+                    <Button variant="outline" size="sm" onClick={addSplitPayment} className="rounded-xl font-bold text-xs bg-white">+ Tambah Individu</Button>
                   </div>
                   
                   {splitPayments.length === 0 && (
-                    <p className="text-sm text-gray-500 italic text-center py-2">Add a split payment to begin.</p>
+                    <p className="text-xs text-slate-400 italic text-center py-3">Tekan butang tambah untuk memulakan pecahan bayaran.</p>
                   )}
 
                   <div className="space-y-2 mb-4">
                     {splitPayments.map((sp, idx) => (
                       <div key={idx} className="flex gap-2 items-center">
-                        <span className="font-bold text-gray-500 w-6">{idx + 1}.</span>
+                        <span className="font-bold text-slate-500 text-xs w-6">{idx + 1}.</span>
                         <div className="flex-1">
                           <Input 
                             type="number" 
                             step="0.01" 
                             min="0"
-                            placeholder="Amount (RM)" 
+                            placeholder="Jumlah (RM)" 
                             value={sp.amount || ''}
                             onChange={(e) => updateSplitPayment(idx, 'amount', parseFloat(e.target.value) || 0)}
+                            className="bg-white border-slate-200 rounded-xl font-mono font-bold text-sm"
                           />
                         </div>
-                        <div className="w-[100px]">
+                        <div className="w-[110px]">
                           <Select 
                             value={sp.method} 
                             onValueChange={(val: 'cash'|'card'|'qr'|'bank_transfer') => updateSplitPayment(idx, 'method', val)}
                           >
-                            <SelectTrigger>
+                            <SelectTrigger className="bg-white border-slate-200 rounded-xl text-xs font-bold">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="cash">Cash</SelectItem>
-                              <SelectItem value="card">Card</SelectItem>
-                              <SelectItem value="qr">QR</SelectItem>
+                              <SelectItem value="cash">Tunai</SelectItem>
+                              <SelectItem value="card">Kad</SelectItem>
+                              <SelectItem value="qr">QR Pay</SelectItem>
                               <SelectItem value="bank_transfer">Transfer</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
-                        <Button variant="ghost" size="icon" className="text-red-500 h-10 w-10 shrink-0" onClick={() => removeSplitPayment(idx)}>
+                        <Button variant="ghost" size="icon" className="text-rose-500 hover:bg-rose-50 rounded-xl h-10 w-10 shrink-0" onClick={() => removeSplitPayment(idx)}>
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     ))}
                   </div>
 
-                  <div className="border-t border-gray-100 pt-3 flex justify-between items-center text-sm">
-                    <span className="text-gray-500">Difference:</span>
-                    <span className={`font-bold ${splitDeltaCents !== 0 ? 'text-red-500' : 'text-green-600'}`}>
-                      {splitDeltaCents > 0 ? 'Overpaid by RM ' : splitDeltaCents < 0 ? 'Remaining RM ' : 'Exact amount'}
+                  <div className="border-t border-slate-200 pt-3 flex justify-between items-center text-sm">
+                    <span className="text-slate-500 font-medium">Baki Perbezaan:</span>
+                    <span className={`font-mono font-black ${splitDeltaCents !== 0 ? 'text-rose-600' : 'text-emerald-600'}`}>
+                      {splitDeltaCents > 0 ? 'Lebih bayar RM ' : splitDeltaCents < 0 ? 'Kurang bayar RM ' : '✓ Tepat Sepenuhnya'}
                       {splitDeltaCents !== 0 && (Math.abs(splitDeltaCents) / 100).toFixed(2)}
                     </span>
                   </div>
                   
                   <div className="mt-4">
                     <Button 
-                      className="w-full h-12 font-bold"
-                      onClick={() => handleSubmitOrder('cash')} // Payment method arg is ignored for split payments in handleSubmitOrder
+                      className="w-full h-12 font-black bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-md cursor-pointer"
+                      onClick={() => handleSubmitOrder('cash')}
                       disabled={isSubmitting || splitPayments.length === 0 || !isSplitBalanced}
                     >
-                      SUBMIT SPLIT PAYMENT
+                      HANTAR BAYARAN ASING (SPLIT)
                     </Button>
                   </div>
                 </div>
@@ -1076,9 +1106,9 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
 
           </div>
 
-          <DialogFooter className="flex gap-2 sm:justify-start">
-            <Button variant="ghost" onClick={() => setIsConfirmOpen(false)} disabled={isSubmitting}>
-              ← Back to Edit
+          <DialogFooter className="flex gap-2 sm:justify-start pt-2">
+            <Button variant="ghost" onClick={() => setIsConfirmOpen(false)} disabled={isSubmitting} className="text-slate-500 hover:text-slate-800 font-bold rounded-xl text-xs">
+              ← Kembali Ubah Pesanan
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1086,18 +1116,18 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
 
       {/* DUITNOW QR PAYMENT MODAL */}
       <Dialog open={showDuitNowModal} onOpenChange={setShowDuitNowModal}>
-        <DialogContent className="max-w-sm bg-slate-900 border border-slate-800 text-white font-sans rounded-3xl p-6 text-center">
+        <DialogContent className="max-w-sm bg-white border border-slate-200 text-slate-900 font-sans rounded-3xl p-6 text-center shadow-2xl">
           <DialogHeader className="p-0">
-            <DialogTitle className="text-xl font-black text-rose-400 flex items-center justify-center gap-2">
+            <DialogTitle className="text-xl font-black text-[#a6192e] flex items-center justify-center gap-2">
               📱 Alliance Bank DuitNow QR
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-400 font-mono mt-1">
-              Scan to pay J&J Cafe & Catering via DuitNow FPX / eWallet
+            <DialogDescription className="text-xs text-slate-500 font-medium mt-1">
+              Imbas untuk bayar ke J&J Cafe & Catering melalui DuitNow FPX / eWallet
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-3">
-            <div className="relative inline-block bg-white p-4 rounded-3xl border-4 border-[#a6192e] shadow-2xl text-center">
+            <div className="relative inline-block bg-white p-4 rounded-3xl border-4 border-[#a6192e] shadow-xl text-center">
               {/* DuitNow Header */}
               <div className="bg-[#a6192e] text-white text-xs font-black py-1.5 px-4 rounded-t-xl tracking-wider uppercase flex items-center justify-between mb-3">
                 <span className="flex items-center gap-1.5 font-sans">💳 DuitNow QR</span>
@@ -1123,18 +1153,18 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
               </div>
             </div>
 
-            <div className="bg-slate-950 border border-slate-800 p-3.5 rounded-2xl font-mono text-center">
-              <span className="text-xs text-slate-400 uppercase tracking-wider block">Exact Order Total</span>
-              <p className="text-2xl font-black text-emerald-400 mt-0.5">RM {finalTotal.toFixed(2)}</p>
+            <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl font-mono text-center">
+              <span className="text-xs text-slate-400 uppercase tracking-wider block font-sans font-bold">Jumlah Tepat Pesanan</span>
+              <p className="text-2xl font-black text-slate-900 mt-0.5">RM {finalTotal.toFixed(2)}</p>
             </div>
 
-            <div className="bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-xl text-left font-mono">
-              <p className="text-[11px] text-amber-300 font-bold flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                STAFF VERIFICATION RULE:
+            <div className="bg-amber-50 border border-amber-200 p-3 rounded-2xl text-left">
+              <p className="text-xs text-amber-900 font-extrabold flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                PERATURAN PENGESAHAN STAF:
               </p>
-              <p className="text-[10px] text-amber-200/80 mt-0.5">
-                Confirm incoming RM {finalTotal.toFixed(2)} on J&J's Alliance Bank BizSmart App before clicking confirm. Never rely on customer phone screens.
+              <p className="text-[11px] text-amber-800/90 mt-1 leading-relaxed">
+                Sahkan kemasukan RM {finalTotal.toFixed(2)} di aplikasi BizSmart Alliance Bank J&J sebelum tekan sah bayar. Jangan hanya bergantung pada skrin telefon pelanggan.
               </p>
             </div>
           </div>
@@ -1145,16 +1175,16 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
                 setShowDuitNowModal(false);
                 handleSubmitOrder('card');
               }}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-xl w-full text-sm shadow-lg active:scale-95"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-2xl w-full text-sm shadow-md active:scale-95 transition-all cursor-pointer"
             >
-              ✅ CONFIRM DUITNOW QR PAID
+              ✅ SAHKAN BAYARAN DUITNOW QR
             </Button>
             <Button
               variant="ghost"
               onClick={() => setShowDuitNowModal(false)}
-              className="text-slate-400 hover:text-white text-xs"
+              className="text-slate-400 hover:text-slate-700 text-xs font-bold"
             >
-              Cancel
+              Batal
             </Button>
           </DialogFooter>
         </DialogContent>

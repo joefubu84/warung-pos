@@ -26,13 +26,13 @@ export function NavigationHeader() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-slate-900 border-b border-slate-800 text-white shadow-md shrink-0">
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/90 text-slate-900 shadow-xs shrink-0">
         <div className="max-w-7xl mx-auto px-3 py-2 flex items-center justify-between gap-2 overflow-x-auto scrollbar-hide">
           
           {/* BRANDING */}
-          <Link to="/counter" className="flex items-center gap-2 font-black text-lg text-emerald-400 tracking-wide shrink-0 pr-2 border-r border-slate-800">
-            <img src="/logo.png" alt="Warung J&J Logo" className="w-8 h-8 rounded-full object-cover border border-amber-400 shadow-sm" />
-            <span>Warung J&J</span>
+          <Link to="/counter" className="flex items-center gap-2.5 font-black text-lg text-slate-900 tracking-wide shrink-0 pr-3 border-r border-slate-200/90">
+            <img src="/logo.png" alt="Warung J&J Logo" className="w-8 h-8 rounded-full object-cover border-2 border-orange-500 shadow-xs" />
+            <span className="tracking-tight">Warung J&J</span>
           </Link>
 
           {/* TOP NAVIGATION LINKS */}
@@ -44,10 +44,10 @@ export function NavigationHeader() {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold transition-all duration-150 whitespace-nowrap active:scale-95 touch-manipulation ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-bold transition-all duration-150 whitespace-nowrap active:scale-95 touch-manipulation ${
                     isActive
-                      ? 'bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-400'
-                      : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                      ? 'bg-orange-500 text-white shadow-sm ring-1 ring-orange-400 font-black'
+                      : 'text-slate-600 hover:bg-orange-50 hover:text-orange-600'
                   }`}
                 >
                   <span className="text-base">{item.emoji}</span>
@@ -61,9 +61,9 @@ export function NavigationHeader() {
               <button
                 onClick={() => setIsModalOpen(true)}
                 title="Drag & Rearrange Header Navigation Tabs"
-                className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-bold text-amber-400 hover:bg-slate-800 hover:text-amber-300 border border-amber-500/30 bg-amber-500/10 transition-all shrink-0 ml-1 shadow-sm"
+                className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold text-amber-800 hover:bg-amber-100 hover:text-amber-900 border border-amber-200 bg-amber-50 transition-all shrink-0 ml-1 shadow-xs"
               >
-                <SlidersHorizontal className="w-4 h-4 text-amber-400" />
+                <SlidersHorizontal className="w-4 h-4 text-amber-600" />
                 <span className="hidden md:inline font-mono">Reorder</span>
               </button>
             )}
@@ -78,9 +78,9 @@ export function NavigationHeader() {
                 window.location.href = '/auth';
               }}
               title="Staff Log Out"
-              className="flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-bold text-rose-400 hover:bg-rose-500/20 hover:text-rose-300 border border-rose-500/30 bg-rose-500/10 transition-all shrink-0 ml-1 shadow-sm"
+              className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold text-rose-700 hover:bg-rose-100 hover:text-rose-800 border border-rose-200 bg-rose-50 transition-all shrink-0 ml-1 shadow-xs"
             >
-              <LogOut className="w-4 h-4 text-rose-400" />
+              <LogOut className="w-4 h-4 text-rose-600" />
               <span className="hidden lg:inline font-mono">Log Out</span>
             </button>
           </nav>

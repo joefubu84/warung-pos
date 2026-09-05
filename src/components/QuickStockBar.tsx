@@ -82,22 +82,22 @@ export function QuickStockBar({ onItemUpdated }: { onItemUpdated?: () => void })
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-lg p-3">
+    <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs p-3.5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded-lg bg-orange-500/10 text-orange-400 border border-orange-500/20 flex items-center justify-center font-black text-xs">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-orange-50 text-orange-500 border border-orange-200 flex items-center justify-center font-black text-xs shadow-2xs">
             <Flame className="w-4 h-4" />
           </div>
           <div>
-            <span className="text-xs font-black text-white tracking-tight flex items-center gap-1.5">
+            <span className="text-xs font-black text-slate-900 tracking-tight flex items-center gap-1.5">
               Pantau Stok Cepat (86 / Sold Out)
               {soldOutCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
                   {soldOutCount} Habis
                 </span>
               )}
             </span>
-            <p className="text-[10px] text-slate-400">1-Klik untuk buka atau tutup hidangan yang kehabisan ramuan</p>
+            <p className="text-[10px] text-slate-500 font-medium">1-Klik untuk buka atau tutup hidangan yang kehabisan ramuan</p>
           </div>
         </div>
 
@@ -108,13 +108,13 @@ export function QuickStockBar({ onItemUpdated }: { onItemUpdated?: () => void })
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Cari hidangan untuk tukar status stok..."
-              className="w-full h-8 pl-8 pr-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+              className="w-full h-8 pl-8 pr-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all shadow-2xs font-medium"
             />
           </div>
           <button
             type="button"
             onClick={fetchStockItems}
-            className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors shadow-2xs"
             title="Muat semula senarai stok"
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -136,14 +136,14 @@ export function QuickStockBar({ onItemUpdated }: { onItemUpdated?: () => void })
               onClick={() => toggleAvailability(item)}
               className={'flex items-center gap-2 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all active:scale-95 ' + (
                 isSoldOut
-                  ? 'bg-rose-950/40 border-rose-800/80 text-rose-300 hover:bg-rose-900/50'
-                  : 'bg-slate-950 border-slate-800 text-slate-300 hover:border-slate-700'
+                  ? 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'
+                  : 'bg-slate-50 border-slate-200/90 text-slate-700 hover:bg-white hover:border-orange-300 hover:text-orange-950 shadow-2xs'
               )}
             >
-              <span className={'w-2 h-2 rounded-full shrink-0 ' + (isSoldOut ? 'bg-rose-500 animate-pulse' : 'bg-emerald-400')} />
+              <span className={'w-2 h-2 rounded-full shrink-0 ' + (isSoldOut ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500')} />
               <span className="truncate max-w-[140px]">{item.name}</span>
               <span className={'text-[10px] px-1.5 py-0.2 rounded font-black ' + (
-                isSoldOut ? 'bg-rose-900 text-rose-200' : 'bg-slate-800 text-slate-400'
+                isSoldOut ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-800'
               )}>
                 {isSoldOut ? 'HABIS' : 'ADA'}
               </span>
