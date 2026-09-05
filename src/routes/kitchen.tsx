@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { createFileRoute } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { requireChefAuth } from '@/lib/auth-guard';
-import { playKitchenSound } from '@/lib/sounds';
+import { playKitchenSound, unlockAudio } from '@/lib/sounds';
 import { resolveDishComponents, detectModifierBadges } from '@/lib/kitchen-checklist-config';
 
 export const Route = createFileRoute('/kitchen')({
@@ -556,9 +556,28 @@ function KitchenPage() {
   // Real-time highlight states
   const [highlightedOrders, setHighlightedOrders] = useState<Record<string, { type: 'new' | 'updated', timestamp: number }>>({});
   const [highlightedItems, setHighlightedItems] = useState<Record<string, number>>({});
+  const [isAudioUnlocked, setIsAudioUnlocked] = useState<boolean>(false);
   
   const ordersRef = useRef<Order[]>([]);
   const isInitialLoad = useRef(true);
+
+  // Auto-unlock Web Audio API on first user gesture anywhere on screen
+  useEffect(() => {
+    const handleGesture = async () => {
+      const unlocked = await unlockAudio();
+      if (unlocked) {
+        setIsAudioUnlocked(true);
+      }
+    };
+    window.addEventListener('click', handleGesture, { once: true });
+    window.addEventListener('touchstart', handleGesture, { once: true });
+    window.addEventListener('keydown', handleGesture, { once: true });
+    return () => {
+      window.removeEventListener('click', handleGesture);
+      window.removeEventListener('touchstart', handleGesture);
+      window.removeEventListener('keydown', handleGesture);
+    };
+  }, []);
 
   const fetchPrinterSettings = useCallback(async () => {
     const DEFAULT_STORE_ID = '1094d737-8104-4a55-b678-0fe9097beba0';
@@ -777,7 +796,8 @@ function KitchenPage() {
     // Table Service Buzzer Channel for Kitchen Display
     const buzzerChannel = supabase.channel('kitchen_table_buzzer')
       .on('broadcast', { event: 'call_waiter' }, () => {
-        playKitchenSound('kitchen_bell');
+        const s = settingsRef.current;
+        playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
       })
       .subscribe();
 
@@ -786,7 +806,8 @@ function KitchenPage() {
       .on('broadcast', { event: 'new_order_placed' }, (msg) => {
         console.log('⚡ Instant Kitchen broadcast received: new order placed!', msg);
         fetchActiveOrders(true);
-        playKitchenSound('kitchen_bell');
+        const s = settingsRef.current;
+        playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
       })
       .subscribe();
 
@@ -899,16 +920,33 @@ function KitchenPage() {
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
-          <button
-            onClick={() => {
-              playKitchenSound('kitchen_bell');
-            }}
-            className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs cursor-pointer"
-            title="Klik untuk membuka kebenaran audio pelayar"
-          >
-            <span>🔔</span>
-            <span>Uji Loceng Dapur</span>
-          </button>
+          {!isAudioUnlocked ? (
+            <button
+              onClick={async () => {
+                const unlocked = await unlockAudio();
+                setIsAudioUnlocked(unlocked);
+                const s = settingsRef.current;
+                playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
+              }}
+              className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow-md animate-pulse cursor-pointer active:scale-95 transition-all"
+              title="Klik sekali untuk menghidupkan audio penggera dapur di pelayar ini"
+            >
+              <span>🔊</span>
+              <span>KLIK UNTUK HIDUPKAN BUNYI</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                const s = settingsRef.current;
+                playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
+              }}
+              className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs cursor-pointer active:scale-95"
+              title="Bunyi Dapur Aktif! Klik untuk uji loceng dapur."
+            >
+              <span>🔔</span>
+              <span>Bunyi Aktif (Uji Loceng)</span>
+            </button>
+          )}
 
           <button
             onClick={() => {
