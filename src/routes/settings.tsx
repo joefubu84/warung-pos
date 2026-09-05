@@ -1123,10 +1123,10 @@ function SettingsPage() {
                     Pantau rekod pengubahan pesanan, pembukaan laci tunai, pembatalan resit, dan aktiviti juruwang untuk kawalan integriti premis.
                   </p>
                   <Link to="/settings/audit-log" className="block pt-2">
-                    <Button className="w-full bg-slate-800 hover:bg-slate-700 text-slate-900 border border-slate-700 font-bold rounded-2xl py-3.5 gap-2">
-                      <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                    <button type="button" className="bg-orange-500 hover:bg-orange-600 active:scale-[0.98] transition-all text-white font-semibold text-sm sm:text-base rounded-xl px-5 py-3 shadow-sm flex items-center justify-center gap-2.5 w-full sm:w-auto">
+                      <ShieldCheck className="w-5 h-5 text-white" />
                       <span>Buka Log Audit Staf & Keselamatan POS</span>
-                    </Button>
+                    </button>
                   </Link>
                 </div>
               </div>
@@ -3022,4 +3022,3 @@ function AdminRiderManagementCard() {
     </div>
   );
 }
-
