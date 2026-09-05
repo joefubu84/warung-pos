@@ -348,10 +348,10 @@ function MenuPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center font-mono">
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex items-center justify-center font-mono">
         <div className="flex flex-col items-center gap-3">
-          <RefreshCw className="w-8 h-8 animate-spin text-emerald-400" />
-          <p className="text-sm text-slate-400">Loading Menu & Inventory Database...</p>
+          <RefreshCw className="w-8 h-8 animate-spin text-orange-600" />
+          <p className="text-sm text-slate-500">Loading Menu & Inventory Database...</p>
         </div>
       </div>
     );
@@ -376,23 +376,30 @@ function MenuPage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* HEADER BAR */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
-          <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="Warung J&J Logo" className="w-12 h-12 rounded-full object-cover border border-amber-400 shadow-md" />
-            <div>
-              <h1 className="text-2xl font-black text-white tracking-tight">Menu & Inventory Management</h1>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">
-                {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </p>
+        {/* HEADER BAR (FAUNA KITCHEN LIGHT THEME) */}
+        <div className="bg-white border border-slate-200/90 p-6 rounded-3xl shadow-xs">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <img src="/logo.png" alt="Warung J&J Logo" className="w-12 h-12 rounded-full object-cover border-2 border-orange-200 shadow-xs" />
+              <div>
+                <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+                  <span>Menu & Inventory Management</span>
+                  <span className="text-xs font-mono font-bold bg-orange-100 text-orange-700 px-2.5 py-0.5 rounded-full border border-orange-200">
+                    MENU
+                  </span>
+                </h1>
+                <p className="text-xs text-slate-500 font-mono mt-1">
+                  Live dish catalogue, pricing, custom badges & inventory tracking
+                </p>
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-3 font-mono text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-4 py-2.5 rounded-xl font-bold">
-            <UtensilsCrossed className="w-4 h-4" /> {items.length} Menu Dishes Tracked
+            <div className="flex items-center gap-2 font-mono text-xs text-orange-700 bg-orange-50 border border-orange-200 px-4 py-2 rounded-full font-bold shadow-xs">
+              <UtensilsCrossed className="w-4 h-4 text-orange-600" /> {items.length} Menu Dishes Tracked
+            </div>
           </div>
         </div>
 
@@ -401,12 +408,12 @@ function MenuPage() {
           
           {/* EDITOR FORM SIDEBAR */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-24 bg-slate-900 border-slate-800 text-white rounded-2xl shadow-xl">
-              <CardHeader className="border-b border-slate-800">
-                <CardTitle className="text-lg font-bold flex items-center gap-2 text-white">
-                  {editingId ? <><Edit2 className="w-5 h-5 text-amber-400"/> Edit Dish</> : <><Plus className="w-5 h-5 text-emerald-400"/> Add New Menu Item</>}
+            <Card className="sticky top-24 bg-white border border-slate-200/90 text-slate-900 rounded-3xl shadow-xs">
+              <CardHeader className="border-b border-slate-100">
+                <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-900">
+                  {editingId ? <><Edit2 className="w-5 h-5 text-amber-400"/> Edit Dish</> : <><Plus className="w-5 h-5 text-orange-600"/> Add New Menu Item</>}
                 </CardTitle>
-                <CardDescription className="text-slate-400 text-xs font-mono">
+                <CardDescription className="text-slate-500 text-xs font-mono">
                   {editingId ? "Update dish price, image, or inventory stock." : "Add a new item to your digital menu."}
                 </CardDescription>
               </CardHeader>
@@ -414,10 +421,10 @@ function MenuPage() {
                 <form onSubmit={handleSubmit} className="space-y-4 font-mono text-xs">
                   
                   {/* Photo Upload with Camera & Gallery */}
-                  <div className="space-y-2.5 p-3 rounded-2xl bg-slate-950/80 border border-slate-800">
+                  <div className="space-y-2.5 p-3 rounded-2xl bg-slate-50/80 border border-slate-200">
                     <div className="flex items-center justify-between">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                        <Camera className="w-3.5 h-3.5 text-emerald-400" />
+                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                        <Camera className="w-3.5 h-3.5 text-orange-600" />
                         <span>Gambar Hidangan (Dish Photo)</span>
                       </Label>
                       {imageUrl && (
@@ -433,11 +440,11 @@ function MenuPage() {
 
                     <div className="flex items-center gap-3">
                       {imageUrl ? (
-                        <div className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-emerald-500/50 bg-slate-950 shrink-0 flex items-center justify-center p-1 shadow-md">
+                        <div className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-emerald-500/50 bg-slate-50 shrink-0 flex items-center justify-center p-1 shadow-md">
                           <img src={imageUrl} alt="Preview" className="w-full h-full object-cover rounded-lg" />
                         </div>
                       ) : (
-                        <div className="w-20 h-20 rounded-xl border border-dashed border-slate-700 bg-slate-900/60 flex flex-col items-center justify-center text-slate-500 shrink-0 gap-1">
+                        <div className="w-20 h-20 rounded-xl border border-dashed border-slate-300 bg-slate-50/60 flex flex-col items-center justify-center text-slate-500 shrink-0 gap-1">
                           <ImageIcon className="w-6 h-6 text-slate-600" />
                           <span className="text-[9px] text-slate-500">Tiada Foto</span>
                         </div>
@@ -468,7 +475,7 @@ function MenuPage() {
                             size="sm"
                             disabled={uploadingPhoto}
                             onClick={() => cameraInputRef.current?.click()}
-                            className="h-9 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm"
+                            className="h-9 bg-orange-600 hover:bg-orange-500 text-slate-900 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm"
                           >
                             <Camera className="w-3.5 h-3.5" />
                             <span>Kamera</span>
@@ -479,7 +486,7 @@ function MenuPage() {
                             variant="outline"
                             disabled={uploadingPhoto}
                             onClick={() => galleryInputRef.current?.click()}
-                            className="h-9 border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm"
+                            className="h-9 border-slate-300 bg-slate-800 hover:bg-slate-700 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm"
                           >
                             <UploadCloud className="w-3.5 h-3.5" />
                             <span>Galeri / Fail</span>
@@ -496,7 +503,7 @@ function MenuPage() {
                             placeholder="Atau tampal URL gambar di sini..."
                             value={imageUrl}
                             onChange={e => setImageUrl(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1 text-[10px] text-slate-300 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-[10px] text-slate-700 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
                           />
                         )}
                       </div>
@@ -504,29 +511,29 @@ function MenuPage() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-300">Dish Name</Label>
+                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-700">Dish Name</Label>
                     <Input 
                       value={name} 
                       onChange={e => setName(e.target.value)} 
                       required 
                       placeholder="e.g. Nasi Ayam Butter Special" 
-                      className="bg-slate-950 border-slate-800 text-white text-xs"
+                      className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
                     />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-300">Category</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-700">Category</Label>
                       <Input 
                         value={category} 
                         onChange={e => setCategory(e.target.value)} 
                         required 
                         placeholder="e.g. Chicken" 
-                        className="bg-slate-950 border-slate-800 text-white text-xs"
+                        className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-300">Price (RM)</Label>
+                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-700">Price (RM)</Label>
                       <Input 
                         type="number" 
                         step="0.01" 
@@ -534,69 +541,69 @@ function MenuPage() {
                         onChange={e => setPrice(e.target.value)} 
                         required 
                         placeholder="12.50" 
-                        className="bg-slate-950 border-slate-800 text-white text-xs font-bold text-emerald-400"
+                        className="bg-slate-50 border-slate-200 text-slate-900 text-xs font-bold text-orange-600"
                       />
                     </div>
                   </div>
 
                   {/* DISH BADGES CONFIGURATION */}
-                  <div className="p-3.5 bg-slate-950/80 rounded-xl space-y-3 border border-slate-800 font-mono">
-                    <Label className="text-xs font-bold text-amber-400 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center gap-1.5">
+                  <div className="p-3.5 bg-slate-50/80 rounded-xl space-y-3 border border-slate-200 font-mono">
+                    <Label className="text-xs font-bold text-amber-400 uppercase tracking-wider block border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5" /> Customer Menu Badges
                     </Label>
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-300">🔥 Popular / Best Seller Badge</span>
+                        <span className="text-xs text-slate-700">🔥 Popular / Best Seller Badge</span>
                         <Switch checked={isPopular} onCheckedChange={setIsPopular} />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-300">⭐ Chef Special Badge</span>
+                        <span className="text-xs text-slate-700">⭐ Chef Special Badge</span>
                         <Switch checked={isChefSpecial} onCheckedChange={setIsChefSpecial} />
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-800 space-y-1">
-                      <Label className="text-[10px] text-slate-400 uppercase">Custom Badge Tag (Optional)</Label>
+                    <div className="pt-2 border-t border-slate-200 space-y-1">
+                      <Label className="text-[10px] text-slate-500 uppercase">Custom Badge Tag (Optional)</Label>
                       <Input 
                         value={customTag} 
                         onChange={e => setCustomTag(e.target.value)} 
                         placeholder="e.g. 🌶️ Super Spicy or 🥤 Free Drink" 
-                        className="bg-slate-900 border-slate-800 text-white text-xs"
+                        className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
                       />
                     </div>
                   </div>
 
                   {/* INVENTORY / STOCK CONTROL */}
-                  <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2">
+                  <div className="p-3 bg-slate-50/80 border border-slate-200 rounded-xl space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-200">Stock Inventory Control</span>
-                      <span className="text-[10px] text-slate-400 font-mono">Leave empty for unlimited</span>
+                      <span className="text-xs font-bold text-slate-800">Stock Inventory Control</span>
+                      <span className="text-[10px] text-slate-500 font-mono">Leave empty for unlimited</span>
                     </div>
                     <div className="grid grid-cols-2 gap-2 font-mono">
                       <div className="space-y-1">
-                        <Label className="text-[10px] text-slate-400 uppercase">Stock Count</Label>
+                        <Label className="text-[10px] text-slate-500 uppercase">Stock Count</Label>
                         <Input 
                           type="number" 
                           value={stockCount} 
                           onChange={e => setStockCount(e.target.value)} 
                           placeholder="Unlimited" 
-                          className="bg-slate-900 border-slate-800 text-white text-xs rounded-lg"
+                          className="bg-slate-50 border-slate-200 text-slate-900 text-xs rounded-lg"
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[10px] text-slate-400 uppercase">Low Alert At</Label>
+                        <Label className="text-[10px] text-slate-500 uppercase">Low Alert At</Label>
                         <Input 
                           type="number" 
                           value={lowStockThreshold} 
                           onChange={e => setLowStockThreshold(e.target.value)} 
                           placeholder="5" 
-                          className="bg-slate-900 border-slate-800 text-white text-xs rounded-lg"
+                          className="bg-slate-50 border-slate-200 text-slate-900 text-xs rounded-lg"
                         />
                       </div>
                     </div>
                     <div className="flex items-center justify-between pt-2">
-                      <Label className="text-xs font-bold text-white block">Available for Ordering</Label>
+                      <Label className="text-xs font-bold text-slate-900 block">Available for Ordering</Label>
                       <Switch checked={isAvailable} onCheckedChange={setIsAvailable} />
                     </div>
                   </div>
@@ -604,11 +611,11 @@ function MenuPage() {
                   {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
                   
                   <div className="flex gap-2 pt-2">
-                    <Button type="submit" disabled={isSubmitting || uploadingPhoto} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl py-2">
+                    <Button type="submit" disabled={isSubmitting || uploadingPhoto} className="flex-1 bg-orange-600 hover:bg-orange-500 text-slate-900 font-bold rounded-xl py-2">
                       {isSubmitting ? 'Saving...' : (editingId ? 'Save Changes' : '+ Add Dish to Menu')}
                     </Button>
                     {editingId && (
-                      <Button type="button" variant="outline" onClick={cancelEdit} className="border-slate-800 text-slate-300 rounded-xl">
+                      <Button type="button" variant="outline" onClick={cancelEdit} className="border-slate-200 text-slate-700 rounded-xl">
                         Cancel
                       </Button>
                     )}
@@ -622,14 +629,14 @@ function MenuPage() {
           <div className="lg:col-span-2 space-y-4">
             
             {/* SEARCH & FILTER BAR */}
-            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-900/80 p-3 rounded-2xl border border-slate-800">
+            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-50/80 p-3 rounded-2xl border border-slate-200">
               <div className="relative w-full sm:w-72">
-                <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 <Input
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Cari hidangan atau kategori..."
-                  className="bg-slate-950 border-slate-800 text-white text-xs pl-9 rounded-xl w-full"
+                  className="bg-slate-50 border-slate-200 text-slate-900 text-xs pl-9 rounded-xl w-full"
                 />
               </div>
 
@@ -639,8 +646,8 @@ function MenuPage() {
                   onClick={() => setMenuFilter('all')}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all shrink-0 ${
                     menuFilter === 'all'
-                      ? 'bg-emerald-600 text-white shadow-md'
-                      : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                      ? 'bg-orange-600 text-slate-900 shadow-md'
+                      : 'bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200'
                   }`}
                 >
                   Semua ({items.length})
@@ -650,8 +657,8 @@ function MenuPage() {
                   onClick={() => setMenuFilter('active')}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all shrink-0 ${
                     menuFilter === 'active'
-                      ? 'bg-emerald-600 text-white shadow-md'
-                      : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                      ? 'bg-orange-600 text-slate-900 shadow-md'
+                      : 'bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200'
                   }`}
                 >
                   ON Menu ({activeCount})
@@ -661,8 +668,8 @@ function MenuPage() {
                   onClick={() => setMenuFilter('archived')}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all shrink-0 ${
                     menuFilter === 'archived'
-                      ? 'bg-amber-600 text-white shadow-md'
-                      : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                      ? 'bg-amber-600 text-slate-900 shadow-md'
+                      : 'bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200'
                   }`}
                 >
                   OFF Menu ({archivedCount})
@@ -671,10 +678,10 @@ function MenuPage() {
             </div>
 
             {filteredItems.length === 0 ? (
-              <div className="text-center py-20 bg-slate-900 rounded-2xl border border-dashed border-slate-800 text-slate-500 space-y-2">
+              <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 space-y-2">
                 <UtensilsCrossed className="w-12 h-12 mx-auto text-slate-700 mb-3" />
-                <h3 className="text-lg font-bold text-white">Tiada Hidangan Dijumpai</h3>
-                <p className="text-xs font-mono text-slate-400">
+                <h3 className="text-lg font-bold text-slate-900">Tiada Hidangan Dijumpai</h3>
+                <p className="text-xs font-mono text-slate-500">
                   {searchQuery ? `Tiada padanan untuk "${searchQuery}".` : 'Sila tambah hidangan baharu atau tukar penapis.'}
                 </p>
               </div>
@@ -685,9 +692,9 @@ function MenuPage() {
                   const isOutOfStock = item.stock_count === 0 || !item.is_available;
 
                   return (
-                    <Card key={item.id} className={`bg-slate-900 border-slate-800 text-white rounded-2xl overflow-hidden hover:border-emerald-500/50 transition-all duration-300 shadow-xl group ${isOutOfStock ? 'opacity-60 grayscale-[0.4]' : ''}`}>
+                    <Card key={item.id} className={`bg-slate-50 border-slate-200 text-slate-900 rounded-2xl overflow-hidden hover:border-emerald-500/50 transition-all duration-300 shadow-xl group ${isOutOfStock ? 'opacity-60 grayscale-[0.4]' : ''}`}>
                       {/* UNCROPPED IMAGE CONTAINER */}
-                      <div className="h-44 bg-slate-950 relative border-b border-slate-800 flex items-center justify-center p-2">
+                      <div className="h-44 bg-slate-50 relative border-b border-slate-100 flex items-center justify-center p-2">
                         {item.image_url ? (
                           <img src={item.image_url} alt={item.name} className="w-full h-full object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300" />
                         ) : (
@@ -697,7 +704,7 @@ function MenuPage() {
                           </div>
                         )}
                         <div className="absolute top-2 right-2">
-                          <Badge variant={item.is_available ? "default" : "destructive"} className={item.is_available ? "bg-emerald-600 text-white font-mono text-[10px]" : "bg-rose-600 text-white font-mono text-[10px]"}>
+                          <Badge variant={item.is_available ? "default" : "destructive"} className={item.is_available ? "bg-orange-600 text-slate-900 font-mono text-[10px]" : "bg-rose-600 text-slate-900 font-mono text-[10px]"}>
                             {item.is_available ? 'ON MENU' : 'OFF MENU'}
                           </Badge>
                         </div>
@@ -706,34 +713,34 @@ function MenuPage() {
                       <CardContent className="p-4 space-y-3">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h3 className="font-bold text-white text-base tracking-tight line-clamp-1">{item.name}</h3>
-                            <p className="text-xs text-slate-400 font-mono">{item.category}</p>
+                            <h3 className="font-bold text-slate-900 text-base tracking-tight line-clamp-1">{item.name}</h3>
+                            <p className="text-xs text-slate-500 font-mono">{item.category}</p>
                           </div>
-                          <p className="font-black text-emerald-400 text-base font-mono">RM {item.price.toFixed(2)}</p>
+                          <p className="font-black text-orange-600 text-base font-mono">RM {item.price.toFixed(2)}</p>
                         </div>
 
                         {/* INVENTORY BADGES */}
                         <div className="flex flex-wrap items-center gap-2 font-mono">
                           {item.stock_count !== null ? (
                             <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                              isOutOfStock ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : (isLowStock ? "bg-amber-500/10 text-amber-300 border-amber-500/20" : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20")
+                              isOutOfStock ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : (isLowStock ? "bg-amber-500/10 text-amber-300 border-amber-500/20" : "bg-emerald-500/10 text-orange-600 border-emerald-500/20")
                             }`}>
                               {isOutOfStock ? "❌ Sold Out (0)" : (isLowStock ? `⚠️ Low Stock (${item.stock_count})` : `📦 Stock: ${item.stock_count}`)}
                             </span>
                           ) : (
-                            <span className="text-[10px] text-slate-400 font-mono bg-slate-950 border border-slate-800 px-2.5 py-0.5 rounded-full">
+                            <span className="text-[10px] text-slate-500 font-mono bg-slate-50 border border-slate-200 px-2.5 py-0.5 rounded-full">
                               ∞ Unlimited Stock
                             </span>
                           )}
                         </div>
 
-                        <div className="pt-3 border-t border-slate-800 flex items-center justify-between gap-2 font-mono">
+                        <div className="pt-3 border-t border-slate-200 flex items-center justify-between gap-2 font-mono">
                           <div className="flex items-center gap-2 text-xs">
                             <Switch 
                               checked={item.is_available} 
                               onCheckedChange={() => toggleAvailability(item.id, item.is_available)}
                             />
-                            <span className={item.is_available ? 'text-slate-300' : 'text-slate-500'}>
+                            <span className={item.is_available ? 'text-slate-700' : 'text-slate-500'}>
                               {item.is_available ? 'Active' : 'Hidden'}
                             </span>
                           </div>
@@ -757,7 +764,7 @@ function MenuPage() {
         </div>
 
         {/* CUSTOM ADD-ONS & PROMO BANNERS MANAGER */}
-        <div className="mt-8 border-t border-slate-800 pt-8">
+        <div className="mt-8 border-t border-slate-200 pt-8">
           <AddonsAndPromosManagerCard />
         </div>
 
@@ -826,15 +833,15 @@ function AddonsAndPromosManagerCard() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-sans">
       {/* 1. CUSTOM DISH ADD-ONS MANAGER */}
-      <Card className="bg-slate-900 border-slate-800 text-white shadow-xl rounded-2xl">
-        <CardHeader className="border-b border-slate-800">
-          <CardTitle className="text-lg font-bold flex items-center justify-between text-emerald-400">
+      <Card className="bg-slate-50 border-slate-200 text-slate-900 shadow-xl rounded-2xl">
+        <CardHeader className="border-b border-slate-100">
+          <CardTitle className="text-lg font-bold flex items-center justify-between text-orange-600">
             <span>✨ Custom Customer Add-ons</span>
-            <Badge variant="outline" className="border-emerald-500/30 text-emerald-400 font-mono text-[10px]">
+            <Badge variant="outline" className="border-emerald-500/30 text-orange-600 font-mono text-[10px]">
               {addons.length} Active
             </Badge>
           </CardTitle>
-          <CardDescription className="text-slate-400 text-xs font-mono">
+          <CardDescription className="text-slate-500 text-xs font-mono">
             Staff can add or edit dish customization add-on choices and pricing.
           </CardDescription>
         </CardHeader>
@@ -845,7 +852,7 @@ function AddonsAndPromosManagerCard() {
               value={newAddonName}
               onChange={(e) => setNewAddonName(e.target.value)}
               placeholder="e.g. Extra Sambal Belacan"
-              className="bg-slate-950 border-slate-800 text-white text-xs"
+              className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
             />
             <Input
               type="number"
@@ -853,27 +860,27 @@ function AddonsAndPromosManagerCard() {
               value={newAddonPrice}
               onChange={(e) => setNewAddonPrice(e.target.value)}
               placeholder="RM 1.50"
-              className="bg-slate-950 border-slate-800 text-white text-xs w-24 shrink-0 font-bold text-emerald-400"
+              className="bg-slate-50 border-slate-200 text-slate-900 text-xs w-24 shrink-0 font-bold text-orange-600"
             />
-            <Button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold shrink-0">
+            <Button type="submit" className="bg-orange-600 hover:bg-orange-500 text-slate-900 font-bold shrink-0">
               <Plus className="w-4 h-4 mr-1" /> Add
             </Button>
           </form>
 
           {/* ADD-ONS LIST */}
-          <div className="divide-y divide-slate-800 border border-slate-800 rounded-xl overflow-hidden bg-slate-950">
+          <div className="divide-y divide-slate-800 border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
             {addons.map((addon) => (
-              <div key={addon.id} className="p-3 flex items-center justify-between hover:bg-slate-900/60 transition-colors">
+              <div key={addon.id} className="p-3 flex items-center justify-between hover:bg-slate-50/60 transition-colors">
                 <div className="flex items-center gap-3">
                   <Switch
                     checked={addon.available}
                     onCheckedChange={() => handleToggleAddonAvailability(addon.id)}
                   />
                   <div>
-                    <span className={`font-bold block ${addon.available ? 'text-white' : 'text-slate-500 line-through'}`}>
+                    <span className={`font-bold block ${addon.available ? 'text-slate-900' : 'text-slate-500 line-through'}`}>
                       {addon.name}
                     </span>
-                    <span className="text-emerald-400 font-bold text-[11px]">
+                    <span className="text-orange-600 font-bold text-[11px]">
                       +RM {Number(addon.price).toFixed(2)}
                     </span>
                   </div>
@@ -894,15 +901,15 @@ function AddonsAndPromosManagerCard() {
       </Card>
 
       {/* 2. PROMO BANNERS MANAGER */}
-      <Card className="bg-slate-900 border-slate-800 text-white shadow-xl rounded-2xl">
-        <CardHeader className="border-b border-slate-800">
+      <Card className="bg-slate-50 border-slate-200 text-slate-900 shadow-xl rounded-2xl">
+        <CardHeader className="border-b border-slate-100">
           <CardTitle className="text-lg font-bold flex items-center justify-between text-amber-400">
             <span>📢 Rotating Promo Banners</span>
             <Badge variant="outline" className="border-amber-500/30 text-amber-300 font-mono text-[10px]">
               {promos.length} Announcements
             </Badge>
           </CardTitle>
-          <CardDescription className="text-slate-400 text-xs font-mono">
+          <CardDescription className="text-slate-500 text-xs font-mono">
             Top promo text banners displayed on customer QR ordering menu.
           </CardDescription>
         </CardHeader>
@@ -913,7 +920,7 @@ function AddonsAndPromosManagerCard() {
               value={newPromoText}
               onChange={(e) => setNewPromoText(e.target.value)}
               placeholder="e.g. ⚡ Happy Hour: 20% OFF Beverages!"
-              className="bg-slate-950 border-slate-800 text-white text-xs"
+              className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
             />
             <Button type="submit" className="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold shrink-0">
               <Plus className="w-4 h-4 mr-1" /> Add Banner
@@ -921,10 +928,10 @@ function AddonsAndPromosManagerCard() {
           </form>
 
           {/* PROMOS LIST */}
-          <div className="divide-y divide-slate-800 border border-slate-800 rounded-xl overflow-hidden bg-slate-950">
+          <div className="divide-y divide-slate-800 border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
             {promos.map((promo, idx) => (
-              <div key={idx} className="p-3 flex items-center justify-between hover:bg-slate-900/60 transition-colors">
-                <span className="text-slate-200 font-bold text-xs truncate max-w-[280px]">
+              <div key={idx} className="p-3 flex items-center justify-between hover:bg-slate-50/60 transition-colors">
+                <span className="text-slate-800 font-bold text-xs truncate max-w-[280px]">
                   {promo}
                 </span>
 
