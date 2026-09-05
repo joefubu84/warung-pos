@@ -181,9 +181,6 @@ function OrdersPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, () => {
         fetchOrders();
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => {
-        fetchOrders();
-      })
       .subscribe();
 
     // Table broadcast listener for instant cross-tab updates
@@ -220,7 +217,6 @@ function OrdersPage() {
         paid,
         payment_method,
         created_at, 
-        payments (id, order_id, amount, payment_method, paid_by, created_at),
         order_items (id, order_id, menu_item_id, quantity, price_at_order, fulfillment_type, notes, menu_items(name))
       `)
       .order('created_at', { ascending: false });
@@ -751,9 +747,9 @@ function OrdersPage() {
           return (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filteredOrders.map((order) => {
-                const totalPaid = (order.payments || []).reduce((sum, p) => sum + Number(p.amount), 0);
-                const remainingBalance = Math.max(0, order.total_amount - totalPaid);
-                const isFullyPaid = remainingBalance <= 0 || order.paid;
+                const isFullyPaid = !!order.paid || (order as any).payment_status === 'paid';
+                const totalPaid = isFullyPaid ? order.total_amount : 0;
+                const remainingBalance = isFullyPaid ? 0 : order.total_amount;
                 
                 // Color coding based on status
                 let bgClass = "bg-slate-900";
@@ -843,13 +839,13 @@ function OrdersPage() {
                         {!isFullyPaid && (
                           <div>
                             <span className="text-slate-400 mr-1">Paid:</span> 
-                            <span className="font-bold text-emerald-500 font-mono">RM{totalPaid.toFixed(2)}</span>
+                            <span className="font-bold text-rose-400 font-mono">RM0.00</span>
                           </div>
                         )}
                         {!isFullyPaid && (
                           <div className="w-full mt-1">
                             <span className="text-gray-500 mr-1">Balance:</span> 
-                            <span className="text-red-600 font-black">RM{remainingBalance.toFixed(2)}</span>
+                            <span className="text-rose-500 font-black">RM{order.total_amount.toFixed(2)}</span>
                           </div>
                         )}
                       </div>
@@ -862,37 +858,34 @@ function OrdersPage() {
                               e.preventDefault();
                               const form = e.currentTarget;
                               const formData = new FormData(form);
-                              const amount = parseFloat(formData.get('amount') as string);
-                              const method = formData.get('method') as string;
-                              const paidBy = formData.get('paid_by') as string;
-
-                              if (isNaN(amount) || amount <= 0) return alert('Invalid amount');
+                              const method = (formData.get('method') as string) || 'cash';
 
                               const { error } = await supabase
-                                .from('payments')
-                                .insert({
-                                  order_id: order.id,
-                                  amount: amount,
-                                  payment_method: method as any,
-                                  paid_by: paidBy || null
-                                });
+                                .from('orders')
+                                .update({
+                                  paid: true,
+                                  payment_method: method,
+                                  payment_status: 'paid'
+                                } as any)
+                                .eq('id', order.id);
 
                               if (error) {
-                                alert('Payment failed: ' + error.message);
+                                toast.error('Payment failed: ' + error.message);
                               } else {
+                                toast.success('🎉 Bayaran berjaya direkod!');
                                 await fetchOrders();
                               }
                             }}
-                            className="flex gap-2 items-center flex-wrap bg-white/60 p-2 rounded-lg border border-black/10"
+                            className="flex gap-2 items-center flex-wrap bg-slate-950 p-2.5 rounded-xl border border-slate-800"
                           >
-                            <input name="amount" type="number" step="0.01" defaultValue={remainingBalance.toFixed(2)} className="border p-1 text-xs w-16 rounded" required />
-                            <select name="method" className="border p-1 text-xs rounded">
-                              <option value="cash">Cash</option>
-                              <option value="card">Card</option>
-                              <option value="qr">QR</option>
+                            <span className="text-xs text-slate-300 font-bold">Terima Bayaran:</span>
+                            <select name="method" className="bg-slate-900 border border-slate-700 text-white p-1 text-xs rounded-lg outline-none">
+                              <option value="cash">💵 Cash</option>
+                              <option value="card">💳 Card</option>
+                              <option value="qr">📱 QR / Transfer</option>
                             </select>
-                            <button type="submit" className="bg-green-600 text-white px-2 py-1 text-xs font-bold rounded hover:bg-green-700 shadow-sm">
-                              PAY
+                            <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 text-xs font-black rounded-lg shadow-sm active:scale-95 transition-all">
+                              ✓ TANDA BAYAR
                             </button>
                           </form>
                         </div>
