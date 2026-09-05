@@ -33,6 +33,7 @@ export function NavCustomizerModal({ isOpen, onClose }: NavCustomizerModalProps)
     }
   }, [isOpen]);
 
+  // Desktop HTML5 Drag Handlers
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDraggedIdx(index);
     e.dataTransfer.effectAllowed = 'move';
@@ -49,22 +50,61 @@ export function NavCustomizerModal({ isOpen, onClose }: NavCustomizerModalProps)
 
   const handleDrop = (e: React.DragEvent, dropIdx: number) => {
     e.preventDefault();
-    if (draggedIdx === null || draggedIdx === dropIdx) {
+    reorderItem(draggedIdx, dropIdx);
+  };
+
+  // Tablet & Mobile Touch Event Handlers
+  const handleTouchStart = (index: number) => {
+    setDraggedIdx(index);
+    setDragOverIdx(index);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent, attrName: string) => {
+    if (draggedIdx === null) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+
+    // Find the element under the finger
+    const elemUnderFinger = document.elementFromPoint(touch.clientX, touch.clientY);
+    if (!elemUnderFinger) return;
+
+    const container = elemUnderFinger.closest(`[${attrName}]`);
+    if (container) {
+      const targetIdxStr = container.getAttribute(attrName);
+      if (targetIdxStr !== null) {
+        const targetIdx = parseInt(targetIdxStr, 10);
+        if (!isNaN(targetIdx) && targetIdx !== dragOverIdx) {
+          setDragOverIdx(targetIdx);
+        }
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (draggedIdx !== null && dragOverIdx !== null) {
+      reorderItem(draggedIdx, dragOverIdx);
+    }
+    setDraggedIdx(null);
+    setDragOverIdx(null);
+  };
+
+  const reorderItem = (sourceIdx: number | null, dropIdx: number | null) => {
+    if (sourceIdx === null || dropIdx === null || sourceIdx === dropIdx) {
       setDraggedIdx(null);
       setDragOverIdx(null);
       return;
     }
 
     const updated = [...navItems];
-    const movedItem = updated[draggedIdx];
+    const movedItem = updated[sourceIdx];
     if (!movedItem) return;
 
-    updated.splice(draggedIdx, 1);
+    updated.splice(sourceIdx, 1);
     updated.splice(dropIdx, 0, movedItem);
 
     setNavItems(updated);
     saveNavOrderConfig(updated);
-    toast.success(`Reordered "${movedItem.label}" to position ${dropIdx + 1}!`);
+    toast.success(`Susun semula "${movedItem.label}" ke posisi ${dropIdx + 1}!`);
 
     setDraggedIdx(null);
     setDragOverIdx(null);
@@ -153,16 +193,21 @@ export function NavCustomizerModal({ isOpen, onClose }: NavCustomizerModalProps)
                   return (
                     <div
                       key={item.id}
+                      data-preview-idx={idx}
                       draggable
                       onDragStart={(e) => handleDragStart(e, idx)}
                       onDragOver={(e) => handleDragOver(e, idx)}
                       onDrop={(e) => handleDrop(e, idx)}
                       onDragEnd={() => { setDraggedIdx(null); setDragOverIdx(null); }}
-                      className={`bg-white border px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-grab active:cursor-grabbing select-none transition-all shadow-2xs ${
+                      onTouchStart={() => handleTouchStart(idx)}
+                      onTouchMove={(e) => handleTouchMove(e, 'data-preview-idx')}
+                      onTouchEnd={handleTouchEnd}
+                      style={{ touchAction: 'none' }}
+                      className={`bg-white border px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-grab active:cursor-grabbing select-none transition-all shadow-2xs touch-none ${
                         isBeingDragged 
-                          ? 'opacity-30 border-orange-400 scale-95 ring-2 ring-orange-400' 
+                          ? 'opacity-80 scale-105 shadow-md border-orange-500 ring-2 ring-orange-400 bg-orange-50 z-10' 
                           : (isTargetSlot 
-                              ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-400 text-orange-700 font-black' 
+                              ? 'border-orange-500 bg-orange-100/70 ring-2 ring-orange-400 text-orange-900 font-black' 
                               : 'border-slate-200 text-slate-700 hover:border-orange-300 hover:bg-orange-50/50')
                       }`}
                     >
@@ -186,19 +231,28 @@ export function NavCustomizerModal({ isOpen, onClose }: NavCustomizerModalProps)
                 return (
                   <div 
                     key={item.id} 
+                    data-item-idx={idx}
                     draggable
                     onDragStart={(e) => handleDragStart(e, idx)}
                     onDragOver={(e) => handleDragOver(e, idx)}
                     onDrop={(e) => handleDrop(e, idx)}
                     onDragEnd={() => { setDraggedIdx(null); setDragOverIdx(null); }}
+                    onTouchStart={() => handleTouchStart(idx)}
+                    onTouchMove={(e) => handleTouchMove(e, 'data-item-idx')}
+                    onTouchEnd={handleTouchEnd}
                     className={`p-3 flex items-center justify-between transition-all cursor-grab active:cursor-grabbing select-none ${
                       isBeingDragged 
-                        ? 'opacity-40 bg-orange-50 border-orange-400' 
-                        : (isTargetSlot ? 'bg-orange-50 border-y-2 border-orange-400 text-orange-950 font-bold' : 'hover:bg-slate-50/80')
+                        ? 'opacity-80 scale-[1.01] shadow-sm bg-orange-50 border-orange-400 z-10' 
+                        : (isTargetSlot ? 'bg-orange-100/60 border-y-2 border-orange-400 text-orange-950 font-bold' : 'hover:bg-slate-50/80')
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <GripVertical className="w-4 h-4 text-slate-400 hover:text-orange-500 shrink-0 cursor-grab" />
+                      <div 
+                        style={{ touchAction: 'none' }}
+                        className="touch-none p-1 -m-1 cursor-grab active:cursor-grabbing"
+                      >
+                        <GripVertical className="w-4 h-4 text-slate-400 hover:text-orange-500 shrink-0" />
+                      </div>
                       <Switch
                         checked={item.visible}
                         onCheckedChange={() => handleToggleVisibility(item.id)}
