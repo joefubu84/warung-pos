@@ -2,6 +2,7 @@
 
 A modern full-stack Point of Sale, QR Table Ordering, Kitchen Display System, and Delivery Management application built for Warung J&J Penampang.
 
+Live test dari Telegram bot
 
 ## Development
 
