@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Bell, Utensils, Receipt, Droplet, Sparkles, Check } from 'lucide-react';
+import { Bell, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { 
+  CallWaiterReason, 
+  getCallWaiterReasons, 
+  fetchCallWaiterReasonsFromSupabase, 
+  getIconComponent 
+} from '@/lib/call-waiter-config';
 
 interface CallWaiterModalProps {
   isOpen: boolean;
@@ -12,23 +18,46 @@ interface CallWaiterModalProps {
   storeId?: string;
 }
 
-const SERVICE_OPTIONS = [
-  { id: 'waiter', title: 'Panggil Pelayan', icon: Bell, desc: 'Perlukan bantuan pesanan atau pertanyaan' },
-  { id: 'bill', title: 'Minta Bil Fizikal', icon: Receipt, desc: 'Sedia untuk bayar secara tunai / kad di meja' },
-  { id: 'cutlery', title: 'Tambah Sudu / Garpu / Mangkuk', icon: Utensils, desc: 'Peralatan makan tambahan' },
-  { id: 'water', title: 'Tambah Air Kosong', icon: Droplet, desc: 'Air suam / ais untuk meja' }
-];
-
 export function CallWaiterModal({ isOpen, onClose, tableNumber, storeId }: CallWaiterModalProps) {
-  const [selectedType, setSelectedType] = useState<string>('waiter');
+  const [reasons, setReasons] = useState<CallWaiterReason[]>(() => {
+    const list = getCallWaiterReasons().filter(r => r.enabled);
+    return list.length > 0 ? list : getCallWaiterReasons();
+  });
+  const [selectedType, setSelectedType] = useState<string>(() => reasons[0]?.id || 'waiter');
   const [customNote, setCustomNote] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [sentSuccess, setSentSuccess] = useState(false);
 
+  useEffect(() => {
+    fetchCallWaiterReasonsFromSupabase().then(all => {
+      const active = all.filter(r => r.enabled);
+      if (active.length > 0) {
+        setReasons(active);
+      }
+    });
+
+    const handleUpdate = (e: any) => {
+      if (e?.detail) {
+        const active = (e.detail as CallWaiterReason[]).filter(r => r.enabled);
+        if (active.length > 0) {
+          setReasons(active);
+        }
+      }
+    };
+    window.addEventListener('warung_call_waiter_reasons_updated', handleUpdate);
+    return () => window.removeEventListener('warung_call_waiter_reasons_updated', handleUpdate);
+  }, []);
+
+  useEffect(() => {
+    if (reasons.length > 0 && !reasons.some(r => r.id === selectedType)) {
+      setSelectedType(reasons[0]!.id);
+    }
+  }, [reasons, selectedType]);
+
   const handleSendBuzzer = async () => {
     try {
       setIsSending(true);
-      const selectedOption = SERVICE_OPTIONS.find(o => o.id === selectedType);
+      const selectedOption = reasons.find(o => o.id === selectedType) || reasons[0];
       const requestText = (selectedOption ? selectedOption.title : 'Panggilan Meja') + (customNote.trim() ? (' (' + customNote.trim() + ')') : '');
 
       // Broadcast real-time message through Supabase Channel
@@ -55,6 +84,7 @@ export function CallWaiterModal({ isOpen, onClose, tableNumber, storeId }: CallW
       toast.success('Panggilan telah dihantar ke kaunter meja ' + tableNumber + '!');
       setTimeout(() => {
         setSentSuccess(false);
+        setCustomNote('');
         onClose();
       }, 1500);
     } catch (err: any) {
@@ -90,8 +120,8 @@ export function CallWaiterModal({ isOpen, onClose, tableNumber, storeId }: CallW
         ) : (
           <div className="space-y-3 my-2">
             <div className="space-y-2">
-              {SERVICE_OPTIONS.map(opt => {
-                const Icon = opt.icon;
+              {reasons.map(opt => {
+                const Icon = getIconComponent(opt.icon);
                 const isSelected = selectedType === opt.id;
                 return (
                   <button
@@ -104,20 +134,20 @@ export function CallWaiterModal({ isOpen, onClose, tableNumber, storeId }: CallW
                         : 'bg-slate-50 border-slate-200 hover:border-slate-300'
                     )}
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={'w-8 h-8 rounded-xl flex items-center justify-center text-xs ' + (
+                    <div className="flex items-center gap-3 min-w-0 pr-2">
+                      <div className={'w-8 h-8 rounded-xl flex items-center justify-center text-xs shrink-0 ' + (
                         isSelected ? 'bg-orange-500 text-white' : 'bg-white text-slate-600 border border-slate-200'
                       )}>
                         <Icon className="w-4 h-4" />
                       </div>
-                      <div>
-                        <span className={'block text-xs font-bold ' + (isSelected ? 'text-orange-950' : 'text-slate-800')}>
+                      <div className="min-w-0">
+                        <span className={'block text-xs font-bold truncate ' + (isSelected ? 'text-orange-950' : 'text-slate-800')}>
                           {opt.title}
                         </span>
-                        <span className="text-[10px] text-slate-500">{opt.desc}</span>
+                        <span className="text-[10px] text-slate-500 line-clamp-1">{opt.description}</span>
                       </div>
                     </div>
-                    <span className={'w-4 h-4 rounded-full border flex items-center justify-center ' + (
+                    <span className={'w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ' + (
                       isSelected ? 'border-orange-500 bg-orange-500 text-white' : 'border-slate-300'
                     )}>
                       {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white" />}

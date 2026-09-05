@@ -68,6 +68,7 @@ import { markManualRefundComplete } from '@/lib/riders';
 import { getToyyibPayConfig, saveToyyibPayConfig, type ToyyibPayConfig } from '@/lib/toyyibpay';
 import { KitchenChecklistCustomizer } from '@/components/KitchenChecklistCustomizer';
 import { DishAddonsCustomizer } from '@/components/DishAddonsCustomizer';
+import { CallWaiterCustomizer } from '@/components/CallWaiterCustomizer';
 
 export const Route = createFileRoute('/settings')({
   ssr: false,
@@ -263,12 +264,22 @@ function SettingsPage() {
     | 'kitchen' 
     | 'checklist' 
     | 'addons' 
+    | 'waiter_call'
     | 'store' 
     | 'appearance' 
     | 'refunds' 
     | 'security';
 
-  const [activeSection, setActiveSection] = useState<SettingsSection>('riders');
+  const [activeSection, setActiveSection] = useState<SettingsSection>(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab') as SettingsSection;
+      if (tab && ['riders', 'payments', 'kitchen', 'checklist', 'addons', 'waiter_call', 'store', 'appearance', 'refunds', 'security'].includes(tab)) {
+        return tab;
+      }
+    }
+    return 'riders';
+  });
   const [showMobileModules, setShowMobileModules] = useState(false);
 
   const [storeForm, setStoreForm] = useState({ name: '', address: '', logo_url: '', phone_number: '', phone_number_2: '' });
@@ -463,6 +474,14 @@ function SettingsPage() {
       color: 'text-pink-400',
     },
     {
+      id: 'waiter_call',
+      label: 'Tujuan Panggil Pelayan',
+      subtitle: 'Bantuan & Buzzer Meja QR',
+      icon: Bell,
+      color: 'text-orange-400',
+      badge: 'Meja QR'
+    },
+    {
       id: 'store',
       label: 'Maklumat Premis',
       subtitle: 'Warung J&J Penampang Sabah',
@@ -557,12 +576,12 @@ function SettingsPage() {
               className="border-slate-700 bg-slate-800 hover:bg-slate-750 text-emerald-400 font-bold text-xs shrink-0 flex items-center gap-1.5 h-9"
             >
               <Menu className="w-3.5 h-3.5" />
-              <span>{showMobileModules ? 'Tutup Menu' : 'Pilih Modul (9)'}</span>
+              <span>{showMobileModules ? 'Tutup Menu' : `Pilih Modul (${SIDEBAR_ITEMS.length})`}</span>
               <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${showMobileModules ? 'rotate-180' : ''}`} />
             </Button>
           </div>
 
-          {/* EXPANDABLE 2-COLUMN MOBILE GRID OF ALL 9 MODULES */}
+          {/* EXPANDABLE 2-COLUMN MOBILE GRID OF ALL MODULES */}
           {showMobileModules && (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="text-[10px] font-mono uppercase text-slate-400 font-bold mb-2 px-1">
@@ -918,6 +937,13 @@ function SettingsPage() {
             {activeSection === 'addons' && (
               <div className="transition-all duration-300 animate-in fade-in">
                 <DishAddonsCustomizer />
+              </div>
+            )}
+
+            {/* 5B. CALL WAITER REASONS CUSTOMIZER */}
+            {activeSection === 'waiter_call' && (
+              <div className="transition-all duration-300 animate-in fade-in">
+                <CallWaiterCustomizer />
               </div>
             )}
 

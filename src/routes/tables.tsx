@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect, memo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -13,7 +13,8 @@ import {
   Loader2,
   Clock,
   Receipt,
-  Utensils
+  Utensils,
+  Bell
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -377,19 +378,31 @@ function TablesPage() {
           <p className="text-xs text-slate-400 font-mono mt-1">Monitor live dine-in table status & QR ordering codes</p>
         </div>
         
-        <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
-          <button 
-            onClick={() => setActiveTab('grid')}
-            className={cn("px-6 py-2 rounded-lg text-sm font-bold transition-all", activeTab === 'grid' ? "bg-emerald-600 shadow-sm text-white font-black" : "text-slate-400 hover:text-white")}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+            <button 
+              onClick={() => setActiveTab('grid')}
+              className={cn("px-6 py-2 rounded-lg text-sm font-bold transition-all", activeTab === 'grid' ? "bg-emerald-600 shadow-sm text-white font-black" : "text-slate-400 hover:text-white")}
+            >
+              Live Grid
+            </button>
+            <button 
+              onClick={() => setActiveTab('manage')}
+              className={cn("px-6 py-2 rounded-lg text-sm font-bold transition-all", activeTab === 'manage' ? "bg-emerald-600 shadow-sm text-white font-black" : "text-slate-400 hover:text-white")}
+            >
+              Manage Setup
+            </button>
+          </div>
+
+          <Link
+            to="/settings"
+            search={{ tab: 'waiter_call' } as any}
+            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-950 hover:bg-slate-800 text-orange-400 border border-slate-800 hover:border-orange-500/50 transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+            title="Ubahsuai Pilihan Bantuan Meja (Buzzer)"
           >
-            Live Grid
-          </button>
-          <button 
-            onClick={() => setActiveTab('manage')}
-            className={cn("px-6 py-2 rounded-lg text-sm font-bold transition-all", activeTab === 'manage' ? "bg-emerald-600 shadow-sm text-white font-black" : "text-slate-400 hover:text-white")}
-          >
-            Manage Setup
-          </button>
+            <Bell className="w-3.5 h-3.5 text-orange-400 animate-bounce" />
+            <span>Tetapan Panggil Pelayan</span>
+          </Link>
         </div>
       </div>
 
