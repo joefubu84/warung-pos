@@ -87,14 +87,21 @@ server {
     gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript image/svg+xml;
     gzip_min_length 1000;
 
-    # Static Assets Caching
+    # Static Hashed Assets Caching (Immutable)
     location /assets/ {
-        expires 30d;
-        add_header Cache-Control "public, no-transform";
+        expires 365d;
+        add_header Cache-Control "public, max-age=31536000, immutable";
     }
 
-    # SPA Route Fallback & Reverse Proxy
+    # Service Worker - Never Cache
+    location = /sw.js {
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
+        expires 0;
+    }
+
+    # SPA Route Fallback & Reverse Proxy (Always revalidate HTML navigation)
     location / {
+        add_header Cache-Control "no-cache, no-store, must-revalidate";
         try_files $uri $uri/ @node_proxy;
     }
 

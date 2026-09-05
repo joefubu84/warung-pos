@@ -40,6 +40,58 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
 
+  const errorMessage = error?.message || String(error || "");
+  const isChunkLoadError =
+    errorMessage.includes("dynamically imported module") ||
+    errorMessage.includes("error loading dynamically imported module") ||
+    errorMessage.includes("Importing a module script failed") ||
+    errorMessage.includes("Loading chunk");
+
+  useEffect(() => {
+    if (isChunkLoadError) {
+      const key = "warung_chunk_reload_ts";
+      const last = sessionStorage.getItem(key);
+      const now = Date.now();
+      if (!last || now - parseInt(last, 10) > 12000) {
+        sessionStorage.setItem(key, String(now));
+        window.location.reload();
+      }
+    }
+  }, [isChunkLoadError]);
+
+  if (isChunkLoadError) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-slate-100">
+        <div className="max-w-md w-full text-center p-8 bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl">
+          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-5" />
+          <h1 className="text-xl font-black text-emerald-400 tracking-tight">
+            Memuat Semula Versi Terkini...
+          </h1>
+          <p className="mt-3 text-sm text-slate-400 leading-relaxed">
+            Sistem Warung J&J telah menerima kemaskini baharu. Halaman sedang disegarkan secara automatik untuk memuat turun kod terkini.
+          </p>
+          <div className="mt-6 flex flex-col gap-2">
+            <button
+              onClick={() => {
+                sessionStorage.clear();
+                window.location.reload();
+              }}
+              className="w-full inline-flex items-center justify-center rounded-xl bg-emerald-500 hover:bg-emerald-400 py-3 text-sm font-bold text-slate-950 transition-colors shadow-lg shadow-emerald-950/40 cursor-pointer"
+            >
+              Segarkan Sekarang (Refresh)
+            </button>
+            <a
+              href="/counter"
+              className="w-full inline-flex items-center justify-center rounded-xl border border-slate-800 bg-slate-800/60 hover:bg-slate-800 py-2.5 text-xs font-semibold text-slate-300 transition-colors"
+            >
+              Buka Counter POS
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
@@ -141,6 +193,60 @@ function RootShell({ children }: { children: ReactNode }) {
                     }
                   }
                 } catch (e) {}
+
+                // Auto-recover seamlessly from stale dynamic import chunks / new deployments
+                function recoverOutdatedChunks(reason) {
+                  try {
+                    var key = 'warung_chunk_reload_ts';
+                    var last = sessionStorage.getItem(key);
+                    var now = Date.now();
+                    // Debounce reload: at most once per 12 seconds
+                    if (!last || now - parseInt(last, 10) > 12000) {
+                      sessionStorage.setItem(key, String(now));
+                      console.warn('Warung POS: Chunk load error (' + reason + '). Reloading page to fetch latest version...');
+                      window.location.reload();
+                    }
+                  } catch (err) {
+                    window.location.reload();
+                  }
+                }
+
+                // 1. Vite's built-in preload error event (dispatched when dynamic chunk fails to load)
+                window.addEventListener('vite:preloadError', function(event) {
+                  if (event && event.preventDefault) {
+                    event.preventDefault();
+                  }
+                  recoverOutdatedChunks('vite:preloadError');
+                });
+
+                // 2. Unhandled promise rejections (Failed to fetch dynamically imported module)
+                window.addEventListener('unhandledrejection', function(event) {
+                  var reason = (event && event.reason) ? (event.reason.message || String(event.reason)) : '';
+                  if (
+                    reason.indexOf('dynamically imported module') !== -1 ||
+                    reason.indexOf('error loading dynamically imported module') !== -1 ||
+                    reason.indexOf('Importing a module script failed') !== -1 ||
+                    reason.indexOf('Loading chunk') !== -1
+                  ) {
+                    if (event && event.preventDefault) {
+                      event.preventDefault();
+                    }
+                    recoverOutdatedChunks(reason);
+                  }
+                });
+
+                // 3. Global window error events
+                window.addEventListener('error', function(event) {
+                  var message = (event && event.message) ? String(event.message) : '';
+                  if (
+                    message.indexOf('dynamically imported module') !== -1 ||
+                    message.indexOf('error loading dynamically imported module') !== -1 ||
+                    message.indexOf('Importing a module script failed') !== -1 ||
+                    message.indexOf('Loading chunk') !== -1
+                  ) {
+                    recoverOutdatedChunks(message);
+                  }
+                });
               })();
             `,
           }}
@@ -207,11 +313,30 @@ function RootComponent() {
         } catch {}
       }
 
-      // Register PWA Service Worker with immediate update check
+      // Register PWA Service Worker with immediate update check and no HTTP cache on sw script
       if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
-        navigator.serviceWorker.register('/sw.js').then((reg) => {
+        navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).then((reg) => {
           reg.update().catch(() => {});
+
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  newWorker.postMessage({ type: 'SKIP_WAITING' });
+                }
+              });
+            }
+          });
         }).catch(() => {});
+
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (!refreshing) {
+            refreshing = true;
+            window.location.reload();
+          }
+        });
       }
     }
   }, []);

@@ -1,15 +1,21 @@
-// Warung J&J Service Worker - High-Reliability Live POS & QR Ordering (v6)
-const CACHE_NAME = 'warung-jnj-v6-live';
+// Warung J&J Service Worker - High-Reliability Live POS & QR Ordering (v7)
+const CACHE_NAME = 'warung-jnj-v7-live';
 
 self.addEventListener('install', (event) => {
   // Activate new worker immediately without waiting for old tabs to close
   self.skipWaiting();
 });
 
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
-      // Purge ALL previous caches immediately to prevent stale UI bugs on customer mobile phones
+      // Purge ALL previous caches immediately to prevent stale UI bugs and dynamic import hash mismatches
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
@@ -27,9 +33,10 @@ self.addEventListener('fetch', (event) => {
   
   const url = new URL(event.request.url);
 
-  // Critical routes that MUST ALWAYS fetch fresh from network (zero caching)
+  // Critical routes & dynamic module chunks that MUST ALWAYS fetch fresh from network (zero caching)
   const isBypassRoute = 
     event.request.mode === 'navigate' ||
+    url.pathname.startsWith('/assets/') ||
     url.pathname.startsWith('/t/') ||
     url.pathname.startsWith('/kitchen') ||
     url.pathname.startsWith('/counter') ||
