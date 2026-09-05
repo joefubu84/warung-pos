@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Lock, Mail, Store, AlertCircle, ArrowLeft, Loader2, Eye, EyeOff, Zap, ShieldCheck, KeyRound } from "lucide-react";
+import { Lock, Mail, Store, AlertCircle, ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from 'sonner';
 import { EMERGENCY_ADMIN_SESSION } from '@/lib/auth-state';
 
@@ -20,8 +20,8 @@ export const Route = createFileRoute('/auth')({
 
 function AuthPage() {
   const { redirect: redirectPath, reason } = Route.useSearch();
-  const [email, setEmail] = useState('teststaffa@test.com');
-  const [password, setPassword] = useState('warungjnj2026');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(
     reason === 'unauthorized' ? 'Akaun anda memerlukan kebenaran Staf/Admin untuk mengakses halaman tersebut.' : null
@@ -43,12 +43,6 @@ function AuthPage() {
     setLoading(true);
     setError(null);
 
-    // If password matches known staff password, instantly bypass and grant access
-    if (password === 'warungjnj2026' || password === '123456' || password === 'admin123') {
-      handleForceStaffLogin();
-      return;
-    }
-
     try {
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim(),
@@ -56,11 +50,15 @@ function AuthPage() {
       });
 
       if (signInError) {
-        // If Supabase has email logins disabled, automatically fallback to emergency staff session
-        if (signInError.message?.toLowerCase().includes('disabled')) {
+        // Fallback for emergency staff credentials if Supabase auth user not yet seeded in auth.users
+        if (
+          (email.trim().toLowerCase() === 'teststaffa@test.com' || email.trim().toLowerCase() === 'joefubu84@gmail.com') &&
+          password === 'warungjnj2026'
+        ) {
           handleForceStaffLogin();
           return;
         }
+
         setError(signInError.message || 'Log masuk gagal. Sila periksa emel dan kata laluan.');
         setLoading(false);
         return;
@@ -132,24 +130,6 @@ function AuthPage() {
           </p>
         </div>
 
-        {/* 1-CLICK INSTANT EMERGENCY BYPASS BUTTON */}
-        <div className="p-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200 rounded-2xl shadow-xs space-y-2.5 text-center">
-          <div className="flex items-center justify-center gap-2 text-emerald-800 text-xs font-bold">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-            <span>Akses Pantas Staf & Admin (1-Klik)</span>
-          </div>
-          <p className="text-[11px] text-emerald-700 leading-tight font-medium">
-            Tekan butang di bawah untuk terus masuk ke sistem POS tanpa sekatan kata laluan.
-          </p>
-          <Button
-            type="button"
-            onClick={handleForceStaffLogin}
-            className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer font-heading"
-          >
-            <Zap className="w-4 h-4 fill-white text-white" />
-            <span>Buka Sistem POS Sekarang (1-Klik) 🚀</span>
-          </Button>
-        </div>
 
         {/* Error Notification Banner */}
         {error && (
