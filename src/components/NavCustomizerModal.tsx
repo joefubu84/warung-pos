@@ -103,8 +103,9 @@ export function NavCustomizerModal({ isOpen, onClose }: NavCustomizerModalProps)
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-xl bg-white border border-slate-200/90 text-slate-900 p-5 sm:p-6 rounded-3xl shadow-2xl font-sans">
-        <DialogHeader className="border-b border-slate-100 pb-3 flex flex-row items-center justify-between">
+      <DialogContent className="w-full max-w-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col p-0 overflow-hidden bg-white border border-slate-200/90 text-slate-900 rounded-3xl shadow-2xl font-sans">
+        {/* PINNED HEADER */}
+        <DialogHeader className="shrink-0 border-b border-slate-100 p-5 flex flex-row items-center justify-between">
           <div>
             <DialogTitle className="text-lg sm:text-xl font-black text-slate-900 flex items-center gap-2">
               <SlidersHorizontal className="w-5 h-5 text-orange-500" />
@@ -125,47 +126,113 @@ export function NavCustomizerModal({ isOpen, onClose }: NavCustomizerModalProps)
           </Button>
         </DialogHeader>
 
-        {/* LIVE HEADER PREVIEW BAR inside Modal */}
-        <div className="space-y-2 py-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono font-bold text-orange-600 uppercase tracking-wider block">
-              Pratonton Bar Langsung (Boleh seret terus di sini):
-            </span>
-            <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
-              Tablet / Skrin Lebar
-            </span>
-          </div>
-          <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-2.5 flex items-center gap-1.5 overflow-x-auto scrollbar-none shadow-inner">
-            <div className="flex items-center gap-1.5 shrink-0 pr-2.5 border-r border-slate-200 font-black text-slate-900 text-xs select-none">
-              <img src="/logo.png" alt="Logo" className="w-5 h-5 rounded-full object-cover border border-orange-400" />
-              <span>Warung J&J</span>
+        {/* SCROLLABLE CONTENT AREA */}
+        <div className="overflow-y-auto flex-1 p-5 space-y-4">
+          {/* LIVE HEADER PREVIEW BAR inside Modal */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-mono font-bold text-orange-600 uppercase tracking-wider block">
+                Pratonton Bar Langsung (Boleh seret terus di sini):
+              </span>
+              <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">
+                Tablet / Skrin Lebar
+              </span>
             </div>
+            <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-2.5 flex items-center gap-1.5 overflow-x-auto scrollbar-none shadow-inner">
+              <div className="flex items-center gap-1.5 shrink-0 pr-2.5 border-r border-slate-200 font-black text-slate-900 text-xs select-none">
+                <img src="/logo.png" alt="Logo" className="w-5 h-5 rounded-full object-cover border border-orange-400" />
+                <span>Warung J&J</span>
+              </div>
 
-            <div className="flex items-center gap-1.5 flex-nowrap">
+              <div className="flex items-center gap-1.5 flex-nowrap">
+                {navItems.map((item, idx) => {
+                  if (!item.visible) return null;
+                  const isBeingDragged = draggedIdx === idx;
+                  const isTargetSlot = dragOverIdx === idx;
+
+                  return (
+                    <div
+                      key={item.id}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, idx)}
+                      onDragOver={(e) => handleDragOver(e, idx)}
+                      onDrop={(e) => handleDrop(e, idx)}
+                      onDragEnd={() => { setDraggedIdx(null); setDragOverIdx(null); }}
+                      className={`bg-white border px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-grab active:cursor-grabbing select-none transition-all shadow-2xs ${
+                        isBeingDragged 
+                          ? 'opacity-30 border-orange-400 scale-95 ring-2 ring-orange-400' 
+                          : (isTargetSlot 
+                              ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-400 text-orange-700 font-black' 
+                              : 'border-slate-200 text-slate-700 hover:border-orange-300 hover:bg-orange-50/50')
+                      }`}
+                    >
+                      <GripVertical className="w-3 h-3 text-slate-400 shrink-0" />
+                      <span>{item.emoji}</span>
+                      <span className="whitespace-nowrap">{item.label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* FULL ITEMS REORDER LIST WITH TOUCH CONTROLS */}
+          <div className="space-y-2 font-sans text-xs">
+            <div className="divide-y divide-slate-100 border border-slate-200/90 rounded-2xl overflow-hidden bg-white shadow-xs">
               {navItems.map((item, idx) => {
-                if (!item.visible) return null;
                 const isBeingDragged = draggedIdx === idx;
                 const isTargetSlot = dragOverIdx === idx;
 
                 return (
-                  <div
-                    key={item.id}
+                  <div 
+                    key={item.id} 
                     draggable
                     onDragStart={(e) => handleDragStart(e, idx)}
                     onDragOver={(e) => handleDragOver(e, idx)}
                     onDrop={(e) => handleDrop(e, idx)}
                     onDragEnd={() => { setDraggedIdx(null); setDragOverIdx(null); }}
-                    className={`bg-white border px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-grab active:cursor-grabbing select-none transition-all shadow-2xs ${
+                    className={`p-3 flex items-center justify-between transition-all cursor-grab active:cursor-grabbing select-none ${
                       isBeingDragged 
-                        ? 'opacity-30 border-orange-400 scale-95 ring-2 ring-orange-400' 
-                        : (isTargetSlot 
-                            ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-400 text-orange-700 font-black' 
-                            : 'border-slate-200 text-slate-700 hover:border-orange-300 hover:bg-orange-50/50')
+                        ? 'opacity-40 bg-orange-50 border-orange-400' 
+                        : (isTargetSlot ? 'bg-orange-50 border-y-2 border-orange-400 text-orange-950 font-bold' : 'hover:bg-slate-50/80')
                     }`}
                   >
-                    <GripVertical className="w-3 h-3 text-slate-400 shrink-0" />
-                    <span>{item.emoji}</span>
-                    <span className="whitespace-nowrap">{item.label}</span>
+                    <div className="flex items-center gap-3">
+                      <GripVertical className="w-4 h-4 text-slate-400 hover:text-orange-500 shrink-0 cursor-grab" />
+                      <Switch
+                        checked={item.visible}
+                        onCheckedChange={() => handleToggleVisibility(item.id)}
+                      />
+                      <div className="flex items-center gap-2">
+                        <span className="text-base">{item.emoji}</span>
+                        <span className={`font-bold text-sm ${item.visible ? 'text-slate-800' : 'text-slate-400 line-through'}`}>
+                          {item.label}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={idx === 0}
+                        onClick={(e) => { e.stopPropagation(); handleMove(idx, 'up'); }}
+                        className="h-8 w-8 p-0 text-slate-600 hover:text-orange-600 hover:bg-orange-50 border-slate-200 rounded-xl disabled:opacity-30 active:scale-95"
+                        title="Alih ke Kiri"
+                      >
+                        ⬅️
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={idx === navItems.length - 1}
+                        onClick={(e) => { e.stopPropagation(); handleMove(idx, 'down'); }}
+                        className="h-8 w-8 p-0 text-slate-600 hover:text-orange-600 hover:bg-orange-50 border-slate-200 rounded-xl disabled:opacity-30 active:scale-95"
+                        title="Alih ke Kanan"
+                      >
+                        ➡️
+                      </Button>
+                    </div>
                   </div>
                 );
               })}
@@ -173,73 +240,18 @@ export function NavCustomizerModal({ isOpen, onClose }: NavCustomizerModalProps)
           </div>
         </div>
 
-        {/* FULL ITEMS REORDER LIST WITH TOUCH CONTROLS */}
-        <div className="space-y-2 font-sans text-xs max-h-72 sm:max-h-80 overflow-y-auto pr-1">
-          <div className="divide-y divide-slate-100 border border-slate-200/90 rounded-2xl overflow-hidden bg-white shadow-xs">
-            {navItems.map((item, idx) => {
-              const isBeingDragged = draggedIdx === idx;
-              const isTargetSlot = dragOverIdx === idx;
-
-              return (
-                <div 
-                  key={item.id} 
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, idx)}
-                  onDragOver={(e) => handleDragOver(e, idx)}
-                  onDrop={(e) => handleDrop(e, idx)}
-                  onDragEnd={() => { setDraggedIdx(null); setDragOverIdx(null); }}
-                  className={`p-3 flex items-center justify-between transition-all cursor-grab active:cursor-grabbing select-none ${
-                    isBeingDragged 
-                      ? 'opacity-40 bg-orange-50 border-orange-400' 
-                      : (isTargetSlot ? 'bg-orange-50 border-y-2 border-orange-400 text-orange-950 font-bold' : 'hover:bg-slate-50/80')
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <GripVertical className="w-4 h-4 text-slate-400 hover:text-orange-500 shrink-0 cursor-grab" />
-                    <Switch
-                      checked={item.visible}
-                      onCheckedChange={() => handleToggleVisibility(item.id)}
-                    />
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">{item.emoji}</span>
-                      <span className={`font-bold text-sm ${item.visible ? 'text-slate-800' : 'text-slate-400 line-through'}`}>
-                        {item.label}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={idx === 0}
-                      onClick={(e) => { e.stopPropagation(); handleMove(idx, 'up'); }}
-                      className="h-8 w-8 p-0 text-slate-600 hover:text-orange-600 hover:bg-orange-50 border-slate-200 rounded-xl disabled:opacity-30 active:scale-95"
-                      title="Alih ke Kiri"
-                    >
-                      ⬅️
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={idx === navItems.length - 1}
-                      onClick={(e) => { e.stopPropagation(); handleMove(idx, 'down'); }}
-                      className="h-8 w-8 p-0 text-slate-600 hover:text-orange-600 hover:bg-orange-50 border-slate-200 rounded-xl disabled:opacity-30 active:scale-95"
-                      title="Alih ke Kanan"
-                    >
-                      ➡️
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="pt-3 border-t border-slate-100 flex justify-end">
+        {/* STICKY ACTION FOOTER */}
+        <div className="shrink-0 bg-slate-50 border-t border-slate-200/80 p-4 flex items-center justify-end gap-3">
+          <Button 
+            variant="outline"
+            onClick={onClose}
+            className="border-slate-200 hover:bg-white text-slate-700 font-semibold rounded-xl px-5 py-2.5 shadow-xs active:scale-95"
+          >
+            Tutup
+          </Button>
           <Button 
             onClick={onClose} 
-            className="bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl px-6 py-2.5 shadow-md shadow-orange-500/20 active:scale-95"
+            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold rounded-xl px-5 py-2.5 shadow-sm shadow-orange-500/20 active:scale-95"
           >
             Simpan & Selesai
           </Button>
