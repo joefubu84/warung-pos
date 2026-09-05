@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Edit2, Trash2, Plus, Image as ImageIcon, Loader2, UtensilsCrossed, Sparkles, Check, RefreshCw, Search, Camera, UploadCloud, X } from 'lucide-react';
+import { Edit2, Trash2, Plus, Image as ImageIcon, Loader2, UtensilsCrossed, Sparkles, RefreshCw, Search, Camera, UploadCloud, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
   getAddonsConfig, 
@@ -179,7 +179,7 @@ function MenuPage() {
     setError(null);
 
     try {
-      // Safe store ID determination (works even if user logged in via emergency bypass)
+      // Safe store ID determination
       let currentStoreId = '1094d737-8104-4a55-b678-0fe9097beba0';
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -411,7 +411,7 @@ function MenuPage() {
             <Card className="sticky top-24 bg-white border border-slate-200/90 text-slate-900 rounded-3xl shadow-xs">
               <CardHeader className="border-b border-slate-100">
                 <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-900">
-                  {editingId ? <><Edit2 className="w-5 h-5 text-amber-400"/> Edit Dish</> : <><Plus className="w-5 h-5 text-orange-600"/> Add New Menu Item</>}
+                  {editingId ? <><Edit2 className="w-5 h-5 text-amber-600"/> Edit Dish</> : <><Plus className="w-5 h-5 text-orange-600"/> Add New Menu Item</>}
                 </CardTitle>
                 <CardDescription className="text-slate-500 text-xs font-mono">
                   {editingId ? "Update dish price, image, or inventory stock." : "Add a new item to your digital menu."}
@@ -431,7 +431,7 @@ function MenuPage() {
                         <button
                           type="button"
                           onClick={() => setImageUrl('')}
-                          className="text-[10px] text-rose-400 hover:text-rose-300 flex items-center gap-1 hover:underline"
+                          className="text-[10px] text-rose-600 hover:text-rose-700 flex items-center gap-1 hover:underline font-bold"
                         >
                           <X className="w-3 h-3" /> Buang Gambar
                         </button>
@@ -468,16 +468,16 @@ function MenuPage() {
                           className="hidden"
                         />
 
-                        {/* Action Buttons */}
+                        {/* Action Buttons with WCAG AA Compliant High Contrast */}
                         <div className="grid grid-cols-2 gap-2">
                           <Button
                             type="button"
                             size="sm"
                             disabled={uploadingPhoto}
                             onClick={() => cameraInputRef.current?.click()}
-                            className="h-9 bg-orange-600 hover:bg-orange-500 text-slate-900 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm"
+                            className="h-9 px-3 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-medium text-xs rounded-xl inline-flex items-center justify-center gap-2 transition-colors duration-150 shadow-sm focus-visible:ring-2 focus-visible:ring-orange-500 border border-transparent"
                           >
-                            <Camera className="w-3.5 h-3.5" />
+                            <Camera className="w-4 h-4 text-white shrink-0" />
                             <span>Kamera</span>
                           </Button>
                           <Button
@@ -486,15 +486,15 @@ function MenuPage() {
                             variant="outline"
                             disabled={uploadingPhoto}
                             onClick={() => galleryInputRef.current?.click()}
-                            className="h-9 border-slate-300 bg-slate-800 hover:bg-slate-700 text-slate-800 font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 active:scale-95 transition-all shadow-sm"
+                            className="h-9 px-3 bg-white hover:bg-amber-50/80 active:scale-[0.98] border border-amber-300 hover:border-amber-400 text-amber-950 font-medium text-xs rounded-xl inline-flex items-center justify-center gap-2 transition-colors duration-150 shadow-sm focus-visible:ring-2 focus-visible:ring-amber-500"
                           >
-                            <UploadCloud className="w-3.5 h-3.5" />
+                            <UploadCloud className="w-4 h-4 text-amber-800 shrink-0" />
                             <span>Galeri / Fail</span>
                           </Button>
                         </div>
 
                         {uploadingPhoto ? (
-                          <p className="text-xs text-amber-400 flex items-center gap-1">
+                          <p className="text-xs text-amber-600 font-bold flex items-center gap-1">
                             <Loader2 className="w-3 h-3 animate-spin"/> Memproses gambar...
                           </p>
                         ) : (
@@ -503,7 +503,7 @@ function MenuPage() {
                             placeholder="Atau tampal URL gambar di sini..."
                             value={imageUrl}
                             onChange={e => setImageUrl(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-[10px] text-slate-700 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500"
+                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-[10px] text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500"
                           />
                         )}
                       </div>
@@ -548,23 +548,23 @@ function MenuPage() {
 
                   {/* DISH BADGES CONFIGURATION */}
                   <div className="p-3.5 bg-slate-50/80 rounded-xl space-y-3 border border-slate-200 font-mono">
-                    <Label className="text-xs font-bold text-amber-400 uppercase tracking-wider block border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5" /> Customer Menu Badges
+                    <Label className="text-xs font-bold text-slate-800 uppercase tracking-wider block border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Customer Menu Badges
                     </Label>
 
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-700">🔥 Popular / Best Seller Badge</span>
+                        <span className="text-xs text-slate-700 font-medium">🔥 Popular / Best Seller Badge</span>
                         <Switch checked={isPopular} onCheckedChange={setIsPopular} />
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-700">⭐ Chef Special Badge</span>
+                        <span className="text-xs text-slate-700 font-medium">⭐ Chef Special Badge</span>
                         <Switch checked={isChefSpecial} onCheckedChange={setIsChefSpecial} />
                       </div>
                     </div>
 
                     <div className="pt-2 border-t border-slate-200 space-y-1">
-                      <Label className="text-[10px] text-slate-500 uppercase">Custom Badge Tag (Optional)</Label>
+                      <Label className="text-[10px] text-slate-500 uppercase font-bold">Custom Badge Tag (Optional)</Label>
                       <Input 
                         value={customTag} 
                         onChange={e => setCustomTag(e.target.value)} 
@@ -582,7 +582,7 @@ function MenuPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-2 font-mono">
                       <div className="space-y-1">
-                        <Label className="text-[10px] text-slate-500 uppercase">Stock Count</Label>
+                        <Label className="text-[10px] text-slate-500 uppercase font-bold">Stock Count</Label>
                         <Input 
                           type="number" 
                           value={stockCount} 
@@ -592,7 +592,7 @@ function MenuPage() {
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[10px] text-slate-500 uppercase">Low Alert At</Label>
+                        <Label className="text-[10px] text-slate-500 uppercase font-bold">Low Alert At</Label>
                         <Input 
                           type="number" 
                           value={lowStockThreshold} 
@@ -608,14 +608,24 @@ function MenuPage() {
                     </div>
                   </div>
 
-                  {error && <p className="text-rose-400 text-xs font-bold">{error}</p>}
+                  {error && <p className="text-rose-600 text-xs font-bold">{error}</p>}
                   
+                  {/* Primary Action Button */}
                   <div className="flex gap-2 pt-2">
-                    <Button type="submit" disabled={isSubmitting || uploadingPhoto} className="flex-1 bg-orange-600 hover:bg-orange-500 text-slate-900 font-bold rounded-xl py-2">
+                    <Button 
+                      type="submit" 
+                      disabled={isSubmitting || uploadingPhoto} 
+                      className="flex-1 bg-orange-600 hover:bg-orange-700 active:scale-[0.98] text-white font-semibold rounded-xl py-2 transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-orange-500"
+                    >
                       {isSubmitting ? 'Saving...' : (editingId ? 'Save Changes' : '+ Add Dish to Menu')}
                     </Button>
                     {editingId && (
-                      <Button type="button" variant="outline" onClick={cancelEdit} className="border-slate-200 text-slate-700 rounded-xl">
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        onClick={cancelEdit} 
+                        className="border border-slate-300 bg-white hover:bg-slate-100 active:scale-[0.98] text-slate-700 font-medium rounded-xl transition-all"
+                      >
                         Cancel
                       </Button>
                     )}
@@ -640,14 +650,15 @@ function MenuPage() {
                 />
               </div>
 
+              {/* Filter tags / Active tab pills */}
               <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
                 <button
                   type="button"
                   onClick={() => setMenuFilter('all')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all shrink-0 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold font-mono transition-all active:scale-[0.98] shrink-0 ${
                     menuFilter === 'all'
-                      ? 'bg-orange-600 text-slate-900 shadow-md'
-                      : 'bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200'
+                      ? 'bg-orange-600 hover:bg-orange-700 text-white shadow-sm'
+                      : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
                   }`}
                 >
                   Semua ({items.length})
@@ -655,10 +666,10 @@ function MenuPage() {
                 <button
                   type="button"
                   onClick={() => setMenuFilter('active')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all shrink-0 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold font-mono transition-all active:scale-[0.98] shrink-0 ${
                     menuFilter === 'active'
-                      ? 'bg-orange-600 text-slate-900 shadow-md'
-                      : 'bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200'
+                      ? 'bg-orange-600 hover:bg-orange-700 text-white shadow-sm'
+                      : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
                   }`}
                 >
                   ON Menu ({activeCount})
@@ -666,10 +677,10 @@ function MenuPage() {
                 <button
                   type="button"
                   onClick={() => setMenuFilter('archived')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold font-mono transition-all shrink-0 ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold font-mono transition-all active:scale-[0.98] shrink-0 ${
                     menuFilter === 'archived'
-                      ? 'bg-amber-600 text-slate-900 shadow-md'
-                      : 'bg-slate-50 text-slate-500 hover:text-slate-900 border border-slate-200'
+                      ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
+                      : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
                   }`}
                 >
                   OFF Menu ({archivedCount})
@@ -679,7 +690,7 @@ function MenuPage() {
 
             {filteredItems.length === 0 ? (
               <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 space-y-2">
-                <UtensilsCrossed className="w-12 h-12 mx-auto text-slate-700 mb-3" />
+                <UtensilsCrossed className="w-12 h-12 mx-auto text-slate-400 mb-3" />
                 <h3 className="text-lg font-bold text-slate-900">Tiada Hidangan Dijumpai</h3>
                 <p className="text-xs font-mono text-slate-500">
                   {searchQuery ? `Tiada padanan untuk "${searchQuery}".` : 'Sila tambah hidangan baharu atau tukar penapis.'}
@@ -692,19 +703,23 @@ function MenuPage() {
                   const isOutOfStock = item.stock_count === 0 || !item.is_available;
 
                   return (
-                    <Card key={item.id} className={`bg-slate-50 border-slate-200 text-slate-900 rounded-2xl overflow-hidden hover:border-emerald-500/50 transition-all duration-300 shadow-xl group ${isOutOfStock ? 'opacity-60 grayscale-[0.4]' : ''}`}>
+                    <Card key={item.id} className={`bg-white border-slate-200 text-slate-900 rounded-2xl overflow-hidden hover:border-orange-300 transition-all duration-300 shadow-xs group ${isOutOfStock ? 'opacity-60 grayscale-[0.4]' : ''}`}>
                       {/* UNCROPPED IMAGE CONTAINER */}
                       <div className="h-44 bg-slate-50 relative border-b border-slate-100 flex items-center justify-center p-2">
                         {item.image_url ? (
-                          <img src={item.image_url} alt={item.name} className="w-full h-full object-contain drop-shadow-md group-hover:scale-105 transition-transform duration-300" />
+                          <img src={item.image_url} alt={item.name} className="w-full h-full object-contain drop-shadow-xs group-hover:scale-105 transition-transform duration-300" />
                         ) : (
-                          <div className="w-full h-full flex flex-col items-center justify-center text-slate-700 gap-1">
+                          <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 gap-1">
                             <ImageIcon className="w-8 h-8" />
                             <span className="text-[10px] font-mono">No Image</span>
                           </div>
                         )}
+                        {/* Status Badges */}
                         <div className="absolute top-2 right-2">
-                          <Badge variant={item.is_available ? "default" : "destructive"} className={item.is_available ? "bg-orange-600 text-slate-900 font-mono text-[10px]" : "bg-rose-600 text-slate-900 font-mono text-[10px]"}>
+                          <Badge 
+                            variant={item.is_available ? "default" : "destructive"} 
+                            className={item.is_available ? "bg-orange-600 text-white font-semibold font-mono text-[10px]" : "bg-rose-600 text-white font-semibold font-mono text-[10px]"}
+                          >
                             {item.is_available ? 'ON MENU' : 'OFF MENU'}
                           </Badge>
                         </div>
@@ -723,32 +738,44 @@ function MenuPage() {
                         <div className="flex flex-wrap items-center gap-2 font-mono">
                           {item.stock_count !== null ? (
                             <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
-                              isOutOfStock ? "bg-rose-500/10 text-rose-400 border-rose-500/20" : (isLowStock ? "bg-amber-500/10 text-amber-300 border-amber-500/20" : "bg-emerald-500/10 text-orange-600 border-emerald-500/20")
+                              isOutOfStock ? "bg-rose-50 text-rose-700 border-rose-200" : (isLowStock ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-emerald-50 text-emerald-700 border-emerald-200")
                             }`}>
                               {isOutOfStock ? "❌ Sold Out (0)" : (isLowStock ? `⚠️ Low Stock (${item.stock_count})` : `📦 Stock: ${item.stock_count}`)}
                             </span>
                           ) : (
-                            <span className="text-[10px] text-slate-500 font-mono bg-slate-50 border border-slate-200 px-2.5 py-0.5 rounded-full">
+                            <span className="text-[10px] text-slate-600 font-mono bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded-full">
                               ∞ Unlimited Stock
                             </span>
                           )}
                         </div>
 
-                        <div className="pt-3 border-t border-slate-200 flex items-center justify-between gap-2 font-mono">
+                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 font-mono">
                           <div className="flex items-center gap-2 text-xs">
                             <Switch 
                               checked={item.is_available} 
                               onCheckedChange={() => toggleAvailability(item.id, item.is_available)}
                             />
-                            <span className={item.is_available ? 'text-slate-700' : 'text-slate-500'}>
+                            <span className={item.is_available ? 'text-slate-800 font-medium' : 'text-slate-400'}>
                               {item.is_available ? 'Active' : 'Hidden'}
                             </span>
                           </div>
                           <div className="flex items-center gap-1.5">
-                            <Button size="icon" variant="ghost" onClick={() => startEditing(item)} className="h-8 w-8 text-amber-400 hover:bg-amber-950/40 border border-amber-500/20">
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              onClick={() => startEditing(item)} 
+                              className="h-8 w-8 text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-all active:scale-95"
+                              title="Edit dish"
+                            >
                               <Edit2 className="w-3.5 h-3.5" />
                             </Button>
-                            <Button size="icon" variant="ghost" onClick={() => handleDelete(item.id)} className="h-8 w-8 text-rose-400 hover:bg-rose-950/40 border border-rose-500/20">
+                            <Button 
+                              size="icon" 
+                              variant="ghost" 
+                              onClick={() => handleDelete(item.id)} 
+                              className="h-8 w-8 text-rose-700 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-all active:scale-95"
+                              title="Delete dish"
+                            >
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>
                           </div>
@@ -833,11 +860,11 @@ function AddonsAndPromosManagerCard() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-sans">
       {/* 1. CUSTOM DISH ADD-ONS MANAGER */}
-      <Card className="bg-slate-50 border-slate-200 text-slate-900 shadow-xl rounded-2xl">
+      <Card className="bg-white border-slate-200 text-slate-900 shadow-xs rounded-2xl">
         <CardHeader className="border-b border-slate-100">
           <CardTitle className="text-lg font-bold flex items-center justify-between text-orange-600">
             <span>✨ Custom Customer Add-ons</span>
-            <Badge variant="outline" className="border-emerald-500/30 text-orange-600 font-mono text-[10px]">
+            <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-800 font-mono text-[10px]">
               {addons.length} Active
             </Badge>
           </CardTitle>
@@ -862,22 +889,25 @@ function AddonsAndPromosManagerCard() {
               placeholder="RM 1.50"
               className="bg-slate-50 border-slate-200 text-slate-900 text-xs w-24 shrink-0 font-bold text-orange-600"
             />
-            <Button type="submit" className="bg-orange-600 hover:bg-orange-500 text-slate-900 font-bold shrink-0">
-              <Plus className="w-4 h-4 mr-1" /> Add
+            <Button 
+              type="submit" 
+              className="bg-orange-600 hover:bg-orange-700 active:scale-[0.98] text-white font-semibold shrink-0 transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-orange-500"
+            >
+              <Plus className="w-4 h-4 mr-1 text-white" /> Add
             </Button>
           </form>
 
           {/* ADD-ONS LIST */}
-          <div className="divide-y divide-slate-800 border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+          <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
             {addons.map((addon) => (
-              <div key={addon.id} className="p-3 flex items-center justify-between hover:bg-slate-50/60 transition-colors">
+              <div key={addon.id} className="p-3 flex items-center justify-between hover:bg-slate-100/60 transition-colors">
                 <div className="flex items-center gap-3">
                   <Switch
                     checked={addon.available}
                     onCheckedChange={() => handleToggleAddonAvailability(addon.id)}
                   />
                   <div>
-                    <span className={`font-bold block ${addon.available ? 'text-slate-900' : 'text-slate-500 line-through'}`}>
+                    <span className={`font-bold block ${addon.available ? 'text-slate-900' : 'text-slate-400 line-through'}`}>
                       {addon.name}
                     </span>
                     <span className="text-orange-600 font-bold text-[11px]">
@@ -890,7 +920,7 @@ function AddonsAndPromosManagerCard() {
                   size="icon"
                   variant="ghost"
                   onClick={() => handleRemoveAddon(addon.id)}
-                  className="h-8 w-8 text-rose-400 hover:text-rose-300 hover:bg-rose-950/40"
+                  className="h-8 w-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50 active:scale-95 transition-all"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -901,11 +931,11 @@ function AddonsAndPromosManagerCard() {
       </Card>
 
       {/* 2. PROMO BANNERS MANAGER */}
-      <Card className="bg-slate-50 border-slate-200 text-slate-900 shadow-xl rounded-2xl">
+      <Card className="bg-white border-slate-200 text-slate-900 shadow-xs rounded-2xl">
         <CardHeader className="border-b border-slate-100">
-          <CardTitle className="text-lg font-bold flex items-center justify-between text-amber-400">
+          <CardTitle className="text-lg font-bold flex items-center justify-between text-amber-700">
             <span>📢 Rotating Promo Banners</span>
-            <Badge variant="outline" className="border-amber-500/30 text-amber-300 font-mono text-[10px]">
+            <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-800 font-mono text-[10px]">
               {promos.length} Announcements
             </Badge>
           </CardTitle>
@@ -922,15 +952,18 @@ function AddonsAndPromosManagerCard() {
               placeholder="e.g. ⚡ Happy Hour: 20% OFF Beverages!"
               className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
             />
-            <Button type="submit" className="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold shrink-0">
-              <Plus className="w-4 h-4 mr-1" /> Add Banner
+            <Button 
+              type="submit" 
+              className="bg-amber-600 hover:bg-amber-700 active:scale-[0.98] text-white font-semibold shrink-0 transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-amber-500"
+            >
+              <Plus className="w-4 h-4 mr-1 text-white" /> Add Banner
             </Button>
           </form>
 
           {/* PROMOS LIST */}
-          <div className="divide-y divide-slate-800 border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+          <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
             {promos.map((promo, idx) => (
-              <div key={idx} className="p-3 flex items-center justify-between hover:bg-slate-50/60 transition-colors">
+              <div key={idx} className="p-3 flex items-center justify-between hover:bg-slate-100/60 transition-colors">
                 <span className="text-slate-800 font-bold text-xs truncate max-w-[280px]">
                   {promo}
                 </span>
@@ -939,7 +972,7 @@ function AddonsAndPromosManagerCard() {
                   size="icon"
                   variant="ghost"
                   onClick={() => handleRemovePromo(idx)}
-                  className="h-8 w-8 text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 shrink-0"
+                  className="h-8 w-8 text-rose-600 hover:text-rose-700 hover:bg-rose-50 shrink-0 active:scale-95 transition-all"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
