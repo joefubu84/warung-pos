@@ -4,7 +4,6 @@ import {
   Plus, 
   Minus, 
   Utensils, 
-  Flame, 
   Check, 
   ShoppingBag,
   Sparkles,
@@ -31,7 +30,7 @@ export interface CustomizedCartItem {
   finalPrice: number;
   quantity: number;
   fulfillmentType: 'dine_in' | 'takeaway' | 'delivery' | 'self_pickup';
-  spiceLevel: 'Mild' | 'Medium' | 'Hot';
+  spiceLevel?: string;
   selectedAddons: { name: string; price: number }[];
   specialInstructions: string;
   packNotes?: string[];
@@ -54,15 +53,8 @@ export interface DishCustomizationModalProps {
   isViewOnly?: boolean;
 }
 
-export const SPICE_LEVELS = [
-  { id: 'Mild', label: 'Mild 🌿', icon: '🌿' },
-  { id: 'Medium', label: 'Medium 🌶️', icon: '🌶️' },
-  { id: 'Hot', label: 'Hot 🌶️🌶️', icon: '🔥' },
-];
-
 export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem, mode = 'dine_in', isViewOnly = false }: DishCustomizationModalProps) {
   const isDeliveryMode = mode === 'delivery';
-  const [spiceLevel, setSpiceLevel] = useState<'Mild' | 'Medium' | 'Hot'>('Medium');
   const [fulfillmentType, setFulfillmentType] = useState<'dine_in' | 'takeaway' | 'delivery' | 'self_pickup'>(
     isDeliveryMode ? 'delivery' : 'dine_in'
   );
@@ -80,7 +72,6 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
 
   useEffect(() => {
     if (isOpen) {
-      setSpiceLevel('Medium');
       setFulfillmentType(isDeliveryMode ? 'delivery' : 'dine_in');
       setSelectedAddonIds([]);
       setSpecialInstructions('');
@@ -177,7 +168,6 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
       finalPrice: totalPrice,
       quantity,
       fulfillmentType,
-      spiceLevel,
       selectedAddons: selectedAddonsList,
       specialInstructions: quantity > 1 ? plateNotes.join(' | ') : specialInstructions.trim(),
       packNotes: quantity > 1 ? plateNotes : (specialInstructions.trim() ? [specialInstructions.trim()] : ['']),
@@ -320,38 +310,6 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
             </div>
           </div>
 
-          {/* 3. SPICE LEVEL SELECTOR */}
-          <div className="space-y-2">
-            <label className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center justify-between">
-              <span>3. Tahap Kepedasan</span>
-              <span className="text-[10px] text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">Pilihan Rasa</span>
-            </label>
-            <div className="grid grid-cols-3 gap-2">
-              {SPICE_LEVELS.map(lvl => {
-                const isSelected = spiceLevel === lvl.id;
-                let activeStyle = 'bg-amber-50 border-amber-500 text-amber-950 ring-2 ring-amber-500/20 shadow-sm';
-                if (lvl.id === 'Mild') activeStyle = 'bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-500/20 shadow-sm';
-                if (lvl.id === 'Hot') activeStyle = 'bg-rose-50 border-rose-500 text-rose-950 ring-2 ring-rose-500/20 shadow-sm';
-
-                return (
-                  <button
-                    key={lvl.id}
-                    type="button"
-                    onClick={() => setSpiceLevel(lvl.id as any)}
-                    className={`p-2.5 rounded-xl border text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
-                      isSelected
-                        ? `${activeStyle} scale-[1.02]`
-                        : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100 hover:text-slate-900'
-                    }`}
-                  >
-                    <span>{lvl.icon}</span>
-                    <span>{lvl.id}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
           {/* OPTIONAL ADD-ONS / SAMBINGAN SECTION */}
           {availableAddons.filter(a => a.available).length > 0 && (
             <div className="space-y-2">
@@ -391,13 +349,13 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
             </div>
           )}
 
-          {/* 4. SPECIAL INSTRUCTIONS (PER-PLATE IF QTY > 1) */}
+          {/* 3. SPECIAL INSTRUCTIONS (PER-PLATE IF QTY > 1) */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
               <label className="text-xs font-black uppercase tracking-wider text-slate-900">
                 {quantity > 1 
-                  ? `4. Permintaan Khas Setiap ${fulfillmentType === 'dine_in' ? 'Pinggan' : 'Pek'} (1 - ${quantity})` 
-                  : '4. Permintaan Khas Dapur (Pilihan)'}
+                  ? `3. Permintaan Khas Setiap ${fulfillmentType === 'dine_in' ? 'Pinggan' : 'Pek'} (1 - ${quantity})` 
+                  : '3. Permintaan Khas Dapur (Pilihan)'}
               </label>
               <span className="text-[10px] text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">Pilihan Pantas ⚡</span>
             </div>
