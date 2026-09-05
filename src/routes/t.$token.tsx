@@ -136,20 +136,40 @@ export function TableQRPage() {
   }, []);
 
   const handleAddonDirectToCart = (addon: CustomAddon) => {
-    const newItem: CartItem = {
-      id: `addon_${addon.id}_${Date.now()}`,
-      menuItemId: addon.id,
-      name: addon.name,
-      price: addon.price,
-      quantity: 1,
-      fulfillmentType: globalFulfillmentType,
-      notes: 'Add-on / Sampingan',
-      packNotes: [''],
-      spiceLevel: 'Medium',
-      selectedAddons: []
-    };
-    setCart(prev => [...prev, newItem]);
-    toast.success(`🍱 Ditambah 1x ${addon.name} (+RM ${addon.price.toFixed(2)}) ke pesanan meja!`);
+    const matchedMenuItem = menuItems.find(m => 
+      m.id === addon.id || 
+      m.name.trim().toLowerCase() === addon.name.trim().toLowerCase()
+    );
+    const resolvedMenuItemId = matchedMenuItem ? matchedMenuItem.id : addon.id;
+
+    setCart(prev => {
+      const existingIdx = prev.findIndex(i => 
+        i.menuItemId === resolvedMenuItemId || 
+        i.name.trim().toLowerCase() === addon.name.trim().toLowerCase()
+      );
+      if (existingIdx >= 0) {
+        const updated = [...prev];
+        updated[existingIdx] = {
+          ...updated[existingIdx],
+          quantity: updated[existingIdx].quantity + 1
+        };
+        return updated;
+      }
+      const newItem: CartItem = {
+        id: `addon_${addon.id}_${Date.now()}`,
+        menuItemId: resolvedMenuItemId,
+        name: addon.name,
+        price: addon.price,
+        quantity: 1,
+        fulfillmentType: globalFulfillmentType,
+        notes: 'Sampingan / Add-on',
+        packNotes: [''],
+        spiceLevel: undefined,
+        selectedAddons: []
+      };
+      return [...prev, newItem];
+    });
+    toast.success(`🍱 Ditambah 1x ${addon.name} (+RM ${addon.price.toFixed(2)}) ke troli!`);
   };
 
   const toggleCartFulfillment = (itemId: string) => {
@@ -1125,7 +1145,7 @@ export function TableQRPage() {
         <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-white/95 backdrop-blur-md border-t border-slate-200/80 p-3 z-40 shadow-2xl flex items-center justify-between">
           <div>
             <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
-              Total ({cart.reduce((s, i) => s + i.quantity, 0)} items)
+              Jumlah ({cart.reduce((s, i) => s + i.quantity, 0)} item)
             </span>
             <span className="text-lg font-black text-orange-500">RM {cartSubtotal.toFixed(2)}</span>
           </div>
@@ -1134,7 +1154,7 @@ export function TableQRPage() {
             onClick={() => setIsMobileCartOpen(true)}
             className="bg-orange-500 hover:bg-orange-600 text-white font-black px-5 py-2.5 rounded-xl shadow-lg shadow-orange-500/25 flex items-center gap-2 text-xs transition-transform active:scale-95"
           >
-            <ShoppingBag className="w-4 h-4" /> View Cart ({cart.reduce((s, i) => s + i.quantity, 0)})
+            <ShoppingBag className="w-4 h-4" /> Semak & Bayar ({cart.reduce((s, i) => s + i.quantity, 0)})
           </Button>
         </div>
       )}
@@ -1144,10 +1164,10 @@ export function TableQRPage() {
         <DialogContent className="bg-white text-slate-900 border-slate-200 max-w-md max-h-[85vh] overflow-y-auto p-5 rounded-3xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg font-black text-slate-900">
-              <ShoppingBag className="w-5 h-5 text-orange-500" /> Your Order Cart
+              <ShoppingBag className="w-5 h-5 text-orange-500" /> Troli Pesanan & Bayaran (Meja #{tableNumber})
             </DialogTitle>
             <DialogDescription className="text-slate-500 text-xs">
-              Review your customized dishes before sending to kitchen
+              Semak hidangan & pilih sebarang tambahan/sampingan sebelum membuat bayaran ke kaunter atau hantar ke dapur
             </DialogDescription>
           </DialogHeader>
 
@@ -1251,60 +1271,114 @@ export function TableQRPage() {
               })}
             </div>
 
-            {/* RECOMMENDED ADD-ONS UPSELL */}
+            {/* 🌟 TAMBAHAN / SAMPINGAN (PILIHAN SEBELUM BAYAR) */}
             {availableAddons.filter(a => a.available).length > 0 && (
-              <div className="pt-3 pb-1 border-t border-slate-100 space-y-2">
+              <div className="pt-3.5 pb-2 border-t border-slate-200/90 space-y-2.5 bg-orange-50/30 p-3 rounded-2xl border border-orange-100">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-orange-500" /> Cadangan Lauk & Sampingan
+                  <div className="flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-orange-500" />
+                    <span className="text-xs font-black uppercase tracking-wider text-slate-900">
+                      Tambahan / Sampingan (Pilihan Sebelum Bayar)
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-orange-600 font-extrabold bg-orange-100 px-2 py-0.5 rounded-full border border-orange-200">
+                    1-Klik Tambah ⚡
                   </span>
-                  <span className="text-[10px] text-slate-400 font-bold">1-Klik Tambah</span>
                 </div>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  Tambah lauk atau sampingan ekstra sebelum membuat bayaran:
+                </p>
                 <div className="grid grid-cols-2 gap-2">
-                  {availableAddons.filter(a => a.available).map(addon => (
-                    <button
-                      key={addon.id}
-                      type="button"
-                      onClick={() => handleAddonDirectToCart(addon)}
-                      className="p-2 rounded-xl bg-slate-50 border border-slate-200 hover:border-orange-400 flex items-center justify-between gap-1 text-left text-xs transition-all active:scale-95 group shadow-sm"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <span className="font-bold text-slate-800 block text-[11px] truncate group-hover:text-orange-600">
-                          {addon.name}
-                        </span>
-                        <span className="text-[10px] text-orange-500 font-black">
-                          +RM {addon.price.toFixed(2)}
-                        </span>
+                  {availableAddons.filter(a => a.available).map(addon => {
+                    const matchedMenuItem = menuItems.find(m => 
+                      m.id === addon.id || 
+                      m.name.trim().toLowerCase() === addon.name.trim().toLowerCase()
+                    );
+                    const resolvedId = matchedMenuItem ? matchedMenuItem.id : addon.id;
+                    const itemInCart = cart.find(i => i.menuItemId === resolvedId || i.name.trim().toLowerCase() === addon.name.trim().toLowerCase());
+                    const qtyInCart = itemInCart ? itemInCart.quantity : 0;
+
+                    return (
+                      <div
+                        key={addon.id}
+                        className={`p-2.5 rounded-2xl border transition-all flex items-center justify-between gap-1.5 shadow-sm ${
+                          qtyInCart > 0 
+                            ? 'bg-orange-50/90 border-orange-400 ring-1 ring-orange-400/20' 
+                            : 'bg-white border-slate-200 hover:border-orange-300'
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <span className="font-bold text-slate-800 block text-xs truncate">
+                            {addon.name}
+                          </span>
+                          <span className="text-[11px] text-orange-600 font-black">
+                            +RM {addon.price.toFixed(2)}
+                          </span>
+                        </div>
+
+                        {qtyInCart > 0 ? (
+                          <div className="flex items-center gap-1 bg-white border border-orange-300 rounded-lg p-0.5 shadow-xs shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (itemInCart) {
+                                  if (itemInCart.quantity > 1) {
+                                    setCart(prev => prev.map(i => i.id === itemInCart.id ? { ...i, quantity: i.quantity - 1 } : i));
+                                  } else {
+                                    setCart(prev => prev.filter(i => i.id !== itemInCart.id));
+                                  }
+                                }
+                              }}
+                              className="w-5 h-5 flex items-center justify-center text-slate-600 hover:text-rose-600 hover:bg-slate-100 rounded text-xs font-bold"
+                            >
+                              -
+                            </button>
+                            <span className="text-xs font-black text-orange-600 px-1">{qtyInCart}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleAddonDirectToCart(addon)}
+                              className="w-5 h-5 flex items-center justify-center text-white bg-orange-500 hover:bg-orange-600 rounded text-xs font-bold shadow-xs"
+                            >
+                              +
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => handleAddonDirectToCart(addon)}
+                            className="w-7 h-7 rounded-xl bg-orange-50 border border-orange-200 text-orange-600 hover:bg-orange-500 hover:text-white hover:border-orange-500 flex items-center justify-center shrink-0 transition-all text-xs font-black active:scale-90"
+                            title="Tambah ke troli"
+                          >
+                            +
+                          </button>
+                        )}
                       </div>
-                      <div className="w-6 h-6 rounded-lg bg-orange-100 text-orange-600 border border-orange-200 flex items-center justify-center shrink-0 group-hover:bg-orange-500 group-hover:text-white transition-colors text-xs font-black">
-                        +
-                      </div>
-                    </button>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
 
             <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">
               <div className="flex justify-between text-slate-500 font-medium">
-                <span>Subtotal ({cart.reduce((sum, i) => sum + i.quantity, 0)} dishes)</span>
+                <span>Subtotal ({cart.reduce((sum, i) => sum + i.quantity, 0)} hidangan)</span>
                 <span className="font-bold text-slate-900">RM {cartSubtotal.toFixed(2)}</span>
               </div>
 
               {isRm8DiscountApplied && (
                 <div className="flex justify-between text-rose-600 font-bold bg-rose-50 p-2 rounded-lg border border-rose-200">
-                  <span className="flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-rose-500" /> Member Discount (60 pts)</span>
+                  <span className="flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-rose-500" /> Diskaun Ahli (60 pts)</span>
                   <span>-RM 8.00</span>
                 </div>
               )}
 
               <div className="flex justify-between text-orange-600 text-[11px] font-bold">
-                <span>Earned VIP Points (1 pt/dish)</span>
-                <span>+{cart.reduce((sum, i) => sum + i.quantity, 0)} pts</span>
+                <span>Mata Ganjaran VIP (+1 mata/hidangan)</span>
+                <span>+{cart.reduce((sum, i) => sum + i.quantity, 0)} mata</span>
               </div>
 
               <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-100">
-                <span>Total Amount</span>
+                <span>Jumlah Keseluruhan</span>
                 <span className="text-orange-500 text-lg">RM {Math.max(0, cartSubtotal - (isRm8DiscountApplied ? 8.00 : 0)).toFixed(2)}</span>
               </div>
             </div>
@@ -1312,14 +1386,14 @@ export function TableQRPage() {
 
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setIsMobileCartOpen(false)} className="border-slate-200 text-slate-700">
-              Close
+              Kembali
             </Button>
             <Button
               disabled={isSubmitting || cart.length === 0}
               onClick={() => handlePlaceOrder(false)}
               className="bg-orange-500 hover:bg-orange-600 text-white font-black"
             >
-              {isSubmitting ? 'Submitting Order...' : 'Confirm & Place Order'}
+              {isSubmitting ? 'Menghantar Pesanan...' : `Sahkan Pesanan & Bayar (RM ${Math.max(0, cartSubtotal - (isRm8DiscountApplied ? 8.00 : 0)).toFixed(2)})`}
             </Button>
           </DialogFooter>
         </DialogContent>

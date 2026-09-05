@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { getAddonsConfig } from '@/lib/addons-config';
 
 export interface TableSession {
   id: string;
@@ -196,7 +197,16 @@ export async function validateOrderPricesAgainstDB(
 
     let calculatedTotal = 0;
     for (const clientItem of cartItems) {
-      const dbBasePrice = priceMap.get(clientItem.menuItemId);
+      let dbBasePrice = priceMap.get(clientItem.menuItemId);
+      if (dbBasePrice === undefined) {
+        // Fallback: check authorized addons list
+        const addons = getAddonsConfig();
+        const foundAddon = addons.find(a => a.id === clientItem.menuItemId || (clientItem as any).name?.toLowerCase().includes(a.name.toLowerCase()));
+        if (foundAddon) {
+          dbBasePrice = foundAddon.price;
+        }
+      }
+
       if (dbBasePrice === undefined) {
         logSecurityEvent({
           type: 'PRICE_MISMATCH',

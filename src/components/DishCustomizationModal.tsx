@@ -6,7 +6,6 @@ import {
   Utensils, 
   Check, 
   ShoppingBag,
-  Sparkles,
   ChevronRight
 } from 'lucide-react';
 import {
@@ -19,7 +18,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { getAddonsConfig, CustomAddon } from '@/lib/addons-config';
 import { COMMON_MODIFIERS } from '@/lib/kitchen-checklist-config';
 
 export interface CustomizedCartItem {
@@ -58,22 +56,13 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
   const [fulfillmentType, setFulfillmentType] = useState<'dine_in' | 'takeaway' | 'delivery' | 'self_pickup'>(
     isDeliveryMode ? 'delivery' : 'dine_in'
   );
-  const [selectedAddonIds, setSelectedAddonIds] = useState<string[]>([]);
   const [specialInstructions, setSpecialInstructions] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [plateNotes, setPlateNotes] = useState<string[]>(['']);
-  const [availableAddons, setAvailableAddons] = useState<CustomAddon[]>(getAddonsConfig());
-
-  useEffect(() => {
-    const handleUpdate = () => setAvailableAddons(getAddonsConfig());
-    window.addEventListener('warung_addons_updated', handleUpdate);
-    return () => window.removeEventListener('warung_addons_updated', handleUpdate);
-  }, []);
 
   useEffect(() => {
     if (isOpen) {
       setFulfillmentType(isDeliveryMode ? 'delivery' : 'dine_in');
-      setSelectedAddonIds([]);
       setSpecialInstructions('');
       setQuantity(1);
       setPlateNotes(['']);
@@ -116,29 +105,10 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
   if (!menuItem) return null;
 
   const basePrice = Number(menuItem.price || 0);
-
-  const addonsTotal = selectedAddonIds.reduce((sum, id) => {
-    const addon = availableAddons.find(a => a.id === id);
-    return sum + (addon ? addon.price : 0);
-  }, 0);
-
-  const unitPrice = basePrice + addonsTotal;
+  const unitPrice = basePrice;
   const totalPrice = unitPrice * quantity;
 
-  const toggleAddon = (id: string) => {
-    if (selectedAddonIds.includes(id)) {
-      setSelectedAddonIds(selectedAddonIds.filter(aId => aId !== id));
-    } else {
-      setSelectedAddonIds([...selectedAddonIds, id]);
-    }
-  };
-
   const handleConfirmAddToCart = () => {
-    const selectedAddonsList = selectedAddonIds.map(id => {
-      const a = availableAddons.find(item => item.id === id);
-      return { name: a?.name || id, price: a?.price || 0 };
-    });
-
     const notesSummaryParts: string[] = [];
     if (fulfillmentType === 'delivery') {
       notesSummaryParts.push('DELIVERY (Penghantaran 🛵)');
@@ -148,9 +118,6 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
       notesSummaryParts.push('TAKEAWAY (Bungkus 🥡)');
     } else {
       notesSummaryParts.push('DINE IN (Makan Sini 🍽️)');
-    }
-    if (selectedAddonsList.length > 0) {
-      notesSummaryParts.push(`Add-ons: ${selectedAddonsList.map(a => a.name).join(', ')}`);
     }
 
     if (quantity > 1) {
@@ -168,7 +135,7 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
       finalPrice: totalPrice,
       quantity,
       fulfillmentType,
-      selectedAddons: selectedAddonsList,
+      selectedAddons: [],
       specialInstructions: quantity > 1 ? plateNotes.join(' | ') : specialInstructions.trim(),
       packNotes: quantity > 1 ? plateNotes : (specialInstructions.trim() ? [specialInstructions.trim()] : ['']),
       notes: notesSummaryParts.join(' | ')
@@ -309,45 +276,6 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
               </Button>
             </div>
           </div>
-
-          {/* OPTIONAL ADD-ONS / SAMBINGAN SECTION */}
-          {availableAddons.filter(a => a.available).length > 0 && (
-            <div className="space-y-2">
-              <label className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center justify-between">
-                <span className="flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-orange-500" /> Tambahan / Sampingan
-                </span>
-                <span className="text-[10px] text-slate-400 font-bold">Pilihan Tambahan</span>
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                {availableAddons.filter(a => a.available).map(addon => {
-                  const isChecked = selectedAddonIds.includes(addon.id);
-                  return (
-                    <button
-                      key={addon.id}
-                      type="button"
-                      onClick={() => toggleAddon(addon.id)}
-                      className={`p-2.5 rounded-xl border text-left text-xs transition-all flex items-center justify-between gap-1.5 ${
-                        isChecked
-                          ? 'bg-orange-50 border-orange-500 text-orange-950 ring-1 ring-orange-500/30 shadow-sm'
-                          : 'bg-stone-50 border-stone-200 text-stone-700 hover:border-orange-300'
-                      }`}
-                    >
-                      <div className="min-w-0 flex-1">
-                        <span className="font-bold text-[11px] block truncate">{addon.name}</span>
-                        <span className="text-[10px] text-orange-600 font-extrabold">+RM {addon.price.toFixed(2)}</span>
-                      </div>
-                      <div className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black shrink-0 ${
-                        isChecked ? 'bg-orange-500 text-white' : 'border border-stone-300 bg-white text-transparent'
-                      }`}>
-                        ✓
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
 
           {/* 3. SPECIAL INSTRUCTIONS (PER-PLATE IF QTY > 1) */}
           <div className="space-y-2.5">
