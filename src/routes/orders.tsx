@@ -567,68 +567,73 @@ function OrdersPage() {
   const statusOptions: OrderStatus[] = ['pending', 'preparing', 'ready', 'completed', 'cancelled'];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
       
       {/* ORDER MANAGEMENT HEADER */}
-      <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+      <div className="bg-white border border-slate-200/90 p-6 rounded-3xl shadow-xs">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">Order Management</h1>
-            <p className="text-xs text-slate-400 font-mono mt-1">Live order tracking, kitchen status & payment processing</p>
+            <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+              <span>Order Management</span>
+              <span className="text-xs font-mono font-bold bg-orange-100 text-orange-700 px-2.5 py-0.5 rounded-full border border-orange-200">
+                POS
+              </span>
+            </h1>
+            <p className="text-xs text-slate-500 font-mono mt-1">Live order tracking, kitchen status & payment processing</p>
           </div>
           <div className="relative w-full md:w-72">
             <input 
               placeholder="Search by ID, Name, or Table..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-sm bg-slate-950 border border-slate-800 text-white placeholder-slate-500 rounded-full px-4 py-2 outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+              className="w-full text-sm bg-slate-50 border border-slate-200 text-slate-900 placeholder-slate-400 rounded-full px-4 py-2.5 outline-none focus:bg-white focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all shadow-xs"
             />
           </div>
         </div>
 
         {/* DATE SCOPE FILTER ROW */}
-        <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-950/80 p-3 rounded-xl border border-slate-800 mb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/80 p-3 rounded-2xl border border-slate-200/80 mb-4">
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide py-0.5">
-            <span className="text-[11px] font-mono font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1">
+            <span className="text-[11px] font-mono font-bold text-slate-500 uppercase tracking-wider shrink-0 mr-1">
               📅 Date View:
             </span>
             <button
               onClick={() => setDateFilter('today')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
                 dateFilter === 'today'
-                  ? 'bg-emerald-600 text-white shadow-md ring-1 ring-emerald-400 font-black'
-                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  ? 'bg-orange-500 text-white shadow-sm ring-1 ring-orange-400 font-black'
+                  : 'bg-white text-slate-600 hover:bg-orange-50 hover:text-orange-700 border border-slate-200 shadow-xs'
               }`}
             >
               <span>⚡ Today / Shift</span>
             </button>
             <button
               onClick={() => setDateFilter('yesterday')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
                 dateFilter === 'yesterday'
-                  ? 'bg-amber-600 text-slate-950 shadow-md font-black'
-                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  ? 'bg-amber-500 text-white shadow-sm ring-1 ring-amber-400 font-black'
+                  : 'bg-white text-slate-600 hover:bg-amber-50 hover:text-amber-700 border border-slate-200 shadow-xs'
               }`}
             >
               <span>📅 Yesterday</span>
             </button>
             <button
               onClick={() => setDateFilter('last7days')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
                 dateFilter === 'last7days'
-                  ? 'bg-sky-600 text-white shadow-md font-black'
-                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  ? 'bg-sky-500 text-white shadow-sm ring-1 ring-sky-400 font-black'
+                  : 'bg-white text-slate-600 hover:bg-sky-50 hover:text-sky-700 border border-slate-200 shadow-xs'
               }`}
             >
               <span>🗓️ Last 7 Days</span>
             </button>
             <button
               onClick={() => setDateFilter('all')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
                 dateFilter === 'all'
-                  ? 'bg-purple-600 text-white shadow-md font-black'
-                  : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                  ? 'bg-slate-800 text-white shadow-sm font-black'
+                  : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200 shadow-xs'
               }`}
             >
               <span>📜 All Time History</span>
@@ -636,7 +641,7 @@ function OrdersPage() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[11px] font-mono text-slate-500">Pick Date:</span>
+            <span className="text-[11px] font-mono text-slate-500 font-bold">Pick Date:</span>
             <input
               type="date"
               value={customDate}
@@ -644,7 +649,7 @@ function OrdersPage() {
                 setCustomDate(e.target.value);
                 if (e.target.value) setDateFilter('custom');
               }}
-              className="bg-slate-900 border border-slate-800 text-xs text-white px-2 py-1 rounded-lg font-mono outline-none focus:ring-1 focus:ring-emerald-500"
+              className="bg-white border border-slate-200 text-xs text-slate-800 px-2.5 py-1.5 rounded-xl font-mono outline-none focus:ring-1 focus:ring-orange-500 shadow-xs"
             />
           </div>
         </div>
@@ -658,41 +663,61 @@ function OrdersPage() {
           const countAll = orders.length;
 
           return (
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
               <button 
                 onClick={() => setActiveTab('all')}
-                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1.5 ${activeTab === 'all' ? 'bg-white text-slate-950 shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
+                className={`whitespace-nowrap px-4 py-2 rounded-2xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 ${
+                  activeTab === 'all' 
+                    ? 'bg-orange-500 text-white shadow-sm ring-1 ring-orange-400 font-black' 
+                    : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200 shadow-xs'
+                }`}
               >
                 <span>📋 All Orders</span>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'all' ? 'bg-slate-900 text-white' : 'bg-slate-800 text-slate-300'}`}>{countAll}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${activeTab === 'all' ? 'bg-white/20 text-white font-black' : 'bg-slate-100 text-slate-600 font-bold'}`}>{countAll}</span>
               </button>
               <button 
                 onClick={() => setActiveTab('pending')}
-                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1.5 ${activeTab === 'pending' ? 'bg-amber-500 text-slate-950 shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
+                className={`whitespace-nowrap px-4 py-2 rounded-2xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 ${
+                  activeTab === 'pending' 
+                    ? 'bg-amber-500 text-white shadow-sm ring-1 ring-amber-400 font-black' 
+                    : 'bg-white text-slate-600 hover:bg-amber-50 hover:text-amber-800 border border-slate-200 shadow-xs'
+                }`}
               >
                 <span>🟡 Pending</span>
-                {countPending > 0 && <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'pending' ? 'bg-slate-950 text-amber-400' : 'bg-amber-500/20 text-amber-400 font-black'}`}>{countPending}</span>}
+                {countPending > 0 && <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${activeTab === 'pending' ? 'bg-white/20 text-white font-black' : 'bg-amber-100 text-amber-800 font-black'}`}>{countPending}</span>}
               </button>
               <button 
                 onClick={() => setActiveTab('preparing')}
-                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1.5 ${activeTab === 'preparing' ? 'bg-sky-500 text-white shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
+                className={`whitespace-nowrap px-4 py-2 rounded-2xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 ${
+                  activeTab === 'preparing' 
+                    ? 'bg-sky-500 text-white shadow-sm ring-1 ring-sky-400 font-black' 
+                    : 'bg-white text-slate-600 hover:bg-sky-50 hover:text-sky-800 border border-slate-200 shadow-xs'
+                }`}
               >
                 <span>🔵 Preparing</span>
-                {countPreparing > 0 && <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'preparing' ? 'bg-slate-950 text-sky-400' : 'bg-sky-500/20 text-sky-400 font-black'}`}>{countPreparing}</span>}
+                {countPreparing > 0 && <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${activeTab === 'preparing' ? 'bg-white/20 text-white font-black' : 'bg-sky-100 text-sky-800 font-black'}`}>{countPreparing}</span>}
               </button>
               <button 
                 onClick={() => setActiveTab('ready')}
-                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1.5 ${activeTab === 'ready' ? 'bg-emerald-600 text-white shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
+                className={`whitespace-nowrap px-4 py-2 rounded-2xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 ${
+                  activeTab === 'ready' 
+                    ? 'bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-400 font-black' 
+                    : 'bg-white text-slate-600 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 shadow-xs'
+                }`}
               >
                 <span>🟢 Ready</span>
-                {countReady > 0 && <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'ready' ? 'bg-slate-950 text-emerald-400' : 'bg-emerald-500/20 text-emerald-400 font-black'}`}>{countReady}</span>}
+                {countReady > 0 && <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${activeTab === 'ready' ? 'bg-white/20 text-white font-black' : 'bg-emerald-100 text-emerald-800 font-black'}`}>{countReady}</span>}
               </button>
               <button 
                 onClick={() => setActiveTab('completed')}
-                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1.5 ${activeTab === 'completed' ? 'bg-slate-700 text-white shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
+                className={`whitespace-nowrap px-4 py-2 rounded-2xl text-xs md:text-sm font-bold transition-all flex items-center gap-2 ${
+                  activeTab === 'completed' 
+                    ? 'bg-slate-800 text-white shadow-sm font-black' 
+                    : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border border-slate-200 shadow-xs'
+                }`}
               >
                 <span>⚪ Completed</span>
-                {countCompleted > 0 && <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'completed' ? 'bg-slate-950 text-slate-300' : 'bg-slate-800 text-slate-400 font-black'}`}>{countCompleted}</span>}
+                {countCompleted > 0 && <span className={`text-xs px-2 py-0.5 rounded-full font-mono ${activeTab === 'completed' ? 'bg-white/20 text-white font-black' : 'bg-slate-100 text-slate-600 font-black'}`}>{countCompleted}</span>}
               </button>
             </div>
           );
@@ -738,8 +763,12 @@ function OrdersPage() {
 
           if (filteredOrders.length === 0) {
             return (
-              <div className="bg-slate-900 rounded-2xl p-12 text-center text-slate-400 border border-slate-800 shadow-xl">
-                <p className="text-lg font-bold">No orders found in this section.</p>
+              <div className="bg-white rounded-3xl p-12 text-center text-slate-500 border border-slate-200/90 shadow-xs">
+                <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center mx-auto mb-3 font-bold text-xl">
+                  📋
+                </div>
+                <p className="text-base font-extrabold text-slate-800">No orders found in this section.</p>
+                <p className="text-xs text-slate-400 font-mono mt-1">Orders placed via QR menu or POS counter will appear here.</p>
               </div>
             );
           }
@@ -751,42 +780,42 @@ function OrdersPage() {
                 const totalPaid = isFullyPaid ? order.total_amount : 0;
                 const remainingBalance = isFullyPaid ? 0 : order.total_amount;
                 
-                // Color coding based on status
-                let bgClass = "bg-slate-900";
-                let borderClass = "border-slate-800";
+                // Color coding based on status in Fauna Kitchen theme
+                let bgClass = "bg-white";
+                let borderClass = "border-slate-200/90";
                 
-                if (order.status === 'pending') { bgClass = "bg-amber-950/20"; borderClass = "border-amber-500/30"; }
-                if (order.status === 'preparing') { bgClass = "bg-sky-950/20"; borderClass = "border-sky-500/30"; }
-                if (order.status === 'ready') { bgClass = "bg-emerald-950/20"; borderClass = "border-emerald-500/30"; }
-                if (order.status === 'completed') { bgClass = "bg-slate-900/60"; borderClass = "border-slate-800/80"; }
+                if (order.status === 'pending') { bgClass = "bg-white"; borderClass = "border-amber-300 ring-1 ring-amber-200/60"; }
+                if (order.status === 'preparing') { bgClass = "bg-white"; borderClass = "border-sky-300 ring-1 ring-sky-200/60"; }
+                if (order.status === 'ready') { bgClass = "bg-white"; borderClass = "border-emerald-300 ring-1 ring-emerald-200/60"; }
+                if (order.status === 'completed') { bgClass = "bg-slate-50/70"; borderClass = "border-slate-200/80"; }
 
                 return (
-                  <div key={order.id} className={`border ${borderClass} ${bgClass} rounded-2xl p-5 shadow-xl transition-all flex flex-col justify-between`}>
+                  <div key={order.id} className={`border ${borderClass} ${bgClass} rounded-3xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between`}>
                     <div>
                       {/* Header */}
-                      <div className="flex justify-between items-start gap-2 mb-3 border-b border-slate-800 pb-3">
+                      <div className="flex justify-between items-start gap-2 mb-3 border-b border-slate-100 pb-3">
                         <div>
                           <div className="flex flex-wrap items-center gap-2 mb-1">
-                            <span className="font-black text-lg text-white">
+                            <span className="font-black text-lg text-slate-900">
                               {order.type === 'delivery' ? `DELIVERY (Grab)` : (order.type === 'takeaway' ? `TAKEAWAY` : `TABLE ${tables.find(t => t.id === order.table_id)?.table_number || 'N/A'}`)}
                             </span>
                             {isFullyPaid ? (
-                              <span className="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">✓ PAID</span>
+                              <span className="text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold">✓ PAID</span>
                             ) : (
-                              <span className="text-[10px] bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded-full font-bold">❌ NOT PAID</span>
+                              <span className="text-[10px] bg-rose-50 text-rose-700 border border-rose-200 px-2.5 py-0.5 rounded-full font-bold">❌ NOT PAID</span>
                             )}
                             {(order.order_items || []).some(i => i.fulfillment_type === 'takeaway') && (
-                              <span className="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">
+                              <span className="text-[10px] bg-orange-50 text-orange-700 border border-orange-200 px-2.5 py-0.5 rounded-full font-bold">
                                 🥡 Has Takeaway Items (Deliver to Table)
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-gray-500 font-medium">Order #{order.id.slice(0, 8)}</p>
-                          <p className="text-xs text-slate-400 mt-1 flex flex-wrap items-center gap-1.5 font-mono">
+                          <p className="text-xs text-slate-400 font-mono">Order #{order.id.slice(0, 8)}</p>
+                          <p className="text-xs text-slate-500 mt-1 flex flex-wrap items-center gap-1.5 font-mono">
                             <span>📍 Opened: {new Date(order.created_at).toLocaleDateString([], { day: '2-digit', month: 'short', year: '2-digit' })}, {new Date(order.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                            <span className="text-slate-500">({Math.floor((Date.now() - new Date(order.created_at).getTime()) / 60000)}m ago)</span>
+                            <span className="text-slate-400">({Math.floor((Date.now() - new Date(order.created_at).getTime()) / 60000)}m ago)</span>
                           </p>
-                          {order.customer_name && <p className="text-xs text-slate-300 mt-1">👤 Customer: {order.customer_name}</p>}
+                          {order.customer_name && <p className="text-xs text-slate-700 font-semibold mt-1">👤 Customer: {order.customer_name}</p>}
                         </div>
                         
                         {/* Status Select */}
@@ -794,7 +823,7 @@ function OrdersPage() {
                           <select 
                             value={order.status} 
                             onChange={(e) => handleStatusChange(order.id, e.target.value as OrderStatus)}
-                            className="text-xs border border-slate-800 bg-slate-950 text-white p-1.5 rounded-lg font-bold shadow-sm outline-none focus:ring-1 focus:ring-emerald-500"
+                            className="text-xs border border-slate-200 bg-slate-50 text-slate-800 p-1.5 rounded-xl font-bold shadow-xs outline-none focus:ring-1 focus:ring-orange-500"
                           >
                             {statusOptions.map(status => (
                               <option key={status} value={status}>{status.toUpperCase()}</option>
@@ -805,20 +834,20 @@ function OrdersPage() {
 
                       {/* Items */}
                       <div className="mb-4 space-y-2">
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Items</p>
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider font-mono">Items</p>
                         {(order.order_items || []).map((item, idx) => {
                           const itemName = item.menu_items?.name || menuItems.find(m => m.id === item.menu_item_id)?.name || 'Menu Item';
                           return (
                             <div key={idx} className="text-sm">
-                              <p className="font-semibold text-slate-200">
-                                • {itemName} <span className="text-slate-400">x{item.quantity}</span>
-                                <span className={`ml-2 text-[10px] px-2 py-0.5 rounded font-bold uppercase ${item.fulfillment_type === 'takeaway' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
+                              <p className="font-semibold text-slate-800">
+                                • {itemName} <span className="text-slate-500 font-bold">x{item.quantity}</span>
+                                <span className={`ml-2 text-[10px] px-2 py-0.5 rounded-md font-bold uppercase ${item.fulfillment_type === 'takeaway' ? 'bg-orange-50 text-orange-800 border border-orange-200' : 'bg-slate-100 text-slate-700 border border-slate-200'}`}>
                                   {item.fulfillment_type === 'takeaway' ? '🥡 Takeaway' : '🍽️ Dine-in'}
                                 </span> 
-                                <span className="text-emerald-400 font-mono ml-2">RM{Number(item.price_at_order * item.quantity).toFixed(2)}</span>
+                                <span className="text-orange-600 font-mono font-black ml-2">RM{Number(item.price_at_order * item.quantity).toFixed(2)}</span>
                               </p>
                               {(item as any).notes && (
-                                <p className="text-xs text-amber-400 font-medium italic ml-3 mt-0.5 flex items-start gap-1">
+                                <p className="text-xs text-amber-800 font-medium italic ml-3 mt-0.5 flex items-start gap-1 bg-amber-50/80 px-2 py-0.5 rounded-md border border-amber-200/70 inline-flex">
                                   <span>↳</span> Notes: {(item as any).notes}
                                 </p>
                               )}
@@ -831,21 +860,21 @@ function OrdersPage() {
                     {/* Footer */}
                     <div>
                       {/* Financials */}
-                      <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 mb-3 flex flex-wrap gap-x-4 gap-y-1 text-sm justify-between text-white">
+                      <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 mb-3 flex flex-wrap gap-x-4 gap-y-1 text-sm justify-between text-slate-800">
                         <div>
-                          <span className="text-slate-400 mr-1">Total:</span> 
-                          <span className="font-black text-emerald-400 font-mono">RM{order.total_amount.toFixed(2)}</span>
+                          <span className="text-slate-500 mr-1 text-xs">Total:</span> 
+                          <span className="font-black text-orange-600 font-mono text-base">RM{order.total_amount.toFixed(2)}</span>
                         </div>
                         {!isFullyPaid && (
                           <div>
-                            <span className="text-slate-400 mr-1">Paid:</span> 
-                            <span className="font-bold text-rose-400 font-mono">RM0.00</span>
+                            <span className="text-slate-500 mr-1 text-xs">Paid:</span> 
+                            <span className="font-bold text-slate-400 font-mono">RM0.00</span>
                           </div>
                         )}
                         {!isFullyPaid && (
-                          <div className="w-full mt-1">
-                            <span className="text-gray-500 mr-1">Balance:</span> 
-                            <span className="text-rose-500 font-black">RM{order.total_amount.toFixed(2)}</span>
+                          <div className="w-full mt-1 pt-1 border-t border-slate-200/60 flex justify-between">
+                            <span className="text-slate-500 text-xs">Balance Due:</span> 
+                            <span className="text-rose-600 font-black font-mono">RM{order.total_amount.toFixed(2)}</span>
                           </div>
                         )}
                       </div>
@@ -876,15 +905,15 @@ function OrdersPage() {
                                 await fetchOrders();
                               }
                             }}
-                            className="flex gap-2 items-center flex-wrap bg-slate-950 p-2.5 rounded-xl border border-slate-800"
+                            className="flex gap-2 items-center flex-wrap bg-orange-50/60 p-2.5 rounded-2xl border border-orange-200/70"
                           >
-                            <span className="text-xs text-slate-300 font-bold">Terima Bayaran:</span>
-                            <select name="method" className="bg-slate-900 border border-slate-700 text-white p-1 text-xs rounded-lg outline-none">
+                            <span className="text-xs text-orange-950 font-bold">Terima Bayaran:</span>
+                            <select name="method" className="bg-white border border-slate-200 text-slate-800 p-1.5 text-xs rounded-xl shadow-xs font-bold outline-none">
                               <option value="cash">💵 Cash</option>
                               <option value="card">💳 Card</option>
                               <option value="qr">📱 QR / Transfer</option>
                             </select>
-                            <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1 text-xs font-black rounded-lg shadow-sm active:scale-95 transition-all">
+                            <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 text-xs font-black rounded-xl shadow-xs active:scale-95 transition-all">
                               ✓ TANDA BAYAR
                             </button>
                           </form>
@@ -893,14 +922,14 @@ function OrdersPage() {
 
                       {/* ANTI-SCAM: STAFF ONE-CLICK VERIFY DELIVERY PAYMENT */}
                       {order.type === 'delivery' && (!order.paid || (order as any).payment_status === 'pending' || order.status === 'pending_payment' || order.status === 'pending_verification') && (
-                        <div className="mb-3 p-2 bg-amber-500/10 border border-amber-500/30 rounded-xl space-y-1.5">
-                          <div className="flex items-center justify-between text-[11px] font-bold text-amber-400">
+                        <div className="mb-3 p-2.5 bg-amber-50 border border-amber-200 rounded-2xl space-y-1.5">
+                          <div className="flex items-center justify-between text-[11px] font-bold text-amber-900">
                             <span>🛡️ Delivery Menunggu Pengesahan Resit</span>
                           </div>
                           <button
                             type="button"
                             onClick={() => handleVerifyDeliveryPayment(order.id)}
-                            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-lg text-xs flex items-center justify-center gap-1.5 shadow-md active:scale-95 transition-all"
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
                           >
                             <span>✓ Sahkan Bayaran & Buka Job Rider</span>
                           </button>
@@ -908,10 +937,10 @@ function OrdersPage() {
                       )}
 
                       {/* Actions */}
-                      <div className="flex gap-2 flex-wrap border-t border-black/10 pt-3">
+                      <div className="flex gap-2 flex-wrap border-t border-slate-100 pt-3">
                         <button 
                           onClick={() => handleEditClick(order)}
-                          className="bg-white border border-gray-300 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-50 shadow-sm"
+                          className="bg-white border border-slate-200 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-slate-50 shadow-xs active:scale-95 transition-all"
                         >
                           EDIT
                         </button>
@@ -921,14 +950,14 @@ function OrdersPage() {
                             setDeleteReason('');
                             setDeleteNotes('');
                           }}
-                          className="bg-white border border-red-200 text-red-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-red-50 shadow-sm"
+                          className="bg-white border border-rose-200 text-rose-600 px-3 py-1.5 rounded-xl text-xs font-bold hover:bg-rose-50 shadow-xs active:scale-95 transition-all"
                         >
                           DELETE
                         </button>
                         <div className="flex-1"></div>
                         <button 
                           onClick={() => handleViewHistory(order)}
-                          className="text-gray-500 text-xs font-semibold hover:underline px-2 py-1.5"
+                          className="text-slate-500 hover:text-slate-900 text-xs font-semibold px-2 py-1.5 transition-colors"
                         >
                           History
                         </button>
@@ -944,7 +973,7 @@ function OrdersPage() {
                               if (printWindow) { printWindow.document.write(html); printWindow.document.close(); }
                             });
                           }}
-                          className="bg-black text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-sm"
+                          className="bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-1.5 rounded-xl text-xs font-black shadow-xs active:scale-95 transition-all"
                         >
                           PRINT
                         </button>
@@ -960,37 +989,37 @@ function OrdersPage() {
 
       {/* Edit Order Dialog */}
       <Dialog open={!!editingOrder} onOpenChange={(open) => !open && setEditingOrder(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white border border-slate-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
-            <DialogTitle>Edit Order {editingOrder?.id.slice(0, 8)}</DialogTitle>
+            <DialogTitle className="text-xl font-black text-slate-900">Edit Order #{editingOrder?.id.slice(0, 8)}</DialogTitle>
           </DialogHeader>
           
           <div className="space-y-6 py-4">
             {/* Order Type */}
-            <div className="space-y-4 border-b pb-4">
-              <h3 className="font-bold text-sm uppercase text-gray-500">Order Type</h3>
+            <div className="space-y-4 border-b border-slate-100 pb-4">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500 font-mono">Order Type</h3>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="edit_type" value="dine_in" checked={editOrderType === 'dine_in'} onChange={() => setEditOrderType('dine_in')} /> Dine-In
+                  <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-800">
+                    <input type="radio" name="edit_type" value="dine_in" checked={editOrderType === 'dine_in'} onChange={() => setEditOrderType('dine_in')} className="text-orange-500 focus:ring-orange-400" /> Dine-In
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="edit_type" value="takeaway" checked={editOrderType === 'takeaway'} onChange={() => setEditOrderType('takeaway')} /> Takeaway
+                  <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-800">
+                    <input type="radio" name="edit_type" value="takeaway" checked={editOrderType === 'takeaway'} onChange={() => setEditOrderType('takeaway')} className="text-orange-500 focus:ring-orange-400" /> Takeaway
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="radio" name="edit_type" value="delivery" checked={editOrderType === 'delivery'} onChange={() => setEditOrderType('delivery')} /> Delivery (Grab)
+                  <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-800">
+                    <input type="radio" name="edit_type" value="delivery" checked={editOrderType === 'delivery'} onChange={() => setEditOrderType('delivery')} className="text-orange-500 focus:ring-orange-400" /> Delivery (Grab)
                   </label>
                 </div>
                 {editOrderType === 'delivery' && (
-                  <div className="mt-2 pl-4 border-l-2 border-blue-500">
-                    <label className="block text-sm font-bold mb-1">Delivery Fee (RM)</label>
+                  <div className="mt-2 pl-4 border-l-2 border-orange-500">
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Delivery Fee (RM)</label>
                     <Input 
                       type="number" 
                       min="0"
                       step="0.10"
                       value={editDeliveryFee} 
                       onChange={(e) => setEditDeliveryFee(parseFloat(e.target.value) || 0)}
-                      className="w-32"
+                      className="w-32 bg-white border-slate-200 text-slate-900 rounded-xl"
                     />
                   </div>
                 )}
@@ -999,15 +1028,15 @@ function OrdersPage() {
 
             {/* Existing & Modified Items */}
             <div className="space-y-4">
-              <h3 className="font-bold text-sm uppercase text-gray-500">Items</h3>
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500 font-mono">Items</h3>
               {editItems.map((item, index) => (
-                <div key={item.id || index} className="flex gap-4 items-end bg-gray-50 p-3 rounded flex-wrap">
+                <div key={item.id || index} className="flex gap-4 items-end bg-slate-50 border border-slate-200/80 p-3.5 rounded-2xl flex-wrap">
                   <div className="flex-1 min-w-[150px]">
-                    <p className="text-sm font-medium">{item.menu_items?.name || menuItems.find(m => m.id === item.menu_item_id)?.name}</p>
-                    <p className="text-xs text-gray-500">RM{Number(item.price_at_order || menuItems.find(m => m.id === item.menu_item_id)?.price || 0).toFixed(2)} each</p>
+                    <p className="text-sm font-bold text-slate-900">{item.menu_items?.name || menuItems.find(m => m.id === item.menu_item_id)?.name}</p>
+                    <p className="text-xs text-orange-600 font-mono font-bold">RM{Number(item.price_at_order || menuItems.find(m => m.id === item.menu_item_id)?.price || 0).toFixed(2)} each</p>
                   </div>
                   <div>
-                    <label className="block text-[10px]">Qty</label>
+                    <label className="block text-[10px] font-mono text-slate-500">Qty</label>
                     <Input 
                       type="number" 
                       min="1" 
@@ -1023,11 +1052,11 @@ function OrdersPage() {
                           setEditItems(newItems);
                         }
                       }}
-                      className="w-20 h-8"
+                      className="w-20 h-8 bg-white border-slate-200 rounded-xl"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px]">Notes</label>
+                    <label className="block text-[10px] font-mono text-slate-500">Notes</label>
                     <Input 
                       type="text"
                       value={item.notes || ''}
@@ -1042,12 +1071,12 @@ function OrdersPage() {
                           setEditItems(newItems);
                         }
                       }}
-                      className="w-32 h-8 text-xs"
+                      className="w-32 h-8 text-xs bg-white border-slate-200 rounded-xl"
                       placeholder="Requests..."
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px]">Fulfillment</label>
+                    <label className="block text-[10px] font-mono text-slate-500">Fulfillment</label>
                     <select 
                       value={item.fulfillment_type}
                       onChange={(e) => {
@@ -1061,7 +1090,7 @@ function OrdersPage() {
                           setEditItems(newItems);
                         }
                       }}
-                      className="border rounded h-8 text-sm px-2"
+                      className="border border-slate-200 bg-white rounded-xl h-8 text-xs px-2"
                     >
                       <option value="dine_in">Eat here</option>
                       <option value="takeaway">Takeaway</option>
@@ -1071,7 +1100,7 @@ function OrdersPage() {
                     variant="destructive" 
                     size="sm" 
                     onClick={() => setEditItems(editItems.filter((_, i) => i !== index))}
-                    className="h-8"
+                    className="h-8 rounded-xl"
                   >
                     Remove
                   </Button>
@@ -1080,13 +1109,13 @@ function OrdersPage() {
             </div>
 
             {/* Add New Item */}
-            <div className="border-t pt-4">
-              <h3 className="font-bold text-sm uppercase text-gray-500 mb-2">Add New Item</h3>
+            <div className="border-t border-slate-100 pt-4">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500 font-mono mb-2">Add New Item</h3>
               <div className="flex gap-2 items-end flex-wrap">
                 <div className="flex-1 min-w-[200px]">
                   <select 
                     id="edit-new-item"
-                    className="w-full border rounded h-9 text-sm px-2"
+                    className="w-full border border-slate-200 bg-white rounded-xl h-9 text-sm px-3 shadow-xs"
                     defaultValue=""
                   >
                     <option value="" disabled>Select Menu Item</option>
@@ -1113,29 +1142,30 @@ function OrdersPage() {
                     }]);
                     if (select) select.value = '';
                   }}
+                  className="bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl shadow-xs"
                 >
-                  Add
+                  Add Item
                 </Button>
               </div>
             </div>
 
             {/* Payment Section */}
-            <div className="border-t pt-4">
-              <h3 className="font-bold mb-2">Payment Status</h3>
+            <div className="border-t border-slate-100 pt-4">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500 font-mono mb-2">Payment Status</h3>
               <div className="flex items-center gap-6">
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-800">
                   <input
                     type="checkbox"
                     checked={editIsPaid}
                     onChange={(e) => setEditIsPaid(e.target.checked)}
-                    className="w-4 h-4"
+                    className="w-4 h-4 text-orange-500 rounded focus:ring-orange-400"
                   />
                   Mark as Paid
                 </label>
                 
                 {editIsPaid && (
                   <div className="flex items-center gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-800">
                       <input
                         type="radio"
                         checked={editPaymentMethod === 'cash'}
@@ -1143,7 +1173,7 @@ function OrdersPage() {
                       />
                       💵 Cash
                     </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    <label className="flex items-center gap-2 cursor-pointer text-sm font-semibold text-slate-800">
                       <input
                         type="radio"
                         checked={editPaymentMethod === 'card'}
@@ -1157,67 +1187,67 @@ function OrdersPage() {
             </div>
 
             {/* Summary */}
-            <div className="border-t pt-4">
-              <h3 className="font-bold text-sm uppercase text-gray-500 mb-2">Summary</h3>
-              <div className="space-y-1 text-sm bg-gray-50 p-3 rounded">
-                <div className="flex justify-between">
+            <div className="border-t border-slate-100 pt-4">
+              <h3 className="font-bold text-xs uppercase tracking-wider text-slate-500 font-mono mb-2">Summary</h3>
+              <div className="space-y-1 text-sm bg-slate-50 border border-slate-200/80 p-3.5 rounded-2xl">
+                <div className="flex justify-between text-slate-600">
                   <span>Subtotal:</span>
-                  <span>RM {editItems.reduce((sum, item) => sum + (Number(item.price_at_order) * item.quantity), 0).toFixed(2)}</span>
+                  <span className="font-mono font-bold text-slate-900">RM {editItems.reduce((sum, item) => sum + (Number(item.price_at_order) * item.quantity), 0).toFixed(2)}</span>
                 </div>
                 {(() => {
                   const containerTotal = editItems.reduce((sum, item) => sum + (Number((item as any).container_charge || 0) * item.quantity), 0);
                   if (containerTotal > 0) {
                     return (
-                      <div className="flex justify-between">
+                      <div className="flex justify-between text-slate-600">
                         <span>Container Fee:</span>
-                        <span>RM {containerTotal.toFixed(2)}</span>
+                        <span className="font-mono font-bold text-slate-900">RM {containerTotal.toFixed(2)}</span>
                       </div>
                     );
                   }
                   return null;
                 })()}
                 {editOrderType === 'delivery' && (
-                  <div className="flex justify-between text-blue-600 font-medium">
+                  <div className="flex justify-between text-orange-600 font-medium">
                     <span>Delivery Fee:</span>
-                    <span>RM {Number(editDeliveryFee || 0).toFixed(2)}</span>
+                    <span className="font-mono font-bold">RM {Number(editDeliveryFee || 0).toFixed(2)}</span>
                   </div>
                 )}
-                <div className="flex justify-between font-bold text-lg pt-2 border-t mt-2">
+                <div className="flex justify-between font-black text-lg pt-2 border-t border-slate-200 mt-2 text-slate-900">
                   <span>TOTAL:</span>
-                  <span>RM {(
+                  <span className="text-orange-600 font-mono">RM {(
                     editItems.reduce((sum, item) => sum + (Number(item.price_at_order) * item.quantity) + (Number((item as any).container_charge || 0) * item.quantity), 0)
-                    
                   ).toFixed(2)}</span>
                 </div>
               </div>
             </div>
 
             {/* Reason for Change */}
-            <div className="border-t pt-4">
-              <label className="block text-sm font-bold mb-1">Reason for change (Mandatory)</label>
+            <div className="border-t border-slate-100 pt-4">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 font-mono mb-1">Reason for change (Mandatory)</label>
               <select 
                 value={editReason}
                 onChange={(e) => setEditReason(e.target.value)}
-                className="w-full border p-2 rounded mb-2"
+                className="w-full border border-slate-200 bg-white p-2.5 rounded-xl mb-2 text-sm shadow-xs"
               >
                 <option value="" disabled>Select a reason...</option>
                 {EDIT_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
-              <label className="block text-sm font-bold mb-1 mt-2">Notes (Optional)</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 font-mono mb-1 mt-2">Notes (Optional)</label>
               <Textarea 
                 placeholder="Additional details..."
                 value={editNotes}
                 onChange={(e) => setEditNotes(e.target.value)}
-                className="h-16"
+                className="h-16 bg-white border-slate-200 rounded-xl"
               />
             </div>
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingOrder(null)}>Cancel</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setEditingOrder(null)} className="rounded-xl">Cancel</Button>
             <Button 
               onClick={handleSaveEdit} 
               disabled={isSavingEdit || !editReason}
+              className="bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl shadow-xs"
             >
               {isSavingEdit ? 'Saving...' : 'Save Changes'}
             </Button>
@@ -1227,41 +1257,41 @@ function OrdersPage() {
 
       {/* View History Dialog */}
       <Dialog open={!!historyOrder} onOpenChange={(open) => !open && setHistoryOrder(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto bg-white border border-slate-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
-            <DialogTitle>Edit History - Order {historyOrder?.id.slice(0, 8)}</DialogTitle>
+            <DialogTitle className="text-xl font-black text-slate-900">Edit History - Order #{historyOrder?.id.slice(0, 8)}</DialogTitle>
           </DialogHeader>
           
           <div className="py-4">
             {isLoadingHistory ? (
-              <p className="text-center italic py-8">Loading history...</p>
+              <p className="text-center italic py-8 text-slate-500 font-mono">Loading history...</p>
             ) : editLogs.length === 0 ? (
-              <p className="text-center italic py-8 text-gray-500">No edits recorded for this order.</p>
+              <p className="text-center italic py-8 text-slate-500 font-mono">No edits recorded for this order.</p>
             ) : (
               <div className="space-y-4">
                 {editLogs.map(log => (
-                  <div key={log.id} className="border-l-4 border-blue-500 bg-gray-50 p-3 rounded">
+                  <div key={log.id} className="border-l-4 border-orange-500 bg-orange-50/40 border border-orange-100 p-3.5 rounded-2xl">
                     <div className="flex justify-between items-start mb-1">
-                      <span className="font-bold text-sm uppercase text-blue-700">{log.action.replace('_', ' ')}</span>
-                      <span className="text-[10px] text-gray-400">{new Date(log.created_at).toLocaleString()}</span>
+                      <span className="font-bold text-xs uppercase tracking-wider text-orange-800 font-mono">{log.action.replace('_', ' ')}</span>
+                      <span className="text-[10px] text-slate-400 font-mono">{new Date(log.created_at).toLocaleString()}</span>
                     </div>
-                    <p className="text-sm font-medium">{log.details?.item_name || 'Order Item'}</p>
+                    <p className="text-sm font-bold text-slate-900">{log.details?.item_name || 'Order Item'}</p>
                     {log.action === 'item_updated' && log.details?.changes && (
-                      <div className="text-xs text-gray-600 mt-1">
+                      <div className="text-xs text-slate-600 mt-1 font-mono">
                         {Object.entries(log.details.changes).map(([field, vals]: [string, any]) => (
-                          <div key={field}>{field}: <span className="line-through">{vals.old}</span> → <span className="font-bold">{vals.new}</span></div>
+                          <div key={field}>{field}: <span className="line-through text-slate-400">{vals.old}</span> → <span className="font-bold text-slate-900">{vals.new}</span></div>
                         ))}
                       </div>
                     )}
                     {log.action === 'item_added' && (
-                      <p className="text-xs text-gray-600">Added quantity: {log.details?.quantity}</p>
+                      <p className="text-xs text-emerald-700 font-mono font-bold">Added quantity: {log.details?.quantity}</p>
                     )}
                     {log.action === 'item_deleted' && (
-                      <p className="text-xs text-gray-600">Deleted quantity: {log.details?.old_quantity}</p>
+                      <p className="text-xs text-rose-700 font-mono font-bold">Deleted quantity: {log.details?.old_quantity}</p>
                     )}
-                    <div className="mt-2 pt-2 border-t border-gray-200">
-                      <p className="text-xs italic text-gray-500">" {log.reason} "</p>
-                      <p className="text-[10px] text-gray-400 mt-1">— {log.users?.name || 'Staff'}</p>
+                    <div className="mt-2 pt-2 border-t border-orange-100">
+                      <p className="text-xs italic text-slate-600">"{log.reason}"</p>
+                      <p className="text-[10px] text-slate-400 mt-1 font-mono">— {log.users?.name || 'Staff'}</p>
                     </div>
                   </div>
                 ))}
@@ -1270,46 +1300,51 @@ function OrdersPage() {
           </div>
           
           <DialogFooter>
-            <Button onClick={() => setHistoryOrder(null)}>Close</Button>
+            <Button onClick={() => setHistoryOrder(null)} className="rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold">Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       {/* Delete Order Dialog */}
       <Dialog open={!!deletingOrder} onOpenChange={(open) => !open && setDeletingOrder(null)}>
-        <DialogContent>
+        <DialogContent className="bg-white border border-slate-200 text-slate-900 rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
-            <DialogTitle>DELETE ORDER?</DialogTitle>
+            <DialogTitle className="text-xl font-black text-rose-600">DELETE ORDER?</DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p className="font-bold mb-2">
-              Order {deletingOrder?.id.slice(0, 8)} <br/>
-              {deletingOrder?.type === 'dine_in' ? `Table ${tables.find(t => t.id === deletingOrder?.table_id)?.table_number || 'N/A'}` : 'Takeaway'} | RM {deletingOrder?.total_amount.toFixed(2)}
-            </p>
-            <div className="mt-4">
-              <label className="block text-sm font-bold mb-1">Reason for deletion (Mandatory)</label>
+            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl mb-4">
+              <p className="font-black text-slate-900">
+                Order #{deletingOrder?.id.slice(0, 8)}
+              </p>
+              <p className="text-xs font-mono text-slate-600 mt-0.5">
+                {deletingOrder?.type === 'dine_in' ? `Table ${tables.find(t => t.id === deletingOrder?.table_id)?.table_number || 'N/A'}` : 'Takeaway'} | RM {deletingOrder?.total_amount.toFixed(2)}
+              </p>
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 font-mono mb-1">Reason for deletion (Mandatory)</label>
               <select 
                 value={deleteReason}
                 onChange={(e) => setDeleteReason(e.target.value)}
-                className="w-full border p-2 rounded mb-2"
+                className="w-full border border-slate-200 bg-white p-2.5 rounded-xl mb-2 text-sm shadow-xs"
               >
                 <option value="" disabled>Select a reason...</option>
                 {DELETE_REASONS.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
-              <label className="block text-sm font-bold mb-1 mt-2">Notes (Optional)</label>
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 font-mono mb-1 mt-2">Notes (Optional)</label>
               <Textarea 
                 placeholder="Additional details..."
                 value={deleteNotes}
                 onChange={(e) => setDeleteNotes(e.target.value)}
-                className="h-16"
+                className="h-16 bg-white border-slate-200 rounded-xl"
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeletingOrder(null)}>NO, CANCEL</Button>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeletingOrder(null)} className="rounded-xl">NO, CANCEL</Button>
             <Button 
               variant="destructive"
               onClick={handleDeleteOrder} 
               disabled={isDeleting || !deleteReason}
+              className="rounded-xl font-bold"
             >
               {isDeleting ? 'Deleting...' : 'YES, DELETE'}
             </Button>

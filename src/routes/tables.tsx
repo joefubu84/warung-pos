@@ -86,27 +86,27 @@ const TableCard = memo(({
       whileTap={{ scale: 0.98 }}
       onClick={() => onClick(table, activeOrder)}
       className={cn(
-        "p-4 rounded-2xl border text-left flex flex-col h-32 relative overflow-hidden transition-all duration-300 ease-in-out shadow-md",
+        "p-4 rounded-3xl border text-left flex flex-col h-32 relative overflow-hidden transition-all duration-200 ease-in-out shadow-xs hover:shadow-md",
         isOccupied 
-          ? "bg-amber-950/30 border-amber-500/40" 
-          : "bg-slate-900 border-slate-800 hover:border-emerald-500/50"
+          ? "bg-gradient-to-br from-amber-50/90 via-white to-amber-50/40 border-amber-300 ring-1 ring-amber-200/60" 
+          : "bg-white border-slate-200/90 hover:border-orange-300"
       )}
     >
       <div className="flex justify-between items-start w-full">
-        <span className="text-2xl font-black text-white">
+        <span className="text-2xl font-black text-slate-900 font-mono">
           {table.table_number}
         </span>
-        <div className={cn("w-3 h-3 rounded-full transition-colors duration-300", isOccupied ? "bg-amber-400 animate-pulse" : "bg-emerald-500")} />
+        <div className={cn("w-3 h-3 rounded-full transition-colors duration-300", isOccupied ? "bg-amber-500 animate-pulse ring-2 ring-amber-200" : "bg-emerald-500 ring-2 ring-emerald-100")} />
       </div>
       
       <div className="mt-auto">
         {isOccupied ? (
           <>
-            <p className="text-xs font-bold text-amber-300 uppercase tracking-wider">Occupied</p>
+            <p className="text-xs font-black text-amber-800 uppercase tracking-wider">Occupied</p>
             <p className="text-[10px] text-slate-400 font-mono">#{activeOrder.id.slice(0,8).toUpperCase()}</p>
           </>
         ) : (
-          <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Available</p>
+          <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Available</p>
         )}
       </div>
     </motion.button>
@@ -339,24 +339,24 @@ function TablesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 font-sans">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
       {cashStatus === 'CLOSED' && (
-        <div className="bg-rose-950 border border-rose-800 p-4 rounded-xl text-white flex flex-col md:flex-row justify-between items-center gap-3 shadow-xl">
+        <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl text-rose-950 flex flex-col md:flex-row justify-between items-center gap-3 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-rose-600 rounded-lg text-white">
+            <div className="p-2 bg-rose-600 rounded-xl text-white">
               <Lock className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-white flex items-center gap-2">
+              <h2 className="text-base md:text-lg font-black text-rose-950 flex items-center gap-2">
                 ⛔ ORDERS CLOSED FOR THE DAY
                 {closedAtTime && (
-                  <span className="text-xs font-mono bg-rose-900 text-rose-200 px-2.5 py-0.5 rounded border border-rose-700">
+                  <span className="text-xs font-mono bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full border border-rose-200 font-bold">
                     Closed at {new Date(closedAtTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 )}
               </h2>
-              <p className="text-xs text-rose-300">
+              <p className="text-xs text-rose-700">
                 The cash register shift is closed. Table creation and dine-in ordering are currently locked.
               </p>
             </div>
@@ -364,7 +364,7 @@ function TablesPage() {
           
           <button
             onClick={() => setIsReopenModalOpen(true)}
-            className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-sm whitespace-nowrap active:scale-95 transition-all"
+            className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-5 py-2.5 rounded-xl shadow-xs flex items-center gap-2 text-sm whitespace-nowrap active:scale-95 transition-all"
           >
             <Unlock className="w-4 h-4" /> Reopen Register for Corrections
           </button>
@@ -372,23 +372,28 @@ function TablesPage() {
       )}
 
       {/* HEADER CARD */}
-      <div className={`bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${cashStatus === 'CLOSED' ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className={`bg-white border border-slate-200/90 p-6 rounded-3xl shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${cashStatus === 'CLOSED' ? 'opacity-50 pointer-events-none' : ''}`}>
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">Table Management</h1>
-          <p className="text-xs text-slate-400 font-mono mt-1">Monitor live dine-in table status & QR ordering codes</p>
+          <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
+            <span>Table Management</span>
+            <span className="text-xs font-mono font-bold bg-orange-100 text-orange-700 px-2.5 py-0.5 rounded-full border border-orange-200">
+              POS
+            </span>
+          </h1>
+          <p className="text-xs text-slate-500 font-mono mt-1">Monitor live dine-in table status & QR ordering codes</p>
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800">
+          <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200/80">
             <button 
               onClick={() => setActiveTab('grid')}
-              className={cn("px-6 py-2 rounded-lg text-sm font-bold transition-all", activeTab === 'grid' ? "bg-emerald-600 shadow-sm text-white font-black" : "text-slate-400 hover:text-white")}
+              className={cn("px-5 py-2 rounded-xl text-xs md:text-sm font-bold transition-all", activeTab === 'grid' ? "bg-orange-500 shadow-sm text-white font-black" : "text-slate-600 hover:text-slate-900")}
             >
               Live Grid
             </button>
             <button 
               onClick={() => setActiveTab('manage')}
-              className={cn("px-6 py-2 rounded-lg text-sm font-bold transition-all", activeTab === 'manage' ? "bg-emerald-600 shadow-sm text-white font-black" : "text-slate-400 hover:text-white")}
+              className={cn("px-5 py-2 rounded-xl text-xs md:text-sm font-bold transition-all", activeTab === 'manage' ? "bg-orange-500 shadow-sm text-white font-black" : "text-slate-600 hover:text-slate-900")}
             >
               Manage Setup
             </button>
@@ -397,10 +402,10 @@ function TablesPage() {
           <Link
             to="/settings"
             search={{ tab: 'waiter_call' } as any}
-            className="px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-950 hover:bg-slate-800 text-orange-400 border border-slate-800 hover:border-orange-500/50 transition-all flex items-center gap-1.5 shadow-sm active:scale-95"
+            className="px-3.5 py-2 rounded-2xl text-xs font-bold bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition-all flex items-center gap-1.5 shadow-xs active:scale-95"
             title="Ubahsuai Pilihan Bantuan Meja (Buzzer)"
           >
-            <Bell className="w-3.5 h-3.5 text-orange-400 animate-bounce" />
+            <Bell className="w-3.5 h-3.5 text-amber-600 animate-bounce" />
             <span>Tetapan Panggil Pelayan</span>
           </Link>
         </div>
@@ -428,17 +433,17 @@ function TablesPage() {
       )}
 
       {activeTab === 'manage' && (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+        <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xs space-y-6">
           
           {/* PHONE CAMERA QR CODE DOMAIN CONFIG */}
-          <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl space-y-3 font-mono">
+          <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl space-y-3 font-mono">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
               <div>
-                <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                  <QrCode className="w-4 h-4 text-emerald-400" /> Phone Camera QR Code Domain URL
+                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <QrCode className="w-4 h-4 text-orange-500" /> Phone Camera QR Code Domain URL
                 </h3>
-                <p className="text-[11px] text-slate-400">
-                  URL embedded in QR codes: <strong className="text-emerald-400">{appBaseUrl || 'Loading...'}</strong>
+                <p className="text-[11px] text-slate-500">
+                  URL embedded in QR codes: <strong className="text-orange-600">{appBaseUrl || 'Loading...'}</strong>
                 </p>
               </div>
               
@@ -452,7 +457,7 @@ function TablesPage() {
                     setAppBaseUrl(val);
                     localStorage.setItem('warung_custom_qr_domain', val);
                   }}
-                  className="bg-slate-900 border border-slate-800 text-xs text-white px-3 py-2 rounded-lg font-mono outline-none focus:ring-1 focus:ring-emerald-500 flex-1 sm:w-80"
+                  className="bg-white border border-slate-200 text-xs text-slate-900 px-3 py-2 rounded-xl font-mono outline-none focus:ring-1 focus:ring-orange-500 flex-1 sm:w-80 shadow-xs"
                 />
                 <button
                   type="button"
@@ -466,7 +471,7 @@ function TablesPage() {
                     }
                     toast.success("QR Domain reset to devtunnels/public URL.");
                   }}
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono px-3 py-2 rounded-lg border border-slate-700 shrink-0"
+                  className="bg-white hover:bg-slate-50 text-slate-700 text-xs font-mono px-3 py-2 rounded-xl border border-slate-200 shrink-0 shadow-xs"
                 >
                   Reset
                 </button>
@@ -474,13 +479,13 @@ function TablesPage() {
             </div>
             
             {appBaseUrl.includes('localhost') ? (
-              <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-300 text-xs font-sans">
-                ⚠️ <strong>Notice for Physical Phone Cameras:</strong> Your QR code URL is set to <code className="font-mono text-white">localhost</code>. Physical smartphones cannot connect to "localhost". Enter your <strong>DevTunnels URL</strong> above (e.g. <code className="font-mono text-emerald-300">https://p6x6tkn4-8080.asse.devtunnels.ms</code>) or local Wi-Fi IP address!
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs font-sans">
+                ⚠️ <strong>Notice for Physical Phone Cameras:</strong> Your QR code URL is set to <code className="font-mono text-slate-900 bg-amber-100 px-1 py-0.5 rounded">localhost</code>. Physical smartphones cannot connect to "localhost". Enter your <strong>DevTunnels URL</strong> above (e.g. <code className="font-mono text-orange-700 bg-amber-100 px-1 py-0.5 rounded">https://p6x6tkn4-8080.asse.devtunnels.ms</code>) or local Wi-Fi IP address!
               </div>
             ) : (
-              <div className="p-2.5 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-300 text-xs font-sans flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Ready for physical phone cameras! Scanned QR codes will connect directly to <strong className="font-mono text-white">{appBaseUrl}</strong>.</span>
+              <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-xs font-sans flex items-center gap-2">
+                <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>Ready for physical phone cameras! Scanned QR codes will connect directly to <strong className="font-mono text-emerald-800">{appBaseUrl}</strong>.</span>
               </div>
             )}
           </div>
@@ -491,12 +496,12 @@ function TablesPage() {
               value={newTableNumber}
               onChange={(e) => setNewTableNumber(e.target.value)}
               placeholder="New table number (e.g. A1)"
-              className="bg-slate-950 border border-slate-800 px-4 py-2 rounded-xl flex-1 text-sm font-medium text-white placeholder-slate-500 focus:ring-2 focus:ring-emerald-500 outline-none transition-all"
+              className="bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-2xl flex-1 text-sm font-medium text-slate-900 placeholder-slate-400 focus:bg-white focus:ring-2 focus:ring-orange-500 outline-none transition-all shadow-xs"
               disabled={isAdding}
             />
             <button 
               type="submit" 
-              className="bg-emerald-600 text-white px-6 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-emerald-500 disabled:opacity-50 flex items-center gap-2 active:scale-95 transition-all"
+              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2.5 rounded-2xl text-sm font-black shadow-xs disabled:opacity-50 flex items-center gap-2 active:scale-95 transition-all"
               disabled={isAdding}
             >
               <Plus className="w-4 h-4" />
@@ -506,12 +511,12 @@ function TablesPage() {
 
           <div className="space-y-3">
             {tables.map((table) => (
-              <div key={table.id} className="flex items-center justify-between p-4 bg-slate-950 border border-slate-800 rounded-xl">
+              <div key={table.id} className="flex items-center justify-between p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-slate-900 border border-slate-800 rounded-lg flex items-center justify-center font-black text-lg text-white">
+                  <div className="w-12 h-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center font-black text-lg text-slate-900 font-mono">
                     {table.table_number}
                   </div>
-                  <div className="bg-white p-1.5 rounded-lg shadow-sm">
+                  <div className="bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs">
                     <QRCodeSVG value={`${appBaseUrl}/t/${table.qr_token}`} size={42} />
                   </div>
                 </div>
@@ -523,19 +528,19 @@ function TablesPage() {
                       setEditValue(newNum);
                       handleSaveEdit(table.id);
                     }
-                  }} className="p-2.5 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors">
+                  }} className="p-2.5 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-800 transition-colors">
                     <Edit2 className="w-4 h-4" />
                   </button>
-                  <button onClick={() => handleDeleteTable(table)} className="p-2.5 hover:bg-rose-950 text-rose-400 rounded-lg transition-colors">
+                  <button onClick={() => handleDeleteTable(table)} className="p-2.5 hover:bg-rose-50 text-rose-600 rounded-xl transition-colors">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
             ))}
             {tables.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">
-                <TableIcon className="w-12 h-12 mx-auto mb-4 opacity-20" />
-                <p>No tables configured yet.</p>
+              <div className="text-center py-12 text-slate-400 border-2 border-dashed border-slate-200 rounded-2xl">
+                <TableIcon className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                <p className="font-semibold">No tables configured yet.</p>
               </div>
             )}
           </div>
@@ -544,71 +549,71 @@ function TablesPage() {
 
       {/* Table Detail Modal */}
       <Dialog open={!!selectedTable} onOpenChange={(open) => !open && setSelectedTable(null)}>
-        <DialogContent className="max-w-md sm:rounded-3xl p-0 overflow-hidden border border-slate-800 bg-slate-900 text-white">
+        <DialogContent className="max-w-md sm:rounded-3xl p-0 overflow-hidden border border-slate-200 bg-white text-slate-900 shadow-2xl">
           {selectedTable && (
             <>
               <div className={cn(
                 "p-6 text-white relative overflow-hidden",
-                tableOrder ? "bg-gradient-to-br from-amber-600 to-amber-800" : "bg-gradient-to-br from-emerald-600 to-emerald-800"
+                tableOrder ? "bg-gradient-to-br from-amber-500 to-amber-600" : "bg-gradient-to-br from-orange-500 to-orange-600"
               )}>
-                <div className="absolute top-0 right-0 p-8 opacity-10">
+                <div className="absolute top-0 right-0 p-8 opacity-15">
                   <TableIcon className="w-32 h-32" />
                 </div>
                 <div className="relative z-10">
-                  <h2 className="text-4xl font-black mb-1">Table {selectedTable.table_number}</h2>
-                  <p className="text-white/80 font-medium uppercase tracking-widest text-xs">
+                  <h2 className="text-4xl font-black mb-1 font-mono">Table {selectedTable.table_number}</h2>
+                  <p className="text-white/90 font-black uppercase tracking-widest text-xs">
                     {tableOrder ? 'Occupied' : 'Available'}
                   </p>
                 </div>
               </div>
               
-              <div className="p-6 bg-slate-900 text-white">
+              <div className="p-6 bg-white text-slate-900">
                 {tableOrder ? (
                   <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-slate-950 border border-slate-800 rounded-xl p-4">
-                        <p className="text-xs text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><Receipt className="w-3 h-3 text-emerald-400"/> Order ID</p>
-                        <p className="font-mono text-sm font-bold text-white">#{tableOrder.id.slice(0,8).toUpperCase()}</p>
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                        <p className="text-xs text-slate-500 font-bold uppercase mb-1 flex items-center gap-1 font-mono"><Receipt className="w-3 h-3 text-orange-500"/> Order ID</p>
+                        <p className="font-mono text-sm font-bold text-slate-900">#{tableOrder.id.slice(0,8).toUpperCase()}</p>
                       </div>
-                      <div className="bg-slate-950 border border-slate-800 rounded-xl p-4">
-                        <p className="text-xs text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><Clock className="w-3 h-3 text-amber-400"/> Wait Time</p>
-                        <p className="font-mono text-sm font-bold text-white">{getWaitTime(tableOrder.created_at)} min</p>
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                        <p className="text-xs text-slate-500 font-bold uppercase mb-1 flex items-center gap-1 font-mono"><Clock className="w-3 h-3 text-amber-500"/> Wait Time</p>
+                        <p className="font-mono text-sm font-bold text-slate-900">{getWaitTime(tableOrder.created_at)} min</p>
                       </div>
-                      <div className="bg-slate-950 border border-slate-800 rounded-xl p-4">
-                        <p className="text-xs text-slate-400 font-bold uppercase mb-1 flex items-center gap-1"><Utensils className="w-3 h-3 text-sky-400"/> Status</p>
-                        <p className="font-mono text-sm font-bold uppercase text-amber-400">{tableOrder.status}</p>
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                        <p className="text-xs text-slate-500 font-bold uppercase mb-1 flex items-center gap-1 font-mono"><Utensils className="w-3 h-3 text-sky-500"/> Status</p>
+                        <p className="font-mono text-sm font-black uppercase text-amber-600">{tableOrder.status}</p>
                       </div>
-                      <div className="bg-slate-950 border border-slate-800 rounded-xl p-4">
-                        <p className="text-xs text-slate-400 font-bold uppercase mb-1">Total</p>
-                        <p className="font-mono text-sm font-bold text-emerald-400">RM {tableOrder.total_amount.toFixed(2)}</p>
+                      <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4">
+                        <p className="text-xs text-slate-500 font-bold uppercase mb-1 font-mono">Total</p>
+                        <p className="font-mono text-sm font-black text-orange-600">RM {tableOrder.total_amount.toFixed(2)}</p>
                       </div>
                     </div>
                     
                     <div className="flex flex-col gap-2 pt-4">
-                      <a href="/orders" className="w-full text-center bg-slate-800 text-slate-200 hover:text-white py-3 rounded-xl font-bold hover:bg-slate-700 transition-colors">
+                      <a href="/orders" className="w-full text-center bg-slate-100 hover:bg-slate-200 text-slate-800 py-3 rounded-2xl font-bold transition-all shadow-xs">
                         View Orders Page
                       </a>
                       {tableOrder.status !== 'ready' && (
-                        <button onClick={() => handleMarkReady(tableOrder.id)} className="w-full bg-amber-500 text-slate-950 font-black py-3 rounded-xl hover:bg-amber-400 transition-colors">
+                        <button onClick={() => handleMarkReady(tableOrder.id)} className="w-full bg-amber-500 hover:bg-amber-600 text-white font-black py-3 rounded-2xl transition-all shadow-xs">
                           Mark Ready
                         </button>
                       )}
-                      <button onClick={() => handleCloseTable(tableOrder.id)} className="w-full bg-emerald-600 text-white py-3 rounded-xl font-black hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-500/20">
+                      <button onClick={() => handleCloseTable(tableOrder.id)} className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl font-black transition-all shadow-md shadow-orange-500/20">
                         Complete Order & Close Table
                       </button>
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-6 text-center">
-                    <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 flex flex-col items-center">
-                      <p className="text-xs text-slate-400 font-bold uppercase mb-3 tracking-widest">Digital Menu QR Code</p>
-                      <div className="bg-white p-3 rounded-xl shadow-md mb-4">
+                    <div className="bg-slate-50 border border-slate-200/80 rounded-3xl p-6 flex flex-col items-center">
+                      <p className="text-xs text-slate-500 font-bold uppercase mb-3 tracking-widest font-mono">Digital Menu QR Code</p>
+                      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs mb-4">
                         <QRCodeSVG value={`${appBaseUrl}/t/${selectedTable.qr_token}`} size={160} />
                       </div>
                       <p className="text-xs text-slate-400 font-mono">Scan for customer self-ordering</p>
                     </div>
                     
-                    <a href={`/t/${selectedTable.qr_token}`} target="_blank" rel="noreferrer" className="block w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-black transition-colors shadow-md">
+                    <a href={`/t/${selectedTable.qr_token}`} target="_blank" rel="noreferrer" className="block w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl font-black transition-colors shadow-md shadow-orange-500/20 text-center">
                       Open Digital Menu
                     </a>
                   </div>
