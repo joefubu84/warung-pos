@@ -443,7 +443,7 @@ function SettingsPage() {
       label: 'Rider & KYC (Gaji)',
       subtitle: 'Daftar, Lesen, Bank & Gaji',
       icon: Bike,
-      color: 'text-amber-400',
+      color: 'text-amber-700',
       badge: 'KYC Sah'
     },
     {
@@ -451,14 +451,14 @@ function SettingsPage() {
       label: 'Kaedah Pembayaran',
       subtitle: 'DuitNow QR & ToyyibPay FPX',
       icon: CreditCard,
-      color: 'text-emerald-400',
+      color: 'text-emerald-700',
     },
     {
       id: 'kitchen',
       label: 'Pencetak & Dapur',
       subtitle: 'Thermal Printer, Bunyi & Alert',
       icon: Printer,
-      color: 'text-sky-400',
+      color: 'text-sky-700',
     },
     {
       id: 'checklist',
@@ -508,32 +508,32 @@ function SettingsPage() {
       label: 'Keselamatan & Audit',
       subtitle: 'Log Kakitangan & Integriti POS',
       icon: ShieldCheck,
-      color: 'text-rose-400',
+      color: 'text-rose-700',
     },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-3 md:p-6 lg:p-8 pb-28 font-sans">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 p-3 md:p-6 lg:p-8 pb-28 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* TOP SYSTEM HEADER */}
-        <div className="bg-slate-900 border border-slate-800 p-5 md:p-6 rounded-3xl shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-white border border-slate-200/90 p-5 md:p-6 rounded-3xl shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-              <Store className="w-7 h-7 text-amber-400" />
+              <Store className="w-7 h-7 text-amber-700" />
             </div>
             <div>
-              <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight flex items-center gap-2">
+              <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2">
                 Pusat Tetapan & Konfigurasi Warung
               </h1>
-              <p className="text-xs text-slate-400 font-mono mt-0.5">
+              <p className="text-xs text-slate-500 font-mono mt-0.5">
                 Pengurusan bersistem: Rakan Penghantar, Kaedah Bayaran, Dapur, QC, dan Integriti POS.
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <span className="text-[11px] font-mono px-3.5 py-1.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full font-bold flex items-center gap-1.5">
+            <span className="text-[11px] font-mono px-3.5 py-1.5 bg-emerald-500/10 text-emerald-700 border border-emerald-500/20 rounded-full font-bold flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               Warung J&J Penampang (Online)
             </span>
@@ -543,19 +543,19 @@ function SettingsPage() {
         {/* MOBILE MODULE QUICK SWITCHER BAR (Visible on Mobile / Small Screens) */}
         <div className="block lg:hidden space-y-3">
           {/* ACTIVE MODULE CARD & TOGGLE BUTTON */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-xl flex items-center justify-between gap-3">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-3 shadow-xs flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
               {(() => {
                 const currentItem = SIDEBAR_ITEMS.find(i => i.id === activeSection) || SIDEBAR_ITEMS[0]!;
                 const CurrentIcon = currentItem.icon;
                 return (
                   <>
-                    <div className="p-2 rounded-xl bg-slate-950 border border-slate-800 shrink-0">
+                    <div className="p-2 rounded-xl bg-slate-50 border border-slate-200 shrink-0">
                       <CurrentIcon className={`w-4 h-4 ${currentItem.color}`} />
                     </div>
                     <div className="min-w-0">
                       <span className="text-[10px] uppercase font-mono text-slate-500 font-bold block">Modul Tetapan Semasa</span>
-                      <h3 className="text-sm font-bold text-white truncate flex items-center gap-1.5">
+                      <h3 className="text-sm font-bold text-slate-900 truncate flex items-center gap-1.5">
                         <span>{currentItem.label}</span>
                         {currentItem.badge && (
                           <span className="text-[9px] px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded font-mono">
@@ -574,7 +574,7 @@ function SettingsPage() {
               variant="outline"
               size="sm"
               onClick={() => setShowMobileModules(!showMobileModules)}
-              className="border-slate-700 bg-slate-800 hover:bg-slate-750 text-emerald-400 font-bold text-xs shrink-0 flex items-center gap-1.5 h-9"
+              className="border-slate-200 bg-white hover:bg-slate-50 text-emerald-700 font-bold text-xs shrink-0 flex items-center gap-1.5 h-9 shadow-xs"
             >
               <Menu className="w-3.5 h-3.5" />
               <span>{showMobileModules ? 'Tutup Menu' : `Pilih Modul (${SIDEBAR_ITEMS.length})`}</span>
@@ -584,8 +584,8 @@ function SettingsPage() {
 
           {/* EXPANDABLE 2-COLUMN MOBILE GRID OF ALL MODULES */}
           {showMobileModules && (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-3 shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="text-[10px] font-mono uppercase text-slate-400 font-bold mb-2 px-1">
+            <div className="bg-white border border-slate-200/90 rounded-2xl p-3 shadow-xs animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="text-[10px] font-mono uppercase text-slate-500 font-bold mb-2 px-1">
                 Pilih Modul Konfigurasi:
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -602,12 +602,12 @@ function SettingsPage() {
                       }}
                       className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all ${
                         isActive
-                          ? 'bg-slate-800 border-emerald-500/50 text-white shadow-md ring-1 ring-emerald-500/30'
-                          : 'bg-slate-950/60 border-slate-800/80 text-slate-400 hover:text-white hover:bg-slate-800/40'
+                          ? 'bg-slate-800 border-emerald-500/50 text-slate-900 shadow-md ring-1 ring-emerald-500/30'
+                          : 'bg-slate-50/60 border-slate-200/80 text-slate-500 hover:text-slate-900 hover:bg-slate-800/40'
                       }`}
                     >
                       <div className={`p-1.5 rounded-lg shrink-0 ${
-                        isActive ? 'bg-slate-950 text-emerald-400 border border-slate-700' : 'bg-slate-900 text-slate-400'
+                        isActive ? 'bg-white text-emerald-700 border border-emerald-200' : 'bg-white text-slate-500 border border-slate-200'
                       }`}>
                         <Icon className={`w-3.5 h-3.5 ${isActive ? item.color : ''}`} />
                       </div>
@@ -634,10 +634,10 @@ function SettingsPage() {
                   className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
                     isActive
                       ? 'bg-emerald-600 text-white shadow-md border border-emerald-400'
-                      : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                      : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : item.color}`} />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-slate-900' : item.color}`} />
                   <span className="whitespace-nowrap">{item.label}</span>
                 </button>
               );
@@ -650,8 +650,8 @@ function SettingsPage() {
           
           {/* LEFT SIDEBAR NAVIGATION (Desktop) */}
           <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 lg:sticky lg:top-4 z-20 space-y-3">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-3 shadow-2xl space-y-1">
-              <div className="px-3 py-2 text-[10px] font-mono font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800/80 mb-2 flex items-center justify-between">
+            <div className="bg-white border border-slate-200/90 rounded-3xl p-3 shadow-xs space-y-1">
+              <div className="px-3 py-2 text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 mb-2 flex items-center justify-between">
                 <span>Menu Tetapan</span>
                 <span className="text-[10px] text-slate-500 font-mono">{SIDEBAR_ITEMS.length} Modul</span>
               </div>
@@ -667,17 +667,17 @@ function SettingsPage() {
                       type="button"
                       className={`w-full text-left flex items-center justify-between p-2.5 sm:p-3 rounded-2xl transition-all ${
                         isActive
-                          ? 'bg-slate-800 text-white shadow-lg border border-slate-700 font-bold'
-                          : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 border border-transparent font-medium'
+                          ? 'bg-slate-800 text-slate-900 shadow-lg border border-slate-700 font-bold'
+                          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-800/50 border border-transparent font-medium'
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className={`p-2 rounded-xl shrink-0 transition-colors ${
                           isActive 
-                            ? 'bg-slate-950 border border-slate-700 shadow-inner' 
-                            : 'bg-slate-950/70 border border-slate-800/60'
+                            ? 'bg-slate-50 border border-slate-700 shadow-inner' 
+                            : 'bg-slate-50/70 border border-slate-200/60'
                         }`}>
-                          <Icon className={`w-4 h-4 ${isActive ? item.color : 'text-slate-400'}`} />
+                          <Icon className={`w-4 h-4 ${isActive ? item.color : 'text-slate-500'}`} />
                         </div>
                         <div className="min-w-0 text-left">
                           <div className="text-xs font-bold truncate flex items-center gap-1.5">
@@ -688,13 +688,13 @@ function SettingsPage() {
                               </span>
                             )}
                           </div>
-                          <div className="text-[10px] text-slate-400 truncate font-mono mt-0.5">
+                          <div className="text-[10px] text-slate-500 truncate font-mono mt-0.5">
                             {item.subtitle}
                           </div>
                         </div>
                       </div>
                       <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${
-                        isActive ? 'text-white translate-x-0.5' : 'text-slate-600 opacity-60'
+                        isActive ? 'text-slate-900 translate-x-0.5' : 'text-slate-500 opacity-60'
                       }`} />
                     </button>
                   );
@@ -717,13 +717,13 @@ function SettingsPage() {
             {activeSection === 'payments' && (
               <div className="space-y-6 transition-all duration-300 animate-in fade-in">
                 {/* DUITNOW MERCHANT QR & HYBRID PAYMENT CARD */}
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xs space-y-6">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-3">
                     <div>
-                      <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                      <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
                         💳 DuitNow Merchant QR & Strategi Pembayaran
                       </h2>
-                      <p className="text-xs text-slate-400 font-mono mt-0.5">
+                      <p className="text-xs text-slate-500 font-mono mt-0.5">
                         Alliance Bank DuitNow QR (Dine-In & Kaunter POS) | ToyyibPay FPX Webhook (Penghantaran Delivery)
                       </p>
                     </div>
@@ -734,7 +734,7 @@ function SettingsPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                     <div className="relative inline-block bg-white p-4 rounded-3xl border-4 border-[#a6192e] shadow-2xl text-center">
-                      <div className="bg-[#a6192e] text-white text-xs font-black py-1.5 px-4 rounded-t-xl tracking-wider uppercase flex items-center justify-between mb-3">
+                      <div className="bg-[#a6192e] text-slate-900 text-xs font-black py-1.5 px-4 rounded-t-xl tracking-wider uppercase flex items-center justify-between mb-3">
                         <span className="flex items-center gap-1.5 font-sans">💳 DuitNow QR</span>
                         <span className="text-[10px] font-mono bg-white/20 px-2 py-0.5 rounded-full">Alliance Bank</span>
                       </div>
@@ -756,20 +756,20 @@ function SettingsPage() {
                     </div>
 
                     <div className="space-y-4">
-                      <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl space-y-2">
-                        <h4 className="text-sm font-bold text-emerald-400 flex items-center gap-2">
+                      <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-2">
+                        <h4 className="text-sm font-bold text-emerald-700 flex items-center gap-2">
                           🍽️ Dine-In & Kaunter: DuitNow QR Statik (0% Caj)
                         </h4>
-                        <p className="text-xs text-slate-300">
+                        <p className="text-xs text-slate-700">
                           Pelanggan imbas DuitNow QR Alliance Bank di kaunter atau meja. Kakitangan mengesahkan bayaran masuk pada aplikasi perbankan sebelum sahkan di POS.
                         </p>
                       </div>
 
-                      <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl space-y-2">
-                        <h4 className="text-sm font-bold text-sky-400 flex items-center gap-2">
+                      <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-2">
+                        <h4 className="text-sm font-bold text-sky-700 flex items-center gap-2">
                           🛵 Online Delivery: ToyyibPay / FPX Gateway
                         </h4>
-                        <p className="text-xs text-slate-300">
+                        <p className="text-xs text-slate-700">
                           Pesanan penghantaran diproses secara automatik dengan pengesahan tandatangan webhook pelayan ToyyibPay.
                         </p>
                       </div>
@@ -785,52 +785,52 @@ function SettingsPage() {
             {/* 3. KITCHEN & THERMAL PRINTER SETTINGS */}
             {activeSection === 'kitchen' && (
               <div className="space-y-6 transition-all duration-300 animate-in fade-in">
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-6">
-                  <h2 className="text-xl font-black text-white tracking-tight border-b border-slate-800 pb-3 flex items-center gap-2">
-                    <Printer className="w-5 h-5 text-sky-400" />
+                <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xs space-y-6">
+                  <h2 className="text-xl font-black text-slate-900 tracking-tight border-b border-slate-200 pb-3 flex items-center gap-2">
+                    <Printer className="w-5 h-5 text-sky-700" />
                     <span>Tetapan Pencetak Thermal & Penggera Dapur</span>
                   </h2>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="printer_name" className="text-slate-300 font-bold">Nama Thermal Printer</Label>
+                    <Label htmlFor="printer_name" className="text-slate-700 font-bold">Nama Thermal Printer</Label>
                     <Input
                       id="printer_name"
                       placeholder='cth: "POS-5810dd Counter"'
                       value={printerForm.printer_name}
                       onChange={(e) => setPrinterForm(prev => ({ ...prev, printer_name: e.target.value }))}
-                      className="bg-slate-950 border-slate-800 text-white placeholder-slate-600 rounded-xl font-mono text-sm"
+                      className="bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl font-mono text-sm"
                     />
                   </div>
                   
                   <div className="space-y-3">
-                    <Label className="text-slate-300 font-bold">Cetus Cetakan Automatik</Label>
+                    <Label className="text-slate-700 font-bold">Cetus Cetakan Automatik</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {[
                         { id: 'payment_confirmed', label: 'Bila Bayaran Disahkan' },
                         { id: 'ready', label: 'Bila Pesanan Siap' },
                         { id: 'completed', label: 'Bila Pesanan Selesai' },
                       ].map((trigger) => (
-                        <div key={trigger.id} className="flex items-center space-x-2 bg-slate-950 border border-slate-800 p-3 rounded-xl">
+                        <div key={trigger.id} className="flex items-center space-x-2 bg-slate-50 border border-slate-200 p-3 rounded-xl">
                           <Checkbox
                             id={trigger.id}
                             checked={printerForm.print_on_status.includes(trigger.id)}
                             onCheckedChange={() => handleToggleStatus(trigger.id)}
                             className="border-slate-700 data-[state=checked]:bg-emerald-600"
                           />
-                          <Label htmlFor={trigger.id} className="font-bold text-xs text-slate-200 cursor-pointer">{trigger.label}</Label>
+                          <Label htmlFor={trigger.id} className="font-bold text-xs text-slate-800 cursor-pointer">{trigger.label}</Label>
                         </div>
                       ))}
                     </div>
                   </div>
                   
-                  <div className="space-y-4 pt-4 border-t border-slate-800">
-                    <h3 className="font-bold text-base text-white flex items-center gap-2">🔊 Bunyi Penggera Dapur (Audio Alerts)</h3>
+                  <div className="space-y-4 pt-4 border-t border-slate-200">
+                    <h3 className="font-bold text-base text-slate-900 flex items-center gap-2">🔊 Bunyi Penggera Dapur (Audio Alerts)</h3>
                     
                     <div className="space-y-2">
-                      <Label className="text-slate-300">Pilih Bunyi Penggera</Label>
+                      <Label className="text-slate-700">Pilih Bunyi Penggera</Label>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {['kitchen_bell', 'beep_alert', 'ding_dong', 'whistle', 'buzzer', 'custom'].map(choice => (
-                          <div key={choice} className="flex items-center space-x-2 bg-slate-950 border border-slate-800 p-2.5 rounded-xl">
+                          <div key={choice} className="flex items-center space-x-2 bg-slate-50 border border-slate-200 p-2.5 rounded-xl">
                             <input 
                               type="radio" 
                               id={`sound-${choice}`} 
@@ -840,7 +840,7 @@ function SettingsPage() {
                               onChange={(e) => setPrinterForm(prev => ({ ...prev, sound_choice: e.target.value }))}
                               className="cursor-pointer accent-emerald-500"
                             />
-                            <Label htmlFor={`sound-${choice}`} className="cursor-pointer capitalize text-xs font-bold text-slate-200">
+                            <Label htmlFor={`sound-${choice}`} className="cursor-pointer capitalize text-xs font-bold text-slate-800">
                               {choice.replace('_', ' ')}
                             </Label>
                           </div>
@@ -849,17 +849,17 @@ function SettingsPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <Button type="button" variant="outline" onClick={handleTestSound} className="bg-slate-950 border-slate-800 text-slate-200 hover:text-white hover:bg-slate-800">
+                      <Button type="button" variant="outline" onClick={handleTestSound} className="bg-slate-50 border-slate-200 text-slate-800 hover:text-slate-900 hover:bg-slate-800">
                         Uji Bunyi Semasa 🔔
                       </Button>
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-slate-300">Muat Naik Bunyi Tersuai (MP3/WAV/WebM maks 5MB)</Label>
+                      <Label className="text-slate-700">Muat Naik Bunyi Tersuai (MP3/WAV/WebM maks 5MB)</Label>
                       <Input
                         type="file"
                         accept="audio/*"
-                        className="bg-slate-950 border-slate-800 text-slate-300 rounded-xl"
+                        className="bg-slate-50 border-slate-200 text-slate-700 rounded-xl"
                         onChange={(e) => {
                           const file = e.target.files?.[0];
                           if (file) handleSoundUpload(file);
@@ -868,10 +868,10 @@ function SettingsPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-slate-300">Atau Rakam Mesej Suara</Label>
+                      <Label className="text-slate-700">Atau Rakam Mesej Suara</Label>
                       <div>
                         {!isRecording ? (
-                          <Button type="button" variant="outline" onClick={handleStartRecording} className="bg-rose-950/40 text-rose-400 border-rose-800 hover:bg-rose-900">
+                          <Button type="button" variant="outline" onClick={handleStartRecording} className="bg-rose-950/40 text-rose-700 border-rose-800 hover:bg-rose-900">
                             🔴 Rakam Suara
                           </Button>
                         ) : (
@@ -882,16 +882,16 @@ function SettingsPage() {
                       </div>
                     </div>
                     {printerForm.sound_file_url && printerForm.sound_choice === 'custom' && (
-                      <p className="text-xs text-emerald-400 font-bold">✓ Bunyi tersuai siap digunakan</p>
+                      <p className="text-xs text-emerald-700 font-bold">✓ Bunyi tersuai siap digunakan</p>
                     )}
                   </div>
 
-                  <div className="space-y-4 pt-4 border-t border-slate-800">
-                    <h3 className="font-bold text-base text-white">🎨 Warna Lencana Jenis Pesanan</h3>
+                  <div className="space-y-4 pt-4 border-t border-slate-200">
+                    <h3 className="font-bold text-base text-slate-900">🎨 Warna Lencana Jenis Pesanan</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {['dineIn', 'takeaway', 'delivery', 'specialRequests'].map(key => (
                         <div key={key} className="space-y-1">
-                          <Label className="capitalize text-xs font-bold text-slate-300">{key.replace(/([A-Z])/g, ' $1').trim()}</Label>
+                          <Label className="capitalize text-xs font-bold text-slate-700">{key.replace(/([A-Z])/g, ' $1').trim()}</Label>
                           <div className="flex gap-2">
                             <input
                               type="color"
@@ -900,7 +900,7 @@ function SettingsPage() {
                                 ...prev,
                                 badge_colors: { ...prev.badge_colors, [key]: e.target.value }
                               }))}
-                              className="h-10 w-12 p-1 rounded-lg border border-slate-800 bg-slate-950 cursor-pointer"
+                              className="h-10 w-12 p-1 rounded-lg border border-slate-200 bg-slate-50 cursor-pointer"
                             />
                             <Input
                               value={printerForm.badge_colors[key]}
@@ -908,7 +908,7 @@ function SettingsPage() {
                                 ...prev,
                                 badge_colors: { ...prev.badge_colors, [key]: e.target.value }
                               }))}
-                              className="flex-1 font-mono text-sm bg-slate-950 border-slate-800 text-white rounded-xl"
+                              className="flex-1 font-mono text-sm bg-slate-50 border-slate-200 text-slate-900 rounded-xl"
                             />
                           </div>
                         </div>
@@ -951,63 +951,63 @@ function SettingsPage() {
             {/* 6. STORE INFO & PROPRIETARY LICENSE */}
             {activeSection === 'store' && (
               <div className="space-y-6 transition-all duration-300 animate-in fade-in">
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5 relative overflow-hidden">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xs space-y-5 relative overflow-hidden">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-3">
                     <div>
-                      <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+                      <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
                         🔒 Maklumat Premis & Pelesenan Sistem
                       </h2>
-                      <p className="text-xs text-slate-400 font-mono mt-0.5">Sistem Eksklusif Warung J&J Penampang, Sabah</p>
+                      <p className="text-xs text-slate-500 font-mono mt-0.5">Sistem Eksklusif Warung J&J Penampang, Sabah</p>
                     </div>
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 w-fit">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-700 border border-amber-500/20 w-fit">
                       <Lock className="w-3.5 h-3.5" /> Terkunci (Backend Sahaja)
                     </span>
                   </div>
 
-                  <div className="bg-slate-950/80 border border-slate-800/80 p-4 rounded-2xl space-y-3 text-xs leading-relaxed text-slate-300">
+                  <div className="bg-slate-50/80 border border-slate-200/80 p-4 rounded-2xl space-y-3 text-xs leading-relaxed text-slate-700">
                     <div className="flex items-start gap-3">
-                      <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0 mt-0.5" />
+                      <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
                       <div>
-                        <strong className="text-white block font-bold">Perlindungan Pelesenan Proprietary:</strong>
+                        <strong className="text-slate-900 block font-bold">Perlindungan Pelesenan Proprietary:</strong>
                         Maklumat kedai, nama restoran, dan lokasi dikunci secara kekal pada antaramuka ini untuk mengelakkan sebarang pengubahsuaian tidak sah.
                       </div>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                    <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800/60 space-y-1">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Nama Restoran / Premis</span>
-                      <p className="text-base font-black text-white">{storeForm.name || 'Warung J&J (Penampang)'}</p>
-                      <span className="text-[10px] text-emerald-400 font-mono font-semibold">Status: Aktif & Berlesen</span>
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/60 space-y-1">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Nama Restoran / Premis</span>
+                      <p className="text-base font-black text-slate-900">{storeForm.name || 'Warung J&J (Penampang)'}</p>
+                      <span className="text-[10px] text-emerald-700 font-mono font-semibold">Status: Aktif & Berlesen</span>
                     </div>
 
-                    <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800/60 space-y-1">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Alamat / Lokasi Operasi</span>
-                      <p className="text-sm font-semibold text-slate-200">{storeForm.address || 'Jalan Penampang, 89500 Penampang, Sabah'}</p>
-                      <span className="text-[10px] text-slate-400 font-mono">Koordinat: 5.918° N, 116.082° E</span>
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/60 space-y-1">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Alamat / Lokasi Operasi</span>
+                      <p className="text-sm font-semibold text-slate-800">{storeForm.address || 'Jalan Penampang, 89500 Penampang, Sabah'}</p>
+                      <span className="text-[10px] text-slate-500 font-mono">Koordinat: 5.918° N, 116.082° E</span>
                     </div>
 
-                    <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800/60 space-y-1">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">No. Telefon Utama</span>
-                      <p className="text-sm font-mono font-bold text-white">{storeForm.phone_number || '017-222 1784'}</p>
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/60 space-y-1">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">No. Telefon Utama</span>
+                      <p className="text-sm font-mono font-bold text-slate-900">{storeForm.phone_number || '017-222 1784'}</p>
                     </div>
 
-                    <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800/60 space-y-1">
-                      <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Kategori Pelesenan</span>
-                      <p className="text-sm font-bold text-emerald-400">POS Single-Tenant Proprietary License</p>
-                      <span className="text-[10px] text-slate-400 font-mono">ID: {storeId || '1094d737-8104-4a55-b678-0fe9097beba0'}</span>
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/60 space-y-1">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Kategori Pelesenan</span>
+                      <p className="text-sm font-bold text-emerald-700">POS Single-Tenant Proprietary License</p>
+                      <span className="text-[10px] text-slate-500 font-mono">ID: {storeId || '1094d737-8104-4a55-b678-0fe9097beba0'}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* ONLINE ORDERING TOGGLE CARD */}
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+                <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xs space-y-5">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
                     <div className="space-y-1">
-                      <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                        <Globe className="w-5 h-5 text-emerald-400" /> Kawalan Status Pesanan Online
+                      <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <Globe className="w-5 h-5 text-emerald-700" /> Kawalan Status Pesanan Online
                       </h2>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-slate-500">
                         Buka atau tutup kebenaran pesanan online (Laman Penghantaran / Delivery & Imbas Meja QR) secara langsung.
                       </p>
                     </div>
@@ -1015,8 +1015,8 @@ function SettingsPage() {
                     <div className="flex items-center gap-3">
                       <span className={`px-3 py-1 rounded-full text-xs font-bold font-mono border ${
                         ((store as any)?.settings?.online_ordering_enabled !== false)
-                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                          : 'bg-rose-500/10 text-rose-400 border-rose-500/30'
+                          ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30'
+                          : 'bg-rose-500/10 text-rose-700 border-rose-500/30'
                       }`}>
                         {((store as any)?.settings?.online_ordering_enabled !== false) ? '🟢 DIBUKA' : '🔴 DITUTUP'}
                       </span>
@@ -1029,16 +1029,16 @@ function SettingsPage() {
                     </div>
                   </div>
 
-                  <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800 text-xs text-slate-300 space-y-2">
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 text-xs text-slate-700 space-y-2">
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-white">Status Pesanan Pelanggan Saat Ini:</span>
+                      <span className="font-semibold text-slate-900">Status Pesanan Pelanggan Saat Ini:</span>
                       <span className="font-bold font-mono">
                         {((store as any)?.settings?.online_ordering_enabled !== false)
                           ? '✅ Pelanggan boleh membuat pesanan online'
                           : '⛔ Pesanan pelanggan disekat sementara waktu'}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
                       💡 <strong>Tip POS:</strong> Anda juga boleh membuka/menutup pesanan online bila-bila masa dengan 1-klik terus dari butang bar atas pada skrin <strong>Counter POS</strong>.
                     </p>
                   </div>
@@ -1050,30 +1050,30 @@ function SettingsPage() {
             {activeSection === 'appearance' && (
               <div className="space-y-6 transition-all duration-300 animate-in fade-in">
                 {/* HOMEPAGE CUSTOMIZATION CARD */}
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-5">
-                  <h2 className="text-xl font-black text-white tracking-tight border-b border-slate-800 pb-3">
+                <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xs space-y-5">
+                  <h2 className="text-xl font-black text-slate-900 tracking-tight border-b border-slate-200 pb-3">
                     Tampilan Laman Utama (Homepage)
                   </h2>
                   <div className="space-y-6">
-                    <div className="space-y-4 bg-slate-950/50 p-4 rounded-2xl border border-slate-800/50">
-                      <h3 className="font-bold text-slate-200">Seksyen Hero Utama</h3>
+                    <div className="space-y-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-200/50">
+                      <h3 className="font-bold text-slate-800">Seksyen Hero Utama</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label htmlFor="heroTitle" className="text-slate-400 text-xs">Tajuk Hero</Label>
+                          <Label htmlFor="heroTitle" className="text-slate-500 text-xs">Tajuk Hero</Label>
                           <Input
                             id="heroTitle"
                             value={homepageForm.hero_title}
                             onChange={(e) => setHomepageForm(prev => ({ ...prev, hero_title: e.target.value }))}
-                            className="bg-slate-950 border-slate-800 text-white rounded-xl text-sm"
+                            className="bg-slate-50 border-slate-200 text-slate-900 rounded-xl text-sm"
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label htmlFor="heroImage" className="text-slate-400 text-xs">Gambar Hero (Pilihan Menu)</Label>
+                          <Label htmlFor="heroImage" className="text-slate-500 text-xs">Gambar Hero (Pilihan Menu)</Label>
                           <select
                             id="heroImage"
                             value={homepageForm.hero_item_id}
                             onChange={(e) => setHomepageForm(prev => ({ ...prev, hero_item_id: e.target.value }))}
-                            className="flex h-10 w-full items-center justify-between rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:outline-none"
+                            className="flex h-10 w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:outline-none"
                           >
                             <option value="">-- Gunakan Default (Item Pilihan #1) --</option>
                             {menuItems?.filter(i => i.image_url).map(item => (
@@ -1109,22 +1109,22 @@ function SettingsPage() {
             {/* 9. SECURITY & AUDIT LOGS */}
             {activeSection === 'security' && (
               <div className="space-y-6 transition-all duration-300 animate-in fade-in">
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                    <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
-                      <ShieldCheck className="w-5 h-5 text-rose-400" />
+                <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xs space-y-4">
+                  <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+                    <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 text-rose-700" />
                       <span>Audit & Keselamatan Operasi POS</span>
                     </h2>
                     <Badge className="bg-rose-500/20 text-rose-300 border-rose-500/30 text-xs">
                       RLS-Protected
                     </Badge>
                   </div>
-                  <p className="text-xs text-slate-400 font-mono leading-relaxed">
+                  <p className="text-xs text-slate-500 font-mono leading-relaxed">
                     Pantau rekod pengubahan pesanan, pembukaan laci tunai, pembatalan resit, dan aktiviti juruwang untuk kawalan integriti premis.
                   </p>
                   <Link to="/settings/audit-log" className="block pt-2">
-                    <Button className="w-full bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 font-bold rounded-2xl py-3.5 gap-2">
-                      <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                    <Button className="w-full bg-slate-800 hover:bg-slate-700 text-slate-900 border border-slate-700 font-bold rounded-2xl py-3.5 gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-700" />
                       <span>Buka Log Audit Staf & Keselamatan POS</span>
                     </Button>
                   </Link>
@@ -1221,13 +1221,13 @@ function NavbarCustomizerCard() {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6 font-sans">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-800 pb-4">
+    <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xl space-y-6 font-sans">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-slate-200 pb-4">
         <div>
-          <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+          <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             <span>🎛️ Drag & Drop Navigation Header Customizer</span>
           </h2>
-          <p className="text-xs text-slate-400 font-mono mt-0.5">
+          <p className="text-xs text-slate-500 font-mono mt-0.5">
             Grab any tab (via ⠿ handle or item pill) and drag to rearrange tab positions (e.g. move Menu next to Orders)!
           </p>
         </div>
@@ -1244,7 +1244,7 @@ function NavbarCustomizerCard() {
             variant="outline" 
             size="sm"
             onClick={handleReset}
-            className="border-slate-800 text-slate-300 hover:text-white font-mono text-xs shrink-0"
+            className="border-slate-200 text-slate-700 hover:text-slate-900 font-mono text-xs shrink-0"
           >
             🔄 Reset Default
           </Button>
@@ -1254,12 +1254,12 @@ function NavbarCustomizerCard() {
       {/* DRAGGABLE LIVE HEADER PREVIEW BAR */}
       <div className="space-y-2">
         <div className="flex items-center justify-between font-mono">
-          <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider">Live Header Preview (Drag items directly here):</span>
+          <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Live Header Preview (Drag items directly here):</span>
           <span className="text-[10px] text-slate-500">🖱️ Drag & Drop supported</span>
         </div>
 
-        <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center gap-2 overflow-x-auto">
-          <div className="flex items-center gap-1.5 shrink-0 pr-3 border-r border-slate-800 font-black text-emerald-400 text-sm select-none">
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex items-center gap-2 overflow-x-auto">
+          <div className="flex items-center gap-1.5 shrink-0 pr-3 border-r border-slate-200 font-black text-emerald-700 text-sm select-none">
             <img src="/logo.png" alt="Logo" className="w-6 h-6 rounded-full" />
             <span>Warung J&J</span>
           </div>
@@ -1278,10 +1278,10 @@ function NavbarCustomizerCard() {
                   onDragOver={(e) => handleDragOver(e, idx)}
                   onDrop={(e) => handleDrop(e, idx)}
                   onDragEnd={() => { setDraggedIdx(null); setDragOverIdx(null); }}
-                  className={`bg-slate-900 border px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-grab active:cursor-grabbing select-none transition-all duration-200 ${
+                  className={`bg-white border px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-grab active:cursor-grabbing select-none transition-all duration-200 ${
                     isBeingDragged 
                       ? 'opacity-40 border-amber-400 scale-95' 
-                      : (isTargetSlot ? 'border-2 border-emerald-400 bg-emerald-950/40 ring-2 ring-emerald-500/50' : 'border-slate-800 text-slate-200 hover:border-slate-700 hover:bg-slate-800')
+                      : (isTargetSlot ? 'border-2 border-emerald-400 bg-emerald-950/40 ring-2 ring-emerald-500/50' : 'border-slate-200 text-slate-800 hover:border-slate-700 hover:bg-slate-800')
                   }`}
                 >
                   <GripVertical className="w-3.5 h-3.5 text-slate-500 shrink-0" />
@@ -1296,8 +1296,8 @@ function NavbarCustomizerCard() {
 
       {/* REORDER & VISIBILITY CONTROLS LIST WITH DRAG HANDLES */}
       <div className="space-y-2 font-mono">
-        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Full Nav Items List (Drag rows or click arrows):</span>
-        <div className="divide-y divide-slate-800 border border-slate-800 rounded-xl overflow-hidden bg-slate-950 text-xs">
+        <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Full Nav Items List (Drag rows or click arrows):</span>
+        <div className="divide-y divide-slate-800 border border-slate-200 rounded-xl overflow-hidden bg-slate-50 text-xs">
           {navItems.map((item, idx) => {
             const isBeingDragged = draggedIdx === idx;
             const isTargetSlot = dragOverIdx === idx;
@@ -1313,18 +1313,18 @@ function NavbarCustomizerCard() {
                 className={`p-3 flex items-center justify-between transition-all duration-200 cursor-grab active:cursor-grabbing select-none ${
                   isBeingDragged 
                     ? 'opacity-40 bg-amber-500/10 border-amber-400' 
-                    : (isTargetSlot ? 'bg-emerald-950/60 border-y-2 border-emerald-400' : 'hover:bg-slate-900/70')
+                    : (isTargetSlot ? 'bg-emerald-950/60 border-y-2 border-emerald-400' : 'hover:bg-white/70')
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <GripVertical className="w-4 h-4 text-slate-500 hover:text-white shrink-0 cursor-grab" />
+                  <GripVertical className="w-4 h-4 text-slate-500 hover:text-slate-900 shrink-0 cursor-grab" />
                   <Switch
                     checked={item.visible}
                     onCheckedChange={() => handleToggleVisibility(item.id)}
                   />
                   <div className="flex items-center gap-2">
                     <span className="text-base">{item.emoji}</span>
-                    <span className={`font-bold text-sm ${item.visible ? 'text-white' : 'text-slate-500 line-through'}`}>
+                    <span className={`font-bold text-sm ${item.visible ? 'text-slate-900' : 'text-slate-500 line-through'}`}>
                       {item.label}
                     </span>
                     <span className="text-[10px] text-slate-500 font-mono">({item.path})</span>
@@ -1337,7 +1337,7 @@ function NavbarCustomizerCard() {
                     variant="ghost"
                     disabled={idx === 0}
                     onClick={(e) => { e.stopPropagation(); handleMove(idx, 'up'); }}
-                    className="h-8 w-8 p-0 text-slate-300 hover:text-white disabled:opacity-30 border border-slate-800"
+                    className="h-8 w-8 p-0 text-slate-700 hover:text-slate-900 disabled:opacity-30 border border-slate-200"
                     title="Move Left"
                   >
                     ⬅️
@@ -1347,7 +1347,7 @@ function NavbarCustomizerCard() {
                     variant="ghost"
                     disabled={idx === navItems.length - 1}
                     onClick={(e) => { e.stopPropagation(); handleMove(idx, 'down'); }}
-                    className="h-8 w-8 p-0 text-slate-300 hover:text-white disabled:opacity-30 border border-slate-800"
+                    className="h-8 w-8 p-0 text-slate-700 hover:text-slate-900 disabled:opacity-30 border border-slate-200"
                     title="Move Right"
                   >
                     ➡️
@@ -1401,13 +1401,13 @@ function RefundQueueCard() {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+    <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xl space-y-4">
+      <div className="flex items-center justify-between border-b border-slate-200 pb-3">
         <div>
-          <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+          <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             🔴 Staff Refund Queue (Manual DuitNow QR Transfer)
           </h2>
-          <p className="text-xs text-slate-400 font-mono mt-0.5">
+          <p className="text-xs text-slate-500 font-mono mt-0.5">
             Process manual refunds via Alliance Bank DuitNow QR to customer phone numbers. Enforces idempotency & rider-race guards.
           </p>
         </div>
@@ -1419,26 +1419,26 @@ function RefundQueueCard() {
       {isLoading ? (
         <div className="text-center py-6 text-slate-500 font-mono text-xs">Loading refund queue...</div>
       ) : pendingRefunds?.length === 0 ? (
-        <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl text-center text-xs text-emerald-400 font-mono">
+        <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center text-xs text-emerald-700 font-mono">
           ✓ No pending refunds in queue. All orders clear!
         </div>
       ) : (
         <div className="space-y-3">
           {pendingRefunds?.map(order => (
-            <div key={order.id} className="bg-slate-950 border border-slate-800 p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-xs">
+            <div key={order.id} className="bg-slate-50 border border-slate-200 p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-xs">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-white text-sm">Order #{order.id.slice(0, 8)}</span>
+                  <span className="font-bold text-slate-900 text-sm">Order #{order.id.slice(0, 8)}</span>
                   <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px]">
                     {order.type}
                   </Badge>
                 </div>
-                <p className="text-slate-400">Customer Phone: <span className="text-emerald-400 font-bold">{order.customer_phone || 'N/A'}</span></p>
+                <p className="text-slate-500">Customer Phone: <span className="text-emerald-700 font-bold">{order.customer_phone || 'N/A'}</span></p>
                 <p className="text-slate-500 text-[10px]">Created: {new Date(order.created_at).toLocaleTimeString()}</p>
               </div>
 
               <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                <span className="font-black text-rose-400 text-lg">RM {order.total_amount.toFixed(2)}</span>
+                <span className="font-black text-rose-700 text-lg">RM {order.total_amount.toFixed(2)}</span>
                 <Button
                   size="sm"
                   onClick={() => handleConfirmRefund(order.id)}
@@ -1474,20 +1474,20 @@ function ToyyibPaySettingsCard() {
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+    <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xl space-y-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-200 pb-4">
         <div>
-          <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
-            <Globe className="w-5 h-5 text-emerald-400" />
+          <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+            <Globe className="w-5 h-5 text-emerald-700" />
             ToyyibPay FPX Gateway Settings
           </h2>
-          <p className="text-xs text-slate-400 font-mono mt-0.5">
+          <p className="text-xs text-slate-500 font-mono mt-0.5">
             Sistem pembayaran automatik FPX Online Banking Malaysia (Maybank, CIMB, Bank Islam, etc.)
           </p>
         </div>
         <div className="flex items-center gap-2">
           {config.userSecretKey && config.categoryCode ? (
-            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 text-xs px-2.5 py-0.5 font-bold">
+            <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30 text-xs px-2.5 py-0.5 font-bold">
               ● API Siap Dikonfigurasi
             </Badge>
           ) : (
@@ -1501,15 +1501,15 @@ function ToyyibPaySettingsCard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* User Secret Key */}
         <div className="space-y-1.5">
-          <Label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-            <Key className="w-3.5 h-3.5 text-amber-400" /> ToyyibPay User Secret Key
+          <Label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <Key className="w-3.5 h-3.5 text-amber-700" /> ToyyibPay User Secret Key
           </Label>
           <Input 
             type="password"
             placeholder="e.g. w5x7srq7-rx5r-3t89-2ou2-k7361x2jewhn"
             value={config.userSecretKey}
             onChange={(e) => setConfig(prev => ({ ...prev, userSecretKey: e.target.value }))}
-            className="bg-slate-950 border-slate-800 text-slate-100 font-mono text-xs h-10 rounded-xl"
+            className="bg-slate-50 border-slate-200 text-slate-900 font-mono text-xs h-10 rounded-xl"
           />
           <p className="text-[11px] text-slate-500">
             Dapatkan User Secret Key daripada portal rasmi ToyyibPay selepas pendaftaran diluluskan.
@@ -1518,14 +1518,14 @@ function ToyyibPaySettingsCard() {
 
         {/* Category Code */}
         <div className="space-y-1.5">
-          <Label className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-            <Globe className="w-3.5 h-3.5 text-sky-400" /> ToyyibPay Category Code
+          <Label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+            <Globe className="w-3.5 h-3.5 text-sky-700" /> ToyyibPay Category Code
           </Label>
           <Input 
             placeholder="e.g. gcbhict9"
             value={config.categoryCode}
             onChange={(e) => setConfig(prev => ({ ...prev, categoryCode: e.target.value }))}
-            className="bg-slate-950 border-slate-800 text-slate-100 font-mono text-xs h-10 rounded-xl"
+            className="bg-slate-50 border-slate-200 text-slate-900 font-mono text-xs h-10 rounded-xl"
           />
           <p className="text-[11px] text-slate-500">
             Kod kategori bil yang dicipta di bawah menu Category dalam akaun ToyyibPay anda.
@@ -1534,11 +1534,11 @@ function ToyyibPaySettingsCard() {
       </div>
 
       {/* Options */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800">
-        <div className="flex items-center justify-between bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-200">
+        <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-xl border border-slate-200">
           <div className="space-y-0.5">
-            <Label className="text-xs font-bold text-slate-200 block">Caj FPX kepada Pelanggan</Label>
-            <span className="text-[10px] text-slate-400 block">Caj RM1.00 FPX ditanggung oleh pembeli</span>
+            <Label className="text-xs font-bold text-slate-800 block">Caj FPX kepada Pelanggan</Label>
+            <span className="text-[10px] text-slate-500 block">Caj RM1.00 FPX ditanggung oleh pembeli</span>
           </div>
           <Switch 
             checked={config.chargeToCustomer} 
@@ -1546,10 +1546,10 @@ function ToyyibPaySettingsCard() {
           />
         </div>
 
-        <div className="flex items-center justify-between bg-slate-950 p-3.5 rounded-xl border border-slate-800">
+        <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-xl border border-slate-200">
           <div className="space-y-0.5">
-            <Label className="text-xs font-bold text-slate-200 block">Mod Sandbox (Testing)</Label>
-            <span className="text-[10px] text-slate-400 block">Gunakan akaun dev.toyyibpay.com untuk ujian</span>
+            <Label className="text-xs font-bold text-slate-800 block">Mod Sandbox (Testing)</Label>
+            <span className="text-[10px] text-slate-500 block">Gunakan akaun dev.toyyibpay.com untuk ujian</span>
           </div>
           <Switch 
             checked={config.isSandbox} 
@@ -1564,7 +1564,7 @@ function ToyyibPaySettingsCard() {
           href="https://toyyibpay.com" 
           target="_blank" 
           rel="noreferrer" 
-          className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1.5 underline"
+          className="text-xs text-emerald-700 hover:text-emerald-300 flex items-center gap-1.5 underline"
         >
           <ExternalLink className="w-3.5 h-3.5" /> Buka Portal ToyyibPay Malaysia
         </a>
@@ -2081,31 +2081,31 @@ function AdminRiderManagementCard() {
 
   // Check if license is valid
   const checkLicenseStatus = (expiryDate: string) => {
-    if (!expiryDate) return { valid: false, text: 'Tiada Tarikh', color: 'text-amber-400' };
+    if (!expiryDate) return { valid: false, text: 'Tiada Tarikh', color: 'text-amber-700' };
     const exp = new Date(expiryDate);
     const now = new Date();
     const diffDays = Math.ceil((exp.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
     
     if (diffDays < 0) {
-      return { valid: false, text: '🔴 Lesen Tamat Tempoh', color: 'text-rose-400 bg-rose-500/10 border-rose-500/30' };
+      return { valid: false, text: '🔴 Lesen Tamat Tempoh', color: 'text-rose-700 bg-rose-500/10 border-rose-500/30' };
     } else if (diffDays <= 30) {
-      return { valid: true, text: `⚠️ Luput dlm ${diffDays} hari`, color: 'text-amber-400 bg-amber-500/10 border-amber-500/30' };
+      return { valid: true, text: `⚠️ Luput dlm ${diffDays} hari`, color: 'text-amber-700 bg-amber-500/10 border-amber-500/30' };
     } else {
-      return { valid: true, text: '🟢 Lesen Sah', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' };
+      return { valid: true, text: '🟢 Lesen Sah', color: 'text-emerald-700 bg-emerald-500/10 border-emerald-500/30' };
     }
   };
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+    <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xl space-y-6">
       
       {/* HEADER BAR */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
         <div>
-          <h2 className="text-xl font-black text-white tracking-tight flex items-center gap-2">
+          <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             <span>🛵</span>
             <span>Pengurusan & Pendaftaran Rakan Penghantar (KYC & Gaji Rider)</span>
           </h2>
-          <p className="text-xs text-slate-400 font-mono mt-0.5">
+          <p className="text-xs text-slate-500 font-mono mt-0.5">
             Pendaftaran bersemuka oleh Admin. Lengkap dengan MyKad, lesen sah, kenderaan, akaun bank gaji, & dokumen foto.
           </p>
         </div>
@@ -2122,9 +2122,9 @@ function AdminRiderManagementCard() {
 
       {/* FULL KYC ONBOARDING FORM */}
       {showForm && (
-        <form onSubmit={handleRegisterRiderKYC} className="bg-slate-950 border-2 border-amber-500/40 p-5 rounded-2xl space-y-5 font-mono">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <div className="flex items-center gap-2 text-amber-400 font-bold text-sm">
+        <form onSubmit={handleRegisterRiderKYC} className="bg-slate-50 border-2 border-amber-500/40 p-5 rounded-2xl space-y-5 font-mono">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+            <div className="flex items-center gap-2 text-amber-700 font-bold text-sm">
               <UserCheck className="w-5 h-5 text-amber-500" />
               <span>Borang Pengesahan Identiti, Kenderaan & Akaun Bank Gaji Rider</span>
             </div>
@@ -2135,86 +2135,86 @@ function AdminRiderManagementCard() {
 
           {/* SECTION 1: BUTIRAN PERIBADI & MYKAD */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <User className="w-4 h-4 text-emerald-400" />
+            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <User className="w-4 h-4 text-emerald-700" />
               <span>1. Butiran Peribadi & Kad Pengenalan</span>
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
               <div className="space-y-1">
-                <Label className="text-slate-300 font-bold">Nama Penuh Seperti Dalam MyKad *</Label>
+                <Label className="text-slate-700 font-bold">Nama Penuh Seperti Dalam MyKad *</Label>
                 <Input
                   placeholder="cth: Mohd Azlan Bin Ramli"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-slate-300 font-bold">No. Kad Pengenalan (MyKad) *</Label>
+                <Label className="text-slate-700 font-bold">No. Kad Pengenalan (MyKad) *</Label>
                 <Input
                   placeholder="cth: 920514-12-5678"
                   value={icNumber}
                   onChange={(e) => setIcNumber(e.target.value)}
-                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-slate-300 font-bold">No. Telefon WhatsApp *</Label>
+                <Label className="text-slate-700 font-bold">No. Telefon WhatsApp *</Label>
                 <Input
                   placeholder="cth: 019-888 7766"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl"
                   required
                 />
               </div>
 
               <div className="space-y-1 sm:col-span-2">
-                <Label className="text-slate-300 font-bold">Alamat Kediaman Lengkap *</Label>
+                <Label className="text-slate-700 font-bold">Alamat Kediaman Lengkap *</Label>
                 <Input
                   placeholder="cth: No. 12, Lorong 3, Taman Penampang, 89500 Penampang, Sabah"
                   value={homeAddress}
                   onChange={(e) => setHomeAddress(e.target.value)}
-                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-slate-300 font-bold">No. Telefon Waris / Kecemasan</Label>
+                <Label className="text-slate-700 font-bold">No. Telefon Waris / Kecemasan</Label>
                 <Input
                   placeholder="cth: 012-345 6789 (Isteri)"
                   value={emergencyContact}
                   onChange={(e) => setEmergencyContact(e.target.value)}
-                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl"
                 />
               </div>
             </div>
           </div>
 
           {/* SECTION 2: AKAUN BANK UNTUK PEMBAYARAN GAJI & UPAH */}
-          <div className="space-y-3 pt-3 border-t border-slate-800">
-            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <Landmark className="w-4 h-4 text-emerald-400" />
+          <div className="space-y-3 pt-3 border-t border-slate-200">
+            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <Landmark className="w-4 h-4 text-emerald-700" />
               <span>2. Maklumat Akaun Bank Rider (Untuk Bayaran Gaji & Komisen)</span>
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div className="space-y-1">
-                <Label className="text-slate-300 font-bold">Nama Bank *</Label>
+                <Label className="text-slate-700 font-bold">Nama Bank *</Label>
                 <select
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-800 text-white h-10 rounded-xl px-3 text-xs focus:outline-none focus:border-amber-500"
+                  className="w-full bg-white border border-slate-200 text-slate-900 h-10 rounded-xl px-3 text-xs focus:outline-none focus:border-amber-500"
                   required
                 >
                   {MALAYSIAN_BANKS.map((b) => (
-                    <option key={b} value={b} className="bg-slate-900 text-white">
+                    <option key={b} value={b} className="bg-white text-slate-900">
                       {b}
                     </option>
                   ))}
@@ -2222,108 +2222,108 @@ function AdminRiderManagementCard() {
               </div>
 
               <div className="space-y-1">
-                <Label className="text-slate-300 font-bold">No. Akaun Bank Rider *</Label>
+                <Label className="text-slate-700 font-bold">No. Akaun Bank Rider *</Label>
                 <Input
                   placeholder="cth: 162012345678"
                   value={bankAccountNumber}
                   onChange={(e) => setBankAccountNumber(e.target.value)}
-                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl font-bold tracking-wider"
+                  className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl font-bold tracking-wider"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-slate-300 font-bold">Nama Pemegang Akaun (Seperti di Bank)</Label>
+                <Label className="text-slate-700 font-bold">Nama Pemegang Akaun (Seperti di Bank)</Label>
                 <Input
                   placeholder="Sama seperti nama MyKad jika kosong"
                   value={bankAccountHolder}
                   onChange={(e) => setBankAccountHolder(e.target.value)}
-                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl"
                 />
               </div>
             </div>
           </div>
 
           {/* SECTION 3: KENDERAAN & LESEN MEMANDU */}
-          <div className="space-y-3 pt-3 border-t border-slate-800">
-            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <Bike className="w-4 h-4 text-sky-400" />
+          <div className="space-y-3 pt-3 border-t border-slate-200">
+            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <Bike className="w-4 h-4 text-sky-700" />
               <span>3. Maklumat Kenderaan & Lesen Memandu</span>
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
               <div className="space-y-1">
-                <Label className="text-slate-300 font-bold">No. Plat Motosikal / Kenderaan *</Label>
+                <Label className="text-slate-700 font-bold">No. Plat Motosikal / Kenderaan *</Label>
                 <Input
                   placeholder="cth: SAB 1234 A"
                   value={vehiclePlate}
                   onChange={(e) => setVehiclePlate(e.target.value)}
-                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl uppercase"
+                  className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl uppercase"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-slate-300 font-bold">Model / Jenis Kenderaan</Label>
+                <Label className="text-slate-700 font-bold">Model / Jenis Kenderaan</Label>
                 <Input
                   placeholder="cth: Yamaha Y15ZR / Honda RSX"
                   value={vehicleModel}
                   onChange={(e) => setVehicleModel(e.target.value)}
-                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl"
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-slate-300 font-bold">Tarikh Sah Lesen Memandu *</Label>
+                <Label className="text-slate-700 font-bold">Tarikh Sah Lesen Memandu *</Label>
                 <Input
                   type="date"
                   value={licenseExpiry}
                   onChange={(e) => setLicenseExpiry(e.target.value)}
-                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-slate-300 font-bold">Tarikh Luput Cukai Jalan (Roadtax)</Label>
+                <Label className="text-slate-700 font-bold">Tarikh Luput Cukai Jalan (Roadtax)</Label>
                 <Input
                   type="date"
                   value={roadtaxExpiry}
                   onChange={(e) => setRoadtaxExpiry(e.target.value)}
-                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl"
                 />
               </div>
             </div>
           </div>
 
           {/* SECTION 4: LOG MASUK SISTEM */}
-          <div className="space-y-3 pt-3 border-t border-slate-800">
-            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <Lock className="w-4 h-4 text-amber-400" />
+          <div className="space-y-3 pt-3 border-t border-slate-200">
+            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <Lock className="w-4 h-4 text-amber-700" />
               <span>4. Akaun Log Masuk Rider</span>
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div className="space-y-1">
-                <Label className="text-slate-300 font-bold">Emel Log Masuk Rider *</Label>
+                <Label className="text-slate-700 font-bold">Emel Log Masuk Rider *</Label>
                 <Input
                   type="email"
                   placeholder="azlan.rider@warungjnj.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl"
                   required
                 />
               </div>
 
               <div className="space-y-1">
-                <Label className="text-slate-300 font-bold">Kata Laluan Sementara *</Label>
+                <Label className="text-slate-700 font-bold">Kata Laluan Sementara *</Label>
                 <Input
                   type="text"
                   placeholder="cth: warung123456"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="bg-slate-900 border-slate-800 text-white h-10 rounded-xl"
+                  className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl"
                   required
                 />
               </div>
@@ -2331,16 +2331,16 @@ function AdminRiderManagementCard() {
           </div>
 
           {/* SECTION 5: TANGKAP GAMBAR DOKUMEN, FOTO RIDER & PENYATA BANK */}
-          <div className="space-y-3 pt-3 border-t border-slate-800">
-            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <Camera className="w-4 h-4 text-emerald-400" />
+          <div className="space-y-3 pt-3 border-t border-slate-200">
+            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <Camera className="w-4 h-4 text-emerald-700" />
               <span>5. Tangkap Gambar Wajah & Dokumen Pengesahan (Kamera / Muat Naik)</span>
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
               {/* Foto Wajah Rider */}
-              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl space-y-2 text-center">
-                <Label className="text-slate-300 font-bold block text-left">📸 Foto Wajah Rider</Label>
+              <div className="bg-white border border-slate-200 p-3 rounded-xl space-y-2 text-center">
+                <Label className="text-slate-700 font-bold block text-left">📸 Foto Wajah Rider</Label>
                 {photoRider ? (
                   <div className="relative aspect-video rounded-lg overflow-hidden border border-emerald-500/50">
                     <img src={photoRider} alt="Foto Rider" className="w-full h-full object-cover" />
@@ -2354,8 +2354,8 @@ function AdminRiderManagementCard() {
                   </div>
                 ) : (
                   <label className="border-2 border-dashed border-slate-700 hover:border-amber-500 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
-                    <Camera className="w-5 h-5 text-amber-400 mb-1" />
-                    <span className="text-[11px] text-slate-300 font-bold">Ambil Foto Wajah</span>
+                    <Camera className="w-5 h-5 text-amber-700 mb-1" />
+                    <span className="text-[11px] text-slate-700 font-bold">Ambil Foto Wajah</span>
                     <span className="text-[9px] text-slate-500">Kamera atau Galeri</span>
                     <input
                       type="file"
@@ -2369,8 +2369,8 @@ function AdminRiderManagementCard() {
               </div>
 
               {/* Foto Kad Pengenalan */}
-              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl space-y-2 text-center">
-                <Label className="text-slate-300 font-bold block text-left">📄 Salinan MyKad</Label>
+              <div className="bg-white border border-slate-200 p-3 rounded-xl space-y-2 text-center">
+                <Label className="text-slate-700 font-bold block text-left">📄 Salinan MyKad</Label>
                 {photoIc ? (
                   <div className="relative aspect-video rounded-lg overflow-hidden border border-emerald-500/50">
                     <img src={photoIc} alt="Salinan IC" className="w-full h-full object-cover" />
@@ -2384,8 +2384,8 @@ function AdminRiderManagementCard() {
                   </div>
                 ) : (
                   <label className="border-2 border-dashed border-slate-700 hover:border-sky-500 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
-                    <FileText className="w-5 h-5 text-sky-400 mb-1" />
-                    <span className="text-[11px] text-slate-300 font-bold">Tangkap Gambar IC</span>
+                    <FileText className="w-5 h-5 text-sky-700 mb-1" />
+                    <span className="text-[11px] text-slate-700 font-bold">Tangkap Gambar IC</span>
                     <span className="text-[9px] text-slate-500">Kamera atau Fail</span>
                     <input
                       type="file"
@@ -2399,8 +2399,8 @@ function AdminRiderManagementCard() {
               </div>
 
               {/* Foto Lesen Memandu */}
-              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl space-y-2 text-center">
-                <Label className="text-slate-300 font-bold block text-left">🪪 Salinan Lesen</Label>
+              <div className="bg-white border border-slate-200 p-3 rounded-xl space-y-2 text-center">
+                <Label className="text-slate-700 font-bold block text-left">🪪 Salinan Lesen</Label>
                 {photoLicense ? (
                   <div className="relative aspect-video rounded-lg overflow-hidden border border-emerald-500/50">
                     <img src={photoLicense} alt="Salinan Lesen" className="w-full h-full object-cover" />
@@ -2414,8 +2414,8 @@ function AdminRiderManagementCard() {
                   </div>
                 ) : (
                   <label className="border-2 border-dashed border-slate-700 hover:border-emerald-500 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
-                    <Upload className="w-5 h-5 text-emerald-400 mb-1" />
-                    <span className="text-[11px] text-slate-300 font-bold">Tangkap Gambar Lesen</span>
+                    <Upload className="w-5 h-5 text-emerald-700 mb-1" />
+                    <span className="text-[11px] text-slate-700 font-bold">Tangkap Gambar Lesen</span>
                     <span className="text-[9px] text-slate-500">Kamera atau Fail</span>
                     <input
                       type="file"
@@ -2429,8 +2429,8 @@ function AdminRiderManagementCard() {
               </div>
 
               {/* Foto Penyata / Kad Bank */}
-              <div className="bg-slate-900 border border-slate-800 p-3 rounded-xl space-y-2 text-center">
-                <Label className="text-slate-300 font-bold block text-left">💳 Salinan Penyata / Kad Bank</Label>
+              <div className="bg-white border border-slate-200 p-3 rounded-xl space-y-2 text-center">
+                <Label className="text-slate-700 font-bold block text-left">💳 Salinan Penyata / Kad Bank</Label>
                 {photoBankStatement ? (
                   <div className="relative aspect-video rounded-lg overflow-hidden border border-emerald-500/50">
                     <img src={photoBankStatement} alt="Salinan Penyata Bank" className="w-full h-full object-cover" />
@@ -2444,8 +2444,8 @@ function AdminRiderManagementCard() {
                   </div>
                 ) : (
                   <label className="border-2 border-dashed border-slate-700 hover:border-amber-500 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
-                    <CreditCard className="w-5 h-5 text-amber-400 mb-1" />
-                    <span className="text-[11px] text-slate-300 font-bold">Penyata / Kad Bank</span>
+                    <CreditCard className="w-5 h-5 text-amber-700 mb-1" />
+                    <span className="text-[11px] text-slate-700 font-bold">Penyata / Kad Bank</span>
                     <span className="text-[9px] text-slate-500">Kamera atau Fail</span>
                     <input
                       type="file"
@@ -2461,8 +2461,8 @@ function AdminRiderManagementCard() {
           </div>
 
           {/* SUBMIT BUTTON */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-800">
-            <span className="text-[11px] text-slate-400">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200">
+            <span className="text-[11px] text-slate-500">
               🛡️ Semua butiran peribadi & akaun bank disimpan secara selamat dalam pangkalan data berpusat Warung J&J.
             </span>
 
@@ -2479,23 +2479,23 @@ function AdminRiderManagementCard() {
 
       {/* VERIFIED RIDERS LIST */}
       <div className="space-y-3 font-mono">
-        <div className="flex items-center justify-between text-xs text-slate-400">
-          <span className="font-bold text-slate-300 uppercase tracking-wider">
+        <div className="flex items-center justify-between text-xs text-slate-500">
+          <span className="font-bold text-slate-700 uppercase tracking-wider">
             Senarai Rakan Penghantar Sah Warung J&J ({kycRecords.length || dbRiders?.length || 0})
           </span>
           <button
             type="button"
             onClick={() => { refetchStore(); refetchUsers(); }}
-            className="text-amber-400 hover:underline inline-flex items-center gap-1"
+            className="text-amber-700 hover:underline inline-flex items-center gap-1"
           >
             <RefreshCw className="w-3 h-3" /> Kemaskini Rekod
           </button>
         </div>
 
         {kycRecords.length === 0 && (!dbRiders || dbRiders.length === 0) ? (
-          <div className="p-8 text-center bg-slate-950 rounded-2xl border border-slate-800 text-slate-500 text-xs space-y-2">
+          <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 text-slate-500 text-xs space-y-2">
             <Bike className="w-8 h-8 mx-auto text-slate-600" />
-            <p className="font-bold text-slate-400">Belum ada rakan penghantar didaftarkan.</p>
+            <p className="font-bold text-slate-500">Belum ada rakan penghantar didaftarkan.</p>
             <p className="text-[11px]">Gunakan butang "➕ Daftar Rider Baru (KYC & Gaji)" di atas untuk memulakan proses pendaftaran.</p>
           </div>
         ) : (
@@ -2509,11 +2509,11 @@ function AdminRiderManagementCard() {
               return (
                 <div
                   key={rider.id}
-                  className={`bg-slate-950 border ${isApproved ? 'border-slate-800' : 'border-amber-500/50'} hover:border-amber-500/40 p-4 rounded-2xl flex flex-col justify-between gap-3 shadow-lg transition-all`}
+                  className={`bg-slate-50 border ${isApproved ? 'border-slate-200' : 'border-amber-500/50'} hover:border-amber-500/40 p-4 rounded-2xl flex flex-col justify-between gap-3 shadow-lg transition-all`}
                 >
                   <div className="flex items-start gap-3">
                     {/* AVATAR / PHOTO */}
-                    <div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-700 overflow-hidden shrink-0 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-slate-700 overflow-hidden shrink-0 flex items-center justify-center">
                       {rider.photoRider ? (
                         <img src={rider.photoRider} alt={rider.fullName} className="w-full h-full object-cover" />
                       ) : (
@@ -2524,11 +2524,11 @@ function AdminRiderManagementCard() {
                     {/* RIDER INFO */}
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center justify-between gap-2">
-                        <h4 className="font-bold text-white text-sm truncate">{rider.fullName}</h4>
+                        <h4 className="font-bold text-slate-900 text-sm truncate">{rider.fullName}</h4>
                         <div className="flex items-center gap-1.5 shrink-0">
                           {/* LIVE STATUS BADGE */}
                           {statusVal === 'available' && (
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 animate-pulse">
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 border border-emerald-500/40 animate-pulse">
                               🟢 ONLINE
                             </span>
                           )}
@@ -2538,36 +2538,36 @@ function AdminRiderManagementCard() {
                             </span>
                           )}
                           {statusVal === 'offline' && (
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-500 border border-slate-700">
                               ⚪ OFFLINE
                             </span>
                           )}
-                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${isApproved ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-400 border-amber-500/30'}`}>
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${isApproved ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30' : 'bg-amber-500/10 text-amber-700 border-amber-500/30'}`}>
                             {isApproved ? 'APPROVED' : 'PENDING'}
                           </span>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-2 text-xs">
-                        <span className="text-amber-400 font-bold flex items-center gap-1">
+                        <span className="text-amber-700 font-bold flex items-center gap-1">
                           <Bike className="w-3.5 h-3.5 text-amber-500" />
                           {rider.vehiclePlate}
                         </span>
                         {rider.bankName && (
-                          <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded font-mono truncate">
+                          <span className="text-[10px] text-emerald-700 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded font-mono truncate">
                             🏦 {rider.bankName.split(' ')[0]} • {rider.bankAccountNumber?.slice(-4) || '****'}
                           </span>
                         )}
                       </div>
 
-                      <p className="text-[11px] text-slate-400 truncate">
+                      <p className="text-[11px] text-slate-500 truncate">
                         📍 {rider.homeAddress}
                       </p>
                     </div>
                   </div>
 
                   {/* ACTION BUTTONS & 1-CLICK APPROVAL */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80 text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200/80 text-xs">
                     <div className="flex flex-wrap items-center gap-1.5">
                       {/* 1-CLICK APPROVE / REVOKE TOGGLE */}
                       <button
@@ -2587,10 +2587,10 @@ function AdminRiderManagementCard() {
                         size="sm"
                         variant="outline"
                         onClick={() => handleOpenEditModal(rider)}
-                        className="bg-amber-600/20 border-amber-500/30 text-amber-300 hover:bg-amber-600/30 hover:text-white text-xs h-7 px-2 rounded-xl gap-1"
+                        className="bg-amber-600/20 border-amber-500/30 text-amber-300 hover:bg-amber-600/30 hover:text-slate-900 text-xs h-7 px-2 rounded-xl gap-1"
                         title="Kemaskini Butiran Rider"
                       >
-                        <Pencil className="w-3 h-3 text-amber-400" />
+                        <Pencil className="w-3 h-3 text-amber-700" />
                         <span>Edit</span>
                       </Button>
 
@@ -2599,9 +2599,9 @@ function AdminRiderManagementCard() {
                         size="sm"
                         variant="outline"
                         onClick={() => { setSelectedRider(rider); setIsDetailOpen(true); }}
-                        className="bg-slate-900 border-slate-800 text-slate-200 hover:text-white hover:bg-slate-800 text-xs h-7 px-2 rounded-xl gap-1"
+                        className="bg-white border-slate-200 text-slate-800 hover:text-slate-900 hover:bg-slate-800 text-xs h-7 px-2 rounded-xl gap-1"
                       >
-                        <Eye className="w-3 h-3 text-sky-400" />
+                        <Eye className="w-3 h-3 text-sky-700" />
                         <span>Dossier</span>
                       </Button>
 
@@ -2610,10 +2610,10 @@ function AdminRiderManagementCard() {
                         size="sm"
                         variant="outline"
                         onClick={() => handleDeleteRider(rider)}
-                        className="bg-rose-950/40 border-rose-900/60 text-rose-400 hover:bg-rose-900/60 hover:text-white text-xs h-7 px-2 rounded-xl gap-1"
+                        className="bg-rose-950/40 border-rose-900/60 text-rose-700 hover:bg-rose-900/60 hover:text-slate-900 text-xs h-7 px-2 rounded-xl gap-1"
                         title="Padam Profil Rider"
                       >
-                        <Trash2 className="w-3 h-3 text-rose-400" />
+                        <Trash2 className="w-3 h-3 text-rose-700" />
                       </Button>
                     </div>
 
@@ -2622,10 +2622,10 @@ function AdminRiderManagementCard() {
                         <button
                           type="button"
                           onClick={() => handleCopyAccount(rider.bankAccountNumber!, rider.id)}
-                          className="px-2 py-1 bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-800 rounded-xl transition-all flex items-center gap-1 text-[10px] font-bold"
+                          className="px-2 py-1 bg-white hover:bg-slate-800 text-amber-700 border border-slate-200 rounded-xl transition-all flex items-center gap-1 text-[10px] font-bold"
                           title="Salin No. Akaun Bank untuk Gaji"
                         >
-                          {copiedBankId === rider.id ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                          {copiedBankId === rider.id ? <Check className="w-3 h-3 text-emerald-700" /> : <Copy className="w-3 h-3" />}
                           <span>{copiedBankId === rider.id ? 'Disalin' : 'Bank'}</span>
                         </button>
                       )}
@@ -2634,7 +2634,7 @@ function AdminRiderManagementCard() {
                         href={`https://wa.me/${rider.phone.replace(/\D/g, '')}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-xl transition-all flex items-center gap-1 font-bold text-xs"
+                        className="px-2.5 py-1 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-700 border border-emerald-500/30 rounded-xl transition-all flex items-center gap-1 font-bold text-xs"
                       >
                         <MessageSquare className="w-3 h-3" />
                         <span>WA</span>
@@ -2650,9 +2650,9 @@ function AdminRiderManagementCard() {
 
       {/* MODAL: DETAIL RIDER KYC & BANK INSPECTION */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className="bg-slate-900 border border-slate-800 text-white max-w-xl max-h-[90vh] overflow-y-auto font-mono">
+        <DialogContent className="bg-white border border-slate-200 text-slate-900 max-w-xl max-h-[90vh] overflow-y-auto font-mono">
           <DialogHeader>
-            <DialogTitle className="text-base font-bold flex items-center gap-2 text-amber-400">
+            <DialogTitle className="text-base font-bold flex items-center gap-2 text-amber-700">
               <ShieldCheck className="w-5 h-5" />
               <span>Dossier Pengesahan & Akaun Bank Rakan Penghantar</span>
             </DialogTitle>
@@ -2661,8 +2661,8 @@ function AdminRiderManagementCard() {
           {selectedRider && (
             <div className="space-y-4 text-xs pt-2">
               {/* HEADER WITH PHOTO */}
-              <div className="flex items-center gap-4 bg-slate-950 p-4 rounded-2xl border border-slate-800">
-                <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-700 overflow-hidden shrink-0">
+              <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                <div className="w-16 h-16 rounded-2xl bg-white border border-slate-700 overflow-hidden shrink-0">
                   {selectedRider.photoRider ? (
                     <img src={selectedRider.photoRider} alt={selectedRider.fullName} className="w-full h-full object-cover" />
                   ) : (
@@ -2671,16 +2671,16 @@ function AdminRiderManagementCard() {
                 </div>
 
                 <div>
-                  <h3 className="text-base font-black text-white">{selectedRider.fullName}</h3>
-                  <p className="text-xs text-amber-400 font-bold">No. IC: {selectedRider.icNumber}</p>
-                  <p className="text-[11px] text-slate-400">No. Telefon: {selectedRider.phone}</p>
+                  <h3 className="text-base font-black text-slate-900">{selectedRider.fullName}</h3>
+                  <p className="text-xs text-amber-700 font-bold">No. IC: {selectedRider.icNumber}</p>
+                  <p className="text-[11px] text-slate-500">No. Telefon: {selectedRider.phone}</p>
                 </div>
               </div>
 
               {/* SECTION: BANK ACCOUNT & PAYOUT HIGHLIGHT */}
               <div className="bg-emerald-950/30 border border-emerald-500/30 p-4 rounded-2xl space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-xs">
+                  <div className="flex items-center gap-2 text-emerald-700 font-bold text-xs">
                     <Landmark className="w-4 h-4" />
                     <span>Maklumat Akaun Bank Untuk Bayaran Gaji</span>
                   </div>
@@ -2698,58 +2698,58 @@ function AdminRiderManagementCard() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs pt-1">
                   <div>
-                    <span className="text-[10px] text-slate-400 block">Nama Bank:</span>
-                    <span className="font-bold text-white">{selectedRider.bankName || 'Maybank'}</span>
+                    <span className="text-[10px] text-slate-500 block">Nama Bank:</span>
+                    <span className="font-bold text-slate-900">{selectedRider.bankName || 'Maybank'}</span>
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-400 block">No. Akaun:</span>
+                    <span className="text-[10px] text-slate-500 block">No. Akaun:</span>
                     <span className="font-bold text-emerald-300 font-mono tracking-wider">{selectedRider.bankAccountNumber || 'Tiada'}</span>
                   </div>
                   <div className="col-span-2 sm:col-span-1">
-                    <span className="text-[10px] text-slate-400 block">Pemegang Akaun:</span>
-                    <span className="font-bold text-slate-200 truncate block">{selectedRider.bankAccountHolder || selectedRider.fullName}</span>
+                    <span className="text-[10px] text-slate-500 block">Pemegang Akaun:</span>
+                    <span className="font-bold text-slate-800 truncate block">{selectedRider.bankAccountHolder || selectedRider.fullName}</span>
                   </div>
                 </div>
               </div>
 
               {/* DETAILS GRID */}
-              <div className="grid grid-cols-2 gap-3 bg-slate-950 p-4 rounded-2xl border border-slate-800">
+              <div className="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
                 <div>
                   <span className="text-[10px] text-slate-500 block">No. Plat Kenderaan:</span>
-                  <span className="font-bold text-white">{selectedRider.vehiclePlate}</span>
+                  <span className="font-bold text-slate-900">{selectedRider.vehiclePlate}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-500 block">Model Kenderaan:</span>
-                  <span className="font-bold text-white">{selectedRider.vehicleModel || 'Motosikal'}</span>
+                  <span className="font-bold text-slate-900">{selectedRider.vehicleModel || 'Motosikal'}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-500 block">Tarikh Sah Lesen:</span>
-                  <span className="font-bold text-emerald-400">{selectedRider.licenseExpiry}</span>
+                  <span className="font-bold text-emerald-700">{selectedRider.licenseExpiry}</span>
                 </div>
                 <div>
                   <span className="text-[10px] text-slate-500 block">Tarikh Luput Roadtax:</span>
-                  <span className="font-bold text-sky-400">{selectedRider.roadtaxExpiry || 'N/A'}</span>
+                  <span className="font-bold text-sky-700">{selectedRider.roadtaxExpiry || 'N/A'}</span>
                 </div>
                 <div className="col-span-2">
                   <span className="text-[10px] text-slate-500 block">Alamat Kediaman:</span>
-                  <span className="text-slate-200">{selectedRider.homeAddress}</span>
+                  <span className="text-slate-800">{selectedRider.homeAddress}</span>
                 </div>
                 {selectedRider.emergencyContact && (
                   <div className="col-span-2">
                     <span className="text-[10px] text-slate-500 block">Hubungan Kecemasan:</span>
-                    <span className="text-rose-400 font-bold">{selectedRider.emergencyContact}</span>
+                    <span className="text-rose-700 font-bold">{selectedRider.emergencyContact}</span>
                   </div>
                 )}
               </div>
 
               {/* DOCUMENT IMAGES PREVIEWS */}
               <div className="space-y-2">
-                <h4 className="font-bold text-slate-300 text-xs">Dokumen Bukti Disahkan:</h4>
+                <h4 className="font-bold text-slate-700 text-xs">Dokumen Bukti Disahkan:</h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {selectedRider.photoIc && (
                     <div className="space-y-1">
-                      <span className="text-[10px] text-slate-400 block">Salinan MyKad</span>
-                      <div className="aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
+                      <span className="text-[10px] text-slate-500 block">Salinan MyKad</span>
+                      <div className="aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-50">
                         <img src={selectedRider.photoIc} alt="IC" className="w-full h-full object-contain" />
                       </div>
                     </div>
@@ -2757,8 +2757,8 @@ function AdminRiderManagementCard() {
 
                   {selectedRider.photoLicense && (
                     <div className="space-y-1">
-                      <span className="text-[10px] text-slate-400 block">Salinan Lesen & Roadtax</span>
-                      <div className="aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
+                      <span className="text-[10px] text-slate-500 block">Salinan Lesen & Roadtax</span>
+                      <div className="aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-50">
                         <img src={selectedRider.photoLicense} alt="Lesen" className="w-full h-full object-contain" />
                       </div>
                     </div>
@@ -2766,8 +2766,8 @@ function AdminRiderManagementCard() {
 
                   {selectedRider.photoBankStatement && (
                     <div className="space-y-1">
-                      <span className="text-[10px] text-slate-400 block">Penyata / Kad Bank</span>
-                      <div className="aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-950">
+                      <span className="text-[10px] text-slate-500 block">Penyata / Kad Bank</span>
+                      <div className="aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-50">
                         <img src={selectedRider.photoBankStatement} alt="Penyata Bank" className="w-full h-full object-contain" />
                       </div>
                     </div>
@@ -2775,7 +2775,7 @@ function AdminRiderManagementCard() {
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2">
+              <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <Button
                     type="button"
@@ -2794,7 +2794,7 @@ function AdminRiderManagementCard() {
                     type="button"
                     variant="outline"
                     onClick={() => handleDeleteRider(selectedRider)}
-                    className="bg-rose-950/40 border-rose-900 text-rose-400 hover:bg-rose-900/60 hover:text-white font-bold text-xs h-9 px-3 rounded-xl gap-1.5"
+                    className="bg-rose-950/40 border-rose-900 text-rose-700 hover:bg-rose-900/60 hover:text-slate-900 font-bold text-xs h-9 px-3 rounded-xl gap-1.5"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Padam Rider</span>
@@ -2803,7 +2803,7 @@ function AdminRiderManagementCard() {
 
                 <Button
                   onClick={() => setIsDetailOpen(false)}
-                  className="bg-slate-800 hover:bg-slate-700 text-white text-xs rounded-xl h-9 px-4"
+                  className="bg-slate-800 hover:bg-slate-700 text-slate-900 text-xs rounded-xl h-9 px-4"
                 >
                   Tutup
                 </Button>
@@ -2815,9 +2815,9 @@ function AdminRiderManagementCard() {
 
       {/* MODAL: EDIT RIDER INFORMATION */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="bg-slate-900 border border-slate-800 text-white max-w-2xl max-h-[90vh] overflow-y-auto font-mono">
+        <DialogContent className="bg-white border border-slate-200 text-slate-900 max-w-2xl max-h-[90vh] overflow-y-auto font-mono">
           <DialogHeader>
-            <DialogTitle className="text-base font-bold flex items-center gap-2 text-amber-400">
+            <DialogTitle className="text-base font-bold flex items-center gap-2 text-amber-700">
               <Pencil className="w-5 h-5" />
               <span>Kemaskini Maklumat Rakan Penghantar ({editFullName || 'Rider'})</span>
             </DialogTitle>
@@ -2826,139 +2826,139 @@ function AdminRiderManagementCard() {
           {editingRider && (
             <form onSubmit={handleSaveEditRider} className="space-y-4 text-xs pt-2">
               {/* SECTION 1: BUTIRAN PERIBADI */}
-              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-                <span className="font-bold text-amber-400 flex items-center gap-1.5 text-xs">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                <span className="font-bold text-amber-700 flex items-center gap-1.5 text-xs">
                   <User className="w-4 h-4" /> 1. Butiran Peribadi & Log Masuk
                 </span>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-slate-400 text-[11px]">Nama Penuh Rider *</Label>
+                    <Label className="text-slate-500 text-[11px]">Nama Penuh Rider *</Label>
                     <Input
                       value={editFullName}
                       onChange={(e) => setEditFullName(e.target.value)}
                       placeholder="Nama penuh mengikut MyKad"
-                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
                       required
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-slate-400 text-[11px]">No. Kad Pengenalan (MyKad)</Label>
+                    <Label className="text-slate-500 text-[11px]">No. Kad Pengenalan (MyKad)</Label>
                     <Input
                       value={editIcNumber}
                       onChange={(e) => setEditIcNumber(e.target.value)}
                       placeholder="Contoh: 980101-12-1234"
-                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-slate-400 text-[11px]">No. Telefon (WhatsApp) *</Label>
+                    <Label className="text-slate-500 text-[11px]">No. Telefon (WhatsApp) *</Label>
                     <Input
                       value={editPhone}
                       onChange={(e) => setEditPhone(e.target.value)}
                       placeholder="Contoh: 0198887766"
-                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
                       required
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-slate-400 text-[11px]">Emel Log Masuk</Label>
+                    <Label className="text-slate-500 text-[11px]">Emel Log Masuk</Label>
                     <Input
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
                       placeholder="rider@warungjnj.online"
-                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-slate-400 text-[11px]">Alamat Kediaman Semasa</Label>
+                  <Label className="text-slate-500 text-[11px]">Alamat Kediaman Semasa</Label>
                   <Input
                     value={editHomeAddress}
                     onChange={(e) => setEditHomeAddress(e.target.value)}
                     placeholder="Alamat tempat tinggal rider"
-                    className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                    className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <Label className="text-slate-400 text-[11px]">Hubungan / No. Kecemasan</Label>
+                  <Label className="text-slate-500 text-[11px]">Hubungan / No. Kecemasan</Label>
                   <Input
                     value={editEmergencyContact}
                     onChange={(e) => setEditEmergencyContact(e.target.value)}
                     placeholder="Nama & No. Telefon Waris (cth: Isteri - 0123456789)"
-                    className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                    className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
                   />
                 </div>
               </div>
 
               {/* SECTION 2: KENDERAAN & LESEN */}
-              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-                <span className="font-bold text-sky-400 flex items-center gap-1.5 text-xs">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                <span className="font-bold text-sky-700 flex items-center gap-1.5 text-xs">
                   <Bike className="w-4 h-4" /> 2. Maklumat Motosikal & Lesen
                 </span>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-slate-400 text-[11px]">No. Plat Kenderaan *</Label>
+                    <Label className="text-slate-500 text-[11px]">No. Plat Kenderaan *</Label>
                     <Input
                       value={editVehiclePlate}
                       onChange={(e) => setEditVehiclePlate(e.target.value)}
                       placeholder="Contoh: SAB 1234 A"
-                      className="bg-slate-900 border-slate-700 text-white uppercase rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-700 text-slate-900 uppercase rounded-xl h-9 text-xs"
                       required
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-slate-400 text-[11px]">Model Motosikal</Label>
+                    <Label className="text-slate-500 text-[11px]">Model Motosikal</Label>
                     <Input
                       value={editVehicleModel}
                       onChange={(e) => setEditVehicleModel(e.target.value)}
                       placeholder="Contoh: Yamaha Y15ZR / Honda Wave"
-                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-slate-400 text-[11px]">Tarikh Sah Lesen Memandu</Label>
+                    <Label className="text-slate-500 text-[11px]">Tarikh Sah Lesen Memandu</Label>
                     <Input
                       type="date"
                       value={editLicenseExpiry}
                       onChange={(e) => setEditLicenseExpiry(e.target.value)}
-                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-slate-400 text-[11px]">Tarikh Luput Cukai Jalan (Roadtax)</Label>
+                    <Label className="text-slate-500 text-[11px]">Tarikh Luput Cukai Jalan (Roadtax)</Label>
                     <Input
                       type="date"
                       value={editRoadtaxExpiry}
                       onChange={(e) => setEditRoadtaxExpiry(e.target.value)}
-                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
                     />
                   </div>
                 </div>
               </div>
 
               {/* SECTION 3: AKAUN BANK GAJI */}
-              <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
-                <span className="font-bold text-emerald-400 flex items-center gap-1.5 text-xs">
+              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                <span className="font-bold text-emerald-700 flex items-center gap-1.5 text-xs">
                   <Landmark className="w-4 h-4" /> 3. Akaun Bank Untuk Pindahan Gaji / Upah
                 </span>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-slate-400 text-[11px]">Nama Bank</Label>
+                    <Label className="text-slate-500 text-[11px]">Nama Bank</Label>
                     <select
                       value={editBankName}
                       onChange={(e) => setEditBankName(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-700 text-white rounded-xl h-9 px-3 text-xs"
+                      className="w-full bg-white border border-slate-700 text-slate-900 rounded-xl h-9 px-3 text-xs"
                     >
                       {MALAYSIAN_BANKS.map((b) => (
                         <option key={b} value={b}>{b}</option>
@@ -2967,35 +2967,35 @@ function AdminRiderManagementCard() {
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-slate-400 text-[11px]">No. Akaun Bank *</Label>
+                    <Label className="text-slate-500 text-[11px]">No. Akaun Bank *</Label>
                     <Input
                       value={editBankAccountNumber}
                       onChange={(e) => setEditBankAccountNumber(e.target.value)}
                       placeholder="Nombor akaun bank tanpa sengkang"
-                      className="bg-slate-900 border-slate-700 text-white font-mono rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-700 text-slate-900 font-mono rounded-xl h-9 text-xs"
                       required
                     />
                   </div>
 
                   <div className="sm:col-span-2 space-y-1">
-                    <Label className="text-slate-400 text-[11px]">Nama Pemegang Akaun</Label>
+                    <Label className="text-slate-500 text-[11px]">Nama Pemegang Akaun</Label>
                     <Input
                       value={editBankAccountHolder}
                       onChange={(e) => setEditBankAccountHolder(e.target.value)}
                       placeholder="Nama pada akaun bank"
-                      className="bg-slate-900 border-slate-700 text-white rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
                     />
                   </div>
                 </div>
               </div>
 
               {/* MODAL FOOTER BUTTONS */}
-              <div className="pt-3 border-t border-slate-800 flex justify-end gap-2">
+              <div className="pt-3 border-t border-slate-200 flex justify-end gap-2">
                 <Button
                   type="button"
                   variant="ghost"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="text-slate-400 hover:text-white text-xs rounded-xl h-10 px-4"
+                  className="text-slate-500 hover:text-slate-900 text-xs rounded-xl h-10 px-4"
                 >
                   Batal
                 </Button>

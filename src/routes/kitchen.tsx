@@ -62,7 +62,7 @@ const WaitTimer = ({ createdAt }: { createdAt: string }) => {
     return () => clearInterval(interval);
   }, [createdAt]);
 
-  return <span className="text-yellow-300 ml-auto tabular-nums font-mono">⏱️ {elapsed}</span>;
+  return <span className="text-amber-700 font-bold ml-auto tabular-nums font-mono text-xs bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">⏱️ {elapsed}</span>;
 };
 
 const OrderCard = memo(({ 
@@ -124,16 +124,16 @@ const OrderCard = memo(({
 
   const isAllComponentsChecked = totalComponents > 0 && checkedComponentsCount === totalComponents;
 
-  let cardClasses = "border-2 p-4 rounded-2xl shadow-sm flex flex-col justify-between transition-all duration-300 ease-in-out relative overflow-hidden ";
+  let cardClasses = "border p-4 rounded-2xl shadow-xs flex flex-col justify-between transition-all duration-300 ease-in-out relative overflow-hidden ";
   
   if (highlight?.type === 'new') {
-    cardClasses += "border-4 border-emerald-500 bg-emerald-950/40 shadow-[0_0_20px_rgba(16,185,129,0.4)] animate-pulse";
+    cardClasses += "border-2 border-emerald-500 bg-emerald-50/90 shadow-[0_4px_20px_rgba(16,185,129,0.2)] animate-pulse";
   } else if (isModified) {
-    cardClasses += "border-4 border-rose-500 bg-rose-950/70 shadow-[0_0_30px_rgba(244,63,94,0.8)] animate-pulse ring-4 ring-rose-500/50";
+    cardClasses += "border-2 border-rose-500 bg-rose-50/90 shadow-[0_4px_25px_rgba(244,63,94,0.3)] animate-pulse ring-4 ring-rose-400/30";
   } else if (isAllComponentsChecked && order.status === 'preparing') {
-    cardClasses += "border-2 border-emerald-500/70 bg-slate-900 shadow-[0_0_15px_rgba(16,185,129,0.25)]";
+    cardClasses += "border-2 border-emerald-500/80 bg-emerald-50/40 shadow-[0_4px_15px_rgba(16,185,129,0.15)]";
   } else {
-    cardClasses += "border-slate-800 bg-slate-900";
+    cardClasses += "border-slate-200/90 bg-white";
   }
 
   const tableNumber = order.tables?.table_number || (order.table_id && tablesMap?.[order.table_id]) || null;
@@ -194,33 +194,33 @@ const OrderCard = memo(({
                 )}
               </div>
               
-              <h2 className="text-lg font-black leading-tight flex items-center gap-2 text-white flex-wrap w-full">
+              <h2 className="text-lg font-black leading-tight flex items-center gap-2 text-slate-900 flex-wrap w-full">
                 {order.type === 'dine_in' 
                   ? `Meja ${tableNumber || '?'}` 
                   : (order.customer_name || 'Pelanggan Walk-In')}
                 
                 {order.paid || order.payment_status === 'paid' ? (
-                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-md border border-emerald-500/30 whitespace-nowrap font-bold">
+                  <span className="text-[10px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-md border border-emerald-200 whitespace-nowrap font-bold">
                     ✓ DAH BAYAR {order.payment_method === 'card' ? '💳' : '📱/💵'}
                   </span>
                 ) : (
-                  <span className="text-[10px] bg-rose-500/20 text-rose-300 px-2 py-0.5 rounded-md border border-rose-500/30 whitespace-nowrap font-bold">
+                  <span className="text-[10px] bg-rose-50 text-rose-700 px-2 py-0.5 rounded-md border border-rose-200 whitespace-nowrap font-bold">
                     ❌ BELUM BAYAR
                   </span>
                 )}
                 <WaitTimer createdAt={order.created_at} />
               </h2>
               {order.type === 'delivery' && (order.customer_phone || order.delivery_address) && (
-                <div className="bg-slate-950/80 p-2.5 rounded-xl text-xs text-slate-300 mt-1 border border-slate-800 w-full space-y-0.5 font-mono">
+                <div className="bg-slate-50 p-2.5 rounded-xl text-xs text-slate-700 mt-1 border border-slate-200 w-full space-y-0.5 font-mono">
                   {order.customer_phone && <p><span className="opacity-70">📞</span> {order.customer_phone}</p>}
-                  {order.delivery_address && <p className="text-emerald-300"><span className="opacity-70">📍</span> {order.delivery_address}</p>}
+                  {order.delivery_address && <p className="text-emerald-700 font-semibold"><span className="opacity-70">📍</span> {order.delivery_address}</p>}
                 </div>
               )}
             </div>
             
             <div className="flex flex-col gap-2 items-end">
               <span className={`px-2.5 py-1 text-[10px] font-bold rounded-lg uppercase tracking-wider ${
-                order.status === 'pending' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-sky-500/20 text-sky-300 border border-sky-500/30'
+                order.status === 'pending' ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-sky-100 text-sky-800 border border-sky-300'
               }`}>
                 {order.status}
               </span>
@@ -228,7 +228,7 @@ const OrderCard = memo(({
               {highlight && (
                 <button 
                   onClick={() => onAcknowledge(order.id)}
-                  className={`${isModified ? 'bg-rose-500 hover:bg-rose-600 text-white animate-pulse border-2 border-white' : 'bg-white hover:bg-slate-200 text-black'} text-xs font-black px-3.5 py-1.5 rounded-xl shadow-lg transition-all active:scale-95 whitespace-nowrap`}
+                  className={`${isModified ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse border-2 border-white' : 'bg-slate-900 hover:bg-slate-800 text-white'} text-xs font-black px-3.5 py-1.5 rounded-xl shadow transition-all active:scale-95 whitespace-nowrap`}
                 >
                   {isModified ? '🚨 SAHKAN PERUBAHAN' : '✅ TERIMA ORDER'}
                 </button>
@@ -238,19 +238,19 @@ const OrderCard = memo(({
         </div>
 
         {/* GRANULAR PACKING & COMPONENT PROGRESS BAR */}
-        <div className="my-2.5 p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 flex flex-col gap-1.5 shadow-inner">
+        <div className="my-2.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col gap-1.5">
           <div className="flex justify-between items-center text-[11px] font-mono">
-            <span className="text-slate-300 font-bold flex items-center gap-1.5">
+            <span className="text-slate-700 font-bold flex items-center gap-1.5">
               <span>🍱</span>
               <span>Semakan Lauk, Nasi & Sambal:</span>
             </span>
-            <span className={`font-bold ${isAllComponentsChecked ? 'text-emerald-400' : 'text-amber-400'}`}>
+            <span className={`font-bold ${isAllComponentsChecked ? 'text-emerald-700' : 'text-amber-700'}`}>
               {checkedComponentsCount}/{totalComponents} Komponen {isAllComponentsChecked && '✓ Lengkap'}
             </span>
           </div>
-          <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+          <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
             <div 
-              className={`h-full transition-all duration-300 ${isAllComponentsChecked ? 'bg-emerald-500' : 'bg-amber-400'}`}
+              className={`h-full transition-all duration-300 ${isAllComponentsChecked ? 'bg-emerald-500' : 'bg-amber-500'}`}
               style={{ width: `${totalComponents > 0 ? (checkedComponentsCount / totalComponents) * 100 : 0}%` }}
             />
           </div>
@@ -277,24 +277,24 @@ const OrderCard = memo(({
                 key={item.id}
                 className={`flex flex-col p-3.5 rounded-2xl border transition-all duration-200 ${
                   dishAllDone 
-                    ? 'bg-emerald-950/30 border-emerald-500/50 shadow-sm' 
+                    ? 'bg-emerald-50/70 border-emerald-300 shadow-2xs' 
                     : modifierBadges.length > 0
-                      ? 'bg-slate-950 border-2 border-amber-500/80 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
+                      ? 'bg-amber-50/70 border-2 border-amber-400 shadow-[0_2px_12px_rgba(245,158,11,0.15)]'
                       : isNewItem
-                        ? 'bg-rose-500/20 text-rose-200 border-rose-500/60 font-black shadow-[0_0_12px_rgba(244,63,94,0.3)] scale-[1.01]'
-                        : 'bg-slate-950/90 text-slate-200 border-slate-800'
+                        ? 'bg-rose-50 text-rose-800 border-rose-300 font-black shadow-[0_2px_10px_rgba(244,63,94,0.15)] scale-[1.01]'
+                        : 'bg-slate-50/80 text-slate-800 border-slate-200'
                 }`}
               >
                 {/* DISH TITLE BAR WITH INDIVIDUAL PLATE/PACK INDEXING */}
-                <div className="flex justify-between items-center text-sm gap-2 pb-2.5 border-b border-slate-800/80">
+                <div className="flex justify-between items-center text-sm gap-2 pb-2.5 border-b border-slate-200">
                   <div className="flex items-center gap-2 flex-wrap">
                     {/* PLATE NUMBER BADGE */}
-                    <span className="text-xs font-black px-2.5 py-1 rounded-lg bg-sky-500/20 text-sky-300 border border-sky-500/40 uppercase tracking-wider font-mono">
+                    <span className="text-xs font-black px-2.5 py-1 rounded-lg bg-sky-100 text-sky-800 border border-sky-200 uppercase tracking-wider font-mono">
                       {order.type === 'dine_in' ? `🍽️ Pinggan #${itemIndex + 1}` : `🥡 Pek #${itemIndex + 1}`}
                       {totalPlates > 1 && <span className="opacity-70 ml-1">({itemIndex + 1}/{totalPlates})</span>}
                     </span>
 
-                    <span className={`font-black text-base ${dishAllDone ? 'line-through text-slate-400' : 'text-white'}`}>
+                    <span className={`font-black text-base ${dishAllDone ? 'line-through text-slate-400' : 'text-slate-900'}`}>
                       {itemName}
                     </span>
 
@@ -304,23 +304,23 @@ const OrderCard = memo(({
                       </span>
                     )}
                     {dishAllDone && (
-                      <span className="text-[10px] bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-md font-bold">
+                      <span className="text-[10px] bg-emerald-100 text-emerald-800 border border-emerald-300 px-2 py-0.5 rounded-md font-bold">
                         ✓ Siap Dibungkus
                       </span>
                     )}
                     {item.fulfillment_type === 'dine_in' ? (
-                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700 font-bold">
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-slate-200 text-slate-700 border border-slate-300 font-bold">
                         Makan Sini
                       </span>
                     ) : (
-                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-black uppercase">
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300 font-black uppercase">
                         BUNGKUS {item.container_size ? `[${item.container_size.toUpperCase()}]` : ''}
                       </span>
                     )}
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <span className={`font-black text-lg font-mono ${dishAllDone ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    <span className={`font-black text-lg font-mono ${dishAllDone ? 'text-emerald-700' : 'text-amber-700'}`}>
                       x{item.quantity}
                     </span>
                     <button
@@ -328,8 +328,8 @@ const OrderCard = memo(({
                       onClick={() => toggleAllForDish(item.id, components)}
                       className={`text-[10px] font-bold px-2 py-1 rounded-lg border transition-all ${
                         dishAllDone 
-                          ? 'bg-slate-800 border-slate-700 text-slate-400 hover:text-white' 
-                          : 'bg-amber-500/20 border-amber-500/40 text-amber-300 hover:bg-amber-500/30'
+                          ? 'bg-slate-100 border-slate-300 text-slate-600 hover:text-slate-900' 
+                          : 'bg-amber-100 border-amber-300 text-amber-800 hover:bg-amber-200'
                       }`}
                       title="Tandakan semua komponen hidangan ini"
                     >
@@ -340,8 +340,8 @@ const OrderCard = memo(({
 
                 {/* HIGH-CONTRAST MODIFIER BADGES (TAK NAK LADA, PEDAS, TANPA TIMUN, KANGKUNG) */}
                 {modifierBadges.length > 0 && (
-                  <div className="my-2.5 p-2 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-2 flex-wrap">
-                    <span className="text-[11px] font-bold text-amber-400 uppercase font-mono">⚠️ PERHATIAN CHEF:</span>
+                  <div className="my-2.5 p-2 rounded-xl bg-amber-100 border border-amber-300 flex items-center gap-2 flex-wrap">
+                    <span className="text-[11px] font-bold text-amber-800 uppercase font-mono">⚠️ PERHATIAN CHEF:</span>
                     {modifierBadges.map((badge) => (
                       <span key={badge.id} className={`text-xs px-2.5 py-1 rounded-lg tracking-wider ${badge.colorClass}`}>
                         {badge.icon} {badge.label}
@@ -352,7 +352,7 @@ const OrderCard = memo(({
 
                 {/* INDIVIDUAL CLICKABLE COMPONENT PILLS (NASI / LAUK / SAMBAL / KUAH / ULAM) */}
                 <div className="mt-2">
-                  <p className="text-[10px] text-slate-400 font-mono mb-1.5">
+                  <p className="text-[10px] text-slate-500 font-mono mb-1.5">
                     Tekan setiap komponen semasa membungkus:
                   </p>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -365,8 +365,8 @@ const OrderCard = memo(({
                           onClick={() => toggleComponentCheck(item.id, comp.key)}
                           className={`px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95 border cursor-pointer ${
                             isCompChecked
-                              ? 'bg-emerald-600 border-emerald-400 text-white shadow-md'
-                              : 'bg-slate-900 border-slate-700 hover:border-amber-400 text-slate-300 shadow-sm'
+                              ? 'bg-emerald-600 border-emerald-600 text-white shadow-xs'
+                              : 'bg-white border-slate-200 hover:border-amber-400 text-slate-700 shadow-xs'
                           }`}
                         >
                           <span className={`text-xs ${isCompChecked ? 'font-black' : 'opacity-60'}`}>
@@ -382,7 +382,7 @@ const OrderCard = memo(({
 
                 {item.notes && (
                   <div 
-                    className="text-xs text-slate-950 font-black py-1.5 px-2.5 mt-2.5 rounded-lg border-2 border-amber-400 bg-amber-300 flex items-start gap-1 shadow-sm"
+                    className="text-xs text-amber-950 font-bold py-1.5 px-2.5 mt-2.5 rounded-lg border border-amber-300 bg-amber-100/90 flex items-start gap-1 shadow-2xs"
                   >
                     <span>⚠️ PERMINTAAN KHAS PELANGGAN:</span>
                     <span>{item.notes}</span>
@@ -395,13 +395,13 @@ const OrderCard = memo(({
       </div>
 
       {/* CARD FOOTER WITH HARD-LOCKED & GUIDED READY BUTTON */}
-      <div className="border-t border-slate-800 pt-3 mt-2">
-        <p className="text-[11px] text-slate-400 mb-2 font-mono flex justify-between items-center">
+      <div className="border-t border-slate-200 pt-3 mt-2">
+        <p className="text-[11px] text-slate-500 mb-2 font-mono flex justify-between items-center">
           <span>Masa Pesanan: {new Date(order.created_at).toLocaleTimeString()}</span>
           {isAllComponentsChecked ? (
-            <span className="text-emerald-400 font-bold">✓ 100% Lengkap Ditanda</span>
+            <span className="text-emerald-700 font-bold">✓ 100% Lengkap Ditanda</span>
           ) : (
-            <span className="text-amber-400 font-bold">🔒 {checkedComponentsCount}/{totalComponents} Diperiksa</span>
+            <span className="text-amber-700 font-bold">🔒 {checkedComponentsCount}/{totalComponents} Diperiksa</span>
           )}
         </p>
         
@@ -410,7 +410,7 @@ const OrderCard = memo(({
             {order.status === 'pending' ? (
               <button
                 onClick={() => onAdvanceStatus(order.id, 'pending')}
-                className="w-full py-2.5 font-black text-xs rounded-xl shadow-lg bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/30 transition-all active:scale-98 uppercase tracking-wider flex items-center justify-center gap-2"
+                className="w-full py-2.5 font-black text-xs rounded-xl shadow bg-orange-600 hover:bg-orange-500 text-white transition-all active:scale-98 uppercase tracking-wider flex items-center justify-center gap-2"
               >
                 <span>🍳 MULA MASAK (START PREPARING)</span>
               </button>
@@ -422,10 +422,10 @@ const OrderCard = memo(({
                   if (!isAllComponentsChecked) return;
                   setShowFinalCheckModal(true);
                 }}
-                className={`w-full py-3 font-black text-xs rounded-xl shadow-lg transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${
+                className={`w-full py-3 font-black text-xs rounded-xl shadow transition-all uppercase tracking-wider flex items-center justify-center gap-2 ${
                   isAllComponentsChecked
-                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/50 ring-2 ring-emerald-400 animate-pulse active:scale-98 cursor-pointer'
-                    : 'bg-slate-800/80 text-slate-500 border border-slate-700/60 cursor-not-allowed select-none opacity-60'
+                    ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30 ring-2 ring-emerald-400 animate-pulse active:scale-98 cursor-pointer'
+                    : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed select-none'
                 }`}
               >
                 {isAllComponentsChecked ? (
@@ -441,7 +441,7 @@ const OrderCard = memo(({
             )}
 
             {order.status === 'preparing' && !isAllComponentsChecked && (
-              <p className="text-[10px] text-center text-amber-400/80 font-mono mt-1.5">
+              <p className="text-[10px] text-center text-amber-700 font-mono mt-1.5">
                 ⚠️ Butang dikunci. Sila tekan semua butang Nasi, Lauk, Sambal & Sup di atas sebelum boleh disahkan siap.
               </p>
             )}
@@ -451,17 +451,17 @@ const OrderCard = memo(({
 
       {/* 🔍 FINAL QUALITY CHECK VERIFICATION MODAL (APPEARS AT 100%) */}
       {showFinalCheckModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-slate-900 border-2 border-emerald-500 rounded-3xl p-6 max-w-lg w-full shadow-[0_0_40px_rgba(16,185,129,0.3)] text-white space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-start justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-lg w-full shadow-2xl text-slate-900 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-start justify-between border-b border-slate-100 pb-3">
               <div>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wider">
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 uppercase tracking-wider">
                   Kawalan Kualiti Makanan
                 </span>
-                <h3 className="text-xl font-black text-white mt-1 flex items-center gap-2">
+                <h3 className="text-xl font-black text-slate-900 mt-1 flex items-center gap-2">
                   <span>🔍 Semakan Akhir Bungkusan</span>
                 </h3>
-                <p className="text-xs text-slate-400 font-mono">
+                <p className="text-xs text-slate-500 font-mono">
                   {order.type === 'dine_in' ? `Meja ${tableNumber || '?'}` : (order.customer_name || 'Pelanggan Walk-In')} | {order.type?.toUpperCase()}
                 </p>
               </div>
@@ -469,26 +469,26 @@ const OrderCard = memo(({
             </div>
 
             {/* SUMMARY CHECKLIST OF DISHES */}
-            <div className="space-y-2 bg-slate-950 p-4 rounded-2xl border border-slate-800 text-xs">
-              <p className="text-slate-300 font-bold mb-2">Pastikan semua komponen di bawah berada di dalam beg/dulang:</p>
+            <div className="space-y-2 bg-slate-50 p-4 rounded-2xl border border-slate-200 text-xs">
+              <p className="text-slate-700 font-bold mb-2">Pastikan semua komponen di bawah berada di dalam beg/dulang:</p>
               {order.order_items.map((item: any) => {
                 const name = item.menu_items?.name || (item.menu_item_id && menuMap?.[item.menu_item_id]) || 'Menu';
                 const comps = itemComponentsMap[item.id] || [];
                 return (
-                  <div key={item.id} className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
-                    <div className="flex justify-between font-bold text-white">
+                  <div key={item.id} className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1">
+                    <div className="flex justify-between font-bold text-slate-900">
                       <span>• {name}</span>
-                      <span className="text-emerald-400 font-mono">x{item.quantity}</span>
+                      <span className="text-emerald-700 font-mono">x{item.quantity}</span>
                     </div>
-                    <div className="flex flex-wrap gap-1 text-[11px] text-emerald-300">
+                    <div className="flex flex-wrap gap-1 text-[11px] text-emerald-700">
                       {comps.map((c) => (
-                        <span key={c.key} className="bg-emerald-950/70 border border-emerald-500/30 px-2 py-0.5 rounded-md">
+                        <span key={c.key} className="bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
                           ✓ {c.icon} {c.label}
                         </span>
                       ))}
                     </div>
                     {item.notes && (
-                      <p className="text-[11px] text-amber-300 font-black mt-1 bg-amber-950/60 p-1.5 rounded-lg border border-amber-500/40">
+                      <p className="text-[11px] text-amber-800 font-black mt-1 bg-amber-50 p-1.5 rounded-lg border border-amber-300">
                         ⚠️ Nota Khas: {item.notes}
                       </p>
                     )}
@@ -498,11 +498,11 @@ const OrderCard = memo(({
             </div>
 
             {/* IMPORTANT FINAL REMINDER BOX */}
-            <div className="bg-rose-950/60 border border-rose-500/50 p-3.5 rounded-2xl text-xs text-rose-200 space-y-1">
-              <p className="font-black flex items-center gap-1.5 text-rose-300">
+            <div className="bg-rose-50 border border-rose-200 p-3.5 rounded-2xl text-xs text-rose-900 space-y-1">
+              <p className="font-black flex items-center gap-1.5 text-rose-700">
                 <span>⚠️ PERINGATAN KESILAPAN SIFAR (0%):</span>
               </p>
-              <ul className="list-disc list-inside space-y-0.5 text-[11px] text-slate-300 font-mono">
+              <ul className="list-disc list-inside space-y-0.5 text-[11px] text-rose-800 font-mono">
                 <li>Adakah beg bungkusan telah diikat kemas?</li>
                 <li>Adakah sambal belacan / kuah sup sudah dimasukkan?</li>
                 <li>Adakah minuman sejuk/panas dan straw sudah lengkap?</li>
@@ -514,7 +514,7 @@ const OrderCard = memo(({
               <button
                 type="button"
                 onClick={() => setShowFinalCheckModal(false)}
-                className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl border border-slate-700 transition-all active:scale-95 uppercase tracking-wider"
+                className="w-full py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl border border-slate-300 transition-all active:scale-95 uppercase tracking-wider"
               >
                 🔙 Semak Semula
               </button>
@@ -525,7 +525,7 @@ const OrderCard = memo(({
                   setShowFinalCheckModal(false);
                   onAdvanceStatus(order.id, 'preparing');
                 }}
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow-lg shadow-emerald-600/40 transition-all active:scale-95 uppercase tracking-wider flex items-center justify-center gap-1.5"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs rounded-xl shadow shadow-emerald-600/30 transition-all active:scale-95 uppercase tracking-wider flex items-center justify-center gap-1.5"
               >
                 <span>✅ Sahkan 100% Sempurna & Serah</span>
               </button>
@@ -879,19 +879,21 @@ function KitchenPage() {
   };
 
   return (
-    <div className="p-6 md:p-8 font-sans min-h-screen bg-slate-950 text-slate-100">
-      {/* KITCHEN HEADER & CONTROLS */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
+    <div className="p-4 md:p-8 font-sans min-h-screen bg-[#f8fafc] text-slate-900">
+      <div className="max-w-7xl mx-auto space-y-6">
+
+      {/* KITCHEN HEADER CARD */}
+      <div className="bg-white border border-slate-200/90 p-6 rounded-3xl shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-white flex items-center gap-3">
+          <h1 className="text-2xl md:text-3xl font-black text-slate-900 flex items-center gap-3">
             <span>👨‍🍳</span>
             <span>Paparan Dapur (Kitchen Display)</span>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1 font-mono font-bold">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping inline-block" />
+            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1 font-mono font-bold">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
               LIVE REALTIME
             </span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-500 mt-1">
             Pesanan aktif masuk secara automatik. Skrin akan berbunyi dan berkelip merah jika ada pesanan diubah.
           </p>
         </div>
@@ -901,7 +903,7 @@ function KitchenPage() {
             onClick={() => {
               playKitchenSound('kitchen_bell');
             }}
-            className="px-3.5 py-2 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow"
+            className="px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs cursor-pointer"
             title="Klik untuk membuka kebenaran audio pelayar"
           >
             <span>🔔</span>
@@ -913,7 +915,7 @@ function KitchenPage() {
               fetchActiveOrders();
               fetchLookupData();
             }}
-            className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow active:scale-95"
+            className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs active:scale-95 cursor-pointer"
           >
             <span>🔄</span>
             <span>Muat Semula (Refresh)</span>
@@ -923,7 +925,7 @@ function KitchenPage() {
 
       {/* ERROR BANNER IF OCCURRED */}
       {fetchError && (
-        <div className="mb-6 p-4 rounded-xl bg-rose-950/80 border-2 border-rose-500 text-rose-200 flex items-center justify-between gap-3 shadow-lg">
+        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-300 text-rose-800 flex items-center justify-between gap-3 shadow-xs">
           <div>
             <p className="font-bold text-sm">⚠️ Ralat Mendapatkan Pesanan:</p>
             <p className="text-xs opacity-90 font-mono mt-0.5">{fetchError}</p>
@@ -938,10 +940,10 @@ function KitchenPage() {
       )}
       
       {orders.length === 0 ? (
-        <div className="py-24 text-center border-2 border-dashed border-slate-800 rounded-2xl bg-slate-900/30 my-4">
+        <div className="py-24 text-center border-2 border-dashed border-slate-300 rounded-3xl bg-white shadow-xs my-4">
           <p className="text-4xl mb-3">🍳</p>
-          <h3 className="text-lg font-bold text-white mb-1">Tiada Pesanan Aktif Buat Masa Ini</h3>
-          <p className="text-xs text-slate-400 max-w-sm mx-auto">
+          <h3 className="text-lg font-bold text-slate-900 mb-1">Tiada Pesanan Aktif Buat Masa Ini</h3>
+          <p className="text-xs text-slate-500 max-w-sm mx-auto">
             Sistem sedia menerima pesanan. Sebarang pesanan baru dari kaunter atau penghantaran akan muncul secara automatik di sini.
           </p>
         </div>
@@ -966,8 +968,9 @@ function KitchenPage() {
       )}
 
       {/* Kitchen Stats Footer */}
-      <div className="mt-8 pt-4 border-t border-slate-800">
+      <div className="mt-8 pt-4 border-t border-slate-200">
         <KitchenStats activeOrders={orders} />
+      </div>
       </div>
     </div>
   );
@@ -1027,21 +1030,21 @@ const KitchenStats = ({ activeOrders }: { activeOrders: Order[] }) => {
   const readyCount = activeOrders.filter(o => o.status === 'ready').length;
 
   return (
-    <div className="flex flex-wrap gap-4 text-xs font-mono text-slate-400 justify-center">
-      <div className="bg-slate-800 px-3 py-2 rounded border border-slate-700">
-        <span className="opacity-50">Currently Ready:</span> <span className="text-white font-bold">{readyCount}</span>
+    <div className="flex flex-wrap gap-4 text-xs font-mono justify-center">
+      <div className="bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-xs">
+        <span className="text-slate-500">Currently Ready:</span> <span className="text-slate-900 font-bold ml-1">{readyCount}</span>
       </div>
-      <div className="bg-slate-800 px-3 py-2 rounded border border-slate-700">
-        <span className="opacity-50">Today's Avg Prep:</span> <span className="text-white font-bold">{stats.avg.toFixed(1)}m</span>
+      <div className="bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-xs">
+        <span className="text-slate-500">Today's Avg Prep:</span> <span className="text-slate-900 font-bold ml-1">{stats.avg.toFixed(1)}m</span>
       </div>
-      <div className="bg-slate-800 px-3 py-2 rounded border border-slate-700">
-        <span className="opacity-50">Fastest:</span> <span className="text-emerald-400 font-bold">{stats.fast.toFixed(1)}m</span>
+      <div className="bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-xs">
+        <span className="text-slate-500">Fastest:</span> <span className="text-emerald-700 font-bold ml-1">{stats.fast.toFixed(1)}m</span>
       </div>
-      <div className="bg-slate-800 px-3 py-2 rounded border border-slate-700">
-        <span className="opacity-50">Slowest:</span> <span className="text-rose-400 font-bold">{stats.slow.toFixed(1)}m</span>
+      <div className="bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-xs">
+        <span className="text-slate-500">Slowest:</span> <span className="text-rose-700 font-bold ml-1">{stats.slow.toFixed(1)}m</span>
       </div>
-      <div className="bg-slate-800 px-3 py-2 rounded border border-slate-700">
-        <span className="opacity-50">Total Prepped:</span> <span className="text-white font-bold">{stats.count}</span>
+      <div className="bg-white px-3.5 py-2.5 rounded-xl border border-slate-200 shadow-xs">
+        <span className="text-slate-500">Total Prepped:</span> <span className="text-slate-900 font-bold ml-1">{stats.count}</span>
       </div>
     </div>
   );
