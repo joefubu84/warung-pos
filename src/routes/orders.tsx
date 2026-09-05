@@ -106,7 +106,7 @@ function OrdersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'pending' | 'preparing' | 'ready' | 'completed' | 'all'>('pending');
+  const [activeTab, setActiveTab] = useState<'pending' | 'preparing' | 'ready' | 'completed' | 'all'>('all');
   const [dateFilter, setDateFilter] = useState<'today' | 'yesterday' | 'last7days' | 'all' | 'custom'>('today');
   const [customDate, setCustomDate] = useState<string>('');
 
@@ -171,6 +171,38 @@ function OrdersPage() {
       setIsLoading(false);
     };
     loadData();
+
+    // Setup Supabase Realtime Listener for instant synchronization
+    const channelName = `orders_page_realtime_${Date.now()}`;
+    const channel = supabase.channel(channelName)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, () => {
+        fetchOrders();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, () => {
+        fetchOrders();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'payments' }, () => {
+        fetchOrders();
+      })
+      .subscribe();
+
+    // Table broadcast listener for instant cross-tab updates
+    const broadcastChannel = supabase.channel('kitchen_realtime_broadcast')
+      .on('broadcast', { event: 'new_order_placed' }, () => {
+        fetchOrders();
+      })
+      .subscribe();
+
+    // Periodic safety sync every 5 seconds
+    const interval = setInterval(() => {
+      fetchOrders();
+    }, 5000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(broadcastChannel);
+      clearInterval(interval);
+    };
   }, []);
 
   const fetchOrders = async () => {
@@ -621,48 +653,63 @@ function OrdersPage() {
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-          <button 
-            onClick={() => setActiveTab('pending')}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'pending' ? 'bg-amber-500 text-slate-950 shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
-          >
-            🟡 Pending
-          </button>
-          <button 
-            onClick={() => setActiveTab('preparing')}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'preparing' ? 'bg-sky-500 text-white shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
-          >
-            🔵 Preparing
-          </button>
-          <button 
-            onClick={() => setActiveTab('ready')}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'ready' ? 'bg-emerald-600 text-white shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
-          >
-            🟢 Ready
-          </button>
-          <button 
-            onClick={() => setActiveTab('completed')}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'completed' ? 'bg-slate-700 text-white shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
-          >
-            ⚪ Completed
-          </button>
-          <button 
-            onClick={() => setActiveTab('all')}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'all' ? 'bg-white text-slate-950 shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
-          >
-            📋 All Orders
-          </button>
-        </div>
+        {/* Tab Navigation with Live Counts */}
+        {(() => {
+          const countPending = orders.filter(o => o.status === 'pending').length;
+          const countPreparing = orders.filter(o => o.status === 'preparing').length;
+          const countReady = orders.filter(o => o.status === 'ready').length;
+          const countCompleted = orders.filter(o => o.status === 'completed').length;
+          const countAll = orders.length;
+
+          return (
+            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              <button 
+                onClick={() => setActiveTab('all')}
+                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1.5 ${activeTab === 'all' ? 'bg-white text-slate-950 shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
+              >
+                <span>📋 All Orders</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'all' ? 'bg-slate-900 text-white' : 'bg-slate-800 text-slate-300'}`}>{countAll}</span>
+              </button>
+              <button 
+                onClick={() => setActiveTab('pending')}
+                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1.5 ${activeTab === 'pending' ? 'bg-amber-500 text-slate-950 shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
+              >
+                <span>🟡 Pending</span>
+                {countPending > 0 && <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'pending' ? 'bg-slate-950 text-amber-400' : 'bg-amber-500/20 text-amber-400 font-black'}`}>{countPending}</span>}
+              </button>
+              <button 
+                onClick={() => setActiveTab('preparing')}
+                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1.5 ${activeTab === 'preparing' ? 'bg-sky-500 text-white shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
+              >
+                <span>🔵 Preparing</span>
+                {countPreparing > 0 && <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'preparing' ? 'bg-slate-950 text-sky-400' : 'bg-sky-500/20 text-sky-400 font-black'}`}>{countPreparing}</span>}
+              </button>
+              <button 
+                onClick={() => setActiveTab('ready')}
+                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1.5 ${activeTab === 'ready' ? 'bg-emerald-600 text-white shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
+              >
+                <span>🟢 Ready</span>
+                {countReady > 0 && <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'ready' ? 'bg-slate-950 text-emerald-400' : 'bg-emerald-500/20 text-emerald-400 font-black'}`}>{countReady}</span>}
+              </button>
+              <button 
+                onClick={() => setActiveTab('completed')}
+                className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all flex items-center gap-1.5 ${activeTab === 'completed' ? 'bg-slate-700 text-white shadow-md font-black scale-105' : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'}`}
+              >
+                <span>⚪ Completed</span>
+                {countCompleted > 0 && <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'completed' ? 'bg-slate-950 text-slate-300' : 'bg-slate-800 text-slate-400 font-black'}`}>{countCompleted}</span>}
+              </button>
+            </div>
+          );
+        })()}
       </div>
 
         {/* Orders Grid */}
         {(() => {
           const sq = searchQuery.toLowerCase();
 
-          // Date Math
+          // Timezone resilient Date Math
           const now = new Date();
-          const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+          const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0).getTime();
           const yesterdayStart = todayStart - (24 * 60 * 60 * 1000);
           const last7DaysStart = todayStart - (7 * 24 * 60 * 60 * 1000);
 
@@ -672,7 +719,8 @@ function OrdersPage() {
             const orderTime = new Date(o.created_at).getTime();
 
             if (dateFilter === 'today') {
-              if (orderTime < todayStart) return false;
+              // Grace margin of 1 hour to handle local timezone shifts safely
+              if (orderTime < (todayStart - 3600000)) return false;
             } else if (dateFilter === 'yesterday') {
               if (orderTime < yesterdayStart || orderTime >= todayStart) return false;
             } else if (dateFilter === 'last7days') {
@@ -762,22 +810,25 @@ function OrdersPage() {
                       {/* Items */}
                       <div className="mb-4 space-y-2">
                         <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Items</p>
-                        {(order.order_items || []).map((item, idx) => (
-                          <div key={idx} className="text-sm">
-                            <p className="font-semibold text-slate-200">
-                              • {item.menu_items?.name || 'Item'} <span className="text-slate-400">x{item.quantity}</span>
-                              <span className={`ml-2 text-[10px] px-2 py-0.5 rounded font-bold uppercase ${item.fulfillment_type === 'takeaway' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
-                                {item.fulfillment_type === 'takeaway' ? '🥡 Takeaway' : '🍽️ Dine-in'}
-                              </span> 
-                              <span className="text-emerald-400 font-mono ml-2">RM{Number(item.price_at_order * item.quantity).toFixed(2)}</span>
-                            </p>
-                            {(item as any).notes && (
-                              <p className="text-xs text-amber-400 font-medium italic ml-3 mt-0.5 flex items-start gap-1">
-                                <span>↳</span> Notes: {(item as any).notes}
+                        {(order.order_items || []).map((item, idx) => {
+                          const itemName = item.menu_items?.name || menuItems.find(m => m.id === item.menu_item_id)?.name || 'Menu Item';
+                          return (
+                            <div key={idx} className="text-sm">
+                              <p className="font-semibold text-slate-200">
+                                • {itemName} <span className="text-slate-400">x{item.quantity}</span>
+                                <span className={`ml-2 text-[10px] px-2 py-0.5 rounded font-bold uppercase ${item.fulfillment_type === 'takeaway' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'}`}>
+                                  {item.fulfillment_type === 'takeaway' ? '🥡 Takeaway' : '🍽️ Dine-in'}
+                                </span> 
+                                <span className="text-emerald-400 font-mono ml-2">RM{Number(item.price_at_order * item.quantity).toFixed(2)}</span>
                               </p>
-                            )}
-                          </div>
-                        ))}
+                              {(item as any).notes && (
+                                <p className="text-xs text-amber-400 font-medium italic ml-3 mt-0.5 flex items-start gap-1">
+                                  <span>↳</span> Notes: {(item as any).notes}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
 
