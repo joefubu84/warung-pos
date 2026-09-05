@@ -1130,7 +1130,7 @@ function SettingsPage() {
                       <ShieldCheck className="w-5 h-5 text-rose-700" />
                       <span>Audit & Keselamatan Operasi POS</span>
                     </h2>
-                    <Badge className="bg-rose-500/20 text-rose-300 border-rose-500/30 text-xs">
+                    <Badge className="bg-rose-50 text-rose-700 border-rose-200 text-xs font-bold">
                       RLS-Protected
                     </Badge>
                   </div>
@@ -2368,8 +2368,8 @@ function AdminRiderManagementCard() {
                     </button>
                   </div>
                 ) : (
-                  <label className="border-2 border-dashed border-slate-700 hover:border-amber-500 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
-                    <Camera className="w-5 h-5 text-amber-700 mb-1" />
+                  <label className="border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50/50 hover:bg-orange-50/20 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
+                    <Camera className="w-5 h-5 text-orange-600 mb-1" />
                     <span className="text-[11px] text-slate-700 font-bold">Ambil Foto Wajah</span>
                     <span className="text-[9px] text-slate-500">Kamera atau Galeri</span>
                     <input
@@ -2398,8 +2398,8 @@ function AdminRiderManagementCard() {
                     </button>
                   </div>
                 ) : (
-                  <label className="border-2 border-dashed border-slate-700 hover:border-sky-500 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
-                    <FileText className="w-5 h-5 text-sky-700 mb-1" />
+                  <label className="border-2 border-dashed border-slate-300 hover:border-sky-500 bg-slate-50/50 hover:bg-sky-50/20 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
+                    <FileText className="w-5 h-5 text-sky-600 mb-1" />
                     <span className="text-[11px] text-slate-700 font-bold">Tangkap Gambar IC</span>
                     <span className="text-[9px] text-slate-500">Kamera atau Fail</span>
                     <input
@@ -2428,8 +2428,8 @@ function AdminRiderManagementCard() {
                     </button>
                   </div>
                 ) : (
-                  <label className="border-2 border-dashed border-slate-700 hover:border-emerald-500 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
-                    <Upload className="w-5 h-5 text-emerald-700 mb-1" />
+                  <label className="border-2 border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50/50 hover:bg-emerald-50/20 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
+                    <Upload className="w-5 h-5 text-emerald-600 mb-1" />
                     <span className="text-[11px] text-slate-700 font-bold">Tangkap Gambar Lesen</span>
                     <span className="text-[9px] text-slate-500">Kamera atau Fail</span>
                     <input
@@ -2458,8 +2458,8 @@ function AdminRiderManagementCard() {
                     </button>
                   </div>
                 ) : (
-                  <label className="border-2 border-dashed border-slate-700 hover:border-amber-500 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
-                    <CreditCard className="w-5 h-5 text-amber-700 mb-1" />
+                  <label className="border-2 border-dashed border-slate-300 hover:border-orange-500 bg-slate-50/50 hover:bg-orange-50/20 p-3 rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all">
+                    <CreditCard className="w-5 h-5 text-orange-600 mb-1" />
                     <span className="text-[11px] text-slate-700 font-bold">Penyata / Kad Bank</span>
                     <span className="text-[9px] text-slate-500">Kamera atau Fail</span>
                     <input

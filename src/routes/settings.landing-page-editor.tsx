@@ -8,7 +8,7 @@ import { Button } from '../components/ui/button';
 import { Switch } from '../components/ui/switch';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { useToast } from '../components/ui/use-toast'; // Assuming a toast component exists
+import { toast } from 'sonner';
 
 interface HeroSection {
   headline: string;
@@ -74,7 +74,6 @@ const defaultLandingPageConfig: LandingPageConfig = {
 };
 
 export function Route() {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
   const [config, setConfig] = useState<LandingPageConfig>(defaultLandingPageConfig);
   const [menuItems, setMenuItems] = useState<{ id: string; name: string }[]>([]);
@@ -134,17 +133,10 @@ export function Route() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['landingPageConfig'] });
-      toast({
-        title: 'Success!',
-        description: 'Landing page configuration saved successfully.',
-      });
+      toast.success('Landing page configuration saved successfully.');
     },
     onError: (err) => {
-      toast({
-        title: 'Error!',
-        description: `Failed to save configuration: ${err.message}`,
-        variant: 'destructive',
-      });
+      toast.error(`Failed to save configuration: ${err.message}`);
     },
   });
 

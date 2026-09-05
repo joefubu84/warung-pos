@@ -178,13 +178,20 @@ export const Route = createRootRouteWithContext<{
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="ms" className="light">
       <head>
         <HeadContent />
         <script
           dangerouslySetInnerHTML={{
             __html: `
               (function() {
+                try {
+                  if (typeof document !== 'undefined') {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.classList.add('light');
+                  }
+                } catch (e) {}
+
                 try {
                   if (typeof window !== 'undefined' && window.location) {
                     var h = window.location.hostname;
