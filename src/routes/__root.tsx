@@ -61,13 +61,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   if (isChunkLoadError) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-white px-4 text-slate-800">
-        <div className="max-w-md w-full text-center p-8 bg-white border border-slate-200 rounded-3xl shadow-2xl">
-          <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-5" />
-          <h1 className="text-xl font-black text-emerald-400 tracking-tight">
+      <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 text-slate-800 font-sans">
+        <div className="max-w-md w-full text-center p-8 bg-white border border-slate-200 rounded-3xl shadow-xl">
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-5" />
+          <h1 className="text-xl font-black text-slate-900 tracking-tight font-heading">
             Memuat Semula Versi Terkini...
           </h1>
-          <p className="mt-3 text-sm text-slate-400 leading-relaxed">
+          <p className="mt-3 text-sm text-slate-600 leading-relaxed font-medium">
             Sistem Warung J&J telah menerima kemaskini baharu. Halaman sedang disegarkan secara automatik untuk memuat turun kod terkini.
           </p>
           <div className="mt-6 flex flex-col gap-2">
@@ -76,13 +76,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
                 sessionStorage.clear();
                 window.location.reload();
               }}
-              className="w-full inline-flex items-center justify-center rounded-xl bg-emerald-500 hover:bg-emerald-400 py-3 text-sm font-bold text-slate-950 transition-colors shadow-lg shadow-emerald-950/40 cursor-pointer"
+              className="w-full inline-flex items-center justify-center rounded-xl bg-orange-500 hover:bg-orange-600 py-3 text-sm font-bold text-white transition-colors shadow-md shadow-orange-500/20 cursor-pointer"
             >
               Segarkan Sekarang (Refresh)
             </button>
             <a
               href="/counter"
-              className="w-full inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-800/60 hover:bg-slate-800 py-2.5 text-xs font-semibold text-slate-300 transition-colors"
+              className="w-full inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 py-2.5 text-xs font-bold text-slate-700 transition-colors shadow-xs"
             >
               Buka Counter POS
             </a>
@@ -93,12 +93,12 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="max-w-md text-center">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+    <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 font-sans text-slate-900">
+      <div className="max-w-md text-center p-6 bg-white rounded-3xl border border-slate-200 shadow-xl">
+        <h1 className="text-xl font-bold tracking-tight text-slate-900 font-heading">
+          Halaman Tidak Dapat Dimuatkan
         </h1>
-        <pre className="mt-2 text-xs text-red-500 text-left bg-black p-4 rounded overflow-auto">
+        <pre className="mt-2 text-xs text-rose-700 text-left bg-rose-50 border border-rose-200 p-4 rounded-2xl overflow-auto font-mono">
           {error?.message || "Unknown error"}
           {"\n"}
           {error?.stack}

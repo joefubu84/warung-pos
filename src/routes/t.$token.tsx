@@ -917,35 +917,36 @@ export function TableQRPage() {
           </div>
         </div>
 
-        {/* 2. HERO PROMO BANNER (Dark charcoal #111827, rounded-2xl, special offer badge + hero image) */}
-        <div className="bg-[#111827] text-white rounded-3xl p-5 shadow-xl relative overflow-hidden flex items-center justify-between border border-slate-200">
+        {/* 2. HERO PROMO BANNER (Fauna Kitchen Warm Editorial Banner) */}
+        <div className="bg-gradient-to-br from-orange-500 via-amber-500 to-orange-600 text-white rounded-3xl p-5 shadow-lg relative overflow-hidden flex items-center justify-between border border-orange-400/40">
           <div className="space-y-3 z-10 max-w-[58%]">
             {/* SPECIAL OFFER! BADGE */}
-            <div className="inline-flex items-center gap-1.5 bg-[#fde047] text-slate-950 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider shadow-sm">
+            <div className="inline-flex items-center gap-1.5 bg-white/95 text-orange-950 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
+              <Sparkles className="w-3 h-3 text-orange-600" />
               <span>SPECIAL OFFER!</span>
             </div>
 
             <div>
-              <p className="text-xs text-slate-300 font-semibold tracking-wide">
+              <p className="text-xs text-orange-100 font-bold tracking-wide">
                 {storeName || 'Warung J&J Penampang'}
               </p>
-              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight font-heading">
                 Table-{tableNumber ? String(tableNumber).padStart(2, '0') : '01'}
               </h2>
             </div>
 
-            <p className="text-[11px] text-slate-400 font-medium line-clamp-1">
+            <p className="text-[11px] text-orange-100/90 font-medium line-clamp-1">
               Freshly cooked to order • Fast kitchen delivery
             </p>
           </div>
 
           {/* HERO IMAGE */}
           <div className="relative w-28 h-28 shrink-0 flex items-center justify-center">
-            <div className="absolute inset-0 bg-orange-500/20 rounded-full blur-xl animate-pulse" />
+            <div className="absolute inset-0 bg-white/20 rounded-full blur-xl animate-pulse" />
             <img
               src={filteredMenuItems.find(i => i.image_url)?.image_url || '/logo.png'}
               alt="Featured Dish"
-              className="w-26 h-26 rounded-full object-cover shadow-2xl border-2 border-white/20 relative z-10 hover:scale-105 transition-transform"
+              className="w-26 h-26 rounded-full object-cover shadow-xl border-2 border-white/60 relative z-10 hover:scale-105 transition-transform"
             />
           </div>
         </div>

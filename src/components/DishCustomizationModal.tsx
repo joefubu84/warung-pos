@@ -149,7 +149,7 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="bg-white text-slate-900 border border-slate-200/90 max-w-md max-h-[90vh] overflow-y-auto font-sans p-0 rounded-3xl shadow-2xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* DISH HERO IMAGE HEADER */}
-        <div className="relative h-48 sm:h-52 bg-gradient-to-b from-stone-100 to-stone-50 w-full flex items-center justify-center border-b border-stone-100 p-3">
+        <div className="relative h-48 sm:h-52 bg-gradient-to-b from-slate-100 to-slate-50 w-full flex items-center justify-center border-b border-slate-100 p-3">
           {menuItem.image_url ? (
             <img
               src={menuItem.image_url}
@@ -157,7 +157,7 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
               className="w-full h-full object-contain drop-shadow-md rounded-2xl hover:scale-105 transition-transform duration-300"
             />
           ) : (
-            <div className="flex flex-col items-center gap-2 text-stone-400">
+            <div className="flex flex-col items-center gap-2 text-slate-400">
               <Utensils className="w-12 h-12 stroke-[1.5]" />
               <span className="text-xs font-medium">Gambar Hidangan Warung J&J</span>
             </div>
@@ -177,7 +177,7 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
         <div className="p-5 space-y-5">
           {/* TITLE & DESCRIPTION */}
           <div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tight">{menuItem.name}</h3>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight font-heading">{menuItem.name}</h3>
             {menuItem.description && (
               <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">{menuItem.description}</p>
             )}
@@ -194,10 +194,10 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                 <button
                   type="button"
                   onClick={() => setFulfillmentType('delivery')}
-                  className={`p-3 rounded-2xl border text-xs font-extrabold transition-all flex flex-col items-center gap-1 ${
+                  className={`p-3 rounded-2xl border text-xs font-extrabold transition-all flex flex-col items-center gap-1 cursor-pointer ${
                     fulfillmentType === 'delivery'
                       ? 'bg-orange-50 border-orange-500 text-orange-950 ring-2 ring-orange-500/20 shadow-sm scale-[1.01]'
-                      : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100 hover:text-slate-900'
+                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                   }`}
                 >
                   <span className="text-xl">🛵</span>
@@ -206,10 +206,10 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                 <button
                   type="button"
                   onClick={() => setFulfillmentType('self_pickup')}
-                  className={`p-3 rounded-2xl border text-xs font-extrabold transition-all flex flex-col items-center gap-1 ${
+                  className={`p-3 rounded-2xl border text-xs font-extrabold transition-all flex flex-col items-center gap-1 cursor-pointer ${
                     fulfillmentType === 'self_pickup'
                       ? 'bg-orange-50 border-orange-500 text-orange-950 ring-2 ring-orange-500/20 shadow-sm scale-[1.01]'
-                      : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100 hover:text-slate-900'
+                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                   }`}
                 >
                   <span className="text-xl">🛍️</span>
@@ -221,10 +221,10 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                 <button
                   type="button"
                   onClick={() => setFulfillmentType('dine_in')}
-                  className={`p-3 rounded-2xl border text-xs font-extrabold transition-all flex flex-col items-center gap-1 ${
+                  className={`p-3 rounded-2xl border text-xs font-extrabold transition-all flex flex-col items-center gap-1 cursor-pointer ${
                     fulfillmentType === 'dine_in'
                       ? 'bg-orange-50 border-orange-500 text-orange-950 ring-2 ring-orange-500/20 shadow-sm scale-[1.01]'
-                      : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100 hover:text-slate-900'
+                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                   }`}
                 >
                   <span className="text-xl">🍽️</span>
@@ -233,10 +233,10 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                 <button
                   type="button"
                   onClick={() => setFulfillmentType('takeaway')}
-                  className={`p-3 rounded-2xl border text-xs font-extrabold transition-all flex flex-col items-center gap-1 ${
+                  className={`p-3 rounded-2xl border text-xs font-extrabold transition-all flex flex-col items-center gap-1 cursor-pointer ${
                     fulfillmentType === 'takeaway'
                       ? 'bg-orange-50 border-orange-500 text-orange-950 ring-2 ring-orange-500/20 shadow-sm scale-[1.01]'
-                      : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100 hover:text-slate-900'
+                      : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                   }`}
                 >
                   <span className="text-xl">🥡</span>
@@ -247,20 +247,20 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
           </div>
 
           {/* 2. QUANTITY SELECTOR */}
-          <div className="p-3.5 bg-stone-50/90 rounded-2xl border border-stone-200 flex justify-between items-center">
+          <div className="p-3.5 bg-slate-50/90 rounded-2xl border border-slate-200 flex justify-between items-center">
             <div>
               <span className="text-xs text-slate-900 font-black uppercase tracking-wide block">
                 2. Bilangan {isDeliveryMode || fulfillmentType !== 'dine_in' ? 'Bungkusan / Pek' : 'Pinggan'}
               </span>
               <span className="text-[11px] text-slate-500 font-medium">Pilih berapa kuantiti untuk hidangan ini</span>
             </div>
-            <div className="flex items-center gap-2 bg-white border border-stone-200 rounded-xl p-1 shadow-sm">
+            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1 shadow-sm">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 onClick={() => updateQuantityClamped(quantity - 1)}
-                className="h-8 w-8 text-stone-600 hover:bg-stone-100 active:scale-95 rounded-lg"
+                className="h-8 w-8 text-slate-600 hover:bg-slate-100 active:scale-95 rounded-lg"
               >
                 <Minus className="w-4 h-4 stroke-[2.5]" />
               </Button>
@@ -293,7 +293,7 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                 {Array.from({ length: quantity }).map((_, pIdx) => {
                   const curNote = plateNotes[pIdx] || '';
                   return (
-                    <div key={pIdx} className="p-3 rounded-2xl bg-stone-50/90 border border-stone-200 space-y-2 shadow-sm">
+                    <div key={pIdx} className="p-3 rounded-2xl bg-slate-50/90 border border-slate-200 space-y-2 shadow-sm">
                       <div className="flex justify-between items-center text-xs">
                         <span className="font-black text-slate-800 flex items-center gap-1">
                           <span>{fulfillmentType === 'dine_in' ? '🍽️ Pinggan' : '🥡 Bungkusan'} #{pIdx + 1}</span>
@@ -310,7 +310,7 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                         value={curNote}
                         onChange={(e) => updateSpecificPlateNote(pIdx, e.target.value)}
                         placeholder={`Nota Pinggan #${pIdx + 1} (cth: Tak nak lada, sambal asing, kuah banjir...)`}
-                        className="bg-white border-stone-200 text-slate-900 text-xs min-h-[45px] resize-none rounded-xl focus:border-orange-500 focus:ring-1 focus:ring-orange-500 placeholder:text-stone-400"
+                        className="bg-white border-slate-200 text-slate-900 text-xs min-h-[45px] resize-none rounded-xl focus:border-orange-500 focus:ring-1 focus:ring-orange-500 placeholder:text-slate-400"
                       />
 
                       {/* QUICK MODIFIER PILLS FOR THIS SPECIFIC PLATE */}
@@ -322,10 +322,10 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                               key={mod.id}
                               type="button"
                               onClick={() => togglePlateQuickModifier(pIdx, mod.tag)}
-                              className={`text-[10px] px-2 py-1 rounded-lg font-bold transition-all border flex items-center gap-1 ${
+                              className={`text-[10px] px-2 py-1 rounded-lg font-bold transition-all border flex items-center gap-1 cursor-pointer ${
                                 isSelected
                                   ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
-                                  : 'bg-white text-stone-700 border-stone-200 hover:border-orange-300 hover:text-orange-600'
+                                  : 'bg-white text-slate-700 border-slate-200 hover:border-orange-300 hover:text-orange-600'
                               }`}
                             >
                               <span>{mod.icon}</span>
@@ -355,10 +355,10 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                             setSpecialInstructions(prev => prev ? `${prev}, ${mod.tag}` : mod.tag);
                           }
                         }}
-                        className={`text-[11px] px-2.5 py-1 rounded-xl font-bold transition-all border flex items-center gap-1 ${
+                        className={`text-[11px] px-2.5 py-1 rounded-xl font-bold transition-all border flex items-center gap-1 cursor-pointer ${
                           isSelected
                             ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
-                            : 'bg-stone-100 text-stone-700 border-stone-200 hover:border-orange-300 hover:text-orange-600'
+                            : 'bg-slate-100 text-slate-700 border-slate-200 hover:border-orange-300 hover:text-orange-600'
                         }`}
                       >
                         <span>{mod.icon}</span>
@@ -372,14 +372,14 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                   value={specialInstructions}
                   onChange={(e) => setSpecialInstructions(e.target.value)}
                   placeholder="Contoh: Tak nak lada, sambal asing, kuah banjir..."
-                  className="bg-stone-50 border-stone-200 text-slate-900 text-xs min-h-[50px] resize-none rounded-xl p-3 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 placeholder:text-stone-400"
+                  className="bg-slate-50 border-slate-200 text-slate-900 text-xs min-h-[50px] resize-none rounded-xl p-3 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 placeholder:text-slate-400"
                 />
               </div>
             )}
           </div>
 
           {/* ADD TO CART ACTION BUTTON OR VIEW ONLY NOTICE */}
-          <div className="pt-2 border-t border-stone-100 flex flex-col gap-2">
+          <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
             {isViewOnly ? (
               <div className="space-y-2">
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-center text-xs text-amber-800 font-medium">
@@ -388,7 +388,7 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                 <Button
                   type="button"
                   onClick={onClose}
-                  className="w-full bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold py-3 rounded-2xl active:scale-98 transition-all"
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 rounded-2xl active:scale-98 transition-all"
                 >
                   Tutup Paparan Menu
                 </Button>
@@ -397,7 +397,7 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
               <Button
                 type="button"
                 onClick={handleConfirmAddToCart}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-4 px-5 rounded-2xl shadow-lg shadow-orange-500/25 flex items-center justify-between text-sm active:scale-98 transition-all cursor-pointer"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-4 px-5 rounded-2xl shadow-lg shadow-orange-500/25 flex items-center justify-between text-sm active:scale-98 transition-all cursor-pointer font-heading"
               >
                 <div className="flex items-center gap-2">
                   <ShoppingBag className="w-4 h-4" />

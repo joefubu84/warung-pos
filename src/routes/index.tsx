@@ -114,7 +114,7 @@ function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 selection:bg-orange-500/30 selection:text-orange-900 overflow-x-hidden font-sans">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 selection:bg-orange-500/20 selection:text-orange-950 overflow-x-hidden font-sans">
       
       {/* Navigation (Floating Island) */}
       <div className="fixed top-5 w-full z-50 px-4 pointer-events-none flex justify-center">
@@ -122,7 +122,7 @@ function LandingPage() {
           initial={{ y: -40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="pointer-events-auto flex items-center justify-between gap-4 md:gap-8 px-3 py-2 rounded-full bg-white/90 backdrop-blur-xl border border-stone-200 shadow-sm"
+          className="pointer-events-auto flex items-center justify-between gap-4 md:gap-8 px-3 py-2 rounded-full bg-white/90 backdrop-blur-xl border border-slate-200 shadow-sm"
         >
           {/* Brand */}
           <Link to="/" className="flex items-center gap-2.5 pl-2 pr-1">
@@ -130,22 +130,22 @@ function LandingPage() {
               <img src="/logo.png" alt="Warung J&J Logo" className="w-full h-full object-cover" />
             </div>
             <div className="hidden sm:block text-left">
-              <span className="text-[15px] font-bold text-stone-900 block leading-none font-heading">Warung J&J</span>
+              <span className="text-[15px] font-bold text-slate-900 block leading-none font-heading">Warung J&J</span>
               <span className="text-[10px] text-orange-600 font-bold">Penampang, Sabah</span>
             </div>
           </Link>
           
           {/* Links Box */}
-          <div className="hidden md:flex items-center gap-1 bg-stone-100 p-1 rounded-full border border-stone-200">
-            <a href="#menu" className="px-4 py-1.5 rounded-full text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-white transition-all">Menu</a>
-            <a href="#keistimewaan" className="px-4 py-1.5 rounded-full text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-white transition-all">Keistimewaan</a>
-            <a href="#location" className="px-4 py-1.5 rounded-full text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-white transition-all">Lokasi & Waktu</a>
+          <div className="hidden md:flex items-center gap-1 bg-slate-100 p-1 rounded-full border border-slate-200">
+            <a href="#menu" className="px-4 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-white transition-all">Menu</a>
+            <a href="#keistimewaan" className="px-4 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-white transition-all">Keistimewaan</a>
+            <a href="#location" className="px-4 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-white transition-all">Lokasi & Waktu</a>
           </div>
 
           {/* CTAs */}
           <div className="flex items-center gap-2 pr-1">
             <a href="#menu">
-              <Button className="rounded-full px-5 h-9 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs tracking-tight transition-all shadow-sm flex items-center gap-1.5">
+              <Button className="rounded-full px-5 h-9 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs tracking-tight transition-all shadow-sm flex items-center gap-1.5 font-heading">
                 <UtensilsCrossed className="w-3.5 h-3.5" />
                 <span>Lihat Menu</span>
               </Button>
@@ -156,7 +156,7 @@ function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-16 md:pt-44 md:pb-28 px-6">
-        <div className="absolute inset-0 bg-stone-50 -z-10" />
+        <div className="absolute inset-0 bg-[#f8fafc] -z-10" />
         
         <div className="max-w-7xl mx-auto flex flex-col-reverse lg:flex-row items-center gap-10 lg:gap-16">
           
@@ -176,7 +176,7 @@ function LandingPage() {
             </motion.div>
 
             {/* Main Headline */}
-            <motion.h1 variants={item} className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.15] text-stone-900 font-heading">
+            <motion.h1 variants={item} className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.15] text-slate-900 font-heading">
               {homepageSettings?.hero_section?.headline || (
                 <>
                   Rasa Asli, Sambal Padu — <br className="hidden sm:inline" />
@@ -188,7 +188,7 @@ function LandingPage() {
             </motion.h1>
 
             {/* Subtitle */}
-            <motion.p variants={item} className="text-base md:text-lg text-stone-600 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
+            <motion.p variants={item} className="text-base md:text-lg text-slate-600 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
               {homepageSettings?.hero_section?.subheadline || 'Nikmati hidangan Ayam Penyet, Ayam Geprek rangup, Ikan Talapia berlada, dan aneka lauk sampingan panas-panas. Disediakan segar setiap hari.'}
             </motion.p>
 
@@ -264,7 +264,7 @@ function LandingPage() {
       </section>
 
       {/* Keistimewaan Warung J&J */}
-      <section id="keistimewaan" className="py-20 px-6 bg-stone-100/70 border-y border-slate-200">
+      <section id="keistimewaan" className="py-20 px-6 bg-slate-50/70 border-y border-slate-200">
         <div className="max-w-7xl mx-auto space-y-12">
           <div className="text-center space-y-3 max-w-2xl mx-auto">
             <span className="text-xs font-bold uppercase tracking-wider text-orange-600 font-mono">Keistimewaan Dapur Kami</span>
@@ -285,7 +285,7 @@ function LandingPage() {
                 <h3 className="text-xl md:text-2xl font-bold text-white mb-1.5 font-heading">
                   {homepageSettings?.bento_1_title || 'Ruang Santai & Mesra Keluarga'}
                 </h3>
-                <p className="text-xs md:text-sm text-stone-200 font-medium">Sesuai untuk makan tengah hari bersama rakan sekerja mahupun makan malam santai bersama seisi keluarga di Penampang.</p>
+                <p className="text-xs md:text-sm text-slate-200 font-medium">Sesuai untuk makan tengah hari bersama rakan sekerja mahupun makan malam santai bersama seisi keluarga di Penampang.</p>
               </div>
             </div>
 
@@ -323,7 +323,7 @@ function LandingPage() {
                 <h3 className="text-xl md:text-2xl font-bold text-white mb-1.5 font-heading">
                   {homepageSettings?.bento_2_title || 'Pilihan Tambahan & Lauk Sampingan Pelbagai'}
                 </h3>
-                <p className="text-xs md:text-sm text-stone-200 font-medium">Boleh beli terus secara berasingan: Telur Dadar Krikil, Popcorn Ayam, Telur Mata, Nasi Tambah, dan aneka sambal tambahan mengikut citarasa anda.</p>
+                <p className="text-xs md:text-sm text-slate-200 font-medium">Boleh beli terus secara berasingan: Telur Dadar Krikil, Popcorn Ayam, Telur Mata, Nasi Tambah, dan aneka sambal tambahan mengikut citarasa anda.</p>
               </div>
             </div>
           </div>
@@ -387,7 +387,7 @@ function LandingPage() {
                         RM {item.price.toFixed(2)}
                       </div>
                       <Link to="/delivery">
-                        <Button size="sm" className="rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold h-8 px-3 flex items-center gap-1 shadow-sm">
+                        <Button size="sm" className="rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-semibold h-8 px-3 flex items-center gap-1 shadow-sm font-heading">
                           <span>Pesan</span>
                           <ArrowRight className="w-3 h-3" />
                         </Button>
@@ -401,7 +401,7 @@ function LandingPage() {
 
           <div className="flex justify-center md:hidden pt-4">
             <Link to="/delivery" className="w-full">
-              <Button size="lg" variant="outline" className="rounded-full px-6 h-12 font-semibold border-slate-200 text-slate-800 w-full bg-white hover:bg-slate-50 shadow-sm">
+              <Button size="lg" variant="outline" className="rounded-full px-6 h-12 font-semibold border-slate-200 text-slate-800 w-full bg-white hover:bg-slate-50 shadow-sm font-heading">
                 Lihat Seluruh Menu & Pesan Delivery 🛵
               </Button>
             </Link>
@@ -410,7 +410,7 @@ function LandingPage() {
       </section>
 
       {/* Location & Hours */}
-      <section id="location" className="py-20 px-6 bg-stone-100/70 border-t border-slate-200">
+      <section id="location" className="py-20 px-6 bg-slate-50/70 border-t border-slate-200">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
           <div className="space-y-8">
             <div>

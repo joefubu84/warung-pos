@@ -743,9 +743,9 @@ function SettingsPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                     <div className="relative inline-block bg-white p-4 rounded-3xl border-4 border-[#a6192e] shadow-2xl text-center">
-                      <div className="bg-[#a6192e] text-slate-900 text-xs font-black py-1.5 px-4 rounded-t-xl tracking-wider uppercase flex items-center justify-between mb-3">
+                      <div className="bg-[#a6192e] text-white text-xs font-black py-1.5 px-4 rounded-t-xl tracking-wider uppercase flex items-center justify-between mb-3">
                         <span className="flex items-center gap-1.5 font-sans">💳 DuitNow QR</span>
-                        <span className="text-[10px] font-mono bg-white/20 px-2 py-0.5 rounded-full">Alliance Bank</span>
+                        <span className="text-[10px] font-mono bg-white/20 text-white px-2 py-0.5 rounded-full">Alliance Bank</span>
                       </div>
 
                       <div className="relative inline-block">
@@ -858,7 +858,7 @@ function SettingsPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      <Button type="button" variant="outline" onClick={handleTestSound} className="bg-slate-50 border-slate-200 text-slate-800 hover:text-slate-900 hover:bg-slate-800">
+                      <Button type="button" variant="outline" onClick={handleTestSound} className="bg-slate-50 border-slate-200 text-slate-800 hover:text-slate-900 hover:bg-slate-100">
                         Uji Bunyi Semasa 🔔
                       </Button>
                     </div>
@@ -1297,7 +1297,7 @@ function NavbarCustomizerCard() {
                   className={`bg-white border px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shrink-0 cursor-grab active:cursor-grabbing select-none transition-all duration-200 ${
                     isBeingDragged 
                       ? 'opacity-40 border-amber-400 scale-95' 
-                      : (isTargetSlot ? 'border-2 border-emerald-400 bg-emerald-950/40 ring-2 ring-emerald-500/50' : 'border-slate-200 text-slate-800 hover:border-slate-700 hover:bg-slate-800')
+                      : (isTargetSlot ? 'border-2 border-emerald-500 bg-emerald-50 ring-2 ring-emerald-400/40' : 'border-slate-200 text-slate-800 hover:border-slate-300 hover:bg-slate-50')
                   }`}
                 >
                   <GripVertical className="w-3.5 h-3.5 text-slate-500 shrink-0" />
@@ -2554,7 +2554,7 @@ function AdminRiderManagementCard() {
                             </span>
                           )}
                           {statusVal === 'offline' && (
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-500 border border-slate-700">
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
                               ⚪ OFFLINE
                             </span>
                           )}
@@ -2819,7 +2819,7 @@ function AdminRiderManagementCard() {
 
                 <Button
                   onClick={() => setIsDetailOpen(false)}
-                  className="bg-slate-800 hover:bg-slate-700 text-slate-900 text-xs rounded-xl h-9 px-4"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 text-xs rounded-xl h-9 px-4 font-semibold"
                 >
                   Tutup
                 </Button>

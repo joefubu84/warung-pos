@@ -106,96 +106,96 @@ function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-slate-800 flex flex-col justify-center items-center p-4 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col justify-center items-center p-4 relative overflow-hidden font-sans">
       {/* Background Glow */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Main Login Card */}
-      <div className="w-full max-w-md bg-white/90 border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative z-10 space-y-6">
+      <div className="w-full max-w-md bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-xl relative z-10 space-y-6">
         
         {/* Header Branding */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 mb-2 shadow-inner">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-orange-50 border border-orange-200 text-orange-600 mb-2 shadow-sm">
             <Store className="w-7 h-7" />
           </div>
           <div className="inline-block">
-            <span className="text-[10px] tracking-widest uppercase bg-emerald-500/20 text-emerald-300 font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/30">
+            <span className="text-[10px] tracking-widest uppercase bg-orange-50 text-orange-700 font-bold px-2.5 py-0.5 rounded-full border border-orange-200 font-mono">
               Staff & Cashier Portal
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-heading">
             Warung J&J POS
           </h1>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500 font-medium">
             Penampang, Sabah • Log masuk untuk akses Counter & Kitchen
           </p>
         </div>
 
         {/* 1-CLICK INSTANT EMERGENCY BYPASS BUTTON */}
-        <div className="p-4 bg-gradient-to-r from-emerald-950/80 via-slate-900 to-amber-950/60 border-2 border-emerald-500/40 rounded-2xl shadow-xl space-y-2.5 text-center">
-          <div className="flex items-center justify-center gap-2 text-emerald-300 text-xs font-bold">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+        <div className="p-4 bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 border border-emerald-200 rounded-2xl shadow-xs space-y-2.5 text-center">
+          <div className="flex items-center justify-center gap-2 text-emerald-800 text-xs font-bold">
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
             <span>Akses Pantas Staf & Admin (1-Klik)</span>
           </div>
-          <p className="text-[11px] text-slate-300 leading-tight">
+          <p className="text-[11px] text-emerald-700 leading-tight font-medium">
             Tekan butang di bawah untuk terus masuk ke sistem POS tanpa sekatan kata laluan.
           </p>
           <Button
             type="button"
             onClick={handleForceStaffLogin}
-            className="w-full h-11 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-900/40 active:scale-95 transition-all flex items-center justify-center gap-2"
+            className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-wider rounded-xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer font-heading"
           >
-            <Zap className="w-4 h-4 fill-emerald-300 text-emerald-300" />
+            <Zap className="w-4 h-4 fill-white text-white" />
             <span>Buka Sistem POS Sekarang (1-Klik) 🚀</span>
           </Button>
         </div>
 
         {/* Error Notification Banner */}
         {error && (
-          <div className="bg-rose-500/10 border border-rose-500/30 text-rose-400 p-3.5 rounded-2xl flex items-start gap-3 text-xs leading-relaxed animate-in fade-in slide-in-from-top-2">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <span>{error}</span>
+          <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3.5 rounded-2xl flex items-start gap-3 text-xs leading-relaxed animate-in fade-in slide-in-from-top-2">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
+            <span className="font-medium">{error}</span>
           </div>
         )}
 
         {/* Form */}
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
+            <label className="text-xs font-bold text-slate-700">
               Emel Staf / Admin
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <Input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nama@warungjnj.com"
-                className="bg-white/80 border-slate-200 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-slate-600 focus:border-emerald-500"
+                className="bg-slate-50 border-slate-200 pl-10 h-11 text-xs rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                 required
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
+            <label className="text-xs font-bold text-slate-700">
               Kata Laluan (Password)
             </label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <Input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="bg-white/80 border-slate-200 pl-10 pr-10 h-11 text-xs rounded-xl text-white placeholder:text-slate-600 focus:border-emerald-500"
+                className="bg-slate-50 border-slate-200 pl-10 pr-10 h-11 text-xs rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -205,7 +205,7 @@ function AuthPage() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full h-12 bg-slate-800 hover:bg-slate-700 text-slate-800 font-bold text-xs rounded-xl border border-slate-700 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
+            className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs rounded-xl shadow-md shadow-orange-500/20 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2 cursor-pointer font-heading"
           >
             {loading ? (
               <>
@@ -219,12 +219,12 @@ function AuthPage() {
         </form>
 
         {/* Footer Navigation */}
-        <div className="pt-2 border-t border-slate-200/80 flex flex-col gap-2.5 text-xs text-slate-400">
+        <div className="pt-2 border-t border-slate-100 flex flex-col gap-2.5 text-xs text-slate-500">
           <div className="flex items-center justify-between">
             <button
               type="button"
               onClick={() => navigate({ to: '/' })}
-              className="inline-flex items-center gap-1.5 hover:text-emerald-400 transition-colors"
+              className="inline-flex items-center gap-1.5 hover:text-slate-900 transition-colors font-medium cursor-pointer"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Kembali ke Utama</span>
@@ -233,17 +233,17 @@ function AuthPage() {
             <button
               type="button"
               onClick={() => navigate({ to: '/delivery' })}
-              className="text-emerald-400 hover:underline font-semibold"
+              className="text-orange-600 hover:text-orange-700 hover:underline font-bold cursor-pointer"
             >
               Pesanan Delivery 🛵
             </button>
           </div>
 
-          <div className="pt-2 border-t border-slate-200/60 text-center">
+          <div className="pt-2 border-t border-slate-100 text-center">
             <button
               type="button"
               onClick={() => navigate({ to: '/rider' })}
-              className="text-xs font-bold text-amber-400 hover:text-amber-300 hover:underline font-mono"
+              className="text-xs font-bold text-orange-600 hover:text-orange-700 hover:underline cursor-pointer"
             >
               🛵 Anda Rider Delivery? Daftar & Log Masuk Portal Rider di Sini →
             </button>

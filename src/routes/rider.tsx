@@ -87,25 +87,25 @@ function RiderPortalPage() {
   // Maintenance screen if rider portal is temporarily closed
   if (!IS_RIDER_ENABLED) {
     return (
-      <div className="min-h-screen bg-[#121110] text-[#f5f5f4] flex flex-col justify-center items-center p-4 sm:p-6 font-sans selection:bg-amber-500/30">
-        <div className="w-full max-w-md bg-[#1c1a18] border border-[#2e2a27] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-center">
-          <div className="w-20 h-20 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border-2 border-amber-500/40 shadow-inner">
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col justify-center items-center p-4 sm:p-6 font-sans selection:bg-orange-500/20">
+        <div className="w-full max-w-md bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6 text-center">
+          <div className="w-20 h-20 rounded-3xl bg-orange-50 text-orange-500 flex items-center justify-center mx-auto border border-orange-200 shadow-sm">
             <Truck className="w-10 h-10" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight font-heading">
               Portal Rider Ditutup Sementara
             </h1>
-            <p className="text-xs sm:text-sm text-stone-400 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
               Perkhidmatan penghantaran dan sistem penugasan rakan rider Warung J&J sedang ditutup buat sementara waktu untuk penambahbaikan & penyelenggaraan sistem.
             </p>
           </div>
-          <div className="p-3.5 bg-stone-900/80 border border-stone-800 rounded-2xl text-xs text-stone-400 space-y-1">
-            <p className="font-bold text-amber-400">Warung J&J • Penampang, Sabah</p>
-            <p className="text-[11px]">Sila hubungi pihak pengurusan warung untuk sebarang maklumat lanjut.</p>
+          <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs text-slate-600 space-y-1">
+            <p className="font-bold text-slate-900">Warung J&J • Penampang, Sabah</p>
+            <p className="text-[11px] text-slate-500">Sila hubungi pihak pengurusan warung untuk sebarang maklumat lanjut.</p>
           </div>
           <Link to="/">
-            <Button variant="outline" className="w-full h-11 rounded-2xl border-stone-700 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold">
+            <Button variant="outline" className="w-full h-11 rounded-2xl border-slate-200 bg-white hover:bg-slate-50 text-slate-800 text-xs font-bold shadow-sm font-heading cursor-pointer">
               Kembali ke Laman Utama
             </Button>
           </Link>
@@ -917,24 +917,24 @@ function RiderPortalPage() {
   // 1. AUTHENTICATION VIEW (CLEAN WARUNG BRANDING)
   if (!sessionUser) {
     return (
-      <div className="min-h-screen bg-[#121110] text-[#f5f5f4] flex flex-col justify-center items-center p-4 sm:p-6 font-sans selection:bg-amber-500/30">
-        <div className="w-full max-w-md bg-[#1c1a18] border border-[#2e2a27] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col justify-center items-center p-4 sm:p-6 font-sans selection:bg-orange-500/20">
+        <div className="w-full max-w-md bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
           
           {/* WARUNG J&J OFFICIAL LOGO HEADER */}
           <div className="text-center space-y-3">
-            <div className="inline-block p-1 bg-gradient-to-b from-amber-500/40 to-transparent rounded-full shadow-lg">
+            <div className="inline-block p-1 bg-gradient-to-b from-orange-100 to-transparent rounded-full shadow-sm">
               <img 
                 src="/warung-logo.png" 
                 alt="Warung J&J" 
-                className="w-20 h-20 rounded-full object-cover border-2 border-amber-500/60 shadow-inner mx-auto"
+                className="w-20 h-20 rounded-full object-cover border-2 border-orange-400 shadow-inner mx-auto"
               />
             </div>
             
             <div>
-              <h1 className="text-2xl font-bold text-[#fafaf9] tracking-tight">
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight font-heading">
                 Rakan Penghantar J&J
               </h1>
-              <p className="text-xs text-stone-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5 font-medium">
                 Warung J&J • Penampang, Sabah
               </p>
             </div>
@@ -943,29 +943,29 @@ function RiderPortalPage() {
           {/* MANUAL LOGIN FORM */}
           <form onSubmit={handleLoginRider} className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-stone-300">Emel Rider</label>
+              <label className="text-xs font-bold text-slate-700">Emel Rider</label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <Input
                   type="email"
                   placeholder="rider@warungjnj.online"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
+                  className="bg-slate-50 border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 pl-10 h-11 text-xs rounded-xl text-slate-900 placeholder:text-slate-400"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-stone-300">Kata Laluan</label>
+              <label className="text-xs font-bold text-slate-700">Kata Laluan</label>
               <div className="relative">
-                <Lock className="w-4 h-4 text-stone-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <Input
                   type="password"
                   placeholder="••••••••"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
-                  className="bg-[#141211] border-[#2e2a27] focus:border-amber-500 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-stone-600"
+                  className="bg-slate-50 border-slate-200 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 pl-10 h-11 text-xs rounded-xl text-slate-900 placeholder:text-slate-400"
                 />
               </div>
             </div>
@@ -973,7 +973,7 @@ function RiderPortalPage() {
             <Button
               type="submit"
               disabled={isAuthSubmitting}
-              className="w-full h-11 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-amber-600/30 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
+              className="w-full h-11 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs rounded-xl shadow-md shadow-orange-500/20 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2 cursor-pointer font-heading"
             >
               {isAuthSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Log Masuk Rider'}
             </Button>
@@ -984,7 +984,7 @@ function RiderPortalPage() {
                 variant="ghost"
                 size="sm"
                 onClick={handleInstallApp}
-                className="text-stone-400 hover:text-emerald-400 text-xs flex items-center gap-1.5 mx-auto"
+                className="text-slate-500 hover:text-orange-600 text-xs font-semibold flex items-center gap-1.5 mx-auto cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Pasang Aplikasi Rider (APK / Telefon)</span>
@@ -994,25 +994,25 @@ function RiderPortalPage() {
 
           {/* INSTALL APP MODAL ON LOGIN */}
           <Dialog open={showInstallModal} onOpenChange={setShowInstallModal}>
-            <DialogContent className="sm:max-w-[420px] bg-[#1c1a18] text-stone-100 border-[#2e2a27] p-6 rounded-3xl shadow-2xl">
+            <DialogContent className="sm:max-w-[420px] bg-white text-slate-800 border-slate-200 p-6 rounded-3xl shadow-2xl">
               <DialogHeader className="text-center space-y-2.5 pb-1">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30 shadow-inner">
+                <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center mx-auto border border-orange-100 shadow-sm">
                   <Download className="w-7 h-7" />
                 </div>
-                <DialogTitle className="text-lg font-bold text-white">
+                <DialogTitle className="text-lg font-bold text-slate-900 font-heading">
                   Pasang Aplikasi Rider J&J 📲
                 </DialogTitle>
-                <DialogDescription className="text-xs text-stone-300 leading-relaxed">
+                <DialogDescription className="text-xs text-slate-500 leading-relaxed">
                   Pasang portal rider terus ke skrin utama telefon anda untuk menerima tugasan penghantaran serta-merta!
                 </DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4 pt-2 text-xs">
-                <div className="bg-[#141211] border border-[#2e2a27] p-4 rounded-2xl space-y-3">
-                  <p className="font-bold text-emerald-400 flex items-center gap-1.5">
+                <div className="bg-slate-50 border border-slate-200/90 p-4 rounded-2xl space-y-3">
+                  <p className="font-bold text-orange-600 flex items-center gap-1.5 font-heading">
                     <span>📱 Android / Chrome:</span>
                   </p>
-                  <ol className="space-y-2 text-stone-300 list-decimal list-inside text-[11px] leading-relaxed">
+                  <ol className="space-y-2 text-slate-600 list-decimal list-inside text-[11px] leading-relaxed">
                     <li>Tekan butang menu <strong>(Titik Tiga ⋮)</strong> di bahagian atas kanan Chrome.</li>
                     <li>Pilih <strong>"Install app"</strong> atau <strong>"Add to Home screen" (Tambah ke skrin utama)</strong>.</li>
                     <li>Ikon <strong>Warung J&J Rider</strong> akan muncul seperti aplikasi native di telefon anda!</li>
@@ -1022,7 +1022,7 @@ function RiderPortalPage() {
                 <Button
                   type="button"
                   onClick={() => setShowInstallModal(false)}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-11 rounded-2xl shadow-lg active:scale-95 transition-all text-xs"
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-11 rounded-2xl shadow-md active:scale-95 transition-all text-xs font-heading cursor-pointer"
                 >
                   Faham & Tutup
                 </Button>
@@ -1034,24 +1034,24 @@ function RiderPortalPage() {
     );
   }
 
-  // 2. AUTHENTICATED RIDER DASHBOARD (CLEAN & PROFESSIONAL)
+  // 2. AUTHENTICATED RIDER DASHBOARD (FAUNA KITCHEN LIGHT EDITORIAL THEME)
   return (
-    <div className="min-h-screen bg-[#121110] text-[#f5f5f4] font-sans pb-24 selection:bg-amber-500/30">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 font-sans pb-24 selection:bg-orange-500/20">
       
       {/* BRANDED HEADER */}
-      <header className="bg-[#1c1a18] border-b border-[#2e2a27] sticky top-0 z-30 shadow-md">
+      <header className="bg-white/95 backdrop-blur-md border-b border-slate-200/90 sticky top-0 z-30 shadow-xs">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <img 
               src="/warung-logo.png" 
               alt="Warung J&J Logo" 
-              className="w-10 h-10 rounded-full object-cover border border-amber-500/40 shadow-sm"
+              className="w-10 h-10 rounded-full object-cover border border-orange-200 shadow-sm"
             />
             <div>
-              <h1 className="font-bold text-sm text-stone-100 leading-tight">
+              <h1 className="font-bold text-sm text-slate-900 leading-tight">
                 Warung J&J Delivery
               </h1>
-              <p className="text-[11px] text-amber-400">
+              <p className="text-[11px] font-semibold text-orange-600 font-sans">
                 {riderProfile?.name || sessionUser.email}
               </p>
             </div>
@@ -1059,8 +1059,8 @@ function RiderPortalPage() {
 
           <div className="flex items-center gap-2.5">
             {/* ONLINE / OFFLINE TOGGLE (GATED BY is_approved) */}
-            <div className="flex items-center gap-1.5 bg-[#141211] border border-[#2e2a27] px-2.5 py-1 rounded-xl">
-              <span className={`text-[10px] font-bold ${!isApproved ? 'text-amber-500' : isOnline ? 'text-emerald-400' : 'text-stone-500'}`}>
+            <div className="flex items-center gap-1.5 bg-slate-100 border border-slate-200 px-2.5 py-1 rounded-xl">
+              <span className={`text-[10px] font-bold ${!isApproved ? 'text-amber-600' : isOnline ? 'text-emerald-700' : 'text-slate-500'}`}>
                 {!isApproved ? 'PENDING' : isOnline ? 'ONLINE' : 'REHAT'}
               </span>
               <Switch
@@ -1076,10 +1076,10 @@ function RiderPortalPage() {
               variant="outline"
               size="sm"
               onClick={handleInstallApp}
-              className="bg-[#141211] border-[#2e2a27] text-emerald-400 hover:text-white hover:bg-[#2e2a27] h-8 px-2.5 rounded-xl flex items-center gap-1.5 text-[11px] shadow-inner"
+              className="bg-white border-slate-200 text-emerald-700 hover:text-emerald-800 hover:bg-emerald-50 h-8 px-2.5 rounded-xl flex items-center gap-1.5 text-[11px] shadow-xs"
               title="Pasang Aplikasi Warung J&J Rider"
             >
-              <Download className="w-3.5 h-3.5 text-emerald-400" />
+              <Download className="w-3.5 h-3.5 text-emerald-600" />
               <span>App</span>
             </Button>
 
@@ -1087,7 +1087,7 @@ function RiderPortalPage() {
               size="icon"
               variant="ghost"
               onClick={handleSignOut}
-              className="text-stone-400 hover:text-rose-400 hover:bg-[#2b2724] w-8 h-8 rounded-xl"
+              className="text-slate-500 hover:text-rose-600 hover:bg-rose-50 w-8 h-8 rounded-xl"
               title="Log Keluar"
             >
               <LogOut className="w-4 h-4" />
@@ -1100,11 +1100,11 @@ function RiderPortalPage() {
         
         {/* PENDING APPROVAL ALERT BANNER */}
         {!isApproved && (
-          <div className="bg-amber-500/10 border border-amber-500/30 p-3.5 rounded-2xl flex items-start gap-2.5 text-xs text-amber-200 shadow-md">
-            <Shield className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+          <div className="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl flex items-start gap-2.5 text-xs text-amber-900 shadow-xs">
+            <Shield className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-amber-300">Akaun Menunggu Kelulusan Admin</p>
-              <p className="text-[11px] text-amber-400/80 mt-0.5 leading-relaxed">
+              <p className="font-bold text-amber-900">Akaun Menunggu Kelulusan Admin</p>
+              <p className="text-[11px] text-amber-800/90 mt-0.5 leading-relaxed">
                 Akaun rider anda belum diluluskan oleh pengurusan Warung J&J. Suis mod <strong>ONLINE</strong> akan dibuka secara automatik selepas kelulusan diberikan.
               </p>
             </div>
@@ -1112,16 +1112,16 @@ function RiderPortalPage() {
         )}
 
         {/* STATUS CARD */}
-        <div className="bg-[#1c1a18] border border-[#2e2a27] p-3.5 rounded-2xl flex items-center justify-between text-xs gap-2">
+        <div className="bg-white border border-slate-200/90 p-3.5 rounded-2xl flex items-center justify-between text-xs gap-2 shadow-xs">
           <div className="flex items-center gap-2 min-w-0">
-            <div className={`w-2.5 h-2.5 shrink-0 rounded-full ${!isApproved ? 'bg-amber-500' : isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-stone-500'}`} />
+            <div className={`w-2.5 h-2.5 shrink-0 rounded-full ${!isApproved ? 'bg-amber-500' : isOnline ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
             <div className="min-w-0">
-              <span className="text-stone-300 font-medium block truncate">
+              <span className="text-slate-700 font-medium block truncate">
                 {!isApproved ? 'Akaun Menunggu Kelulusan Admin' : isOnline ? 'Sedia menerima tugasan penghantaran' : 'Status: Sedang Berehat'}
               </span>
               {isWakeLockActive && (
-                <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1 mt-0.5">
-                  <Smartphone className="w-3 h-3 text-emerald-400 shrink-0" />
+                <span className="text-[10px] text-emerald-600 font-bold flex items-center gap-1 mt-0.5">
+                  <Smartphone className="w-3 h-3 text-emerald-600 shrink-0" />
                   <span>Skrin Sentiasa Menyala (Wake Lock ON)</span>
                 </span>
               )}
@@ -1131,7 +1131,7 @@ function RiderPortalPage() {
             size="sm"
             onClick={fetchDeliveryOrders}
             disabled={loadingJobs}
-            className="bg-[#141211] border border-[#2e2a27] hover:bg-[#2b2724] text-stone-300 text-xs rounded-xl h-7 px-2.5 gap-1 shrink-0"
+            className="bg-slate-50 border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs rounded-xl h-7 px-2.5 gap-1 shrink-0"
           >
             <RefreshCw className={`w-3 h-3 ${loadingJobs ? 'animate-spin' : ''}`} />
             <span>Kemas Kini</span>
@@ -1140,68 +1140,68 @@ function RiderPortalPage() {
 
         {/* NAVIGATION TABS */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-          <TabsList className="grid grid-cols-3 bg-[#141211] p-1 rounded-2xl border border-[#2e2a27] h-11 w-full">
-            <TabsTrigger value="jobs" className="text-xs font-semibold rounded-xl data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+          <TabsList className="grid grid-cols-3 bg-slate-100 p-1 rounded-2xl border border-slate-200 h-11 w-full">
+            <TabsTrigger value="jobs" className="text-xs font-semibold rounded-xl text-slate-600 data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
               Tugasan ({availableJobs.length})
             </TabsTrigger>
-            <TabsTrigger value="active" className="text-xs font-semibold rounded-xl data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+            <TabsTrigger value="active" className="text-xs font-semibold rounded-xl text-slate-600 data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
               Aktif {activeJob ? '•' : ''}
             </TabsTrigger>
-            <TabsTrigger value="wallet" className="text-xs font-semibold rounded-xl data-[state=active]:bg-amber-600 data-[state=active]:text-white">
+            <TabsTrigger value="wallet" className="text-xs font-semibold rounded-xl text-slate-600 data-[state=active]:bg-orange-500 data-[state=active]:text-white data-[state=active]:shadow-sm transition-all">
               Pendapatan
             </TabsTrigger>
           </TabsList>
 
           {/* TAB 1: AVAILABLE JOBS */}
           <TabsContent value="jobs" className="space-y-3 pt-3">
-            <div className="flex justify-between items-center text-xs text-stone-400">
+            <div className="flex justify-between items-center text-xs text-slate-500">
               <span>Pesanan Sedia Untuk Dihantar</span>
               <span>{availableJobs.length} pesanan</span>
             </div>
 
             {loadingJobs ? (
-              <div className="py-12 text-center text-stone-500 text-xs flex flex-col items-center gap-2">
-                <Loader2 className="w-5 h-5 animate-spin text-amber-500" />
+              <div className="py-12 text-center text-slate-500 text-xs flex flex-col items-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin text-orange-500" />
                 <span>Memeriksa pesanan baru...</span>
               </div>
             ) : availableJobs.length === 0 ? (
-              <div className="p-8 text-center bg-[#1c1a18] rounded-2xl border border-[#2e2a27] text-stone-400 space-y-2">
-                <Store className="w-8 h-8 mx-auto text-stone-600" />
-                <p className="text-xs font-medium text-stone-300">Tiada pesanan baru untuk dihantar buat masa ini.</p>
-                <p className="text-[11px] text-stone-500">Pesanan dari kaunter & dapur akan dipaparkan di sini secara automatik apabila sedia untuk dihantar.</p>
+              <div className="p-8 text-center bg-white rounded-3xl border border-slate-200/90 text-slate-500 space-y-2 shadow-xs">
+                <Store className="w-8 h-8 mx-auto text-slate-400" />
+                <p className="text-xs font-semibold text-slate-800">Tiada pesanan baru untuk dihantar buat masa ini.</p>
+                <p className="text-[11px] text-slate-500">Pesanan dari kaunter & dapur akan dipaparkan di sini secara automatik apabila sedia untuk dihantar.</p>
               </div>
             ) : (
               <div className="space-y-3">
                 {availableJobs.map((job) => (
-                  <Card key={job.id} className="bg-[#1c1a18] border border-[#2e2a27] text-white rounded-2xl shadow-lg overflow-hidden">
+                  <Card key={job.id} className="bg-white border border-slate-200/90 text-slate-800 rounded-3xl shadow-sm hover:shadow-md transition-all overflow-hidden">
                     <CardContent className="p-4 space-y-3">
-                      <div className="flex justify-between items-start border-b border-[#2e2a27] pb-2.5">
+                      <div className="flex justify-between items-start border-b border-slate-100 pb-2.5">
                         <div>
-                          <span className="text-[10px] text-amber-400 font-mono font-bold block">
+                          <span className="text-[10px] text-orange-600 font-mono font-bold block">
                             #{job.id.slice(0, 8).toUpperCase()}
                           </span>
-                          <h3 className="font-bold text-stone-100 text-sm">{job.customer_name || 'Pelanggan'}</h3>
+                          <h3 className="font-bold text-slate-900 text-sm">{job.customer_name || 'Pelanggan'}</h3>
                         </div>
                         <div className="text-right">
-                          <span className="text-[10px] text-stone-400 block">Upah Penghantaran</span>
-                          <span className="text-base font-bold text-emerald-400 font-mono">
+                          <span className="text-[10px] text-slate-500 block">Upah Penghantaran</span>
+                          <span className="text-base font-bold text-emerald-600 font-mono">
                             RM {getJobDeliveryFee(job).toFixed(2)}
                           </span>
                         </div>
                       </div>
 
                       {/* ROUTE INFO */}
-                      <div className="space-y-2 text-xs text-stone-300">
-                        <div className="flex items-center gap-2 text-stone-400 text-[11px]">
-                          <Store className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                          <span>Ambil: <strong>Warung J&J (Penampang)</strong></span>
+                      <div className="space-y-2 text-xs text-slate-700">
+                        <div className="flex items-center gap-2 text-slate-500 text-[11px]">
+                          <Store className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                          <span>Ambil: <strong className="text-slate-800">Warung J&J (Penampang)</strong></span>
                         </div>
-                        <div className="flex items-start gap-2 text-stone-200 text-xs">
-                          <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0 mt-0.5" />
+                        <div className="flex items-start gap-2 text-slate-800 text-xs">
+                          <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0 mt-0.5" />
                           <div className="flex-1">
                             <span className="line-clamp-2">{getCleanDeliveryAddress(job.delivery_address)}</span>
                             {getDistanceBadge(job.delivery_address) && (
-                              <span className="inline-block mt-1 text-[10px] font-mono px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md font-semibold">
+                              <span className="inline-block mt-1 text-[10px] font-mono px-2 py-0.5 bg-orange-50 text-orange-700 border border-orange-200 rounded-md font-semibold">
                                 📍 {getDistanceBadge(job.delivery_address)}
                               </span>
                             )}
@@ -1214,9 +1214,9 @@ function RiderPortalPage() {
                         <button
                           type="button"
                           onClick={() => setPreviewRouteJobId(prev => prev === job.id ? null : job.id)}
-                          className="text-[11px] font-mono text-sky-400 hover:text-sky-300 flex items-center gap-1.5 py-1 transition-colors"
+                          className="text-[11px] font-mono text-sky-600 hover:text-sky-700 flex items-center gap-1.5 py-1 transition-colors"
                         >
-                          <Navigation className="w-3.5 h-3.5 text-sky-400" />
+                          <Navigation className="w-3.5 h-3.5 text-sky-600" />
                           <span>{previewRouteJobId === job.id ? 'Sembunyikan Peta Laluan' : '📍 Papar Peta Laluan Jalan Raya'}</span>
                         </button>
 
@@ -1241,7 +1241,7 @@ function RiderPortalPage() {
                       <Button
                         disabled={isClaiming === job.id || !isOnline}
                         onClick={() => handleClaimJob(job)}
-                        className="w-full h-10 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                        className="w-full h-10 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-2xl shadow-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
                       >
                         {isClaiming === job.id ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -1262,40 +1262,40 @@ function RiderPortalPage() {
           {/* TAB 2: ACTIVE JOB */}
           <TabsContent value="active" className="space-y-3 pt-3">
             {!activeJob ? (
-              <div className="p-8 text-center bg-[#1c1a18] rounded-2xl border border-[#2e2a27] text-stone-400 space-y-2">
-                <Truck className="w-8 h-8 mx-auto text-stone-600" />
-                <p className="text-xs font-medium text-stone-300">Tiada tugasan aktif pada masa ini.</p>
-                <p className="text-[11px] text-stone-500">Pilih mana-mana pesanan dari senarai "Tugasan" untuk mula menghantar.</p>
+              <div className="p-8 text-center bg-white rounded-3xl border border-slate-200/90 text-slate-500 space-y-2 shadow-xs">
+                <Truck className="w-8 h-8 mx-auto text-slate-400" />
+                <p className="text-xs font-semibold text-slate-800">Tiada tugasan aktif pada masa ini.</p>
+                <p className="text-[11px] text-slate-500">Pilih mana-mana pesanan dari senarai "Tugasan" untuk mula menghantar.</p>
               </div>
             ) : (
-              <Card className="bg-[#1c1a18] border-2 border-amber-500/60 text-white rounded-2xl shadow-xl overflow-hidden">
-                <div className="bg-amber-600 text-white font-bold text-xs px-4 py-2 flex justify-between items-center">
+              <Card className="bg-white border-2 border-orange-400/80 text-slate-800 rounded-3xl shadow-md overflow-hidden">
+                <div className="bg-gradient-to-r from-orange-500 to-amber-500 text-white font-bold text-xs px-4 py-2.5 flex justify-between items-center shadow-xs">
                   <span>DALAM PENGHANTARAN</span>
                   <span className="font-mono">#{activeJob.id.slice(0, 8).toUpperCase()}</span>
                 </div>
 
                 <CardContent className="p-4 sm:p-5 space-y-4">
                   <div>
-                    <span className="text-[10px] text-stone-400 block uppercase">Penerima</span>
-                    <h3 className="text-base font-bold text-stone-100">{activeJob.customer_name}</h3>
-                    <p className="text-xs text-amber-400 font-mono">{activeJob.customer_phone}</p>
+                    <span className="text-[10px] text-slate-500 block uppercase font-semibold">Penerima</span>
+                    <h3 className="text-base font-bold text-slate-900">{activeJob.customer_name}</h3>
+                    <p className="text-xs text-orange-600 font-mono font-semibold">{activeJob.customer_phone}</p>
                   </div>
 
-                  <div className="bg-[#141211] border border-[#2e2a27] p-3 rounded-xl space-y-1.5 text-xs">
+                  <div className="bg-slate-50 border border-slate-200/80 p-3 rounded-2xl space-y-1.5 text-xs">
                     <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-stone-400 block uppercase">Alamat Penghantaran:</span>
+                      <span className="text-[10px] text-slate-500 block uppercase font-semibold">Alamat Penghantaran:</span>
                       {getDistanceBadge(activeJob.delivery_address) && (
-                        <span className="text-[10px] font-mono px-2 py-0.5 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md font-semibold">
+                        <span className="text-[10px] font-mono px-2 py-0.5 bg-orange-50 text-orange-700 border border-orange-200 rounded-md font-semibold">
                           📍 {getDistanceBadge(activeJob.delivery_address)}
                         </span>
                       )}
                     </div>
-                    <p className="text-stone-200 leading-relaxed">{getCleanDeliveryAddress(activeJob.delivery_address)}</p>
+                    <p className="text-slate-700 leading-relaxed">{getCleanDeliveryAddress(activeJob.delivery_address)}</p>
                   </div>
 
                   {/* REAL-ROAD INTERACTIVE ROUTE MAP FOR RIDER */}
                   <div className="space-y-1.5">
-                    <span className="text-[10px] text-stone-400 uppercase tracking-wider block font-bold">
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider block font-bold">
                       🗺️ Peta Pandu Arah Laluan Sebenar:
                     </span>
                     <DeliveryRouteMap
@@ -1316,32 +1316,32 @@ function RiderPortalPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <Button
                       onClick={() => openNavigation(activeJob.delivery_address || '', activeJob.delivery_lat, activeJob.delivery_lng)}
-                      className="bg-stone-800 hover:bg-stone-700 text-stone-100 font-semibold h-10 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-stone-700"
+                      className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold h-10 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-slate-200 transition-colors"
                     >
-                      <Navigation className="w-3.5 h-3.5 text-sky-400" />
+                      <Navigation className="w-3.5 h-3.5 text-sky-600" />
                       <span>Buka Google Maps</span>
                     </Button>
 
                     <Button
                       onClick={() => contactWhatsApp(activeJob.customer_phone || '', activeJob.customer_name || '', activeJob.id)}
-                      className="bg-stone-800 hover:bg-stone-700 text-stone-100 font-semibold h-10 rounded-xl text-xs flex items-center justify-center gap-1.5 border border-stone-700"
+                      className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-semibold h-10 rounded-2xl text-xs flex items-center justify-center gap-1.5 border border-emerald-200 transition-colors"
                     >
-                      <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                      <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
                       <span>WhatsApp</span>
                     </Button>
                   </div>
 
                   {/* 3-STEP PROGRESSIVE MILESTONES (FALLBACK GPS & WHATSAPP NOTIFICATION) */}
-                  <div className="border-t border-[#2e2a27] pt-3.5 space-y-2.5">
+                  <div className="border-t border-slate-100 pt-3.5 space-y-2.5">
                     <div className="flex justify-between items-center text-xs mb-1 font-mono">
-                      <span className="text-stone-400">Upah Pesanan:</span>
-                      <span className="font-bold text-base text-emerald-400">
+                      <span className="text-slate-600">Upah Pesanan:</span>
+                      <span className="font-bold text-base text-emerald-600">
                         RM {getJobDeliveryFee(activeJob).toFixed(2)}
                       </span>
                     </div>
 
-                    <div className="bg-[#141211] p-3 rounded-2xl border border-[#2e2a27] space-y-2">
-                      <span className="text-[11px] font-bold text-amber-400 block uppercase tracking-wider">
+                    <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2.5">
+                      <span className="text-[11px] font-bold text-orange-600 block uppercase tracking-wider">
                         🚀 Tindakan Kemajuan Penghantaran:
                       </span>
 
@@ -1349,7 +1349,7 @@ function RiderPortalPage() {
                       {(!activeJob.delivery_status || activeJob.delivery_status === 'dispatched' || activeJob.delivery_status === 'preparing') && (
                         <Button
                           onClick={() => handleUpdateMilestone('picked_up')}
-                          className="w-full h-11 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-between px-4 active:scale-[0.98] transition-all"
+                          className="w-full h-11 bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-between px-4 active:scale-[0.98] transition-all"
                         >
                           <span className="flex items-center gap-2">
                             <span>🍱</span>
@@ -1363,7 +1363,7 @@ function RiderPortalPage() {
                       {activeJob.delivery_status === 'picked_up' && (
                         <Button
                           onClick={() => handleUpdateMilestone('arrived')}
-                          className="w-full h-11 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-between px-4 active:scale-[0.98] transition-all"
+                          className="w-full h-11 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-between px-4 active:scale-[0.98] transition-all"
                         >
                           <span className="flex items-center gap-2">
                             <span>🛵</span>
@@ -1377,7 +1377,7 @@ function RiderPortalPage() {
                       {activeJob.delivery_status === 'arrived' && (
                         <Button
                           onClick={() => handleUpdateMilestone('completed')}
-                          className="w-full h-11 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg flex items-center justify-between px-4 active:scale-[0.98] transition-all"
+                          className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm flex items-center justify-between px-4 active:scale-[0.98] transition-all"
                         >
                           <span className="flex items-center gap-2">
                             <CheckCircle2 className="w-4 h-4" />
@@ -1387,7 +1387,7 @@ function RiderPortalPage() {
                         </Button>
                       )}
 
-                      <p className="text-[10px] text-stone-500 text-center pt-0.5">
+                      <p className="text-[10px] text-slate-500 text-center pt-0.5">
                         * Tekan butang di atas untuk maklumkan pelanggan secara automatik (WhatsApp & Live Status).
                       </p>
                     </div>
@@ -1401,14 +1401,14 @@ function RiderPortalPage() {
           <TabsContent value="wallet" className="space-y-4 pt-3">
             
             {/* 1. PERIOD FILTER BUTTONS */}
-            <div className="grid grid-cols-4 gap-1.5 bg-[#141211] p-1.5 rounded-2xl border border-[#2e2a27]">
+            <div className="grid grid-cols-4 gap-1.5 bg-slate-100 p-1.5 rounded-2xl border border-slate-200">
               <button
                 type="button"
                 onClick={() => setEarningsFilter('today')}
                 className={`py-2 text-[11px] font-bold rounded-xl transition-all ${
                   earningsFilter === 'today'
-                    ? 'bg-amber-600 text-white shadow-md'
-                    : 'text-stone-400 hover:text-stone-200 hover:bg-[#1c1a18]'
+                    ? 'bg-orange-500 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                 }`}
               >
                 Hari Ini
@@ -1418,8 +1418,8 @@ function RiderPortalPage() {
                 onClick={() => setEarningsFilter('week')}
                 className={`py-2 text-[11px] font-bold rounded-xl transition-all ${
                   earningsFilter === 'week'
-                    ? 'bg-amber-600 text-white shadow-md'
-                    : 'text-stone-400 hover:text-stone-200 hover:bg-[#1c1a18]'
+                    ? 'bg-orange-500 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                 }`}
               >
                 7 Hari
@@ -1429,8 +1429,8 @@ function RiderPortalPage() {
                 onClick={() => setEarningsFilter('month')}
                 className={`py-2 text-[11px] font-bold rounded-xl transition-all ${
                   earningsFilter === 'month'
-                    ? 'bg-amber-600 text-white shadow-md'
-                    : 'text-stone-400 hover:text-stone-200 hover:bg-[#1c1a18]'
+                    ? 'bg-orange-500 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                 }`}
               >
                 Bulan Ini
@@ -1440,8 +1440,8 @@ function RiderPortalPage() {
                 onClick={() => setEarningsFilter('all')}
                 className={`py-2 text-[11px] font-bold rounded-xl transition-all ${
                   earningsFilter === 'all'
-                    ? 'bg-amber-600 text-white shadow-md'
-                    : 'text-stone-400 hover:text-stone-200 hover:bg-[#1c1a18]'
+                    ? 'bg-orange-500 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-white'
                 }`}
               >
                 Semua
@@ -1449,98 +1449,98 @@ function RiderPortalPage() {
             </div>
 
             {/* 2. EARNINGS OVERVIEW BENTO GRID */}
-            <div className="bg-gradient-to-br from-[#1e1a16] to-[#141211] border border-amber-500/20 p-4 sm:p-5 rounded-3xl space-y-4 shadow-xl">
+            <div className="bg-gradient-to-br from-emerald-50 via-teal-50/50 to-white border border-emerald-200/80 p-4 sm:p-5 rounded-3xl space-y-4 shadow-sm">
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider">
-                  <Coins className="w-4 h-4 text-amber-400" />
+                <div className="flex items-center gap-2 text-emerald-800 text-xs font-bold uppercase tracking-wider">
+                  <Coins className="w-4 h-4 text-emerald-600" />
                   <span>
                     Upah Bersih Penghantaran ({earningsFilter === 'today' ? 'Hari Ini' : earningsFilter === 'week' ? '7 Hari Lepas' : earningsFilter === 'month' ? 'Bulan Ini' : 'Keseluruhan'})
                   </span>
                 </div>
-                <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-full">
                   Disahkan ✓
                 </span>
               </div>
 
               <div>
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl sm:text-4xl font-black text-emerald-400 font-mono tracking-tight">
+                  <span className="text-3xl sm:text-4xl font-black text-emerald-700 font-mono tracking-tight">
                     RM {periodEarnings.toFixed(2)}
                   </span>
                 </div>
-                <span className="text-[11px] text-stone-400 block mt-1">
+                <span className="text-[11px] text-slate-600 block mt-1">
                   100% upah penghantaran adalah milik rider sepenuhnya tanpa caj tersembunyi.
                 </span>
               </div>
 
               {/* 3 STATS PILLS */}
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#2e2a27]/80 text-center">
-                <div className="bg-[#171513] p-2.5 rounded-xl border border-[#2e2a27]">
-                  <span className="text-[10px] text-stone-400 block">Trip Selesai</span>
-                  <span className="text-sm font-bold text-white font-mono mt-0.5 block">
-                    {periodTrips} <span className="text-[10px] font-normal text-stone-400">trip</span>
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-emerald-200/60 text-center">
+                <div className="bg-white/80 p-2.5 rounded-2xl border border-emerald-200/60 shadow-2xs">
+                  <span className="text-[10px] text-slate-500 block">Trip Selesai</span>
+                  <span className="text-sm font-bold text-slate-900 font-mono mt-0.5 block">
+                    {periodTrips} <span className="text-[10px] font-normal text-slate-500">trip</span>
                   </span>
                 </div>
-                <div className="bg-[#171513] p-2.5 rounded-xl border border-[#2e2a27]">
-                  <span className="text-[10px] text-stone-400 block">Purata / Trip</span>
-                  <span className="text-sm font-bold text-amber-400 font-mono mt-0.5 block">
+                <div className="bg-white/80 p-2.5 rounded-2xl border border-emerald-200/60 shadow-2xs">
+                  <span className="text-[10px] text-slate-500 block">Purata / Trip</span>
+                  <span className="text-sm font-bold text-orange-600 font-mono mt-0.5 block">
                     RM {periodAvg.toFixed(2)}
                   </span>
                 </div>
-                <div className="bg-[#171513] p-2.5 rounded-xl border border-[#2e2a27]">
-                  <span className="text-[10px] text-stone-400 block">Jarak Laluan</span>
-                  <span className="text-sm font-bold text-sky-400 font-mono mt-0.5 block">
-                    {periodDistance.toFixed(1)} <span className="text-[10px] font-normal text-stone-400">KM</span>
+                <div className="bg-white/80 p-2.5 rounded-2xl border border-emerald-200/60 shadow-2xs">
+                  <span className="text-[10px] text-slate-500 block">Jarak Laluan</span>
+                  <span className="text-sm font-bold text-sky-700 font-mono mt-0.5 block">
+                    {periodDistance.toFixed(1)} <span className="text-[10px] font-normal text-slate-500">KM</span>
                   </span>
                 </div>
               </div>
             </div>
 
             {/* 3. REGISTERED BANK ACCOUNT CARD */}
-            <div className="bg-[#1c1a18] border border-[#2e2a27] p-4 rounded-2xl space-y-2 text-xs">
-              <div className="flex items-center justify-between text-emerald-400 font-bold">
+            <div className="bg-white border border-slate-200/90 p-4 rounded-3xl space-y-2 text-xs shadow-xs">
+              <div className="flex items-center justify-between text-emerald-700 font-bold">
                 <div className="flex items-center gap-1.5">
-                  <Landmark className="w-4 h-4" />
+                  <Landmark className="w-4 h-4 text-emerald-600" />
                   <span>Akaun Bank Penerima Gaji</span>
                 </div>
-                <span className="text-[10px] text-stone-400 font-normal">Pindahan Mingguan / Harian</span>
+                <span className="text-[10px] text-slate-500 font-normal">Pindahan Mingguan / Harian</span>
               </div>
 
-              <div className="bg-[#141211] p-3 rounded-xl border border-[#2e2a27] grid grid-cols-2 gap-2 text-xs">
+              <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200/80 grid grid-cols-2 gap-2 text-xs">
                 <div>
-                  <span className="text-[10px] text-stone-400 block">Nama Bank:</span>
-                  <span className="font-bold text-white block truncate">{riderProfile?.bank_name || 'Maybank'}</span>
+                  <span className="text-[10px] text-slate-500 block">Nama Bank:</span>
+                  <span className="font-bold text-slate-900 block truncate">{riderProfile?.bank_name || 'Maybank'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] text-stone-400 block">No. Akaun:</span>
-                  <span className="font-bold text-emerald-300 font-mono block truncate">
+                  <span className="text-[10px] text-slate-500 block">No. Akaun:</span>
+                  <span className="font-bold text-emerald-700 font-mono block truncate">
                     {riderProfile?.bank_account_number ? riderProfile.bank_account_number : 'Belum Ditetapkan'}
                   </span>
                 </div>
                 <div className="col-span-2">
-                  <span className="text-[10px] text-stone-400 block">Nama Pemegang Akaun:</span>
-                  <span className="font-bold text-stone-200 block truncate">{riderProfile?.bank_account_holder || riderProfile?.name || 'Rider J&J'}</span>
+                  <span className="text-[10px] text-slate-500 block">Nama Pemegang Akaun:</span>
+                  <span className="font-bold text-slate-800 block truncate">{riderProfile?.bank_account_holder || riderProfile?.name || 'Rider J&J'}</span>
                 </div>
               </div>
             </div>
 
             {/* 4. DETAILED COMPLETED TRIPS LIST */}
             <div className="space-y-2.5">
-              <div className="flex items-center justify-between text-xs text-stone-400">
-                <span className="font-bold text-stone-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <Receipt className="w-3.5 h-3.5 text-amber-400" />
+              <div className="flex items-center justify-between text-xs text-slate-500">
+                <span className="font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                  <Receipt className="w-3.5 h-3.5 text-orange-500" />
                   <span>Rekod Tugasan Selesai ({filteredCompletedJobs.length})</span>
                 </span>
-                <span className="text-[11px] text-stone-500">
+                <span className="text-[11px] text-slate-500">
                   {earningsFilter === 'today' ? 'Hari Ini' : earningsFilter === 'week' ? '7 Hari' : earningsFilter === 'month' ? 'Bulan Ini' : 'Semua'}
                 </span>
               </div>
 
               {filteredCompletedJobs.length === 0 ? (
-                <div className="p-8 text-center bg-[#1c1a18] rounded-2xl border border-[#2e2a27] text-xs text-stone-500 space-y-1">
-                  <Bike className="w-6 h-6 mx-auto text-stone-600 mb-2" />
-                  <p className="font-bold text-stone-400">Tiada rekod penghantaran bagi tempoh ini.</p>
-                  <p className="text-[11px] text-stone-500">Tugasan yang diselesaikan akan direkodkan dan dijumlahkan di sini secara automatik.</p>
+                <div className="p-8 text-center bg-white rounded-3xl border border-slate-200/90 text-xs text-slate-500 space-y-1 shadow-xs">
+                  <Bike className="w-6 h-6 mx-auto text-slate-400 mb-2" />
+                  <p className="font-bold text-slate-800">Tiada rekod penghantaran bagi tempoh ini.</p>
+                  <p className="text-[11px] text-slate-500">Tugasan yang diselesaikan akan direkodkan dan dijumlahkan di sini secara automatik.</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -1554,38 +1554,38 @@ function RiderPortalPage() {
                     return (
                       <div
                         key={job.id}
-                        className="p-3.5 bg-[#1c1a18] hover:bg-[#22201d] border border-[#2e2a27] rounded-2xl flex flex-col gap-2 transition-all shadow-sm"
+                        className="p-3.5 bg-white hover:bg-slate-50/80 border border-slate-200/90 rounded-2xl flex flex-col gap-2 transition-all shadow-xs"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="font-mono font-black text-amber-400 text-xs">
+                              <span className="font-mono font-black text-orange-600 text-xs">
                                 #{job.id.slice(0, 8).toUpperCase()}
                               </span>
-                              <span className="text-[11px] text-stone-400">
+                              <span className="text-[11px] text-slate-500">
                                 • {dateStr}, {timeStr}
                               </span>
                             </div>
-                            <h4 className="font-bold text-white text-xs truncate mt-0.5">
+                            <h4 className="font-bold text-slate-900 text-xs truncate mt-0.5">
                               {job.customer_name || 'Pelanggan J&J'}
                             </h4>
                           </div>
 
                           <div className="text-right shrink-0">
-                            <span className="font-black text-emerald-400 text-sm block font-mono">
+                            <span className="font-black text-emerald-700 text-sm block font-mono">
                               +RM {fee.toFixed(2)}
                             </span>
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
                               DITERIMA
                             </span>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between text-[11px] text-stone-400 pt-1 border-t border-[#2e2a27]/60">
+                        <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
                           <span className="truncate pr-2">
                             📍 {getCleanDeliveryAddress(job.delivery_address)}
                           </span>
-                          <span className="font-bold text-sky-400 shrink-0 font-mono">
+                          <span className="font-bold text-sky-700 shrink-0 font-mono">
                             {distKm.toFixed(1)} KM
                           </span>
                         </div>
@@ -1600,25 +1600,25 @@ function RiderPortalPage() {
 
         {/* INSTALL APP / APK GUIDE MODAL FOR LOGGED IN RIDER */}
         <Dialog open={showInstallModal} onOpenChange={setShowInstallModal}>
-          <DialogContent className="sm:max-w-[420px] bg-[#1c1a18] text-stone-100 border-[#2e2a27] p-6 rounded-3xl shadow-2xl">
+          <DialogContent className="sm:max-w-[420px] bg-white text-slate-800 border-slate-200 p-6 rounded-3xl shadow-2xl">
             <DialogHeader className="text-center space-y-2.5 pb-1">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border border-emerald-500/30 shadow-inner">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-200 shadow-xs">
                 <Download className="w-7 h-7" />
               </div>
-              <DialogTitle className="text-lg font-bold text-white">
+              <DialogTitle className="text-lg font-bold text-slate-900">
                 Pasang Aplikasi Rider J&J 📲
               </DialogTitle>
-              <DialogDescription className="text-xs text-stone-300 leading-relaxed">
+              <DialogDescription className="text-xs text-slate-600 leading-relaxed">
                 Pasang portal rider terus ke skrin utama telefon anda untuk menerima tugasan penghantaran serta-merta!
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 pt-2 text-xs">
-              <div className="bg-[#141211] border border-[#2e2a27] p-4 rounded-2xl space-y-3">
-                <p className="font-bold text-emerald-400 flex items-center gap-1.5">
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-3">
+                <p className="font-bold text-emerald-700 flex items-center gap-1.5">
                   <span>📱 Android / Chrome:</span>
                 </p>
-                <ol className="space-y-2 text-stone-300 list-decimal list-inside text-[11px] leading-relaxed">
+                <ol className="space-y-2 text-slate-700 list-decimal list-inside text-[11px] leading-relaxed">
                   <li>Tekan butang menu <strong>(Titik Tiga ⋮)</strong> di bahagian atas kanan Chrome.</li>
                   <li>Pilih <strong>"Install app"</strong> atau <strong>"Add to Home screen" (Tambah ke skrin utama)</strong>.</li>
                   <li>Ikon <strong>Warung J&J Rider</strong> akan muncul seperti aplikasi native di telefon anda!</li>
@@ -1628,7 +1628,7 @@ function RiderPortalPage() {
               <Button
                 type="button"
                 onClick={() => setShowInstallModal(false)}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-11 rounded-2xl shadow-lg active:scale-95 transition-all text-xs"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 rounded-2xl shadow-sm active:scale-95 transition-all text-xs"
               >
                 Faham & Tutup
               </Button>

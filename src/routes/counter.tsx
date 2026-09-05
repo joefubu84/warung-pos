@@ -525,13 +525,13 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
     <div className="h-screen w-full bg-[#f8fafc] text-slate-900 overflow-hidden flex flex-col font-sans selection:bg-orange-500 selection:text-white">
       
       {/* MOBILE WARNING OVERLAY */}
-      <div className="md:hidden fixed inset-0 bg-white/95 backdrop-blur-md text-white z-50 flex flex-col items-center justify-center p-8 text-center">
-        <div className="w-16 h-16 rounded-3xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center mb-4 text-orange-400">
+      <div className="md:hidden fixed inset-0 bg-white/95 backdrop-blur-md text-slate-900 z-50 flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-16 h-16 rounded-3xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center mb-4 text-orange-600">
           <ShoppingCart className="w-8 h-8" />
         </div>
-        <h1 className="text-2xl font-black mb-2 tracking-tight">Peranti Tablet Diperlukan</h1>
-        <p className="text-sm text-slate-300 mb-8 max-w-xs leading-relaxed">Antaramuka POS Kaunter memerlukan skrin bersaiz 8 inci ke atas dalam mod melintang (landscape) bagi operasi pantas juruwang.</p>
-        <a href="/orders" className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-2xl font-black text-sm shadow-lg shadow-orange-500/30 transition-all">
+        <h1 className="text-2xl font-black mb-2 tracking-tight text-slate-900 font-heading">Peranti Tablet Diperlukan</h1>
+        <p className="text-sm text-slate-600 mb-8 max-w-xs leading-relaxed font-medium">Antaramuka POS Kaunter memerlukan skrin bersaiz 8 inci ke atas dalam mod melintang (landscape) bagi operasi pantas juruwang.</p>
+        <a href="/orders" className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-2xl font-black text-sm shadow-lg shadow-orange-500/30 transition-all font-heading">
           Buka Pengurusan Pesanan (/orders)
         </a>
       </div>
@@ -544,12 +544,12 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
         }
       `}} />
 
-      <div id="portrait-blocker" className="hidden fixed inset-0 bg-white/95 backdrop-blur-md text-white z-50 flex-col items-center justify-center p-8 text-center">
-        <div className="w-16 h-16 rounded-3xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center mb-4 text-orange-400">
+      <div id="portrait-blocker" className="hidden fixed inset-0 bg-white/95 backdrop-blur-md text-slate-900 z-50 flex-col items-center justify-center p-8 text-center">
+        <div className="w-16 h-16 rounded-3xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center mb-4 text-orange-600">
           <Radio className="w-8 h-8 animate-pulse" />
         </div>
-        <h1 className="text-2xl font-black mb-2 tracking-tight">Sila Putar Peranti (Landscape)</h1>
-        <p className="text-sm text-slate-300">Sistem POS Kaunter direka khas untuk paparan melintang.</p>
+        <h1 className="text-2xl font-black mb-2 tracking-tight text-slate-900 font-heading">Sila Putar Peranti (Landscape)</h1>
+        <p className="text-sm text-slate-600 font-medium">Sistem POS Kaunter direka khas untuk paparan melintang.</p>
       </div>
 
       {/* POS LAYOUT (LANDSCAPE ONLY) */}
