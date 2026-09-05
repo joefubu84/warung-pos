@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Link } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { requireOrderingAuth } from '@/lib/auth-guard';
@@ -117,9 +117,9 @@ const addSplitPayment = () => {
   const isSplitBalanced = splitDeltaCents === 0;
 
   const beepAudio = useRef<HTMLAudioElement | null>(null);
-  const { storeId } = Route.useRouteContext();
-  const [cashStatus, setCashStatus] = useState<CashStatus>('OPEN');
-  const [closedAtTime, setClosedAtTime] = useState<string | null>(null);
+  const { storeId, cashStatus: initialCashStatus } = Route.useRouteContext() as any;
+  const [cashStatus, setCashStatus] = useState<CashStatus>(initialCashStatus?.status || 'NOT_OPENED');
+  const [closedAtTime, setClosedAtTime] = useState<string | null>(initialCashStatus?.closedAt || null);
   const [isReopenModalOpen, setIsReopenModalOpen] = useState(false);
   const [showDuitNowModal, setShowDuitNowModal] = useState(false);
   const [isOnlineOrderingEnabled, setIsOnlineOrderingEnabled] = useState<boolean>(true);
@@ -273,8 +273,16 @@ const addSplitPayment = () => {
   };
 
   const handleAddToCart = (item: MenuItem) => {
+    if (cashStatus === 'NOT_OPENED') {
+      toast.error("Kaunter belum dibuka! Sila buka daftar tunai (masukkan float permulaan) di Pengurusan Tunai terlebih dahulu.");
+      return;
+    }
     if (cashStatus === 'CLOSED') {
-      alert("Counter is CLOSED for the day. New orders are locked.");
+      toast.error("Kaunter telah ditutup untuk hari ini! Urus niaga pesanan baharu disekat.");
+      return;
+    }
+    if (cashStatus !== 'OPEN') {
+      toast.error("Sistem POS dikunci kerana daftar tunai tidak aktif.");
       return;
     }
     if (item.stock_count !== undefined && item.stock_count !== null && item.stock_count <= 0) {
@@ -309,7 +317,10 @@ const addSplitPayment = () => {
   };
 
   const updateQuantity = (cartItemId: string, delta: number) => {
-    if (cashStatus === 'CLOSED') return;
+    if (cashStatus !== 'OPEN') {
+      toast.error("Sistem POS dikunci. Kaunter belum dibuka atau telah ditutup.");
+      return;
+    }
     setCart(cart.map(item => {
       if (item.id === cartItemId) {
         const newQty = Math.max(1, item.quantity + delta);
@@ -427,9 +438,21 @@ const addSplitPayment = () => {
     return a.name.localeCompare(b.name);
   });
 
-const handlePlaceOrderClick = () => {
+  const handlePlaceOrderClick = () => {
+    if (cashStatus === 'NOT_OPENED') {
+      const msg = 'Kaunter belum dibuka! Sila tetapkan wang apungan permulaan dan buka kaunter di Pengurusan Tunai.';
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
     if (cashStatus === 'CLOSED') {
-      setError('Counter is CLOSED for the day. Cannot place new orders.');
+      const msg = 'Kaunter telah ditutup untuk hari ini! Urus niaga pesanan baharu disekat.';
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
+    if (cashStatus !== 'OPEN') {
+      setError('Sistem POS dikunci kerana daftar tunai tidak aktif.');
       return;
     }
     if (cart.length === 0) {
@@ -447,9 +470,21 @@ const handlePlaceOrderClick = () => {
     setIsConfirmOpen(true);
   };
 
-const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'unpaid') => {
+  const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'unpaid') => {
+    if (cashStatus === 'NOT_OPENED') {
+      const msg = 'Kaunter belum dibuka! Sila buka kaunter terlebih dahulu di Pengurusan Tunai.';
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
     if (cashStatus === 'CLOSED') {
-      setError('Counter is CLOSED for the day. Cannot place new orders.');
+      const msg = 'Kaunter telah ditutup untuk hari ini! Urus niaga pesanan baharu disekat.';
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
+    if (cashStatus !== 'OPEN') {
+      setError('Sistem POS dikunci kerana daftar tunai tidak aktif.');
       return;
     }
     setIsSubmitting(true);
@@ -555,6 +590,36 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
       {/* POS LAYOUT (LANDSCAPE ONLY) */}
       <div id="pos-layout" className="flex-1 flex flex-col h-full overflow-hidden relative">
         
+        {/* COUNTER NOT OPENED BANNER */}
+        {cashStatus === 'NOT_OPENED' && (
+          <div className="bg-amber-50 border-b border-amber-200 p-4 shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs z-30">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 bg-amber-500 rounded-2xl text-white shadow-xs">
+                <Lock className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-sm sm:text-base font-black text-amber-950 flex items-center gap-2">
+                  ⛔ KAUNTER BELUM DIBUKA (REGISTER NOT OPENED)
+                  <span className="text-xs font-mono bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full border border-amber-300 font-bold">
+                    Perlu Wang Apungan
+                  </span>
+                </h2>
+                <p className="text-xs text-amber-800 font-medium">
+                  Sesi daftar tunai hari ini belum dimulakan. Anda mesti menetapkan wang apungan permulaan di Pengurusan Tunai sebelum memulakan urus niaga.
+                </p>
+              </div>
+            </div>
+            
+            <Link
+              to="/cash-management"
+              search={{ reason: 'not_opened' }}
+              className="bg-orange-500 hover:bg-orange-600 text-white font-black px-4 py-2 rounded-xl shadow-xs flex items-center gap-2 text-xs whitespace-nowrap active:scale-95 transition-all cursor-pointer"
+            >
+              <Unlock className="w-4 h-4" /> Buka Kaunter Sekarang 💵
+            </Link>
+          </div>
+        )}
+
         {/* COUNTER CLOSED BANNER */}
         {cashStatus === 'CLOSED' && (
           <div className="bg-rose-50 border-b border-rose-200 p-4 shrink-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 shadow-xs z-30">
@@ -577,17 +642,95 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
               </div>
             </div>
             
-            <button
-              onClick={() => setIsReopenModalOpen(true)}
-              className="bg-orange-500 hover:bg-orange-600 text-white font-black px-4 py-2 rounded-xl shadow-xs flex items-center gap-2 text-xs whitespace-nowrap active:scale-95 transition-all cursor-pointer"
-            >
-              <Unlock className="w-4 h-4" /> Buka Semula Daftar Tunai
-            </button>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/cash-management"
+                className="bg-slate-800 hover:bg-slate-900 text-white font-black px-4 py-2 rounded-xl shadow-xs flex items-center gap-2 text-xs whitespace-nowrap active:scale-95 transition-all cursor-pointer"
+              >
+                Lihat Pengurusan Tunai
+              </Link>
+              <button
+                onClick={() => setIsReopenModalOpen(true)}
+                className="bg-orange-500 hover:bg-orange-600 text-white font-black px-4 py-2 rounded-xl shadow-xs flex items-center gap-2 text-xs whitespace-nowrap active:scale-95 transition-all cursor-pointer"
+              >
+                <Unlock className="w-4 h-4" /> Buka Semula Daftar Tunai
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STRICT POS LOCK OVERLAY WHEN NOT OPENED OR CLOSED */}
+        {cashStatus !== 'OPEN' && (
+          <div className="absolute inset-0 z-40 bg-slate-900/60 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
+            {cashStatus === 'NOT_OPENED' ? (
+              <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-amber-200/80 flex flex-col items-center">
+                <div className="w-16 h-16 rounded-3xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 mb-4 shadow-sm">
+                  <Lock className="w-8 h-8" />
+                </div>
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-amber-700 bg-amber-50 px-3 py-1 rounded-full border border-amber-200 mb-2">
+                  Daftar Tunai Belum Dibuka
+                </span>
+                <h2 className="text-2xl font-black text-slate-900 font-heading mb-2">
+                  Sesi Perniagaan Belum Bermula
+                </h2>
+                <p className="text-sm text-slate-600 mb-6 leading-relaxed">
+                  Sistem POS Warung J&J dikunci. Mengikut peraturan pengurusan tunai yang ketat, anda <strong>wajib menetapkan wang apungan permulaan (morning float)</strong> di Pengurusan Tunai sebelum sebarang pesanan pelanggan boleh diambil.
+                </p>
+                <div className="flex flex-col gap-3 w-full">
+                  <Link
+                    to="/cash-management"
+                    search={{ reason: 'not_opened' }}
+                    className="w-full bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-black py-3.5 px-6 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 text-base cursor-pointer"
+                  >
+                    <Unlock className="w-5 h-5" /> Buka Kaunter Sekarang (RM) 💵
+                  </Link>
+                  <Link
+                    to="/dashboard"
+                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-4 rounded-xl transition-all text-xs flex items-center justify-center"
+                  >
+                    Kembali ke Papan Pemuka (Dashboard)
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-white rounded-3xl p-8 max-w-lg w-full shadow-2xl border border-rose-200/80 flex flex-col items-center">
+                <div className="w-16 h-16 rounded-3xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 mb-4 shadow-sm">
+                  <Lock className="w-8 h-8" />
+                </div>
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-3 py-1 rounded-full border border-rose-200 mb-2">
+                  Sif Selesai & Ditutup
+                </span>
+                <h2 className="text-2xl font-black text-slate-900 font-heading mb-2">
+                  Kaunter Telah Ditutup
+                </h2>
+                <p className="text-sm text-slate-600 mb-2 leading-relaxed">
+                  Sif daftar tunai hari ini telah selesai dan ditutup
+                  {closedAtTime && <span className="font-bold text-slate-900"> pada jam {new Date(closedAtTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}.
+                </p>
+                <p className="text-xs text-rose-600 font-semibold mb-6">
+                  Semua urus niaga sistem POS dikunci untuk mengelakkan ketirisan dan rekod tunai tidak seimbang.
+                </p>
+                <div className="flex flex-col gap-3 w-full">
+                  <button
+                    onClick={() => setIsReopenModalOpen(true)}
+                    className="w-full bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-black py-3.5 px-6 rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 text-sm cursor-pointer"
+                  >
+                    <Unlock className="w-4 h-4" /> Buka Semula Kaunter (Kebenaran Khas)
+                  </button>
+                  <Link
+                    to="/cash-management"
+                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 px-4 rounded-xl transition-all text-xs flex items-center justify-center"
+                  >
+                    Lihat Laporan Sif & Pengurusan Tunai
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* TOP ACTION BAR */}
-        <div className={`h-16 bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-5 flex justify-between items-center shadow-2xs z-20 shrink-0 ${cashStatus === 'CLOSED' ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`h-16 bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-5 flex justify-between items-center shadow-2xs z-20 shrink-0 ${cashStatus !== 'OPEN' ? 'opacity-50 pointer-events-none' : ''}`}>
           <div className="flex items-center gap-3">
             <img src="/logo.png" alt="Warung J&J Logo" className="w-9 h-9 rounded-full object-cover border-2 border-orange-500 shadow-2xs" />
             <div>
@@ -625,7 +768,7 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
         </div>
 
         {/* MAIN SPLIT VIEW */}
-        <div className={`flex-1 flex overflow-hidden ${cashStatus === 'CLOSED' ? 'opacity-50 pointer-events-none select-none' : ''}`}>
+        <div className={`flex-1 flex overflow-hidden ${cashStatus !== 'OPEN' ? 'opacity-40 pointer-events-none select-none' : ''}`}>
           
           {/* LEFT: MENU GRID (60%) */}
           <div className="w-[60%] bg-[#f8fafc] flex flex-col border-r border-slate-200/90 relative">
@@ -895,10 +1038,14 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
               
               <button
                 onClick={handlePlaceOrderClick}
-                disabled={cart.length === 0 || cashStatus === 'CLOSED'}
+                disabled={cart.length === 0 || cashStatus !== 'OPEN'}
                 className="w-full h-14 bg-orange-500 hover:bg-orange-600 active:scale-98 disabled:bg-slate-200 disabled:text-slate-400 text-white rounded-2xl text-base sm:text-lg font-black tracking-wide transition-all flex items-center justify-center gap-2.5 shadow-lg shadow-orange-500/25 cursor-pointer disabled:cursor-not-allowed"
               >
-                {cashStatus === 'CLOSED' ? (
+                {cashStatus === 'NOT_OPENED' ? (
+                  <>
+                    <Lock className="w-5 h-5 text-amber-500" /> KAUNTER BELUM BUKA
+                  </>
+                ) : cashStatus === 'CLOSED' ? (
                   <>
                     <Lock className="w-5 h-5 text-rose-500" /> KAUNTER DITUTUP
                   </>

@@ -458,6 +458,7 @@ function DashboardPage() {
                 </p>
                 <Link
                   to="/cash-management"
+                  search={{ reason: 'not_opened' } as any}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold shadow-xs transition-all active:scale-95"
                 >
                   <span>Buka Daftar Tunai Sekarang</span>

@@ -130,9 +130,9 @@ function TablesPage() {
   // Modal state
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [tableOrder, setTableOrder] = useState<any>(null);
-  const { storeId } = Route.useRouteContext();
-  const [cashStatus, setCashStatus] = useState<CashStatus>('OPEN');
-  const [closedAtTime, setClosedAtTime] = useState<string | null>(null);
+  const { storeId, cashStatus: initialCashStatus } = Route.useRouteContext() as any;
+  const [cashStatus, setCashStatus] = useState<CashStatus>(initialCashStatus?.status || 'NOT_OPENED');
+  const [closedAtTime, setClosedAtTime] = useState<string | null>(initialCashStatus?.closedAt || null);
   const [isReopenModalOpen, setIsReopenModalOpen] = useState(false);
 
   const fetchCashStatus = useCallback(async () => {
@@ -236,6 +236,12 @@ function TablesPage() {
   const handleAddTable = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTableNumber.trim()) return;
+    if (cashStatus !== 'OPEN') {
+      toast.error(cashStatus === 'NOT_OPENED' 
+        ? "Kaunter belum dibuka! Sila buka kaunter terlebih dahulu di Pengurusan Tunai." 
+        : "Kaunter telah ditutup! Urus niaga meja disekat.");
+      return;
+    }
 
     setIsAdding(true);
     try {
@@ -341,38 +347,76 @@ function TablesPage() {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto space-y-6">
-      {cashStatus === 'CLOSED' && (
-        <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl text-rose-950 flex flex-col md:flex-row justify-between items-center gap-3 shadow-xs">
+      {/* CASH GUARD BANNERS */}
+      {cashStatus === 'NOT_OPENED' && (
+        <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-amber-950 flex flex-col md:flex-row justify-between items-center gap-3 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-rose-600 rounded-xl text-white">
+            <div className="p-2.5 bg-amber-500 rounded-2xl text-white shadow-xs">
               <Lock className="w-6 h-6" />
             </div>
             <div>
-              <h2 className="text-base md:text-lg font-black text-rose-950 flex items-center gap-2">
-                ⛔ ORDERS CLOSED FOR THE DAY
-                {closedAtTime && (
-                  <span className="text-xs font-mono bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full border border-rose-200 font-bold">
-                    Closed at {new Date(closedAtTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                )}
+              <h2 className="text-base md:text-lg font-black text-amber-950 flex items-center gap-2">
+                ⛔ KAUNTER BELUM DIBUKA (REGISTER NOT OPENED)
+                <span className="text-xs font-mono bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full border border-amber-300 font-bold">
+                  Perlu Wang Apungan
+                </span>
               </h2>
-              <p className="text-xs text-rose-700">
-                The cash register shift is closed. Table creation and dine-in ordering are currently locked.
+              <p className="text-xs text-amber-800 font-medium">
+                Sesi daftar tunai hari ini belum dibuka. Anda perlu memasukkan wang apungan di Pengurusan Tunai sebelum memulakan urusan meja & pesanan.
               </p>
             </div>
           </div>
           
-          <button
-            onClick={() => setIsReopenModalOpen(true)}
-            className="bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-5 py-2.5 rounded-xl shadow-xs flex items-center gap-2 text-sm whitespace-nowrap active:scale-95 transition-all"
+          <Link
+            to="/cash-management"
+            search={{ reason: 'not_opened' }}
+            className="bg-orange-500 hover:bg-orange-600 text-white font-black px-5 py-2.5 rounded-xl shadow-xs flex items-center gap-2 text-sm whitespace-nowrap active:scale-95 transition-all cursor-pointer"
           >
-            <Unlock className="w-4 h-4" /> Reopen Register for Corrections
-          </button>
+            <Unlock className="w-4 h-4" /> Buka Kaunter Sekarang 💵
+          </Link>
+        </div>
+      )}
+
+      {cashStatus === 'CLOSED' && (
+        <div className="bg-rose-50 border border-rose-200 p-4 rounded-2xl text-rose-950 flex flex-col md:flex-row justify-between items-center gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-rose-500 rounded-2xl text-white shadow-xs">
+              <Lock className="w-6 h-6" />
+            </div>
+            <div>
+              <h2 className="text-base md:text-lg font-black text-rose-950 flex items-center gap-2">
+                ⛔ KAUNTER TELAH DITUTUP HARI INI (COUNTER CLOSED)
+                {closedAtTime && (
+                  <span className="text-xs font-mono bg-rose-100 text-rose-800 px-2.5 py-0.5 rounded-full border border-rose-200 font-bold">
+                    Ditutup jam {new Date(closedAtTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                )}
+              </h2>
+              <p className="text-xs text-rose-700 font-medium">
+                Sif daftar tunai hari ini telah ditutup. Pengurusan meja dan pesanan baharu dikunci.
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Link
+              to="/cash-management"
+              className="bg-slate-800 hover:bg-slate-900 text-white font-black px-4 py-2.5 rounded-xl shadow-xs text-xs whitespace-nowrap"
+            >
+              Pengurusan Tunai
+            </Link>
+            <button
+              onClick={() => setIsReopenModalOpen(true)}
+              className="bg-orange-500 hover:bg-orange-600 text-white font-black px-5 py-2.5 rounded-xl shadow-xs flex items-center gap-2 text-sm whitespace-nowrap active:scale-95 transition-all cursor-pointer"
+            >
+              <Unlock className="w-4 h-4" /> Buka Semula Daftar Tunai
+            </button>
+          </div>
         </div>
       )}
 
       {/* HEADER CARD */}
-      <div className={`bg-white border border-slate-200/90 p-6 rounded-3xl shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${cashStatus === 'CLOSED' ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className={`bg-white border border-slate-200/90 p-6 rounded-3xl shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${cashStatus !== 'OPEN' ? 'opacity-50 pointer-events-none' : ''}`}>
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
             <span>Table Management</span>
@@ -423,6 +467,12 @@ function TablesPage() {
                 table={table}
                 activeOrder={activeOrder}
                 onClick={(t, o) => {
+                  if (cashStatus !== 'OPEN') {
+                    toast.error(cashStatus === 'NOT_OPENED' 
+                      ? "Kaunter belum dibuka! Sila buka kaunter terlebih dahulu di Pengurusan Tunai." 
+                      : "Kaunter telah ditutup! Urus niaga pesanan meja disekat.");
+                    return;
+                  }
                   setSelectedTable(t);
                   setTableOrder(o);
                 }}

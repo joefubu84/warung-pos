@@ -164,6 +164,6 @@ export async function requireOrderingAuth(location: { pathname: string }, auth: 
       throw err;
     }
     console.error('Error in requireOrderingAuth:', err);
-    return { ...authData, cashStatus: { status: 'OPEN', dailyCash: null, closedAt: null } as any };
+    return { ...authData, cashStatus: { status: 'NOT_OPENED', dailyCash: null, closedAt: null } as any };
   }
 }

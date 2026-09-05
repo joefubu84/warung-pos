@@ -241,7 +241,10 @@ export function CashManagementPage() {
 
   useEffect(() => {
     if (searchParams?.reason === 'not_opened') {
-      toast.warning("Morning Float Required: Please open cash register to start today's ordering shift.");
+      toast.warning("Sesi Daftar Tunai Belum Dibuka: Sila masukkan wang apungan untuk memulakan perniagaan.");
+      setIsOpeningModal(true);
+    } else if (searchParams?.reason === 'closed') {
+      toast.error("Sesi Daftar Tunai Telah Ditutup: Sistem POS tidak dapat berfungsi kerana kaunter telah ditutup.");
     }
   }, [searchParams]);
 
