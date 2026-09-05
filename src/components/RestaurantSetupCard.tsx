@@ -102,31 +102,35 @@ export function RestaurantSetupCard() {
 
   if (loading) {
     return (
-      <div className="bg-white/80 border border-slate-200 p-5 rounded-2xl animate-pulse">
-        <div className="h-4 bg-slate-800 rounded w-1/3 mb-2" />
-        <div className="h-2 bg-slate-800 rounded w-full" />
+      <div className="bg-white border border-slate-200/90 p-5 rounded-3xl shadow-xs animate-pulse">
+        <div className="h-4 bg-slate-200 rounded-lg w-1/3 mb-2" />
+        <div className="h-2 bg-slate-100 rounded-full w-full" />
       </div>
     );
   }
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
+    <div className="bg-white border border-slate-200/90 rounded-3xl shadow-xs overflow-hidden">
       {/* HEADER BAR */}
-      <div className="p-5 border-b border-slate-200/80 flex items-center justify-between gap-4">
+      <div className="p-5 border-b border-slate-100 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+          <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-orange-500 shrink-0">
             <Sparkles className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-base font-black text-white tracking-tight">
+              <h3 className="text-base font-black text-slate-900 tracking-tight">
                 Panduan Persediaan Warung J&J
               </h3>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/20">
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold border ${
+                progressPercent === 100
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                  : 'bg-orange-50 text-orange-700 border-orange-200'
+              }`}>
                 {completedCount}/{steps.length} Selesai ({progressPercent}%)
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-sans mt-0.5">
+            <p className="text-xs text-slate-500 font-sans mt-0.5">
               Selesaikan langkah persediaan di bawah untuk melancarkan operasi penuh restoran.
             </p>
           </div>
@@ -135,7 +139,7 @@ export function RestaurantSetupCard() {
         <button
           type="button"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors shrink-0"
+          className="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
           title={isExpanded ? 'Kecilkan' : 'Buka'}
         >
           {isExpanded ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
@@ -143,53 +147,53 @@ export function RestaurantSetupCard() {
       </div>
 
       {/* PROGRESS BAR */}
-      <div className="w-full bg-white h-2">
+      <div className="w-full bg-slate-100 h-2">
         <div
-          className="bg-gradient-to-r from-amber-500 to-emerald-500 h-2 transition-all duration-500"
-          style={{ width: progressPercent + '%' }}
+          className="bg-gradient-to-r from-orange-500 to-emerald-500 h-2 transition-all duration-500"
+          style={{ width: `${progressPercent}%` }}
         />
       </div>
 
       {/* EXPANDABLE STEPS LIST */}
       {isExpanded && (
-        <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-3 bg-slate-50/40">
           {steps.map((step) => {
             const Icon = step.icon;
             return (
               <Link
                 key={step.id}
                 to={step.path}
-                className={'flex items-start justify-between p-3.5 rounded-xl border transition-all group ' + (
+                className={`flex items-start justify-between p-3.5 rounded-2xl border transition-all group ${
                   step.isComplete
-                    ? 'bg-white/60 border-slate-200/80 hover:border-emerald-500/40'
-                    : 'bg-amber-950/10 border-amber-500/30 hover:border-amber-500/60 hover:bg-amber-950/20'
-                )}
+                    ? 'bg-emerald-50/40 border-emerald-200/80 hover:border-emerald-300 hover:bg-emerald-50/70'
+                    : 'bg-white border-orange-200/80 hover:border-orange-300 hover:bg-orange-50/40 shadow-xs'
+                }`}
               >
                 <div className="flex items-start gap-3 min-w-0 pr-2">
                   <div className="mt-0.5 shrink-0">
                     {step.isComplete ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                     ) : (
-                      <Circle className="w-5 h-5 text-amber-400" />
+                      <Circle className="w-5 h-5 text-orange-500" />
                     )}
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <Icon className={'w-3.5 h-3.5 ' + (step.isComplete ? 'text-slate-400' : 'text-amber-400')} />
-                      <span className={'text-xs font-bold truncate ' + (step.isComplete ? 'text-slate-700' : 'text-white')}>
+                      <Icon className={`w-3.5 h-3.5 ${step.isComplete ? 'text-emerald-600' : 'text-orange-500'}`} />
+                      <span className={`text-xs font-bold truncate ${step.isComplete ? 'text-slate-900' : 'text-slate-900 font-extrabold'}`}>
                         {step.title}
                       </span>
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-2">
+                    <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
                       {step.description}
                     </p>
                   </div>
                 </div>
 
                 <div className="shrink-0 self-center">
-                  <span className={'text-[11px] font-bold flex items-center gap-1 transition-transform group-hover:translate-x-0.5 ' + (
-                    step.isComplete ? 'text-slate-500' : 'text-amber-400'
-                  )}>
+                  <span className={`text-[11px] font-bold flex items-center gap-1 transition-transform group-hover:translate-x-0.5 ${
+                    step.isComplete ? 'text-emerald-700' : 'text-orange-600'
+                  }`}>
                     {step.isComplete ? 'Lihat' : 'Setup'} <ArrowRight className="w-3 h-3" />
                   </span>
                 </div>
