@@ -228,7 +228,7 @@ const OrderCard = memo(({
               {highlight && (
                 <button 
                   onClick={() => onAcknowledge(order.id)}
-                  className={`${isModified ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse border-2 border-white' : 'bg-slate-900 hover:bg-slate-800 text-white'} text-xs font-black px-3.5 py-1.5 rounded-xl shadow transition-all active:scale-95 whitespace-nowrap`}
+                  className={`${isModified ? 'bg-rose-600 hover:bg-rose-700 text-white animate-pulse border-2 border-white' : 'bg-white hover:bg-slate-800 text-white'} text-xs font-black px-3.5 py-1.5 rounded-xl shadow transition-all active:scale-95 whitespace-nowrap`}
                 >
                   {isModified ? '🚨 SAHKAN PERUBAHAN' : '✅ TERIMA ORDER'}
                 </button>

@@ -61,8 +61,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   if (isChunkLoadError) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 text-slate-100">
-        <div className="max-w-md w-full text-center p-8 bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl">
+      <div className="flex min-h-screen items-center justify-center bg-white px-4 text-slate-800">
+        <div className="max-w-md w-full text-center p-8 bg-white border border-slate-200 rounded-3xl shadow-2xl">
           <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-5" />
           <h1 className="text-xl font-black text-emerald-400 tracking-tight">
             Memuat Semula Versi Terkini...
@@ -82,7 +82,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             </button>
             <a
               href="/counter"
-              className="w-full inline-flex items-center justify-center rounded-xl border border-slate-800 bg-slate-800/60 hover:bg-slate-800 py-2.5 text-xs font-semibold text-slate-300 transition-colors"
+              className="w-full inline-flex items-center justify-center rounded-xl border border-slate-200 bg-slate-800/60 hover:bg-slate-800 py-2.5 text-xs font-semibold text-slate-300 transition-colors"
             >
               Buka Counter POS
             </a>

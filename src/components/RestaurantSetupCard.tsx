@@ -102,7 +102,7 @@ export function RestaurantSetupCard() {
 
   if (loading) {
     return (
-      <div className="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl animate-pulse">
+      <div className="bg-white/80 border border-slate-200 p-5 rounded-2xl animate-pulse">
         <div className="h-4 bg-slate-800 rounded w-1/3 mb-2" />
         <div className="h-2 bg-slate-800 rounded w-full" />
       </div>
@@ -110,9 +110,9 @@ export function RestaurantSetupCard() {
   }
 
   return (
-    <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+    <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 border border-slate-200 rounded-2xl shadow-xl overflow-hidden">
       {/* HEADER BAR */}
-      <div className="p-5 border-b border-slate-800/80 flex items-center justify-between gap-4">
+      <div className="p-5 border-b border-slate-200/80 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
             <Sparkles className="w-5 h-5" />
@@ -143,7 +143,7 @@ export function RestaurantSetupCard() {
       </div>
 
       {/* PROGRESS BAR */}
-      <div className="w-full bg-slate-950 h-2">
+      <div className="w-full bg-white h-2">
         <div
           className="bg-gradient-to-r from-amber-500 to-emerald-500 h-2 transition-all duration-500"
           style={{ width: progressPercent + '%' }}
@@ -161,7 +161,7 @@ export function RestaurantSetupCard() {
                 to={step.path}
                 className={'flex items-start justify-between p-3.5 rounded-xl border transition-all group ' + (
                   step.isComplete
-                    ? 'bg-slate-950/60 border-slate-800/80 hover:border-emerald-500/40'
+                    ? 'bg-white/60 border-slate-200/80 hover:border-emerald-500/40'
                     : 'bg-amber-950/10 border-amber-500/30 hover:border-amber-500/60 hover:bg-amber-950/20'
                 )}
               >
@@ -176,7 +176,7 @@ export function RestaurantSetupCard() {
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <Icon className={'w-3.5 h-3.5 ' + (step.isComplete ? 'text-slate-400' : 'text-amber-400')} />
-                      <span className={'text-xs font-bold truncate ' + (step.isComplete ? 'text-slate-200' : 'text-white')}>
+                      <span className={'text-xs font-bold truncate ' + (step.isComplete ? 'text-slate-700' : 'text-white')}>
                         {step.title}
                       </span>
                     </div>

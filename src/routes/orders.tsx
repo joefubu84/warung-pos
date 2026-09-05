@@ -973,7 +973,7 @@ function OrdersPage() {
                               if (printWindow) { printWindow.document.write(html); printWindow.document.close(); }
                             });
                           }}
-                          className="bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-1.5 rounded-xl text-xs font-black shadow-xs active:scale-95 transition-all"
+                          className="bg-white hover:bg-slate-800 text-white px-3.5 py-1.5 rounded-xl text-xs font-black shadow-xs active:scale-95 transition-all"
                         >
                           PRINT
                         </button>
@@ -1300,7 +1300,7 @@ function OrdersPage() {
           </div>
           
           <DialogFooter>
-            <Button onClick={() => setHistoryOrder(null)} className="rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold">Close</Button>
+            <Button onClick={() => setHistoryOrder(null)} className="rounded-xl bg-white hover:bg-slate-800 text-white font-bold">Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

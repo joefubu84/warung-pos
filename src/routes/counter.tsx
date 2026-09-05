@@ -525,7 +525,7 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
     <div className="h-screen w-full bg-[#f8fafc] text-slate-900 overflow-hidden flex flex-col font-sans selection:bg-orange-500 selection:text-white">
       
       {/* MOBILE WARNING OVERLAY */}
-      <div className="md:hidden fixed inset-0 bg-slate-900/95 backdrop-blur-md text-white z-50 flex flex-col items-center justify-center p-8 text-center">
+      <div className="md:hidden fixed inset-0 bg-white/95 backdrop-blur-md text-white z-50 flex flex-col items-center justify-center p-8 text-center">
         <div className="w-16 h-16 rounded-3xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center mb-4 text-orange-400">
           <ShoppingCart className="w-8 h-8" />
         </div>
@@ -544,7 +544,7 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
         }
       `}} />
 
-      <div id="portrait-blocker" className="hidden fixed inset-0 bg-slate-900/95 backdrop-blur-md text-white z-50 flex-col items-center justify-center p-8 text-center">
+      <div id="portrait-blocker" className="hidden fixed inset-0 bg-white/95 backdrop-blur-md text-white z-50 flex-col items-center justify-center p-8 text-center">
         <div className="w-16 h-16 rounded-3xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center mb-4 text-orange-400">
           <Radio className="w-8 h-8 animate-pulse" />
         </div>
@@ -695,7 +695,7 @@ const handleSubmitOrder = async (paymentMethod: 'cash' | 'card' | 'unpaid' = 'un
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 rounded-xl"
                           />
                           {isSoldOut && (
-                            <div className="absolute inset-0 bg-slate-900/60 flex items-center justify-center backdrop-blur-xs">
+                            <div className="absolute inset-0 bg-white/60 flex items-center justify-center backdrop-blur-xs">
                               <span className="text-xs font-black bg-rose-600 text-white px-3 py-1.5 rounded-full shadow-lg tracking-wider uppercase font-mono">HABIS (86)</span>
                             </div>
                           )}

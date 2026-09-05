@@ -106,13 +106,13 @@ function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-white text-slate-800 flex flex-col justify-center items-center p-4 relative overflow-hidden font-sans">
       {/* Background Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Main Login Card */}
-      <div className="w-full max-w-md bg-slate-900/90 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative z-10 space-y-6">
+      <div className="w-full max-w-md bg-white/90 border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative z-10 space-y-6">
         
         {/* Header Branding */}
         <div className="text-center space-y-2">
@@ -172,7 +172,7 @@ function AuthPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="nama@warungjnj.com"
-                className="bg-slate-950/80 border-slate-800 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-slate-600 focus:border-emerald-500"
+                className="bg-white/80 border-slate-200 pl-10 h-11 text-xs rounded-xl text-white placeholder:text-slate-600 focus:border-emerald-500"
                 required
               />
             </div>
@@ -189,7 +189,7 @@ function AuthPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="bg-slate-950/80 border-slate-800 pl-10 pr-10 h-11 text-xs rounded-xl text-white placeholder:text-slate-600 focus:border-emerald-500"
+                className="bg-white/80 border-slate-200 pl-10 pr-10 h-11 text-xs rounded-xl text-white placeholder:text-slate-600 focus:border-emerald-500"
                 required
               />
               <button
@@ -205,7 +205,7 @@ function AuthPage() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full h-12 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold text-xs rounded-xl border border-slate-700 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
+            className="w-full h-12 bg-slate-800 hover:bg-slate-700 text-slate-800 font-bold text-xs rounded-xl border border-slate-700 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -219,7 +219,7 @@ function AuthPage() {
         </form>
 
         {/* Footer Navigation */}
-        <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-2.5 text-xs text-slate-400">
+        <div className="pt-2 border-t border-slate-200/80 flex flex-col gap-2.5 text-xs text-slate-400">
           <div className="flex items-center justify-between">
             <button
               type="button"
@@ -239,7 +239,7 @@ function AuthPage() {
             </button>
           </div>
 
-          <div className="pt-2 border-t border-slate-800/60 text-center">
+          <div className="pt-2 border-t border-slate-200/60 text-center">
             <button
               type="button"
               onClick={() => navigate({ to: '/rider' })}

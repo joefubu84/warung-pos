@@ -820,7 +820,7 @@ export function TableQRPage() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans pb-28 md:pb-12 selection:bg-orange-500 selection:text-white">
       {/* CLOSED OVERLAY */}
       {isClosedForDay && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center">
+        <div className="fixed inset-0 bg-white/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center">
           <div className="bg-white rounded-3xl p-6 max-w-sm w-full border border-slate-200 shadow-2xl space-y-4">
             <div className="w-14 h-14 bg-rose-50 border border-rose-200 rounded-2xl text-rose-500 mx-auto flex items-center justify-center">
               <Lock className="w-7 h-7" />
@@ -840,7 +840,7 @@ export function TableQRPage() {
 
       {/* OCCUPIED TABLE SESSION BLOCKED OVERLAY */}
       {sessionBlockedMessage && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center">
+        <div className="fixed inset-0 bg-white/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center">
           <div className="bg-white rounded-3xl p-6 max-w-sm w-full border border-slate-200 shadow-2xl space-y-4">
             <div className="w-14 h-14 bg-amber-50 border border-amber-200 rounded-2xl text-amber-500 mx-auto flex items-center justify-center">
               <ShieldAlert className="w-7 h-7" />
@@ -918,7 +918,7 @@ export function TableQRPage() {
         </div>
 
         {/* 2. HERO PROMO BANNER (Dark charcoal #111827, rounded-2xl, special offer badge + hero image) */}
-        <div className="bg-[#111827] text-white rounded-3xl p-5 shadow-xl relative overflow-hidden flex items-center justify-between border border-slate-800">
+        <div className="bg-[#111827] text-white rounded-3xl p-5 shadow-xl relative overflow-hidden flex items-center justify-between border border-slate-200">
           <div className="space-y-3 z-10 max-w-[58%]">
             {/* SPECIAL OFFER! BADGE */}
             <div className="inline-flex items-center gap-1.5 bg-[#fde047] text-slate-950 px-3 py-1 rounded-lg text-xs font-black uppercase tracking-wider shadow-sm">
