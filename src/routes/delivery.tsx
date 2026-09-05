@@ -1489,28 +1489,28 @@ function CustomerDeliveryPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1c1917] text-stone-100 font-sans pb-36 selection:bg-orange-500/30 selection:text-orange-200">
+    <div className="min-h-screen bg-[#f8fafc] text-slate-800 font-sans pb-36 selection:bg-orange-500/20 selection:text-orange-950">
       {/* HEADER BANNER - MODERN GLASS ISLAND */}
-      <header className="bg-[#292524]/90 backdrop-blur-xl border-b border-stone-800/80 sticky top-0 z-30 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+      <header className="bg-white/90 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 shadow-xs">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link 
               to="/" 
-              className="w-9 h-9 rounded-xl bg-stone-800/80 hover:bg-stone-700 border border-stone-700/50 flex items-center justify-center text-stone-300 hover:text-white transition-all active:scale-95 shadow-inner"
+              className="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200/80 flex items-center justify-center text-slate-600 hover:text-slate-900 transition-all active:scale-95 shadow-xs"
               title="Kembali ke Laman Utama"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
 
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-xl overflow-hidden border border-stone-700/60 shadow-md bg-stone-900 shrink-0">
+              <div className="w-10 h-10 rounded-xl overflow-hidden border border-slate-200 shadow-xs bg-white shrink-0">
                 <img src="/logo.png" alt="Warung JNJ Logo" className="w-full h-full object-cover scale-105" />
               </div>
               <div>
-                <h1 className="font-bold text-base sm:text-lg tracking-tight text-stone-100 flex items-center gap-1.5">
+                <h1 className="font-bold text-base sm:text-lg tracking-tight text-slate-900 flex items-center gap-1.5 font-heading">
                   Warung JNJ Delivery 🛵
                 </h1>
-                <p className="text-[11px] text-emerald-400 font-medium flex items-center gap-2">
+                <p className="text-[11px] text-emerald-600 font-medium flex items-center gap-2">
                   <span>✨ Penghantaran Makanan Panas & Segar • Penampang, Sabah</span>
                 </p>
               </div>
@@ -1519,7 +1519,7 @@ function CustomerDeliveryPage() {
 
           <div className="flex items-center gap-2.5">
             {currentUser ? (
-              <div className="flex items-center gap-2 bg-stone-900/90 border border-stone-700/80 px-2.5 py-1 rounded-2xl">
+              <div className="flex items-center gap-2 bg-white border border-slate-200 px-2.5 py-1 rounded-2xl shadow-xs">
                 {currentUser.avatarUrl ? (
                   <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-6 h-6 rounded-full object-cover border border-emerald-500/60 shrink-0" />
                 ) : (
@@ -1528,11 +1528,11 @@ function CustomerDeliveryPage() {
                   </div>
                 )}
                 <div className="flex flex-col text-left">
-                  <span className="text-xs font-bold text-stone-200 max-w-[110px] truncate leading-tight">
+                  <span className="text-xs font-bold text-slate-800 max-w-[110px] truncate leading-tight">
                     {currentUser.name}
                   </span>
                   {loyaltyMember && (
-                    <span className="text-[9px] font-bold font-mono text-amber-400">
+                    <span className="text-[9px] font-bold font-mono text-amber-600">
                       💎 {loyaltyMember.points} Pts ({loyaltyMember.tier})
                     </span>
                   )}
@@ -1540,7 +1540,7 @@ function CustomerDeliveryPage() {
                 <button
                   type="button"
                   onClick={handleLogout}
-                  className="text-[10px] text-stone-400 hover:text-rose-400 font-medium ml-1"
+                  className="text-[10px] text-slate-400 hover:text-rose-500 font-medium ml-1"
                   title="Log Keluar"
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -1551,7 +1551,7 @@ function CustomerDeliveryPage() {
                 type="button"
                 size="sm"
                 onClick={() => setShowAuthModal(true)}
-                className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold h-9 px-3.5 rounded-xl flex items-center gap-1.5 text-xs shadow-md active:scale-95 transition-all"
+                className="bg-orange-500 hover:bg-orange-600 text-white font-bold h-9 px-3.5 rounded-xl flex items-center gap-1.5 text-xs shadow-xs active:scale-95 transition-all"
               >
                 <User className="w-3.5 h-3.5" />
                 <span>Log Masuk</span>
@@ -1563,20 +1563,20 @@ function CustomerDeliveryPage() {
               variant="outline"
               size="sm"
               onClick={handleInstallApp}
-              className="bg-stone-900 border-stone-700 text-orange-400 hover:text-white hover:bg-stone-800 h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs shadow-inner"
+              className="bg-white border-slate-200 text-slate-700 hover:text-orange-600 hover:bg-orange-50/50 h-9 px-3 rounded-xl flex items-center gap-1.5 text-xs shadow-xs transition-all"
               title="Pasang Aplikasi Warung J&J Delivery (Android / iOS)"
             >
-              <Download className="w-3.5 h-3.5 text-orange-400" />
+              <Download className="w-3.5 h-3.5 text-orange-500" />
               <span className="hidden sm:inline">Pasang App</span>
               <span className="sm:hidden">App</span>
             </Button>
 
             {isOnlineOrderingEnabled ? (
-              <Badge className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold text-xs px-2.5 py-1 rounded-full hidden sm:inline-flex animate-pulse">
+              <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-xs px-2.5 py-1 rounded-full hidden sm:inline-flex">
                 🟢 Dibuka
               </Badge>
             ) : (
-              <Badge className="bg-rose-500/15 text-rose-300 border border-rose-500/30 font-bold text-xs px-2.5 py-1 rounded-full hidden sm:inline-flex">
+              <Badge className="bg-rose-50 text-rose-700 border border-rose-200 font-bold text-xs px-2.5 py-1 rounded-full hidden sm:inline-flex">
                 🔴 Ditutup
               </Badge>
             )}
@@ -1587,25 +1587,25 @@ function CustomerDeliveryPage() {
       <main className="max-w-4xl mx-auto px-4 py-5 space-y-6">
         {/* LIVE ORDER TRACKING BANNER & CARD */}
         {trackedOrder && (
-          <div className="bg-gradient-to-r from-stone-900 via-[#1e1c1a] to-stone-900 border-2 border-emerald-500/50 p-4 sm:p-5 rounded-3xl shadow-2xl space-y-4 animate-fade-in relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
+          <div className="bg-white border border-emerald-300 p-4 sm:p-5 rounded-3xl shadow-sm space-y-4 animate-fade-in relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full blur-2xl pointer-events-none" />
             
-            <div className="flex items-center justify-between flex-wrap gap-2 border-b border-stone-800 pb-3">
+            <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-emerald-400">
+                <div className="w-9 h-9 rounded-xl bg-emerald-100 border border-emerald-200 flex items-center justify-center text-emerald-700">
                   <Truck className="w-5 h-5 animate-bounce" />
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
                       🛵 Penjejakan Langsung Pesanan (Live Tracking)
                     </span>
-                    <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 font-mono text-[10px] rounded-full font-bold">
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 font-mono text-[10px] rounded-full font-bold">
                       #{trackedOrder?.id ? String(trackedOrder.id).slice(0, 8).toUpperCase() : 'DELIVERY'}
                     </span>
                   </div>
-                  <p className="text-xs text-stone-300 font-medium">
-                    Penerima: <strong className="text-white">{trackedOrder.customer_name || 'Pelanggan'}</strong> • RM {Number(trackedOrder.total_amount || 0).toFixed(2)}
+                  <p className="text-xs text-slate-600 font-medium">
+                    Penerima: <strong className="text-slate-900">{trackedOrder.customer_name || 'Pelanggan'}</strong> • RM {Number(trackedOrder.total_amount || 0).toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -1620,7 +1620,7 @@ function CustomerDeliveryPage() {
                     const msg = `Salam Warung J&J, saya ingin bertanya status pesanan saya #${shortId}`;
                     window.open(`https://wa.me/${clean}?text=${encodeURIComponent(msg)}`, '_blank');
                   }}
-                  className="bg-stone-800 border-stone-700 text-emerald-400 hover:text-emerald-300 h-8 px-2.5 rounded-xl text-[11px] flex items-center gap-1.5"
+                  className="bg-white border-slate-200 text-emerald-700 hover:bg-emerald-50 h-8 px-2.5 rounded-xl text-[11px] flex items-center gap-1.5 shadow-xs"
                 >
                   <MessageCircle className="w-3.5 h-3.5" />
                   <span>WhatsApp Kedai</span>
@@ -1628,7 +1628,7 @@ function CustomerDeliveryPage() {
                 <button
                   type="button"
                   onClick={() => setTrackedOrder(null)}
-                  className="w-7 h-7 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-400 hover:text-white flex items-center justify-center"
+                  className="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-400 hover:text-slate-700 flex items-center justify-center transition-colors"
                   title="Tutup penjejakan"
                 >
                   <X className="w-4 h-4" />
@@ -1636,7 +1636,7 @@ function CustomerDeliveryPage() {
               </div>
             </div>
 
-            {/* INTERACTIVE FOOD DELIVERY RIVE/SVG ANIMATION HERO */}
+            {/* INTERACTIVE FOOD DELIVERY ANIMATION HERO */}
             <div className="pt-1">
               <FoodDeliveryAnimation 
                 status={trackedOrder.delivery_status || trackedOrder.status} 
@@ -1649,14 +1649,14 @@ function CustomerDeliveryPage() {
               {/* Step 1 */}
               <div className={`p-2.5 rounded-2xl border text-center transition-all ${
                 trackedOrder.status === 'pending_payment'
-                  ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-md animate-pulse font-bold'
-                  : 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 font-bold'
+                  ? 'bg-amber-50 border-amber-300 text-amber-800 shadow-xs animate-pulse font-bold'
+                  : 'bg-emerald-50 border-emerald-200 text-emerald-800 font-bold'
               }`}>
                 <div className="text-sm mb-0.5">{trackedOrder.status === 'pending_payment' ? '🕒' : '✅'}</div>
                 <div className="text-[11px] font-bold leading-tight">
                   {trackedOrder.status === 'pending_payment' ? '1. Menunggu Bayaran' : '1. Bayaran Sah'}
                 </div>
-                <div className="text-[9px] text-stone-400">
+                <div className="text-[9px] text-slate-500">
                   {trackedOrder.status === 'pending_payment' ? 'DuitNow / Resit' : 'Diterima Warung'}
                 </div>
               </div>
@@ -1664,10 +1664,10 @@ function CustomerDeliveryPage() {
               {/* Step 2 */}
               <div className={`p-2.5 rounded-2xl border text-center transition-all ${
                 trackedOrder.status === 'preparing'
-                  ? 'bg-orange-500/20 border-orange-500/50 text-orange-300 shadow-md animate-pulse font-bold'
+                  ? 'bg-orange-50 border-orange-300 text-orange-800 shadow-xs animate-pulse font-bold'
                   : (trackedOrder.status === 'ready' || trackedOrder.status === 'on_the_way' || trackedOrder.delivery_status === 'picked_up' || trackedOrder.delivery_status === 'arrived' || trackedOrder.status === 'completed')
-                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 font-bold'
-                    : 'bg-stone-900/60 border-stone-800 text-stone-400'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800 font-bold'
+                    : 'bg-slate-50 border-slate-200 text-slate-500'
               }`}>
                 <div className="text-sm mb-0.5">
                   {(trackedOrder.status === 'ready' || trackedOrder.status === 'on_the_way' || trackedOrder.delivery_status === 'picked_up' || trackedOrder.delivery_status === 'arrived' || trackedOrder.status === 'completed') ? '✅' : '👨‍🍳'}
@@ -1675,16 +1675,16 @@ function CustomerDeliveryPage() {
                 <div className="text-[11px] font-bold leading-tight">
                   {trackedOrder.status === 'preparing' ? '2. Sedang Dimasak' : (trackedOrder.status === 'ready' || trackedOrder.status === 'on_the_way' || trackedOrder.delivery_status === 'picked_up' || trackedOrder.delivery_status === 'arrived' || trackedOrder.status === 'completed') ? '2. Siap Dimasak' : '2. Menunggu Dapur'}
                 </div>
-                <div className="text-[9px] text-stone-400">Dapur Warung J&J</div>
+                <div className="text-[9px] text-slate-500">Dapur Warung J&J</div>
               </div>
 
               {/* Step 3 */}
               <div className={`p-2.5 rounded-2xl border text-center transition-all ${
                 (trackedOrder.status === 'ready' || trackedOrder.status === 'on_the_way' || trackedOrder.delivery_status === 'picked_up' || trackedOrder.delivery_status === 'arrived') && trackedOrder.status !== 'completed'
-                  ? 'bg-sky-500/20 border-sky-500/50 text-sky-300 shadow-lg animate-pulse font-bold'
+                  ? 'bg-sky-50 border-sky-300 text-sky-800 shadow-xs animate-pulse font-bold'
                   : (trackedOrder.status === 'completed' || trackedOrder.delivery_status === 'delivered')
-                    ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 font-bold'
-                    : 'bg-stone-900/60 border-stone-800 text-stone-400'
+                    ? 'bg-emerald-50 border-emerald-200 text-emerald-800 font-bold'
+                    : 'bg-slate-50 border-slate-200 text-slate-500'
               }`}>
                 <div className="text-sm mb-0.5">
                   {(trackedOrder.status === 'completed' || trackedOrder.delivery_status === 'delivered') ? '✅' : '🛵'}
@@ -1694,7 +1694,7 @@ function CustomerDeliveryPage() {
                     ? '3. Telah Sampai' 
                     : (trackedOrder.delivery_status === 'arrived' ? '3. Rider Tiba' : '3. Rider Menghantar')}
                 </div>
-                <div className="text-[9px] text-stone-400">
+                <div className="text-[9px] text-slate-500">
                   {trackedOrder.delivery_status === 'arrived' ? 'Di Pagar / Lokasi' : (trackedOrder.status === 'completed' ? 'Lokasi Destinasi' : 'Dalam Perjalanan')}
                 </div>
               </div>
@@ -1702,23 +1702,23 @@ function CustomerDeliveryPage() {
               {/* Step 4 */}
               <div className={`p-2.5 rounded-2xl border text-center transition-all ${
                 trackedOrder.status === 'completed' || trackedOrder.delivery_status === 'delivered'
-                  ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.35)] animate-pulse font-bold'
-                  : 'bg-stone-900/60 border-stone-800 text-stone-400'
+                  ? 'bg-emerald-50 border-emerald-400 text-emerald-800 shadow-xs font-bold'
+                  : 'bg-slate-50 border-slate-200 text-slate-500'
               }`}>
                 <div className="text-sm mb-0.5">✨</div>
                 <div className="text-[11px] font-bold leading-tight">4. Selesai Diserah</div>
-                <div className="text-[9px] text-stone-400">
+                <div className="text-[9px] text-slate-500">
                   {trackedOrder.status === 'completed' ? 'Selamat Menjamu!' : 'Pesanan Lengkap'}
                 </div>
               </div>
             </div>
 
             {/* ADDRESS & DETAILS */}
-            <div className="bg-stone-950/60 p-3 rounded-2xl border border-stone-800/80 flex items-start gap-2.5 text-xs text-stone-300">
-              <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="bg-slate-50 p-3 rounded-2xl border border-slate-200 flex items-start gap-2.5 text-xs text-slate-700">
+              <MapPin className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
               <div className="space-y-0.5">
-                <span className="text-[10px] text-stone-500 uppercase font-bold tracking-wider block">Destinasi Penghantaran:</span>
-                <p className="text-stone-200 leading-relaxed font-medium">
+                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">Destinasi Penghantaran:</span>
+                <p className="text-slate-800 leading-relaxed font-medium">
                   {trackedOrder.delivery_address?.replace(/\[TAMBANG:.*?\]/g, '').trim() || 'Penampang, Sabah'}
                 </p>
               </div>
@@ -1728,21 +1728,21 @@ function CustomerDeliveryPage() {
 
         {/* ONLINE ORDERING CLOSED BANNER */}
         {!isOnlineOrderingEnabled && (
-          <div className="bg-gradient-to-r from-rose-950/90 via-red-950/90 to-stone-900 border-2 border-rose-600/80 p-4 sm:p-5 rounded-3xl shadow-2xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in text-rose-200">
+          <div className="bg-rose-50/90 border border-rose-200 p-4 sm:p-5 rounded-3xl shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in text-rose-900">
             <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-rose-400 shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-rose-100 border border-rose-200 flex items-center justify-center text-rose-600 shrink-0">
                 <AlertCircle className="w-6 h-6" />
               </div>
               <div className="space-y-0.5">
-                <h3 className="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                <h3 className="font-bold text-sm sm:text-base text-rose-900 flex items-center gap-2 font-heading">
                   ⛔ Perkhidmatan Penghantaran (Delivery) Ditutup Buat Sementara Waktu
                 </h3>
-                <p className="text-xs text-rose-300/90 leading-relaxed">
+                <p className="text-xs text-rose-700 leading-relaxed">
                   Pihak pengurusan Warung J&J menutup pesanan online & penghantaran rider buat sementara waktu untuk penambahbaikan sistem. Pelanggan dialu-alukan untuk menikmati hidangan secara <strong>Dine-in / Bungkus Terus di Warung J&J Penampang</strong>.
                 </p>
               </div>
             </div>
-            <span className="px-3.5 py-1.5 bg-rose-600/30 border border-rose-500/50 rounded-xl text-xs font-bold text-rose-200 uppercase tracking-wider shrink-0 font-mono">
+            <span className="px-3.5 py-1.5 bg-rose-100 border border-rose-300 rounded-xl text-xs font-bold text-rose-800 uppercase tracking-wider shrink-0 font-mono">
               Ditutup Sementara
             </span>
           </div>
@@ -1750,16 +1750,16 @@ function CustomerDeliveryPage() {
 
         {/* IN-APP USER SIGN IN MANDATORY FILTER BANNER */}
         {!currentUser && (
-          <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-red-500/10 border-2 border-amber-500/40 p-4 sm:p-5 rounded-3xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in">
+          <div className="bg-orange-50/90 border border-orange-200 p-4 sm:p-5 rounded-3xl shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4 animate-fade-in">
             <div className="flex items-center gap-3.5">
-              <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-orange-100 border border-orange-200 flex items-center justify-center text-orange-600 shrink-0">
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <div className="space-y-0.5">
-                <h3 className="font-bold text-sm sm:text-base text-white flex items-center gap-2">
+                <h3 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2 font-heading">
                   <span>🔒 Sila Daftar / Log Masuk untuk Pesanan Delivery</span>
                 </h3>
-                <p className="text-xs text-stone-300 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed">
                   Masukkan nama & nombor WhatsApp anda untuk menerima kemas kini penjejakan live rider & kumpul 50 Mata VIP Percuma.
                 </p>
               </div>
@@ -1767,7 +1767,7 @@ function CustomerDeliveryPage() {
             <Button
               type="button"
               onClick={handleGoogleLogin}
-              className="w-full sm:w-auto bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold px-6 h-12 rounded-2xl shadow-xl flex items-center justify-center gap-2.5 text-xs sm:text-sm active:scale-95 transition-all shrink-0 font-heading"
+              className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white font-bold px-6 h-12 rounded-2xl shadow-xs flex items-center justify-center gap-2.5 text-xs sm:text-sm active:scale-95 transition-all shrink-0 font-heading"
             >
               <User className="w-4 h-4" />
               <span>Daftar / Log Masuk (Dapat 50 Pts VIP)</span>
@@ -1776,19 +1776,19 @@ function CustomerDeliveryPage() {
         )}
 
         {/* STEP 1: DELIVERY ADDRESS & REAL-ROAD ROUTE MAP CARD */}
-        <Card className="bg-[#292524] border border-stone-800 text-stone-100 rounded-3xl shadow-xl overflow-hidden">
+        <Card className="bg-white border border-slate-200/90 text-slate-800 rounded-3xl shadow-xs overflow-hidden">
           <CardContent className="p-4 sm:p-5 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-bold text-sm sm:text-base tracking-tight text-white flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-emerald-400" /> 1. Alamat Penghantaran & Peta Jalan Raya
+              <h2 className="font-bold text-sm sm:text-base tracking-tight text-slate-900 flex items-center gap-2 font-heading">
+                <MapPin className="w-4 h-4 text-emerald-600" /> 1. Alamat Penghantaran & Peta Jalan Raya
               </h2>
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={handleGetLocation} 
-                className="bg-stone-900 border-stone-700 text-emerald-400 hover:text-emerald-300 text-xs rounded-xl hover:bg-stone-800 flex items-center gap-1.5 h-8"
+                className="bg-white border-slate-200 text-slate-700 hover:text-emerald-700 text-xs rounded-xl hover:bg-emerald-50 flex items-center gap-1.5 h-8 shadow-xs transition-all"
               >
-                <Navigation className="w-3.5 h-3.5 text-emerald-400" />
+                <Navigation className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Kesan Lokasi GPS</span>
               </Button>
             </div>
@@ -1821,18 +1821,18 @@ function CustomerDeliveryPage() {
                   onFocus={() => {
                     if (addressSuggestions.length > 0) setShowSuggestionsDropdown(true);
                   }}
-                  className="bg-stone-900 border-stone-800 text-white placeholder:text-stone-500 rounded-2xl text-xs sm:text-sm min-h-[60px]"
+                  className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-2xl text-xs sm:text-sm min-h-[60px] focus:bg-white focus:border-orange-500 shadow-xs"
                 />
 
                 {/* AUTOCOMPLETE SUGGESTIONS DROPDOWN */}
                 {showSuggestionsDropdown && addressSuggestions.length > 0 && (
-                  <div className="absolute top-[64px] left-0 right-0 z-30 bg-[#292524] border border-stone-700/80 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-md animate-fade-in divide-y divide-stone-800">
-                    <div className="px-3 py-1.5 bg-stone-950/90 flex items-center justify-between text-[10px] text-stone-400">
-                      <span className="flex items-center gap-1 font-bold text-emerald-400">
-                        <Sparkles className="w-3 h-3 text-emerald-400" /> Cadangan Lokasi:
+                  <div className="absolute top-[64px] left-0 right-0 z-30 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden backdrop-blur-md animate-fade-in divide-y divide-slate-100">
+                    <div className="px-3 py-1.5 bg-slate-50 flex items-center justify-between text-[10px] text-slate-500">
+                      <span className="flex items-center gap-1 font-bold text-emerald-700">
+                        <Sparkles className="w-3 h-3 text-emerald-600" /> Cadangan Lokasi:
                       </span>
                       {isLoadingSuggestions && (
-                        <span className="flex items-center gap-1 text-[10px] text-stone-500">
+                        <span className="flex items-center gap-1 text-[10px] text-slate-400">
                           <Loader2 className="w-2.5 h-2.5 animate-spin" /> Mencari...
                         </span>
                       )}
@@ -1844,12 +1844,12 @@ function CustomerDeliveryPage() {
                           key={idx}
                           type="button"
                           onClick={() => handleSelectSuggestion(item)}
-                          className="w-full text-left px-3.5 py-2.5 hover:bg-stone-800 flex items-start gap-2 text-xs transition-colors"
+                          className="w-full text-left px-3.5 py-2.5 hover:bg-slate-50 flex items-start gap-2 text-xs transition-colors"
                         >
-                          <MapPin className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
+                          <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
                           <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-white truncate">{item.displayName}</p>
-                            <p className="text-[11px] text-stone-400 truncate">{item.mainText}</p>
+                            <p className="font-semibold text-slate-900 truncate">{item.displayName}</p>
+                            <p className="text-[11px] text-slate-500 truncate">{item.mainText}</p>
                           </div>
                         </button>
                       ))}
@@ -1860,45 +1860,45 @@ function CustomerDeliveryPage() {
 
               {/* DEDICATED PREMISE / UNIT / WAITING SPOT NOTE FOR RIDER */}
               <div className="space-y-1.5 pt-1">
-                <label className="text-xs font-bold text-stone-300 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-amber-400">
+                <label className="text-xs font-bold text-slate-700 flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-amber-700">
                     <Building2 className="w-3.5 h-3.5" /> No. Lot / Tingkat / Nama Kedai / Tempat Menunggu (Untuk Rider)
                   </span>
-                  <span className="text-[10px] text-stone-400">Pilihan</span>
+                  <span className="text-[10px] text-slate-400 font-normal">Pilihan</span>
                 </label>
                 <Input
                   placeholder="Cth: Unit T10 (Tingkat Bawah) / Kedai Niyocha / Depan Restoran Mari Mari / Blok A"
                   value={specificUnitNote}
                   onChange={(e) => setSpecificUnitNote(e.target.value)}
-                  className="bg-stone-900 border-stone-800 text-white placeholder:text-stone-500 rounded-xl text-xs h-10"
+                  className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl text-xs h-10 focus:bg-white focus:border-orange-500 shadow-xs"
                 />
               </div>
             </div>
 
             {/* ROUTE INFO & DELIVERY FEE BADGES */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
-              <div className="bg-stone-900 border border-stone-800 p-3 rounded-2xl flex flex-col justify-between">
-                <span className="text-stone-400 text-[10px] block mb-0.5">Jarak Jalan Raya:</span>
+              <div className="bg-slate-50 border border-slate-200 p-3 rounded-2xl flex flex-col justify-between shadow-2xs">
+                <span className="text-slate-500 text-[10px] block mb-0.5">Jarak Jalan Raya:</span>
                 <div className="flex items-center justify-between">
-                  <span className={`font-bold text-sm ${isOutOfZone ? 'text-rose-400' : 'text-emerald-400'}`}>
+                  <span className={`font-bold text-sm ${isOutOfZone ? 'text-rose-600' : 'text-emerald-700 font-mono'}`}>
                     {roadDistanceKm} km {isOutOfZone ? '⚠️' : '✓'}
                   </span>
                   {travelTimeMins && (
-                    <span className="text-[10px] text-stone-400">~{travelTimeMins} minit</span>
+                    <span className="text-[10px] text-slate-500">~{travelTimeMins} minit</span>
                   )}
                 </div>
               </div>
 
-              <div className="bg-stone-900 border border-stone-800 p-3 rounded-2xl flex flex-col justify-between">
-                <span className="text-stone-400 text-[10px] block mb-0.5">Zon Penghantaran:</span>
-                <span className={`font-bold text-xs ${isOutOfZone ? 'text-rose-400' : 'text-emerald-400'}`}>
+              <div className="bg-slate-50 border border-slate-200 p-3 rounded-2xl flex flex-col justify-between shadow-2xs">
+                <span className="text-slate-500 text-[10px] block mb-0.5">Zon Penghantaran:</span>
+                <span className={`font-bold text-xs ${isOutOfZone ? 'text-rose-600' : 'text-slate-800'}`}>
                   {isOutOfZone ? 'Luar Zon (> 15km)' : 'Dalam Zon Warung J&J'}
                 </span>
               </div>
 
-              <div className="bg-stone-900 border border-stone-800 p-3 rounded-2xl flex flex-col justify-between">
-                <span className="text-stone-400 text-[10px] block mb-0.5">Tambang Rider:</span>
-                <span className="font-bold text-sm text-emerald-400 font-mono">
+              <div className="bg-slate-50 border border-slate-200 p-3 rounded-2xl flex flex-col justify-between shadow-2xs">
+                <span className="text-slate-500 text-[10px] block mb-0.5">Tambang Rider:</span>
+                <span className="font-bold text-sm text-orange-600 font-mono">
                   RM {deliveryFee.toFixed(2)}
                 </span>
               </div>
@@ -1909,30 +1909,30 @@ function CustomerDeliveryPage() {
         {/* STEP 2: SEARCH AND CATEGORY FILTER BAR */}
         <div className="space-y-3 pt-2">
           <div className="flex items-center justify-between">
-            <h2 className="font-bold text-base sm:text-lg tracking-tight text-white flex items-center gap-2">
+            <h2 className="font-bold text-base sm:text-lg tracking-tight text-slate-900 flex items-center gap-2 font-heading">
               <span>2. Pilihan Menu Makanan 🍜</span>
             </h2>
-            <span className="text-xs text-stone-400 font-medium">{filteredMenuItems.length} hidangan sedia dipesan</span>
+            <span className="text-xs text-slate-500 font-medium">{filteredMenuItems.length} hidangan sedia dipesan</span>
           </div>
 
           {/* DYNAMIC PROMOTIONAL BANNER SLIDER */}
           <div 
-            className="relative rounded-3xl overflow-hidden shadow-2xl border border-stone-800/80 transition-all duration-300"
+            className="relative rounded-3xl overflow-hidden shadow-sm border border-slate-200/80 transition-all duration-300"
             onMouseEnter={() => setIsPromoPaused(true)}
             onMouseLeave={() => setIsPromoPaused(false)}
           >
             {/* SLIDE 1: COMBO JIMAT */}
             {promoSlideIndex === 0 && (
-              <div className="bg-gradient-to-r from-amber-700 via-orange-600 to-rose-700 p-5 sm:p-6 text-white animate-fade-in relative flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="bg-gradient-to-r from-amber-600 via-orange-500 to-rose-500 p-5 sm:p-6 text-white animate-fade-in relative flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="space-y-1.5 max-w-xl text-center sm:text-left">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-black/25 backdrop-blur-md rounded-full text-[10px] sm:text-xs font-bold text-amber-200 uppercase tracking-wider border border-amber-300/30">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-black/20 backdrop-blur-md rounded-full text-[10px] sm:text-xs font-bold text-amber-100 uppercase tracking-wider border border-white/20">
                     <Flame className="w-3.5 h-3.5 text-amber-300" />
                     <span>Tawaran Kombo Mingguan</span>
                   </div>
-                  <h3 className="text-base sm:text-xl font-extrabold tracking-tight text-white drop-shadow-md">
+                  <h3 className="text-base sm:text-xl font-extrabold tracking-tight text-white drop-shadow-xs font-heading">
                     🍗 Kombo Ayam Penyet Crispy + Sambal Berapi!
                   </h3>
-                  <p className="text-xs sm:text-sm text-orange-100/90 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-orange-50 leading-relaxed">
                     Percuma <strong>Teh Tarik Kaw / Sirap Bandung</strong> dengan setiap pesanan delivery melebihi <strong>RM 25.00</strong>.
                   </p>
                 </div>
@@ -1941,7 +1941,7 @@ function CustomerDeliveryPage() {
                     setSelectedCategory('chicken');
                     toast.success('Kategori Ayam dibuka! Sila pilih hidangan kombo kegemaran anda.');
                   }}
-                  className="bg-white hover:bg-stone-100 text-stone-950 font-bold px-4 py-2 rounded-2xl text-xs sm:text-sm shadow-xl active:scale-95 transition-all shrink-0"
+                  className="bg-white hover:bg-slate-50 text-slate-900 font-bold px-4 py-2 rounded-2xl text-xs sm:text-sm shadow-md active:scale-95 transition-all shrink-0 font-heading"
                 >
                   <span>Pesan Sekarang</span>
                   <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
@@ -1951,33 +1951,33 @@ function CustomerDeliveryPage() {
 
             {/* SLIDE 2: LOYALTY 50 PTS */}
             {promoSlideIndex === 1 && (
-              <div className="bg-gradient-to-r from-emerald-800 via-teal-700 to-cyan-800 p-5 sm:p-6 text-white animate-fade-in relative flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600 p-5 sm:p-6 text-white animate-fade-in relative flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="space-y-1.5 max-w-xl text-center sm:text-left">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-black/25 backdrop-blur-md rounded-full text-[10px] sm:text-xs font-bold text-emerald-200 uppercase tracking-wider border border-emerald-300/30">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-black/20 backdrop-blur-md rounded-full text-[10px] sm:text-xs font-bold text-emerald-100 uppercase tracking-wider border border-white/20">
                     <Gift className="w-3.5 h-3.5 text-emerald-300" />
                     <span>Ganjaran Keahlian VIP</span>
                   </div>
-                  <h3 className="text-base sm:text-xl font-extrabold tracking-tight text-white drop-shadow-md">
+                  <h3 className="text-base sm:text-xl font-extrabold tracking-tight text-white drop-shadow-xs font-heading">
                     💎 Bonus 50 Mata Ganjaran Percuma untuk Pelanggan Baru!
                   </h3>
-                  <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-emerald-50 leading-relaxed">
                     Log masuk dengan <strong>Akaun Google</strong> hari ini & kumpul mata pada setiap pesanan untuk tebus potongan diskaun tunai.
                   </p>
                 </div>
                 {!currentUser ? (
                   <Button
                     onClick={handleGoogleLogin}
-                    className="bg-white hover:bg-stone-100 text-stone-950 font-bold px-4 py-2 rounded-2xl text-xs sm:text-sm shadow-xl active:scale-95 transition-all shrink-0"
+                    className="bg-white hover:bg-slate-50 text-slate-900 font-bold px-4 py-2 rounded-2xl text-xs sm:text-sm shadow-md active:scale-95 transition-all shrink-0 font-heading"
                   >
                     <span>Daftar & Tebus 50 Pts</span>
                     <Sparkles className="w-3.5 h-3.5 ml-1.5 text-amber-600" />
                   </Button>
                 ) : (
-                  <div className="px-4 py-2 bg-emerald-950/80 border border-emerald-400/40 rounded-2xl text-center shrink-0">
-                    <span className="text-xs font-bold text-emerald-200 block font-mono">
+                  <div className="px-4 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-2xl text-center shrink-0">
+                    <span className="text-xs font-bold text-white block font-mono">
                       💎 {loyaltyMember?.points || 50} Mata Dimiliki
                     </span>
-                    <span className="text-[10px] text-emerald-300/80">Ahli {loyaltyMember?.tier || 'Bronze'}</span>
+                    <span className="text-[10px] text-emerald-100">Ahli {loyaltyMember?.tier || 'Bronze'}</span>
                   </div>
                 )}
               </div>
@@ -1985,16 +1985,16 @@ function CustomerDeliveryPage() {
 
             {/* SLIDE 3: SABAH FAST DELIVERY */}
             {promoSlideIndex === 2 && (
-              <div className="bg-gradient-to-r from-purple-800 via-indigo-700 to-blue-800 p-5 sm:p-6 text-white animate-fade-in relative flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="bg-gradient-to-r from-indigo-600 via-blue-600 to-sky-600 p-5 sm:p-6 text-white animate-fade-in relative flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="space-y-1.5 max-w-xl text-center sm:text-left">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-black/25 backdrop-blur-md rounded-full text-[10px] sm:text-xs font-bold text-indigo-200 uppercase tracking-wider border border-indigo-300/30">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-black/20 backdrop-blur-md rounded-full text-[10px] sm:text-xs font-bold text-indigo-100 uppercase tracking-wider border border-white/20">
                     <Truck className="w-3.5 h-3.5 text-indigo-300" />
                     <span>Kadar Tambang Jimat Sabah</span>
                   </div>
-                  <h3 className="text-base sm:text-xl font-extrabold tracking-tight text-white drop-shadow-md">
+                  <h3 className="text-base sm:text-xl font-extrabold tracking-tight text-white drop-shadow-xs font-heading">
                     🛵 Penghantaran Pantas Donggongon & Penampang!
                   </h3>
-                  <p className="text-xs sm:text-sm text-indigo-100/90 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-indigo-50 leading-relaxed">
                     Tambang bermula serendah <strong>RM 3.00</strong> dengan pengiraan jarak jalan raya GPS sebenar & penjejakan masa-nyata.
                   </p>
                 </div>
@@ -2003,7 +2003,7 @@ function CustomerDeliveryPage() {
                     window.scrollTo({ top: 300, behavior: 'smooth' });
                     toast.info('Sila sahkan lokasi anda di Peta Jalan Raya untuk mengira tambang.');
                   }}
-                  className="bg-white hover:bg-stone-100 text-stone-950 font-bold px-4 py-2 rounded-2xl text-xs sm:text-sm shadow-xl active:scale-95 transition-all shrink-0"
+                  className="bg-white hover:bg-slate-50 text-slate-900 font-bold px-4 py-2 rounded-2xl text-xs sm:text-sm shadow-md active:scale-95 transition-all shrink-0 font-heading"
                 >
                   <span>Semak Zon Peta</span>
                   <Navigation className="w-3.5 h-3.5 ml-1.5 text-sky-600" />
@@ -2015,7 +2015,7 @@ function CustomerDeliveryPage() {
             <button
               type="button"
               onClick={() => setPromoSlideIndex(prev => (prev === 0 ? 2 : prev - 1))}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 border border-white/10"
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 border border-white/20"
               title="Slaid Sebelumnya"
             >
               <ChevronLeft className="w-4 h-4" />
@@ -2023,21 +2023,21 @@ function CustomerDeliveryPage() {
             <button
               type="button"
               onClick={() => setPromoSlideIndex(prev => (prev + 1) % 3)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 hover:bg-black/70 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 border border-white/10"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 text-white flex items-center justify-center backdrop-blur-md transition-all active:scale-95 border border-white/20"
               title="Slaid Seterusnya"
             >
               <ChevronRight className="w-4 h-4" />
             </button>
 
             {/* INDICATOR DOTS */}
-            <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/30 backdrop-blur-md px-2.5 py-1 rounded-full">
+            <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black/20 backdrop-blur-md px-2.5 py-1 rounded-full">
               {[0, 1, 2].map((idx) => (
                 <button
                   key={idx}
                   type="button"
                   onClick={() => setPromoSlideIndex(idx)}
                   className={`w-2 h-2 rounded-full transition-all ${
-                    promoSlideIndex === idx ? 'bg-white w-5' : 'bg-white/40 hover:bg-white/70'
+                    promoSlideIndex === idx ? 'bg-white w-5' : 'bg-white/50 hover:bg-white/80'
                   }`}
                   title={`Slaid ${idx + 1}`}
                 />
@@ -2046,13 +2046,13 @@ function CustomerDeliveryPage() {
           </div>
 
           <div className="relative">
-            <Search className="absolute left-4 top-3.5 w-4 h-4 text-stone-500" />
+            <Search className="absolute left-4 top-3.5 w-4 h-4 text-slate-400" />
             <Input
               type="text"
               placeholder="Cari makanan kegemaran anda (cth: Nasi Goreng, Sup Tulang, Tomyam)..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="bg-[#292524] border-stone-800 text-white pl-11 h-12 rounded-2xl text-xs sm:text-sm placeholder:text-stone-500 shadow-inner focus:border-orange-500/60"
+              className="bg-white border-slate-200 text-slate-900 pl-11 h-12 rounded-2xl text-xs sm:text-sm placeholder:text-slate-400 shadow-xs focus:border-orange-500"
             />
           </div>
 
@@ -2066,8 +2066,8 @@ function CustomerDeliveryPage() {
                   onClick={() => setSelectedCategory(cat)}
                   className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
                     isSelected
-                      ? 'bg-orange-600 text-white border-orange-500 shadow-[0_4px_15px_rgba(234,88,12,0.35)] scale-105'
-                      : 'bg-[#292524] text-stone-400 border-stone-800 hover:text-white hover:border-stone-700'
+                      ? 'bg-orange-500 text-white border-orange-500 shadow-xs scale-105'
+                      : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-300'
                   }`}
                 >
                   {cat === 'all' ? '🍽️ Semua Menu' : `🥘 ${cat ? (cat.charAt(0).toUpperCase() + cat.slice(1)) : 'Menu'}`}
@@ -2080,12 +2080,12 @@ function CustomerDeliveryPage() {
         {/* MENU ITEMS GRID */}
         <div>
           {loadingItems ? (
-            <div className="text-center py-16 text-stone-400 font-medium flex flex-col items-center gap-3">
+            <div className="text-center py-16 text-slate-500 font-medium flex flex-col items-center gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
               <span>Memuat turun menu Warung JNJ...</span>
             </div>
           ) : filteredMenuItems.length === 0 ? (
-            <div className="p-12 text-center bg-[#292524] rounded-3xl border border-stone-800 text-stone-400 text-xs">
+            <div className="p-12 text-center bg-white rounded-3xl border border-slate-200 text-slate-500 text-xs shadow-xs">
               Tiada menu dijumpai untuk carian ini.
             </div>
           ) : (
@@ -2095,10 +2095,10 @@ function CustomerDeliveryPage() {
                 const isSoldOut = item.stock_count !== null && item.stock_count !== undefined && item.stock_count <= 0;
 
                 return (
-                  <Card key={item.id} className="bg-[#292524] border-stone-800 text-stone-100 rounded-3xl overflow-hidden hover:border-orange-500/40 transition-all flex flex-col justify-between shadow-lg group">
+                  <Card key={item.id} className="bg-white border-slate-200/90 text-slate-800 rounded-3xl overflow-hidden hover:border-orange-300 hover:shadow-md transition-all flex flex-col justify-between shadow-xs group">
                     <CardContent className="p-4 flex gap-3.5 items-center">
                       {item.image_url ? (
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shrink-0 border border-stone-700/60 shadow-md bg-stone-900">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl overflow-hidden shrink-0 border border-slate-100 shadow-xs bg-slate-100">
                           <img 
                             src={item.image_url} 
                             alt={item.name} 
@@ -2106,35 +2106,35 @@ function CustomerDeliveryPage() {
                           />
                         </div>
                       ) : (
-                        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-stone-900 rounded-2xl shrink-0 border border-stone-700/60 flex items-center justify-center text-stone-500 font-black text-sm shadow-inner">
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-slate-100 rounded-2xl shrink-0 border border-slate-200 flex items-center justify-center text-slate-400 font-black text-sm shadow-inner">
                           JNJ
                         </div>
                       )}
 
                       <div className="flex-1 min-w-0 space-y-1">
-                        <h3 className="font-bold text-white text-sm sm:text-base leading-tight truncate group-hover:text-orange-300 transition-colors">
+                        <h3 className="font-bold text-slate-900 text-sm sm:text-base leading-tight truncate group-hover:text-orange-600 transition-colors">
                           {item.name}
                         </h3>
                         {item.description && (
-                          <p className="text-[11px] text-stone-400 line-clamp-1 leading-relaxed">{item.description}</p>
+                          <p className="text-[11px] text-slate-500 line-clamp-1 leading-relaxed">{item.description}</p>
                         )}
-                        <p className="text-[10px] text-stone-500 capitalize">{item.category}</p>
-                        <p className="font-bold text-orange-400 text-sm sm:text-base">RM {item.price.toFixed(2)}</p>
+                        <p className="text-[10px] text-slate-400 uppercase font-semibold">{item.category}</p>
+                        <p className="font-bold text-orange-600 text-sm sm:text-base font-mono">RM {item.price.toFixed(2)}</p>
                       </div>
                     </CardContent>
 
                     {/* ACTION BUTTONS */}
-                    <div className="p-3 pt-0 border-t border-stone-800/80 bg-stone-950/30 flex items-center justify-between gap-2">
+                    <div className="p-3 pt-0 border-t border-slate-100 bg-slate-50/50 flex items-center justify-between gap-2">
                       {inCart ? (
-                        <div className="w-full flex items-center justify-between bg-stone-900/90 border border-orange-500/40 rounded-xl p-1 px-2.5">
-                          <span className="text-xs font-bold text-orange-400 font-mono">
+                        <div className="w-full flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl p-1 px-2.5">
+                          <span className="text-xs font-bold text-orange-700 font-mono">
                             {inCart.quantity}x Ditambah
                           </span>
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => setCustomizingItem(item)}
-                            className="text-[11px] text-amber-400 hover:text-amber-300 px-3 h-7 rounded-xl font-medium"
+                            className="text-[11px] text-orange-600 hover:text-orange-700 px-3 h-7 rounded-xl font-medium"
                           >
                             ✏️ Kustom
                           </Button>
@@ -2144,7 +2144,7 @@ function CustomerDeliveryPage() {
                           <Button
                             disabled={isSoldOut}
                             onClick={() => setCustomizingItem(item)}
-                            className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-bold rounded-xl h-9 text-xs shadow-md active:scale-95 flex items-center justify-center gap-1.5 transition-all"
+                            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl h-9 text-xs shadow-xs active:scale-95 flex items-center justify-center gap-1.5 transition-all"
                           >
                             <SlidersHorizontal className="w-3.5 h-3.5" />
                             <span>Pilih & Kustom</span>
@@ -2153,7 +2153,7 @@ function CustomerDeliveryPage() {
                             disabled={isSoldOut}
                             onClick={() => handleQuickAdd(item)}
                             variant="outline"
-                            className="border-stone-700 bg-stone-900 hover:bg-stone-800 text-stone-300 h-9 px-3 rounded-xl text-xs active:scale-95 transition-all"
+                            className="border-slate-200 bg-white hover:bg-slate-100 text-slate-700 h-9 px-3 rounded-xl text-xs active:scale-95 transition-all shadow-xs"
                             title="Tambah terus 1x"
                           >
                             <Plus className="w-3.5 h-3.5" />
@@ -2170,45 +2170,45 @@ function CustomerDeliveryPage() {
 
         {/* STEP 3: CUSTOMER CONTACT & IN-PAGE CHECKOUT CARD */}
         {cart.length > 0 && (
-          <Card className="bg-[#292524] border-2 border-orange-500/40 text-stone-100 rounded-3xl shadow-2xl overflow-hidden">
+          <Card className="bg-white border border-orange-200 text-slate-800 rounded-3xl shadow-xs overflow-hidden">
             <CardContent className="p-5 sm:p-6 space-y-5">
-              <div className="flex items-center justify-between border-b border-stone-800 pb-3.5">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
                 <div className="space-y-0.5">
-                  <h2 className="font-bold text-base sm:text-lg tracking-tight text-white flex items-center gap-2 font-heading">
+                  <h2 className="font-bold text-base sm:text-lg tracking-tight text-slate-900 flex items-center gap-2 font-heading">
                     <User className="w-4 h-4 text-orange-500" /> 3. Maklumat Penerima & Keselamatan
                   </h2>
-                  <p className="text-[11px] text-stone-400">Pendaftaran rasmi akaun Google & No. WhatsApp untuk dihubungi oleh rider</p>
+                  <p className="text-[11px] text-slate-500">Pendaftaran rasmi akaun Google & No. WhatsApp untuk dihubungi oleh rider</p>
                 </div>
-                <Badge className="bg-orange-500/20 text-orange-300 border-orange-500/30 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
+                <Badge className="bg-orange-50 text-orange-700 border-orange-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full">
                   Wajib Diisi
                 </Badge>
               </div>
 
               {/* GOOGLE ACCOUNT REQUIREMENT BANNER */}
               {!currentUser ? (
-                <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-red-500/10 border-2 border-amber-500/50 p-5 rounded-3xl space-y-3.5 shadow-lg text-center">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-400 flex items-center justify-center mx-auto border border-amber-500/40">
+                <div className="bg-orange-50/80 border border-orange-200 p-5 rounded-3xl space-y-3.5 shadow-xs text-center">
+                  <div className="w-12 h-12 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mx-auto border border-orange-200">
                     <User className="w-6 h-6" />
                   </div>
                   <div className="space-y-1">
-                    <h4 className="font-bold text-sm sm:text-base text-white font-heading">
+                    <h4 className="font-bold text-sm sm:text-base text-slate-900 font-heading">
                       <span>👤 Sila Sahkan Maklumat Pelanggan</span>
                     </h4>
-                    <p className="text-xs text-stone-300 max-w-md mx-auto leading-relaxed">
+                    <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
                       Daftar nama dan nombor telefon WhatsApp untuk mengaktifkan pesanan delivery & tebus 50 Mata VIP.
                     </p>
                   </div>
                   <Button
                     type="button"
                     onClick={handleGoogleLogin}
-                    className="w-full sm:w-auto px-8 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold h-12 rounded-2xl shadow-xl flex items-center justify-center gap-2.5 text-xs sm:text-sm active:scale-95 transition-all mx-auto font-heading"
+                    className="w-full sm:w-auto px-8 bg-orange-500 hover:bg-orange-600 text-white font-bold h-12 rounded-2xl shadow-xs flex items-center justify-center gap-2.5 text-xs sm:text-sm active:scale-95 transition-all mx-auto font-heading"
                   >
                     <User className="w-4 h-4" />
                     <span>Daftar / Log Masuk Sekarang (50 Pts)</span>
                   </Button>
                 </div>
               ) : (
-                <div className="bg-emerald-500/10 border border-emerald-500/30 p-3.5 rounded-2xl flex items-center justify-between gap-2 shadow-inner">
+                <div className="bg-emerald-50 border border-emerald-200 p-3.5 rounded-2xl flex items-center justify-between gap-2 shadow-xs">
                   <div className="flex items-center gap-3 min-w-0">
                     {currentUser.avatarUrl ? (
                       <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-8 h-8 rounded-full object-cover border border-emerald-500/60 shrink-0" />
@@ -2218,17 +2218,17 @@ function CustomerDeliveryPage() {
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider flex items-center gap-1">
+                      <p className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider flex items-center gap-1">
                         <CheckCircle2 className="w-3.5 h-3.5" /> Akaun Google Disahkan
                       </p>
-                      <p className="text-xs sm:text-sm font-bold text-white truncate">{currentUser.name}</p>
-                      <p className="text-[11px] text-stone-400 truncate">{currentUser.email}</p>
+                      <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">{currentUser.name}</p>
+                      <p className="text-[11px] text-slate-500 truncate">{currentUser.email}</p>
                     </div>
                   </div>
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="text-xs text-stone-400 hover:text-rose-400 underline shrink-0 px-2 py-1"
+                    className="text-xs text-slate-500 hover:text-rose-600 underline shrink-0 px-2 py-1"
                   >
                     Tukar Akaun
                   </button>
@@ -2237,8 +2237,8 @@ function CustomerDeliveryPage() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-orange-400" /> Nama Penerima
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-orange-500" /> Nama Penerima
                   </label>
                   <Input
                     placeholder="Contoh: Farhan / Siti / John"
@@ -2249,21 +2249,21 @@ function CustomerDeliveryPage() {
                         localStorage.setItem('warung_customer_name', e.target.value);
                       }
                     }}
-                    className="bg-stone-900 border-stone-700/80 text-white placeholder:text-stone-500 rounded-2xl text-xs sm:text-sm h-11 focus:border-orange-500/60 shadow-inner"
+                    className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-2xl text-xs sm:text-sm h-11 focus:bg-white focus:border-orange-500 shadow-xs"
                   />
                 </div>
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
-                      <Phone className="w-3.5 h-3.5 text-emerald-400" /> No. Telefon WhatsApp (Untuk Rider Hubungi)
+                    <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-emerald-600" /> No. Telefon WhatsApp (Untuk Rider Hubungi)
                     </label>
                     {customerPhone.replace(/\D/g, '').startsWith('01') && customerPhone.replace(/\D/g, '').length >= 10 && customerPhone.replace(/\D/g, '').length <= 11 ? (
-                      <span className="text-[10px] text-emerald-400 font-bold bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-500/30 flex items-center gap-1">
+                      <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 flex items-center gap-1">
                         <CheckCircle2 className="w-3 h-3" /> Format Sah ✓
                       </span>
                     ) : (
-                      <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
+                      <span className="text-[10px] text-amber-600 font-bold flex items-center gap-1">
                         ⚠️ 01X (10-11 digit)
                       </span>
                     )}
@@ -2283,17 +2283,17 @@ function CustomerDeliveryPage() {
                           }
                         }
                       }}
-                      className="bg-stone-900 border-stone-700/80 text-white placeholder:text-stone-500 rounded-2xl text-xs sm:text-sm h-11 focus:border-orange-500/60 shadow-inner flex-1"
+                      className="bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-2xl text-xs sm:text-sm h-11 focus:bg-white focus:border-orange-500 shadow-xs flex-1"
                     />
                   </div>
                 </div>
               </div>
 
               {/* ANTI-SCAM & ADMIN APPROVAL NOTICE */}
-              <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl flex items-start gap-2.5 text-xs text-stone-300">
-                <ShieldCheck className="w-4 h-4 text-orange-400 shrink-0 mt-0.5" />
+              <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-2xl flex items-start gap-2.5 text-xs text-slate-700 shadow-2xs">
+                <ShieldCheck className="w-4 h-4 text-orange-500 shrink-0 mt-0.5" />
                 <div className="space-y-1 text-[11px] leading-relaxed">
-                  <span className="font-bold text-orange-300 block">🛡️ Pengesahan Pesanan & Bayaran oleh Admin Warung J&J:</span>
+                  <span className="font-bold text-orange-700 block">🛡️ Pengesahan Pesanan & Bayaran oleh Admin Warung J&J:</span>
                   <span>
                     Status pesanan akan diletakkan sebagai <strong>Menunggu Pengesahan Bayaran Admin</strong>. Pihak warung akan menyemak resit bayaran DuitNow/Online Banking anda di kaunter sebelum pesanan dilepaskan kepada rider untuk penghantaran.
                   </span>
@@ -2301,16 +2301,16 @@ function CustomerDeliveryPage() {
               </div>
 
               {/* CART ITEMS SUMMARY & PER-PACK SPECIFICATION */}
-              <div className="space-y-3 pt-2 border-t border-stone-800">
+              <div className="space-y-3 pt-2 border-t border-slate-100">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm sm:text-base text-white flex items-center gap-2">
-                    <ShoppingBag className="w-4 h-4 text-emerald-400" /> Semakan Bungkusan ({totalCartCount} Bungkusan)
+                  <h3 className="font-bold text-sm sm:text-base text-slate-900 flex items-center gap-2 font-heading">
+                    <ShoppingBag className="w-4 h-4 text-emerald-600" /> Semakan Bungkusan ({totalCartCount} Bungkusan)
                   </h3>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => setIsCartDrawerOpen(true)}
-                    className="text-xs text-orange-400 hover:text-orange-300 hover:bg-orange-950/30 h-8 rounded-xl font-medium"
+                    className="text-xs text-orange-600 hover:text-orange-700 hover:bg-orange-50 h-8 rounded-xl font-medium"
                   >
                     Troli Terperinci ↗
                   </Button>
@@ -2322,11 +2322,11 @@ function CustomerDeliveryPage() {
                     const packNotes = cItem.packNotes || Array(qty).fill('');
 
                     return (
-                      <div key={cItem.id} className="p-4 rounded-2xl bg-stone-900/90 border border-stone-800 space-y-3 shadow-inner">
-                        <div className="flex justify-between items-center pb-2.5 border-b border-stone-800 text-xs">
+                      <div key={cItem.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-3 shadow-xs">
+                        <div className="flex justify-between items-center pb-2.5 border-b border-slate-200/70 text-xs">
                           <div className="flex items-center gap-2">
-                            <span className="font-bold text-white text-sm">🍱 {cItem.name}</span>
-                            <span className="font-bold text-emerald-400 bg-emerald-950/60 px-2.5 py-0.5 rounded-full border border-emerald-500/30 text-[11px] font-mono">
+                            <span className="font-bold text-slate-900 text-sm">🍱 {cItem.name}</span>
+                            <span className="font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 text-[11px] font-mono">
                               x{qty} • RM {(cItem.price * qty).toFixed(2)}
                             </span>
                           </div>
@@ -2336,7 +2336,7 @@ function CustomerDeliveryPage() {
                               <button
                                 type="button"
                                 onClick={() => splitDeliveryItem(cItem.id)}
-                                className="px-2.5 py-1 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20 border border-sky-500/30 rounded-xl text-[10px] font-bold flex items-center gap-1 active:scale-95 transition-all"
+                                className="px-2.5 py-1 bg-sky-50 text-sky-700 hover:bg-sky-100 border border-sky-200 rounded-xl text-[10px] font-bold flex items-center gap-1 active:scale-95 transition-all shadow-2xs"
                                 title="Pecahkan kepada entri bungkusan berasingan"
                               >
                                 <Split className="w-3 h-3" /> Pecah
@@ -2345,7 +2345,7 @@ function CustomerDeliveryPage() {
                             <button
                               type="button"
                               onClick={() => removeFromCart(cItem.id)}
-                              className="text-rose-400 hover:text-rose-300 text-xs font-medium px-2 py-1 hover:bg-rose-950/30 rounded-lg transition-colors"
+                              className="text-rose-600 hover:text-rose-700 text-xs font-medium px-2 py-1 hover:bg-rose-50 rounded-lg transition-colors"
                             >
                               Padam
                             </button>
@@ -2357,20 +2357,20 @@ function CustomerDeliveryPage() {
                           {Array.from({ length: qty }).map((_, pIdx) => {
                             const currentNote = packNotes[pIdx] || '';
                             return (
-                              <div key={pIdx} className="p-2.5 rounded-xl bg-stone-950/60 border border-stone-800/80 space-y-1.5 text-xs">
+                              <div key={pIdx} className="p-2.5 rounded-xl bg-white border border-slate-200 space-y-1.5 text-xs shadow-2xs">
                                 <div className="flex justify-between items-center text-[11px]">
-                                  <span className="font-bold text-amber-400 flex items-center gap-1">
+                                  <span className="font-bold text-amber-700 flex items-center gap-1">
                                     <span>🥡 Bungkusan #{pIdx + 1}</span>
-                                    {qty > 1 && <span className="text-stone-500 font-normal">({pIdx + 1}/{qty})</span>}
+                                    {qty > 1 && <span className="text-slate-400 font-normal">({pIdx + 1}/{qty})</span>}
                                   </span>
-                                  {currentNote && <span className="text-emerald-400 text-[10px] font-bold">✓ Ada Nota Khas</span>}
+                                  {currentNote && <span className="text-emerald-600 text-[10px] font-bold">✓ Ada Nota Khas</span>}
                                 </div>
 
                                 <Input
                                   placeholder={`Nota Bungkusan #${pIdx + 1} (cth: Tak nak taugeh, sambal asing, ekstra sup...)`}
                                   value={currentNote}
                                   onChange={(e) => updatePackNote(cItem.id, pIdx, e.target.value)}
-                                  className="h-8 bg-stone-900 border-stone-800 text-white placeholder:text-stone-600 text-xs rounded-xl focus:border-orange-500/50"
+                                  className="h-8 bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 text-xs rounded-xl focus:bg-white focus:border-orange-500"
                                 />
 
                                 {/* QUICK MODIFIER CHIPS */}
@@ -2384,8 +2384,8 @@ function CustomerDeliveryPage() {
                                         onClick={() => togglePackQuickModifier(cItem.id, pIdx, mod.tag)}
                                         className={`text-[10px] px-2.5 py-0.5 rounded-lg font-medium transition-all border active:scale-95 ${
                                           isSelected
-                                            ? 'bg-amber-500 text-stone-950 border-amber-400 font-bold shadow-sm'
-                                            : 'bg-stone-900 text-stone-400 border-stone-800 hover:text-stone-200'
+                                            ? 'bg-amber-500 text-white border-amber-600 font-bold shadow-xs'
+                                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-300'
                                         }`}
                                       >
                                         {mod.icon} {(mod.label.split('/')[0] ?? mod.label).trim()}
@@ -2405,12 +2405,12 @@ function CustomerDeliveryPage() {
 
               {/* RECOMMENDED ADD-ONS UPSELL SECTION BEFORE CHECKOUT */}
               {availableAddons.filter(a => a.available).length > 0 && (
-                <div className="p-4 rounded-2xl bg-stone-900/90 border border-stone-800 space-y-2.5 shadow-inner">
+                <div className="p-4 rounded-2xl bg-orange-50/50 border border-orange-200/80 space-y-2.5 shadow-xs">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-xs sm:text-sm text-amber-400 flex items-center gap-1.5 font-heading">
-                      <Sparkles className="w-4 h-4 text-amber-400" /> Cadangan Lauk & Sampingan Tambahan (Add-ons)
+                    <h3 className="font-bold text-xs sm:text-sm text-amber-800 flex items-center gap-1.5 font-heading">
+                      <Sparkles className="w-4 h-4 text-amber-600" /> Cadangan Lauk & Sampingan Tambahan (Add-ons)
                     </h3>
-                    <span className="text-[10px] text-stone-500 font-mono">1-Klik Tambah</span>
+                    <span className="text-[10px] text-slate-400 font-mono">1-Klik Tambah</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {availableAddons.filter(a => a.available).map(addon => (
@@ -2418,17 +2418,17 @@ function CustomerDeliveryPage() {
                         key={addon.id}
                         type="button"
                         onClick={() => handleAddonDirectToCart(addon)}
-                        className="p-2.5 rounded-xl bg-stone-950/80 border border-stone-800 hover:border-amber-500/50 flex items-center justify-between gap-2 text-left text-xs transition-all active:scale-95 group shadow-sm"
+                        className="p-2.5 rounded-xl bg-white border border-slate-200 hover:border-orange-300 flex items-center justify-between gap-2 text-left text-xs transition-all active:scale-95 group shadow-xs"
                       >
                         <div className="min-w-0 flex-1">
-                          <span className="font-bold text-stone-200 block text-xs truncate group-hover:text-amber-300">
+                          <span className="font-bold text-slate-800 block text-xs truncate group-hover:text-orange-600">
                             {addon.name}
                           </span>
-                          <span className="text-[11px] text-emerald-400 font-mono font-bold">
+                          <span className="text-[11px] text-emerald-700 font-mono font-bold">
                             +RM {addon.price.toFixed(2)}
                           </span>
                         </div>
-                        <div className="w-6 h-6 rounded-lg bg-orange-600/20 text-orange-400 border border-orange-500/30 flex items-center justify-center shrink-0 group-hover:bg-orange-600 group-hover:text-white transition-colors text-xs font-black">
+                        <div className="w-6 h-6 rounded-lg bg-orange-50 text-orange-600 border border-orange-200 flex items-center justify-center shrink-0 group-hover:bg-orange-500 group-hover:text-white transition-colors text-xs font-black">
                           +
                         </div>
                       </button>
@@ -2438,41 +2438,41 @@ function CustomerDeliveryPage() {
               )}
 
               {/* PRICE SUMMARY CARD */}
-              <div className="bg-stone-900/90 border border-stone-800 p-4 sm:p-5 rounded-2xl space-y-2.5 text-xs shadow-inner">
-                <div className="flex justify-between text-stone-400 text-xs sm:text-sm">
+              <div className="bg-slate-50 border border-slate-200 p-4 sm:p-5 rounded-2xl space-y-2.5 text-xs shadow-xs">
+                <div className="flex justify-between text-slate-600 text-xs sm:text-sm">
                   <span>Subtotal Makanan ({totalCartCount} pek):</span>
-                  <span className="font-bold text-white font-mono">RM {foodSubtotal.toFixed(2)}</span>
+                  <span className="font-bold text-slate-900 font-mono">RM {foodSubtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-stone-400 text-xs sm:text-sm">
+                <div className="flex justify-between text-slate-600 text-xs sm:text-sm">
                   <span>Caj Penghantaran ({roadDistanceKm}km @ RM1/km):</span>
-                  <span className="font-bold text-white font-mono">RM {deliveryFee.toFixed(2)}</span>
+                  <span className="font-bold text-slate-900 font-mono">RM {deliveryFee.toFixed(2)}</span>
                 </div>
 
                 {/* MINIMUM ORDER PROGRESS BAR */}
                 <div className="pt-2">
                   <div className="flex justify-between text-[11px] mb-1.5">
-                    <span className="text-stone-400 font-medium">Pesanan Minimum Delivery: RM 15.00</span>
-                    <span className={foodSubtotal >= 15.00 ? 'text-emerald-400 font-bold' : 'text-amber-400 font-bold'}>
+                    <span className="text-slate-500 font-medium">Pesanan Minimum Delivery: RM 15.00</span>
+                    <span className={foodSubtotal >= 15.00 ? 'text-emerald-700 font-bold' : 'text-amber-700 font-bold'}>
                       {foodSubtotal >= 15.00 ? '✓ Minimum Tercapai' : `Kurang RM ${(15.00 - foodSubtotal).toFixed(2)}`}
                     </span>
                   </div>
-                  <div className="w-full bg-stone-950 h-2.5 rounded-full overflow-hidden border border-stone-800 p-0.5">
+                  <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden border border-slate-300 p-0.5">
                     <div 
-                      className={`h-full rounded-full transition-all duration-500 ${foodSubtotal >= 15.00 ? 'bg-gradient-to-r from-emerald-500 to-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]' : 'bg-gradient-to-r from-amber-500 to-orange-500'}`}
+                      className={`h-full rounded-full transition-all duration-500 ${foodSubtotal >= 15.00 ? 'bg-emerald-500 shadow-xs' : 'bg-amber-500'}`}
                       style={{ width: `${Math.min(100, (foodSubtotal / 15.00) * 100)}%` }}
                     />
                   </div>
                 </div>
 
-                <div className="border-t border-stone-800 pt-3 flex justify-between text-base sm:text-lg font-black text-white">
+                <div className="border-t border-slate-200 pt-3 flex justify-between text-base sm:text-lg font-black text-slate-900">
                   <span>Jumlah Keseluruhan:</span>
-                  <span className="text-orange-400 font-mono">RM {grandTotal.toFixed(2)}</span>
+                  <span className="text-orange-600 font-mono">RM {grandTotal.toFixed(2)}</span>
                 </div>
               </div>
 
               {!currentUser ? (
                 <Button 
-                  className="w-full h-14 text-sm sm:text-base font-bold bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white rounded-2xl shadow-xl flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all font-heading"
+                  className="w-full h-14 text-sm sm:text-base font-bold bg-orange-500 hover:bg-orange-600 text-white rounded-2xl shadow-md flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all font-heading"
                   onClick={handleGoogleLogin}
                 >
                   <User className="w-5 h-5" />
@@ -2482,8 +2482,8 @@ function CustomerDeliveryPage() {
                 <Button 
                   className={`w-full h-14 text-sm sm:text-base font-bold rounded-2xl flex items-center justify-center gap-2.5 active:scale-[0.98] transition-all font-heading ${
                     !isOnlineOrderingEnabled
-                      ? 'bg-rose-950/80 border border-rose-700/80 text-rose-300 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white shadow-[0_8px_25px_rgba(234,88,12,0.4)]'
+                      ? 'bg-rose-100 border border-rose-200 text-rose-800 cursor-not-allowed'
+                      : 'bg-orange-500 hover:bg-orange-600 text-white shadow-md'
                   }`}
                   onClick={handlePlaceDeliveryOrder}
                   disabled={isSubmitting || cart.length === 0 || isOutOfZone || foodSubtotal < 15.00 || !isOnlineOrderingEnabled}
@@ -2494,7 +2494,7 @@ function CustomerDeliveryPage() {
                     </>
                   ) : !isOnlineOrderingEnabled ? (
                     <>
-                      <AlertCircle className="w-5 h-5 text-rose-400" />
+                      <AlertCircle className="w-5 h-5 text-rose-600" />
                       <span>⛔ PESANAN ONLINE DITUTUP BUAT SEMENTARA WAKTU</span>
                     </>
                   ) : (
@@ -2511,11 +2511,11 @@ function CustomerDeliveryPage() {
 
         {/* FLOATING STICKY BOTTOM CART BAR */}
         {cart.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-[#1c1917]/95 backdrop-blur-xl border-t border-stone-800/80 p-3 sm:p-4 z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.6)]">
+          <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-200/80 p-3 sm:p-4 z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.08)]">
             <div className="max-w-4xl mx-auto flex items-center justify-between gap-3">
               <div>
-                <span className="text-[10px] text-stone-400 block uppercase font-medium">Jumlah ({totalCartCount} Bungkusan)</span>
-                <span className="text-base sm:text-xl font-black text-orange-400 font-mono">
+                <span className="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Jumlah ({totalCartCount} Bungkusan)</span>
+                <span className="text-base sm:text-xl font-black text-slate-900 font-mono">
                   RM {grandTotal.toFixed(2)}
                 </span>
               </div>
@@ -2523,7 +2523,7 @@ function CustomerDeliveryPage() {
               <div className="flex items-center gap-2">
                 <Button
                   onClick={() => setIsCartDrawerOpen(true)}
-                  className="bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold px-3.5 py-2.5 rounded-2xl text-xs border border-stone-700 flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold px-3.5 py-2.5 rounded-2xl text-xs border border-slate-200 flex items-center gap-1.5 shadow-xs active:scale-95 transition-all"
                 >
                   <Eye className="w-3.5 h-3.5" /> Semak ({totalCartCount})
                 </Button>
@@ -2531,7 +2531,7 @@ function CustomerDeliveryPage() {
                 {!currentUser ? (
                   <Button
                     onClick={handleGoogleLogin}
-                    className="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold px-5 py-2.5 rounded-2xl text-xs shadow-lg flex items-center gap-2 active:scale-95 transition-all font-heading"
+                    className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-2xl text-xs shadow-md flex items-center gap-2 active:scale-95 transition-all font-heading"
                   >
                     <User className="w-3.5 h-3.5" />
                     <span>Daftar / Log Masuk</span>
@@ -2540,10 +2540,10 @@ function CustomerDeliveryPage() {
                   <Button
                     onClick={handlePlaceDeliveryOrder}
                     disabled={isSubmitting || isOutOfZone || foodSubtotal < 15.00 || !isOnlineOrderingEnabled}
-                    className={`font-bold px-5 py-2.5 rounded-2xl text-xs shadow-lg flex items-center gap-1.5 active:scale-95 transition-all font-heading ${
+                    className={`font-bold px-5 py-2.5 rounded-2xl text-xs shadow-md flex items-center gap-1.5 active:scale-95 transition-all font-heading ${
                       !isOnlineOrderingEnabled
-                        ? 'bg-rose-950/80 text-rose-300 border border-rose-700/80 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white'
+                        ? 'bg-rose-100 text-rose-800 border border-rose-200 cursor-not-allowed'
+                        : 'bg-orange-500 hover:bg-orange-600 text-white'
                     }`}
                   >
                     {!isOnlineOrderingEnabled ? (
@@ -2573,18 +2573,18 @@ function CustomerDeliveryPage() {
 
         {/* CART DRAWER DIALOG */}
         <Dialog open={isCartDrawerOpen} onOpenChange={setIsCartDrawerOpen}>
-          <DialogContent className="bg-[#292524] text-stone-100 border-stone-800 max-w-lg max-h-[85vh] overflow-y-auto p-5 sm:p-6 rounded-3xl shadow-2xl">
+          <DialogContent className="bg-white text-slate-900 border-slate-200 max-w-lg max-h-[85vh] overflow-y-auto p-5 sm:p-6 rounded-3xl shadow-2xl">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-lg font-bold text-orange-400 font-heading">
+              <DialogTitle className="flex items-center gap-2 text-lg font-bold text-orange-600 font-heading">
                 <ShoppingBag className="w-5 h-5 text-orange-500" /> Troli Pesanan Delivery ({totalCartCount} Pek)
               </DialogTitle>
-              <DialogDescription className="text-stone-400 text-xs">
+              <DialogDescription className="text-slate-500 text-xs">
                 Semak spesifikasi bungkusan sebelum menghantar pesanan
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 my-2">
-              <div className="divide-y divide-stone-800">
+              <div className="divide-y divide-slate-100">
                 {cart.map((item) => {
                   const qty = item.quantity;
                   const packNotes = item.packNotes || Array(qty).fill('');
@@ -2593,13 +2593,13 @@ function CustomerDeliveryPage() {
                     <div key={item.id} className="py-3.5 space-y-2.5">
                       <div className="flex justify-between items-start gap-2">
                         <div>
-                          <span className="font-bold text-white text-sm">🍱 {item.name}</span>
+                          <span className="font-bold text-slate-900 text-sm">🍱 {item.name}</span>
                           <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[11px] text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-500/20 font-mono">
+                            <span className="text-[11px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 font-mono">
                               x{qty}
                             </span>
                             {item.spiceLevel && (
-                              <span className="text-[10px] text-amber-300 font-bold bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-500/20">
+                              <span className="text-[10px] text-amber-800 font-bold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200">
                                 🌶️ {item.spiceLevel}
                               </span>
                             )}
@@ -2607,7 +2607,7 @@ function CustomerDeliveryPage() {
                         </div>
 
                         <div className="text-right shrink-0">
-                          <span className="font-bold text-orange-400 text-sm font-mono">
+                          <span className="font-bold text-orange-600 text-sm font-mono">
                             RM {(item.price * qty).toFixed(2)}
                           </span>
                           <div className="flex items-center gap-2 mt-1 justify-end">
@@ -2615,7 +2615,7 @@ function CustomerDeliveryPage() {
                               <button
                                 type="button"
                                 onClick={() => splitDeliveryItem(item.id)}
-                                className="text-[10px] text-sky-400 hover:text-sky-300 bg-sky-950/60 border border-sky-500/30 px-2 py-0.5 rounded-lg flex items-center gap-1 active:scale-95"
+                                className="text-[10px] text-sky-700 hover:text-sky-800 bg-sky-50 border border-sky-200 px-2 py-0.5 rounded-lg flex items-center gap-1 active:scale-95 shadow-2xs"
                                 title="Pecahkan kepada entri berasingan"
                               >
                                 <Split className="w-3 h-3" /> Pecah
@@ -2623,7 +2623,7 @@ function CustomerDeliveryPage() {
                             )}
                             <button
                               onClick={() => removeFromCart(item.id)}
-                              className="text-rose-400 hover:text-rose-300 text-xs font-medium px-2 py-0.5 hover:bg-rose-950/30 rounded-md transition-colors"
+                              className="text-rose-600 hover:text-rose-700 text-xs font-medium px-2 py-0.5 hover:bg-rose-50 rounded-md transition-colors"
                             >
                               Padam
                             </button>
@@ -2636,20 +2636,20 @@ function CustomerDeliveryPage() {
                         {Array.from({ length: qty }).map((_, pIdx) => {
                           const curNote = packNotes[pIdx] || '';
                           return (
-                            <div key={pIdx} className="p-2.5 rounded-xl bg-stone-900/90 border border-stone-800 space-y-1.5 text-xs">
+                            <div key={pIdx} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5 text-xs shadow-2xs">
                               <div className="flex justify-between items-center text-[10px]">
-                                <span className="font-bold text-amber-400 flex items-center gap-1">
+                                <span className="font-bold text-amber-700 flex items-center gap-1">
                                   <span>🥡 Pek #{pIdx + 1}</span>
-                                  {qty > 1 && <span className="text-stone-500 font-normal">({pIdx + 1}/{qty})</span>}
+                                  {qty > 1 && <span className="text-slate-400 font-normal">({pIdx + 1}/{qty})</span>}
                                 </span>
-                                {curNote && <span className="text-emerald-400 text-[10px] font-bold">✓ Ada Nota</span>}
+                                {curNote && <span className="text-emerald-600 text-[10px] font-bold">✓ Ada Nota</span>}
                               </div>
 
                               <Input
                                 value={curNote}
                                 onChange={(e) => updatePackNote(item.id, pIdx, e.target.value)}
                                 placeholder={`Nota Pek #${pIdx + 1} (cth: Tak nak lada, sambal asing...)`}
-                                className="h-8 bg-stone-950 border-stone-800 text-white placeholder:text-stone-600 text-xs rounded-xl focus:border-orange-500/50"
+                                className="h-8 bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 text-xs rounded-xl focus:border-orange-500"
                               />
 
                               {/* QUICK CHIPS */}
@@ -2661,10 +2661,10 @@ function CustomerDeliveryPage() {
                                       key={mod.id}
                                       type="button"
                                       onClick={() => togglePackQuickModifier(item.id, pIdx, mod.tag)}
-                                      className={`text-[10px] px-2 py-0.5 rounded-lg font-medium transition-all border active:scale-95 ${
+                                      className={`text-[10px] px-2.5 py-0.5 rounded-lg font-medium transition-all border active:scale-95 ${
                                         isSelected
-                                          ? 'bg-amber-500 text-stone-950 border-amber-400 font-bold shadow-sm'
-                                          : 'bg-stone-950 text-stone-400 border-stone-800 hover:text-stone-200'
+                                          ? 'bg-amber-500 text-white border-amber-600 font-bold shadow-xs'
+                                          : 'bg-white text-slate-600 border-slate-200 hover:text-slate-900 hover:border-slate-300'
                                       }`}
                                     >
                                       {mod.icon} {(mod.label.split('/')[0] ?? mod.label).trim()}
@@ -2683,12 +2683,12 @@ function CustomerDeliveryPage() {
 
               {/* RECOMMENDED ADD-ONS UPSELL IN CART DRAWER */}
               {availableAddons.filter(a => a.available).length > 0 && (
-                <div className="pt-3 pb-1 border-t border-stone-800 space-y-2">
+                <div className="pt-3 pb-1 border-t border-slate-100 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5 font-heading">
-                      <Sparkles className="w-3.5 h-3.5" /> Cadangan Lauk & Sampingan Tambahan
+                    <span className="text-xs font-bold text-amber-800 flex items-center gap-1.5 font-heading">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Cadangan Lauk & Sampingan Tambahan
                     </span>
-                    <span className="text-[10px] text-stone-500 font-mono">1-Klik Tambah</span>
+                    <span className="text-[10px] text-slate-400 font-mono">1-Klik Tambah</span>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     {availableAddons.filter(a => a.available).map(addon => (
@@ -2696,17 +2696,17 @@ function CustomerDeliveryPage() {
                         key={addon.id}
                         type="button"
                         onClick={() => handleAddonDirectToCart(addon)}
-                        className="p-2 rounded-xl bg-stone-950 border border-stone-800 hover:border-amber-500/50 flex items-center justify-between gap-1 text-left text-xs transition-all active:scale-95 group shadow-sm"
+                        className="p-2 rounded-xl bg-slate-50 border border-slate-200 hover:border-orange-300 flex items-center justify-between gap-1 text-left text-xs transition-all active:scale-95 group shadow-2xs"
                       >
                         <div className="min-w-0 flex-1">
-                          <span className="font-bold text-stone-200 block text-[11px] truncate group-hover:text-amber-300">
+                          <span className="font-bold text-slate-800 block text-[11px] truncate group-hover:text-orange-600">
                             {addon.name}
                           </span>
-                          <span className="text-[10px] text-emerald-400 font-mono font-bold">
+                          <span className="text-[10px] text-emerald-700 font-mono font-bold">
                             +RM {addon.price.toFixed(2)}
                           </span>
                         </div>
-                        <div className="w-6 h-6 rounded-lg bg-orange-600/20 text-orange-400 border border-orange-500/30 flex items-center justify-center shrink-0 group-hover:bg-orange-600 group-hover:text-white transition-colors text-xs font-black">
+                        <div className="w-6 h-6 rounded-lg bg-orange-50 text-orange-600 border border-orange-200 flex items-center justify-center shrink-0 group-hover:bg-orange-500 group-hover:text-white transition-colors text-xs font-black">
                           +
                         </div>
                       </button>
@@ -2715,16 +2715,16 @@ function CustomerDeliveryPage() {
                 </div>
               )}
 
-              <div className="pt-3 border-t border-stone-800 space-y-2.5 text-xs">
-                <div className="flex justify-between text-stone-400">
+              <div className="pt-3 border-t border-slate-100 space-y-2.5 text-xs">
+                <div className="flex justify-between text-slate-600">
                   <span>Subtotal Makanan:</span>
-                  <span className="font-bold text-white font-mono">RM {foodSubtotal.toFixed(2)}</span>
+                  <span className="font-bold text-slate-900 font-mono">RM {foodSubtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-stone-400">
+                <div className="flex justify-between text-slate-600">
                   <span>Caj Penghantaran ({roadDistanceKm}km):</span>
-                  <span className="font-bold text-white font-mono">RM {deliveryFee.toFixed(2)}</span>
+                  <span className="font-bold text-slate-900 font-mono">RM {deliveryFee.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-base font-black text-orange-400 pt-2 border-t border-stone-800">
+                <div className="flex justify-between text-base font-black text-orange-600 pt-2 border-t border-slate-200">
                   <span>Jumlah Keseluruhan:</span>
                   <span className="font-mono">RM {grandTotal.toFixed(2)}</span>
                 </div>
@@ -2735,7 +2735,7 @@ function CustomerDeliveryPage() {
                       setIsCartDrawerOpen(false);
                       handleGoogleLogin();
                     }}
-                    className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold py-3.5 rounded-2xl shadow-xl flex items-center justify-center gap-2 text-xs sm:text-sm mt-3 active:scale-95 transition-all font-heading"
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2 text-xs sm:text-sm mt-3 active:scale-95 transition-all font-heading"
                   >
                     <User className="w-4 h-4" />
                     <span>Daftar / Log Masuk untuk Bayar</span>
@@ -2747,7 +2747,7 @@ function CustomerDeliveryPage() {
                       handlePlaceDeliveryOrder();
                     }}
                     disabled={isSubmitting || cart.length === 0 || foodSubtotal < 15.00}
-                    className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold py-3.5 rounded-2xl shadow-xl flex items-center justify-center gap-2 text-xs sm:text-sm mt-3 active:scale-95 transition-all font-heading"
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2 text-xs sm:text-sm mt-3 active:scale-95 transition-all font-heading"
                   >
                     <Check className="w-4 h-4" /> {isSubmitting ? 'Memproses...' : 'Teruskan ke Pembayaran'}
                   </Button>
@@ -2759,24 +2759,24 @@ function CustomerDeliveryPage() {
 
         {/* EXCLUSIVE DUITNOW QR PAYMENT MODAL */}
         <Dialog open={showDuitNowModal} onOpenChange={setShowDuitNowModal}>
-          <DialogContent className="sm:max-w-[420px] bg-[#292524] text-stone-100 border-stone-800 p-5 rounded-3xl max-h-[92vh] overflow-y-auto shadow-2xl">
+          <DialogContent className="sm:max-w-[420px] bg-white text-slate-800 border-slate-200 p-6 rounded-3xl max-h-[92vh] overflow-y-auto shadow-2xl">
             <DialogHeader className="text-center sm:text-center pb-1">
-              <DialogTitle className="text-xl font-bold flex items-center justify-center gap-2 text-white font-heading">
+              <DialogTitle className="text-xl font-bold flex items-center justify-center gap-2 text-slate-900 font-heading">
                 <QrCode className="w-5 h-5 text-orange-500" /> Bayaran DuitNow QR
               </DialogTitle>
-              <DialogDescription className="text-xs text-stone-400">
+              <DialogDescription className="text-xs text-slate-500">
                 Imbas kod QR di bawah dengan mana-mana aplikasi Bank / e-Wallet (Touch 'n Go, MAE, CIMB, dsb.)
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 mt-2">
-              <div className="bg-stone-900/90 border border-stone-800 p-4 rounded-2xl flex flex-col items-center text-center space-y-3 shadow-inner">
-                <div className="flex items-center justify-between w-full border-b border-stone-800 pb-2">
-                  <span className="text-xs text-stone-400 font-medium">Jumlah Perlu Dibayar:</span>
-                  <span className="text-lg font-black text-emerald-400 font-mono">RM {grandTotal.toFixed(2)}</span>
+              <div className="bg-slate-50 border border-slate-200/90 p-4 rounded-2xl flex flex-col items-center text-center space-y-3 shadow-sm">
+                <div className="flex items-center justify-between w-full border-b border-slate-200 pb-2">
+                  <span className="text-xs text-slate-500 font-medium">Jumlah Perlu Dibayar:</span>
+                  <span className="text-lg font-black text-emerald-600 font-mono">RM {grandTotal.toFixed(2)}</span>
                 </div>
 
-                <div className="p-3 bg-white rounded-2xl shadow-xl border-4 border-orange-500/30">
+                <div className="p-3 bg-white rounded-2xl shadow-md border-2 border-orange-200">
                   <img 
                     src="/duitnow-qr.png" 
                     alt="Warung JNJ DuitNow QR" 
@@ -2787,14 +2787,14 @@ function CustomerDeliveryPage() {
                   />
                 </div>
 
-                <div className="w-full space-y-1.5 bg-stone-950/80 p-3 rounded-xl border border-stone-800 text-left text-xs">
-                  <div className="flex justify-between items-center text-stone-400">
+                <div className="w-full space-y-1.5 bg-white p-3.5 rounded-xl border border-slate-200/80 text-left text-xs shadow-sm">
+                  <div className="flex justify-between items-center text-slate-500">
                     <span>Nama Penerima:</span>
-                    <span className="font-bold text-white">WARUNG JNJ</span>
+                    <span className="font-bold text-slate-900">WARUNG JNJ</span>
                   </div>
-                  <div className="flex justify-between items-center text-stone-400">
+                  <div className="flex justify-between items-center text-slate-500">
                     <span>Bank Penerima:</span>
-                    <span className="font-bold text-white">Maybank / CIMB / Touch n Go / Alliance</span>
+                    <span className="font-bold text-slate-900">Maybank / CIMB / Touch n Go / Alliance</span>
                   </div>
                 </div>
 
@@ -2803,25 +2803,25 @@ function CustomerDeliveryPage() {
                     type="button"
                     variant="outline"
                     onClick={handleDownloadQR}
-                    className="flex-1 border-stone-700 bg-stone-800/80 hover:bg-stone-700 text-stone-200 text-xs h-9 rounded-xl font-heading"
+                    className="flex-1 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs h-9 rounded-xl font-heading shadow-sm"
                   >
-                    <Download className="w-3.5 h-3.5 mr-1.5 text-orange-400" /> Muat Turun QR
+                    <Download className="w-3.5 h-3.5 mr-1.5 text-orange-500" /> Muat Turun QR
                   </Button>
                   <Button
                     type="button"
                     variant="outline"
                     onClick={handleCopyAmount}
-                    className="flex-1 border-stone-700 bg-stone-800/80 hover:bg-stone-700 text-stone-200 text-xs h-9 rounded-xl font-heading"
+                    className="flex-1 border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs h-9 rounded-xl font-heading shadow-sm"
                   >
-                    {copiedAmount ? <Check className="w-3.5 h-3.5 mr-1.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 mr-1.5 text-orange-400" />}
+                    {copiedAmount ? <Check className="w-3.5 h-3.5 mr-1.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 mr-1.5 text-orange-500" />}
                     {copiedAmount ? 'Disalin!' : 'Salin RM'}
                   </Button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
-                  <UploadCloud className="w-4 h-4 text-orange-400" /> Muat Naik Resit Bukti Bayaran (Wajib)
+                <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <UploadCloud className="w-4 h-4 text-orange-500" /> Muat Naik Resit Bukti Bayaran (Wajib)
                 </label>
                 <div className="relative">
                   <input
@@ -2829,29 +2829,29 @@ function CustomerDeliveryPage() {
                     accept="image/*,application/pdf"
                     onChange={handleReceiptUpload}
                     disabled={isUploadingReceipt}
-                    className="w-full text-xs text-stone-300 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-orange-600 file:text-white hover:file:bg-orange-500 file:cursor-pointer cursor-pointer bg-stone-900 border border-stone-800 rounded-2xl p-2"
+                    className="w-full text-xs text-slate-700 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-orange-500 file:text-white hover:file:bg-orange-600 file:cursor-pointer cursor-pointer bg-slate-50 border border-slate-200 rounded-2xl p-2"
                   />
                   {isUploadingReceipt && (
-                    <div className="absolute inset-0 bg-stone-900/80 rounded-2xl flex items-center justify-center gap-2 text-xs text-orange-400">
+                    <div className="absolute inset-0 bg-white/80 rounded-2xl flex items-center justify-center gap-2 text-xs text-orange-600">
                       <Loader2 className="w-4 h-4 animate-spin" /> Memuat naik resit...
                     </div>
                   )}
                 </div>
                 {receiptProofUrl && (
-                  <p className="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
+                  <p className="text-[11px] text-emerald-600 font-medium flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Resit berjaya dimuat naik!
                   </p>
                 )}
               </div>
 
-              <div className="pt-2 border-t border-stone-800 flex flex-col gap-2">
+              <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
                 <Button
                   type="button"
                   onClick={() => {
                     setShowDuitNowModal(false);
                     toast.success('Pesanan anda telah direkodkan. Admin sedang menyemak bayaran.');
                   }}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-11 rounded-xl text-xs active:scale-95 transition-all font-heading"
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 rounded-2xl text-xs active:scale-95 transition-all font-heading shadow-md shadow-emerald-500/20"
                 >
                   <CheckCircle2 className="w-4 h-4 mr-1.5" /> Saya Dah Selesai Bayar & Hantar Resit
                 </Button>
@@ -2862,15 +2862,15 @@ function CustomerDeliveryPage() {
 
         {/* CUSTOMER AUTHENTICATION MODAL (DIRECT & 100% IN-APP) */}
         <Dialog open={showAuthModal} onOpenChange={setShowAuthModal}>
-          <DialogContent className="sm:max-w-[420px] bg-[#292524] text-stone-100 border-stone-800 p-6 rounded-3xl shadow-2xl">
+          <DialogContent className="sm:max-w-[420px] bg-white text-slate-800 border-slate-200 p-6 rounded-3xl shadow-2xl">
             <DialogHeader className="text-center sm:text-center space-y-2.5 pb-1">
-              <div className="w-14 h-14 rounded-2xl bg-orange-500/20 text-orange-400 flex items-center justify-center mx-auto border border-orange-500/30 shadow-inner">
+              <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center mx-auto border border-orange-100 shadow-sm">
                 <User className="w-7 h-7" />
               </div>
-              <DialogTitle className="text-lg font-bold text-white font-heading">
+              <DialogTitle className="text-lg font-bold text-slate-900 font-heading">
                 Log Masuk & Pendaftaran Pelanggan
               </DialogTitle>
-              <DialogDescription className="text-xs text-stone-300 leading-relaxed">
+              <DialogDescription className="text-xs text-slate-500 leading-relaxed">
                 Daftar atau log masuk dengan mudah untuk menyimpan alamat, kumpul <strong>50 Mata VIP Percuma</strong> & nikmati diskaun eksklusif!
               </DialogDescription>
             </DialogHeader>
@@ -2878,8 +2878,8 @@ function CustomerDeliveryPage() {
             <div className="space-y-4 pt-2">
               <div className="space-y-3">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
-                    <User className="w-3.5 h-3.5 text-orange-400" />
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-orange-500" />
                     <span>Nama Penuh Pelanggan:</span>
                   </label>
                   <Input
@@ -2890,13 +2890,13 @@ function CustomerDeliveryPage() {
                       setAuthNameInput(e.target.value);
                       setCustomerName(e.target.value);
                     }}
-                    className="bg-stone-900 border-stone-700 text-stone-100 text-xs h-11 rounded-xl focus:border-orange-500"
+                    className="bg-slate-50 border-slate-200 text-slate-900 text-xs h-11 rounded-xl focus:border-orange-500 focus:bg-white"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
-                    <Phone className="w-3.5 h-3.5 text-emerald-400" />
+                  <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Phone className="w-3.5 h-3.5 text-emerald-600" />
                     <span>Nombor WhatsApp (Untuk Live Tracking):</span>
                   </label>
                   <Input
@@ -2907,16 +2907,16 @@ function CustomerDeliveryPage() {
                       setAuthPhoneInput(e.target.value);
                       setCustomerPhone(e.target.value);
                     }}
-                    className="bg-stone-900 border-stone-700 text-stone-100 text-xs h-11 rounded-xl focus:border-emerald-500"
+                    className="bg-slate-50 border-slate-200 text-slate-900 text-xs h-11 rounded-xl focus:border-emerald-500 focus:bg-white"
                   />
                 </div>
               </div>
 
-              <div className="bg-stone-900/90 border border-stone-800 p-3.5 rounded-2xl space-y-1.5 text-xs text-stone-300">
-                <p className="font-bold text-amber-400 flex items-center gap-1.5 font-heading">
-                  <Sparkles className="w-3.5 h-3.5" /> Kelebihan Ahli Warung:
+              <div className="bg-amber-50/70 border border-amber-200/60 p-3.5 rounded-2xl space-y-1.5 text-xs text-amber-950">
+                <p className="font-bold text-amber-900 flex items-center gap-1.5 font-heading">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Kelebihan Ahli Warung:
                 </p>
-                <ul className="space-y-1 text-[11px] text-stone-400">
+                <ul className="space-y-1 text-[11px] text-amber-800/90">
                   <li className="flex items-center gap-2">✓ <strong>+50 Mata Ganjaran Percuma</strong> untuk pendaftaran baru</li>
                   <li className="flex items-center gap-2">✓ Simpan alamat & jejak status rider masa-nyata</li>
                   <li className="flex items-center gap-2">✓ Tiada kata laluan yang merumitkan</li>
@@ -2926,7 +2926,7 @@ function CustomerDeliveryPage() {
               <Button
                 type="button"
                 onClick={handleQuickPhoneRegister}
-                className="w-full h-12 bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold rounded-2xl shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all text-xs font-heading"
+                className="w-full h-12 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold rounded-2xl shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2 active:scale-95 transition-all text-xs font-heading"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Sahkan & Mula Memesan (50 Pts VIP)</span>
@@ -2936,7 +2936,7 @@ function CustomerDeliveryPage() {
                 type="button"
                 variant="ghost"
                 onClick={() => setShowAuthModal(false)}
-                className="w-full text-xs text-stone-500 hover:text-stone-400 h-8"
+                className="w-full text-xs text-slate-400 hover:text-slate-600 h-8"
               >
                 Tutup
               </Button>
@@ -2946,36 +2946,36 @@ function CustomerDeliveryPage() {
 
         {/* INSTALL APP / APK GUIDE MODAL */}
         <Dialog open={showInstallModal} onOpenChange={setShowInstallModal}>
-          <DialogContent className="sm:max-w-[420px] bg-[#292524] text-stone-100 border-stone-800 p-6 rounded-3xl shadow-2xl">
+          <DialogContent className="sm:max-w-[420px] bg-white text-slate-800 border-slate-200 p-6 rounded-3xl shadow-2xl">
             <DialogHeader className="text-center sm:text-center space-y-2.5 pb-1">
-              <div className="w-14 h-14 rounded-2xl bg-orange-500/20 text-orange-400 flex items-center justify-center mx-auto border border-orange-500/30 shadow-inner">
+              <div className="w-14 h-14 rounded-2xl bg-orange-50 text-orange-500 flex items-center justify-center mx-auto border border-orange-100 shadow-sm">
                 <Download className="w-7 h-7" />
               </div>
-              <DialogTitle className="text-lg font-bold text-white font-heading">
+              <DialogTitle className="text-lg font-bold text-slate-900 font-heading">
                 Pasang Aplikasi Warung J&J Delivery 📲
               </DialogTitle>
-              <DialogDescription className="text-xs text-stone-300 leading-relaxed">
+              <DialogDescription className="text-xs text-slate-500 leading-relaxed">
                 Nikmati pengalaman memesan makanan yang pantas terus dari skrin utama telefon anda tanpa perlu membuka browser berulang kali!
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-4 pt-2 text-xs">
-              <div className="bg-stone-900/90 border border-stone-800 p-4 rounded-2xl space-y-3">
-                <p className="font-bold text-orange-400 flex items-center gap-1.5 font-heading">
+              <div className="bg-slate-50 border border-slate-200/90 p-4 rounded-2xl space-y-3">
+                <p className="font-bold text-orange-600 flex items-center gap-1.5 font-heading">
                   <span>📱 Cara 1: Pasang Terus (Android / Chrome)</span>
                 </p>
-                <ol className="space-y-2 text-stone-300 list-decimal list-inside text-[11px] leading-relaxed">
+                <ol className="space-y-2 text-slate-600 list-decimal list-inside text-[11px] leading-relaxed">
                   <li>Tekan butang menu <strong>(Titik Tiga ⋮)</strong> di bahagian atas kanan browser Chrome.</li>
                   <li>Pilih <strong>"Install app"</strong> atau <strong>"Add to Home screen" (Tambah ke skrin utama)</strong>.</li>
                   <li>Ikon <strong>Warung J&J Delivery</strong> akan muncul seperti aplikasi APK di telefon anda!</li>
                 </ol>
               </div>
 
-              <div className="bg-stone-900/90 border border-stone-800 p-4 rounded-2xl space-y-3">
-                <p className="font-bold text-sky-400 flex items-center gap-1.5 font-heading">
+              <div className="bg-slate-50 border border-slate-200/90 p-4 rounded-2xl space-y-3">
+                <p className="font-bold text-sky-600 flex items-center gap-1.5 font-heading">
                   <span>🍏 Cara 2: iPhone / Safari (iOS)</span>
                 </p>
-                <ol className="space-y-2 text-stone-300 list-decimal list-inside text-[11px] leading-relaxed">
+                <ol className="space-y-2 text-slate-600 list-decimal list-inside text-[11px] leading-relaxed">
                   <li>Buka di Safari dan tekan butang <strong>Share (Kongsi)</strong> di bawah skrin.</li>
                   <li>Skrol dan tekan <strong>"Add to Home Screen" (+)</strong>.</li>
                 </ol>
@@ -2984,7 +2984,7 @@ function CustomerDeliveryPage() {
               <Button
                 type="button"
                 onClick={() => setShowInstallModal(false)}
-                className="w-full bg-orange-600 hover:bg-orange-500 text-white font-bold h-11 rounded-2xl shadow-lg active:scale-95 transition-all text-xs font-heading"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-11 rounded-2xl shadow-md active:scale-95 transition-all text-xs font-heading"
               >
                 Faham & Tutup
               </Button>

@@ -537,23 +537,23 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
 
       {/* TOP FLOATING ROUTE STATS HUD */}
       <div className="absolute top-3 left-3 right-3 z-10 pointer-events-none flex flex-wrap items-center justify-between gap-2">
-        <div className="bg-white/90 backdrop-blur-md border border-slate-700/80 px-3 py-1.5 rounded-xl shadow-lg pointer-events-auto flex items-center gap-3 font-mono text-xs">
-          <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+        <div className="bg-white/95 backdrop-blur-md border border-slate-200 px-3 py-1.5 rounded-xl shadow-md pointer-events-auto flex items-center gap-3 font-mono text-xs">
+          <div className="flex items-center gap-1.5 text-emerald-600 font-bold">
             <RouteIcon className="w-3.5 h-3.5" />
             <span>{isLoadingRoute ? 'Mengira...' : `${routeDistance || 0} km`}</span>
           </div>
 
-          <span className="text-slate-600">|</span>
+          <span className="text-slate-300">|</span>
 
-          <div className="flex items-center gap-1.5 text-sky-400 font-bold">
+          <div className="flex items-center gap-1.5 text-orange-600 font-bold">
             <Clock className="w-3.5 h-3.5" />
             <span>{isLoadingRoute ? '...' : `~${routeDuration || 0} min`}</span>
           </div>
 
           {roadStepsSummary && (
             <>
-              <span className="hidden sm:inline text-slate-600">|</span>
-              <span className="hidden sm:inline text-[10px] text-slate-300 font-normal truncate max-w-[160px]">
+              <span className="hidden sm:inline text-slate-300">|</span>
+              <span className="hidden sm:inline text-[10px] text-slate-600 font-normal truncate max-w-[160px]">
                 {roadStepsSummary}
               </span>
             </>
@@ -568,10 +568,10 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
             variant="ghost"
             type="button"
             onClick={() => setMapViewMode(prev => prev === 'satellite' ? 'streets' : 'satellite')}
-            className={`h-8 px-2.5 rounded-xl border font-bold font-mono text-xs shadow-lg flex items-center gap-1.5 transition-all ${
+            className={`h-8 px-2.5 rounded-xl border font-bold font-mono text-xs shadow-md flex items-center gap-1.5 transition-all ${
               mapViewMode === 'satellite'
-                ? 'bg-amber-500/20 border-amber-500/50 text-amber-300 hover:bg-amber-500/30'
-                : 'bg-white/90 border-slate-700 text-sky-300 hover:bg-slate-800'
+                ? 'bg-orange-50 border-orange-300 text-orange-700 hover:bg-orange-100'
+                : 'bg-white/95 border-slate-200 text-slate-700 hover:bg-slate-50'
             }`}
             title="Tukar Paparan Satelit / Peta Standard"
           >
@@ -584,7 +584,7 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
             variant="ghost"
             type="button"
             onClick={handleRecenter}
-            className="w-8 h-8 rounded-xl bg-white/90 hover:bg-slate-800 border border-slate-700 text-slate-700 shadow-lg"
+            className="w-8 h-8 rounded-xl bg-white/95 hover:bg-slate-100 border border-slate-200 text-slate-700 shadow-md"
             title="Pusatkan Peta"
           >
             <Compass className="w-4 h-4" />
@@ -596,7 +596,7 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
               variant="ghost"
               type="button"
               onClick={() => setIsFullscreen(prev => !prev)}
-              className="w-8 h-8 rounded-xl bg-white/90 hover:bg-slate-800 border border-slate-700 text-slate-700 shadow-lg"
+              className="w-8 h-8 rounded-xl bg-white/95 hover:bg-slate-100 border border-slate-200 text-slate-700 shadow-md"
               title="Skrin Penuh"
             >
               <Maximize2 className="w-4 h-4" />
@@ -610,13 +610,13 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-full pointer-events-none z-20 flex flex-col items-center select-none">
           {/* FLOATING ADDRESS/HINT PILL */}
           <div 
-            className={`mb-2 px-3 py-1 rounded-full text-[11px] font-mono font-bold whitespace-nowrap shadow-2xl transition-all duration-300 border backdrop-blur-md flex items-center gap-1.5 ${
+            className={`mb-2 px-3 py-1 rounded-full text-[11px] font-mono font-bold whitespace-nowrap shadow-xl transition-all duration-300 border backdrop-blur-md flex items-center gap-1.5 ${
               isMapMoving
-                ? 'bg-amber-950/90 text-amber-300 border-amber-500/60 scale-105 -translate-y-2 shadow-[0_10px_25px_rgba(245,158,11,0.4)]'
-                : 'bg-white/90 text-emerald-300 border-emerald-500/60 scale-100 translate-y-0 shadow-[0_10px_25px_rgba(16,185,129,0.3)]'
+                ? 'bg-amber-500 text-white border-amber-600 scale-105 -translate-y-2 shadow-[0_10px_25px_rgba(245,158,11,0.4)]'
+                : 'bg-white/95 text-emerald-700 border-emerald-300 scale-100 translate-y-0 shadow-[0_10px_25px_rgba(16,185,129,0.2)]'
             }`}
           >
-            <MapPin className={`w-3.5 h-3.5 ${isMapMoving ? 'text-amber-400 animate-spin' : 'text-emerald-400'}`} />
+            <MapPin className={`w-3.5 h-3.5 ${isMapMoving ? 'text-white animate-spin' : 'text-emerald-600'}`} />
             <span className="max-w-[200px] truncate">
               {isMapMoving ? 'Lepaskan untuk tetapkan lokasi...' : (destination?.address ? destination.address.split(',')[0] : 'Lokasi Terpilih 📍')}
             </span>
@@ -628,7 +628,7 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
               isMapMoving ? '-translate-y-3 scale-110' : 'translate-y-0 scale-100'
             }`}
           >
-            <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-[0_8px_20px_rgba(0,0,0,0.6)]">
+            <div className="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center border-2 border-white shadow-[0_8px_20px_rgba(0,0,0,0.4)]">
               <MapPin className="w-6 h-6 fill-white text-emerald-600" />
             </div>
             {/* PIN NEEDLE POINT */}
@@ -637,8 +637,8 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
 
           {/* GROUND TARGET SHADOW / PULSE RING */}
           <div className="relative mt-2 flex items-center justify-center">
-            <div className={`w-4 h-2 bg-black/60 rounded-full blur-[1px] transition-all duration-300 ${isMapMoving ? 'scale-75 opacity-40' : 'scale-100 opacity-90'}`} />
-            <div className={`absolute w-7 h-7 rounded-full border border-emerald-400/60 transition-all ${isMapMoving ? 'scale-125 opacity-70 animate-ping' : 'scale-100 opacity-30'}`} />
+            <div className={`w-4 h-2 bg-black/40 rounded-full blur-[1px] transition-all duration-300 ${isMapMoving ? 'scale-75 opacity-40' : 'scale-100 opacity-80'}`} />
+            <div className={`absolute w-7 h-7 rounded-full border border-emerald-500/60 transition-all ${isMapMoving ? 'scale-125 opacity-70 animate-ping' : 'scale-100 opacity-30'}`} />
           </div>
         </div>
       )}
@@ -646,8 +646,8 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
       {/* INTERACTIVE HINT BANNER */}
       {interactive && (
         <div className="absolute bottom-3 left-3 right-3 z-10 pointer-events-none flex items-center justify-between gap-2">
-          <div className="bg-white/90 backdrop-blur-md border border-emerald-500/40 px-3 py-1.5 rounded-xl shadow-lg pointer-events-auto flex items-center gap-2 text-[11px] text-emerald-300 font-mono">
-            <MapPin className="w-3.5 h-3.5 text-emerald-400 animate-bounce" />
+          <div className="bg-white/95 backdrop-blur-md border border-emerald-300 px-3 py-1.5 rounded-xl shadow-md pointer-events-auto flex items-center gap-2 text-[11px] text-emerald-800 font-mono">
+            <MapPin className="w-3.5 h-3.5 text-emerald-600 animate-bounce" />
             <span>Gerakkan peta untuk tepatkan pin lokasi penghantaran 📍</span>
           </div>
         </div>
@@ -660,7 +660,7 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
             size="sm"
             type="button"
             onClick={openGoogleMaps}
-            className="h-8 px-2.5 bg-white/95 hover:bg-slate-800 border border-slate-700 text-sky-400 text-xs font-mono font-bold rounded-xl shadow-xl flex items-center gap-1.5"
+            className="h-8 px-2.5 bg-white/95 hover:bg-slate-100 border border-slate-200 text-sky-700 text-xs font-mono font-bold rounded-xl shadow-md flex items-center gap-1.5"
           >
             <Navigation className="w-3.5 h-3.5" />
             <span>Google Maps</span>
@@ -670,7 +670,7 @@ export const DeliveryRouteMap: React.FC<DeliveryRouteMapProps> = React.memo(({
             size="sm"
             type="button"
             onClick={openWaze}
-            className="h-8 px-2.5 bg-white/95 hover:bg-slate-800 border border-slate-700 text-cyan-400 text-xs font-mono font-bold rounded-xl shadow-xl flex items-center gap-1.5"
+            className="h-8 px-2.5 bg-white/95 hover:bg-slate-100 border border-slate-200 text-cyan-700 text-xs font-mono font-bold rounded-xl shadow-md flex items-center gap-1.5"
           >
             <ExternalLink className="w-3.5 h-3.5" />
             <span>Waze</span>

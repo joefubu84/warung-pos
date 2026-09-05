@@ -19,25 +19,25 @@ export const FoodDeliveryAnimation: React.FC<FoodDeliveryAnimationProps> = ({
   const heightClass = size === 'compact' ? 'h-28' : size === 'hero' ? 'h-52 sm:h-64' : 'h-36 sm:h-44';
 
   return (
-    <div className={`relative w-full ${heightClass} overflow-hidden rounded-2xl bg-gradient-to-b from-[#1c1917] via-[#24201d] to-[#171513] border border-stone-800/80 shadow-inner flex flex-col justify-end select-none ${className}`}>
+    <div className={`relative w-full ${heightClass} overflow-hidden rounded-2xl bg-gradient-to-b from-sky-50 via-amber-50/40 to-orange-50/60 border border-slate-200/90 shadow-xs flex flex-col justify-end select-none ${className}`}>
       {/* BACKGROUND AMBIENT GLOW */}
       <div className="absolute inset-0 pointer-events-none opacity-40">
-        <div className="absolute top-2 left-1/4 w-40 h-20 bg-orange-500/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-4 right-1/4 w-48 h-20 bg-amber-500/15 rounded-full blur-3xl" />
+        <div className="absolute top-2 left-1/4 w-40 h-20 bg-orange-200/40 rounded-full blur-3xl" />
+        <div className="absolute bottom-4 right-1/4 w-48 h-20 bg-amber-200/30 rounded-full blur-3xl" />
       </div>
 
       {/* PARALLAX MOUNTAINS / SABAH SILHOUETTE */}
-      <div className="absolute inset-x-0 bottom-10 h-16 opacity-25 pointer-events-none">
-        <svg viewBox="0 0 1000 120" preserveAspectRatio="none" className="w-full h-full text-stone-700 fill-current">
+      <div className="absolute inset-x-0 bottom-10 h-16 opacity-30 pointer-events-none">
+        <svg viewBox="0 0 1000 120" preserveAspectRatio="none" className="w-full h-full text-slate-300 fill-current">
           <path d="M0,120 L0,70 Q120,40 240,65 Q380,20 520,60 Q680,10 820,70 Q920,45 1000,60 L1000,120 Z" />
         </svg>
       </div>
 
       {/* MOVING CLOUDS (WHEN DRIVING) */}
-      <div className={`absolute top-3 inset-x-0 h-6 flex justify-around opacity-40 pointer-events-none ${isDriving ? 'animate-pulse' : ''}`}>
-        <div className="w-12 h-3 bg-stone-600/40 rounded-full blur-[1px]" />
-        <div className="w-20 h-4 bg-stone-500/30 rounded-full blur-[1px]" />
-        <div className="w-14 h-3 bg-stone-600/40 rounded-full blur-[1px]" />
+      <div className={`absolute top-3 inset-x-0 h-6 flex justify-around opacity-60 pointer-events-none ${isDriving ? 'animate-pulse' : ''}`}>
+        <div className="w-12 h-3 bg-white/80 rounded-full blur-[1px] shadow-xs" />
+        <div className="w-20 h-4 bg-white/90 rounded-full blur-[1px] shadow-xs" />
+        <div className="w-14 h-3 bg-white/80 rounded-full blur-[1px] shadow-xs" />
       </div>
 
       {/* RIDER & SCOOTER STAGE */}
@@ -169,11 +169,11 @@ export const FoodDeliveryAnimation: React.FC<FoodDeliveryAnimationProps> = ({
       </div>
 
       {/* ROAD SURFACE & FAST MOVING DASHED STRIPES */}
-      <div className="relative w-full h-8 bg-stone-900 border-t-2 border-stone-700/80 flex items-center overflow-hidden">
+      <div className="relative w-full h-8 bg-slate-800 border-t-2 border-slate-700 flex items-center overflow-hidden">
         <div className={`flex w-[200%] ${isDriving ? 'animate-road-move' : ''}`}>
           {Array.from({ length: 16 }).map((_, i) => (
             <div key={i} className="flex-1 flex justify-center">
-              <div className="w-8 h-1 bg-amber-400/80 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+              <div className="w-8 h-1 bg-amber-400 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
             </div>
           ))}
         </div>
@@ -181,14 +181,14 @@ export const FoodDeliveryAnimation: React.FC<FoodDeliveryAnimationProps> = ({
 
       {/* INLINE STATUS BADGE BAR */}
       <div className="absolute top-2 left-3 flex items-center gap-2">
-        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border shadow-md flex items-center gap-1.5 ${
+        <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-md border shadow-xs flex items-center gap-1.5 ${
           isCompleted 
-            ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
             : isDriving 
-              ? 'bg-sky-500/20 text-sky-300 border-sky-500/40 animate-pulse'
+              ? 'bg-sky-50 text-sky-800 border-sky-300 animate-pulse'
               : isPreparing
-                ? 'bg-orange-500/20 text-orange-300 border-orange-500/40'
-                : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                ? 'bg-orange-50 text-orange-800 border-orange-300'
+                : 'bg-amber-50 text-amber-800 border-amber-300'
         }`}>
           <span>{isCompleted ? '✨ Selesai' : isDriving ? '🛵 Dalam Penghantaran' : isPreparing ? '👨‍🍳 Sedang Dimasak' : '🕒 Diterima'}</span>
         </span>
