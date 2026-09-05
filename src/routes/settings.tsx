@@ -48,6 +48,7 @@ import {
   Copy,
   Check,
   Layers,
+  Bell,
   Printer,
   Utensils,
   Palette,
