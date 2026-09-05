@@ -70,6 +70,7 @@ import { getToyyibPayConfig, saveToyyibPayConfig, type ToyyibPayConfig } from '@
 import { KitchenChecklistCustomizer } from '@/components/KitchenChecklistCustomizer';
 import { DishAddonsCustomizer } from '@/components/DishAddonsCustomizer';
 import { CallWaiterCustomizer } from '@/components/CallWaiterCustomizer';
+import { Route as LandingPageEditorRoute } from './settings.landing-page-editor'; // New import for the landing page editor
 
 export const Route = createFileRoute('/settings')({
   ssr: false,
@@ -495,6 +496,13 @@ function SettingsPage() {
       subtitle: 'Hero Bento & Susunan Nav',
       icon: Palette,
       color: 'text-teal-400',
+    },
+    {
+      id: 'landing_page_editor',
+      label: 'Pengurusan Homepage',
+      subtitle: 'Hero, Sorotan & Info Kedai',
+      icon: Globe,
+      color: 'text-purple-700',
     },
     {
       id: 'refunds',
@@ -1096,6 +1104,13 @@ function SettingsPage() {
 
                 {/* TOP NAVIGATION HEADER CUSTOMIZER */}
                 <NavbarCustomizerCard />
+              </div>
+            )}
+
+            {/* 7B. LANDING PAGE EDITOR */}
+            {activeSection === 'landing_page_editor' && (
+              <div className="transition-all duration-300 animate-in fade-in">
+                <LandingPageEditorRoute /> {/* This renders the content of settings.landing-page-editor.tsx */}
               </div>
             )}
 
