@@ -404,10 +404,10 @@ function MenuPage() {
             <Card className="sticky top-24 bg-slate-900 border-slate-800 text-white rounded-2xl shadow-xl">
               <CardHeader className="border-b border-slate-800">
                 <CardTitle className="text-lg font-bold flex items-center gap-2 text-white">
-                  {editingId ? <><Edit2 className="w-5 h-5 text-amber-400"/> Edit Dish</> : <><Plus className="w-5 h-5 text-emerald-400"/> Add New Dish</>}
+                  {editingId ? <><Edit2 className="w-5 h-5 text-amber-400"/> Edit Dish</> : <><Plus className="w-5 h-5 text-emerald-400"/> Add New Menu Item</>}
                 </CardTitle>
                 <CardDescription className="text-slate-400 text-xs font-mono">
-                  {editingId ? "Update dish price, image, or inventory stock." : "Add a new dish to your digital menu."}
+                  {editingId ? "Update dish price, image, or inventory stock." : "Add a new item to your digital menu."}
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-4">
@@ -540,7 +540,7 @@ function MenuPage() {
                   </div>
 
                   {/* DISH BADGES CONFIGURATION */}
-                  <div className="p-3.5 bg-slate-950 rounded-xl space-y-3 border border-slate-800 font-mono">
+                  <div className="p-3.5 bg-slate-950/80 rounded-xl space-y-3 border border-slate-800 font-mono">
                     <Label className="text-xs font-bold text-amber-400 uppercase tracking-wider block border-b border-slate-800 pb-1.5 flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5" /> Customer Menu Badges
                     </Label>
