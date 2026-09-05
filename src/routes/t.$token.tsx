@@ -862,7 +862,7 @@ export function TableQRPage() {
       )}
 
       {/* MOBILE-FIRST WRAPPER */}
-      <div className="max-w-md mx-auto min-h-screen bg-[#f8fafc] shadow-2xl sm:border-x sm:border-slate-200/80 px-4 py-5 space-y-4">
+      <div className="max-w-md mx-auto min-h-screen bg-[#f8fafc] shadow-2xl sm:border-x sm:border-slate-200/80 px-4 pt-5 pb-32 space-y-4">
 
         {/* 1. TOP HEADER BAR */}
         <div className="flex items-center justify-between pt-1 pb-1">
@@ -1095,67 +1095,46 @@ export function TableQRPage() {
           )}
         </div>
 
-        {/* DESKTOP/EXPANDED CART PREVIEW */}
-        {cart.length > 0 && (
-          <div className="bg-white border border-slate-200 rounded-3xl p-4 shadow-sm space-y-3 mt-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-              <span className="font-extrabold text-slate-900 text-xs uppercase tracking-wide">
-                Your Order ({cart.reduce((s, i) => s + i.quantity, 0)} items)
-              </span>
-              <button
-                onClick={() => setIsMobileCartOpen(true)}
-                className="text-xs font-bold text-orange-500 hover:underline"
-              >
-                Expand
-              </button>
-            </div>
-
-            <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto pr-1">
-              {cart.map((item) => (
-                <div key={item.id} className="py-2 flex justify-between items-center text-xs">
-                  <div>
-                    <span className="font-bold text-slate-800">{item.quantity}x {item.name}</span>
-                    <span className="block text-[10px] text-slate-400">{item.fulfillmentType === 'takeaway' ? '🥡 Takeaway' : '🍽️ Dine-in'}</span>
-                  </div>
-                  <span className="font-black text-slate-900">RM {(item.price * item.quantity).toFixed(2)}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="pt-2 border-t border-slate-100 flex justify-between items-center font-extrabold text-sm text-slate-900">
-              <span>Total</span>
-              <span className="text-orange-500 text-base">RM {cartSubtotal.toFixed(2)}</span>
-            </div>
-
-            <Button
-              disabled={isSubmitting || cart.length === 0}
-              onClick={() => handlePlaceOrder(false)}
-              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-extrabold py-3 rounded-2xl shadow-lg shadow-orange-500/20 text-xs flex items-center justify-center gap-1.5 transition-all"
-            >
-              <Check className="w-4 h-4 stroke-[3]" />
-              <span>{isSubmitting ? 'Sending Order...' : 'Confirm & Place Order'}</span>
-            </Button>
-          </div>
-        )}
-
       </div>
 
-      {/* MOBILE STICKY BOTTOM CART BAR */}
+      {/* 🌟 FLOATING "SEMAK & BAYAR" DOCK (WARNA OREN FLOATING) */}
       {cart.length > 0 && (
-        <div className="fixed bottom-0 inset-x-0 max-w-md mx-auto bg-white/95 backdrop-blur-md border-t border-slate-200/80 p-3 z-40 shadow-2xl flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
-              Jumlah ({cart.reduce((s, i) => s + i.quantity, 0)} item)
-            </span>
-            <span className="text-lg font-black text-orange-500">RM {cartSubtotal.toFixed(2)}</span>
-          </div>
-
-          <Button
+        <div className="fixed bottom-5 sm:bottom-6 inset-x-3 sm:inset-x-4 max-w-md mx-auto z-50 animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none">
+          <div 
             onClick={() => setIsMobileCartOpen(true)}
-            className="bg-orange-500 hover:bg-orange-600 text-white font-black px-5 py-2.5 rounded-xl shadow-lg shadow-orange-500/25 flex items-center gap-2 text-xs transition-transform active:scale-95"
+            className="pointer-events-auto w-full bg-white/95 backdrop-blur-xl border border-orange-200/90 p-3 sm:p-3.5 rounded-2xl sm:rounded-3xl shadow-[0_14px_40px_rgba(249,115,22,0.3)] flex items-center justify-between gap-3 active:scale-[0.99] transition-all cursor-pointer group hover:border-orange-300"
           >
-            <ShoppingBag className="w-4 h-4" /> Semak & Bayar ({cart.reduce((s, i) => s + i.quantity, 0)})
-          </Button>
+            {/* LEFT: CART SUMMARY */}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-200 text-orange-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                <ShoppingBag className="w-5 h-5" />
+              </div>
+              <div className="text-left min-w-0">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block truncate">
+                  Jumlah ({cart.reduce((s, i) => s + i.quantity, 0)} item)
+                </span>
+                <span className="text-lg sm:text-xl font-black text-slate-900 leading-tight block">
+                  RM {cartSubtotal.toFixed(2)}
+                </span>
+              </div>
+            </div>
+
+            {/* RIGHT: FLOATING ORANGE BUTTON */}
+            <Button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMobileCartOpen(true);
+              }}
+              className="bg-orange-500 hover:bg-orange-600 text-white font-black px-4 sm:px-5 py-3 rounded-xl sm:rounded-2xl shadow-lg shadow-orange-500/35 flex items-center gap-2 text-xs sm:text-sm tracking-tight shrink-0 transition-transform active:scale-95 cursor-pointer"
+            >
+              <span>Semak & Bayar</span>
+              <span className="text-xs font-bold bg-white/20 px-1.5 py-0.5 rounded-md">
+                {cart.reduce((s, i) => s + i.quantity, 0)}
+              </span>
+              <span className="text-base font-bold">→</span>
+            </Button>
+          </div>
         </div>
       )}
 
