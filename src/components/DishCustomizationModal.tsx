@@ -190,98 +190,99 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-slate-900 text-white border-slate-800 max-w-md max-h-[90vh] overflow-y-auto font-sans p-0 rounded-2xl">
+      <DialogContent className="bg-white text-slate-900 border border-slate-200/90 max-w-md max-h-[90vh] overflow-y-auto font-sans p-0 rounded-3xl shadow-2xl [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {/* DISH HERO IMAGE HEADER */}
-        <div className="relative h-48 sm:h-52 bg-slate-950 w-full flex items-center justify-center border-b border-slate-800 p-2">
+        <div className="relative h-48 sm:h-52 bg-gradient-to-b from-stone-100 to-stone-50 w-full flex items-center justify-center border-b border-stone-100 p-3">
           {menuItem.image_url ? (
             <img
               src={menuItem.image_url}
               alt={menuItem.name}
-              className="w-full h-full object-contain drop-shadow-xl"
+              className="w-full h-full object-contain drop-shadow-md rounded-2xl hover:scale-105 transition-transform duration-300"
             />
           ) : (
-            <div className="flex flex-col items-center gap-2 text-slate-600">
-              <Utensils className="w-12 h-12" />
-              <span className="text-xs font-mono">No Image Available</span>
+            <div className="flex flex-col items-center gap-2 text-stone-400">
+              <Utensils className="w-12 h-12 stroke-[1.5]" />
+              <span className="text-xs font-medium">Gambar Hidangan Warung J&J</span>
             </div>
           )}
 
-          <div className="absolute bottom-3 left-3 bg-slate-950/90 border border-emerald-500/30 px-3 py-1 rounded-full text-emerald-400 font-mono font-bold text-xs shadow-md">
+          {/* FLOATING PRICE BADGE */}
+          <div className="absolute bottom-3 left-3 bg-white/95 backdrop-blur-md border border-orange-200 px-3.5 py-1 rounded-full text-orange-600 font-black text-xs shadow-sm">
             RM {basePrice.toFixed(2)}
+          </div>
+
+          {/* RATING BADGE */}
+          <div className="absolute bottom-3 right-3 bg-white/95 backdrop-blur-md border border-amber-200 px-2.5 py-0.5 rounded-full text-[10px] font-black text-amber-700 shadow-sm flex items-center gap-1">
+            ⭐ 4.8 / 5
           </div>
         </div>
 
         <div className="p-5 space-y-5">
           {/* TITLE & DESCRIPTION */}
           <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-xl font-black text-white tracking-tight">{menuItem.name}</h3>
-              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
-                ⭐ 4.8 / 5
-              </span>
-            </div>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">{menuItem.name}</h3>
             {menuItem.description && (
-              <p className="text-xs text-slate-400 mt-1 line-clamp-2">{menuItem.description}</p>
+              <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">{menuItem.description}</p>
             )}
           </div>
 
           {/* 1. FULFILLMENT TYPE SELECTOR */}
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center justify-between">
-              <span>1. Jenis Pesanan</span>
-              <span className="text-[10px] text-emerald-400 font-normal">Pilih Satu</span>
+            <label className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center justify-between">
+              <span>1. Pilihan Hidangan</span>
+              <span className="text-[10px] text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">Pilih Satu</span>
             </label>
             {isDeliveryMode ? (
-              <div className="grid grid-cols-2 gap-2 font-mono">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setFulfillmentType('delivery')}
-                  className={`p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 ${
+                  className={`p-3 rounded-2xl border text-xs font-extrabold transition-all flex flex-col items-center gap-1 ${
                     fulfillmentType === 'delivery'
-                      ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 ring-1 ring-emerald-400 shadow-md scale-[1.02]'
-                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                      ? 'bg-orange-50 border-orange-500 text-orange-950 ring-2 ring-orange-500/20 shadow-sm scale-[1.01]'
+                      : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100 hover:text-slate-900'
                   }`}
                 >
-                  <span className="text-lg">🛵</span>
+                  <span className="text-xl">🛵</span>
                   <span>Penghantaran (Delivery)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setFulfillmentType('self_pickup')}
-                  className={`p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 ${
+                  className={`p-3 rounded-2xl border text-xs font-extrabold transition-all flex flex-col items-center gap-1 ${
                     fulfillmentType === 'self_pickup'
-                      ? 'bg-amber-500/20 border-amber-400 text-amber-300 ring-1 ring-amber-400 shadow-md scale-[1.02]'
-                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                      ? 'bg-orange-50 border-orange-500 text-orange-950 ring-2 ring-orange-500/20 shadow-sm scale-[1.01]'
+                      : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100 hover:text-slate-900'
                   }`}
                 >
-                  <span className="text-lg">🛍️</span>
+                  <span className="text-xl">🛍️</span>
                   <span>Ambil Sendiri (Self-Pickup)</span>
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2 font-mono">
+              <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setFulfillmentType('dine_in')}
-                  className={`p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 ${
+                  className={`p-3 rounded-2xl border text-xs font-extrabold transition-all flex flex-col items-center gap-1 ${
                     fulfillmentType === 'dine_in'
-                      ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 ring-1 ring-emerald-400 shadow-md scale-[1.02]'
-                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                      ? 'bg-orange-50 border-orange-500 text-orange-950 ring-2 ring-orange-500/20 shadow-sm scale-[1.01]'
+                      : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100 hover:text-slate-900'
                   }`}
                 >
-                  <span className="text-lg">🍽️</span>
+                  <span className="text-xl">🍽️</span>
                   <span>Dine In (Makan Sini)</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setFulfillmentType('takeaway')}
-                  className={`p-3 rounded-xl border text-xs font-bold transition-all flex flex-col items-center gap-1 ${
+                  className={`p-3 rounded-2xl border text-xs font-extrabold transition-all flex flex-col items-center gap-1 ${
                     fulfillmentType === 'takeaway'
-                      ? 'bg-amber-500/20 border-amber-400 text-amber-300 ring-1 ring-amber-400 shadow-md scale-[1.02]'
-                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
+                      ? 'bg-orange-50 border-orange-500 text-orange-950 ring-2 ring-orange-500/20 shadow-sm scale-[1.01]'
+                      : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100 hover:text-slate-900'
                   }`}
                 >
-                  <span className="text-lg">🥡</span>
+                  <span className="text-xl">🥡</span>
                   <span>Takeaway (Bungkus)</span>
                 </button>
               </div>
@@ -289,70 +290,116 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
           </div>
 
           {/* 2. QUANTITY SELECTOR */}
-          <div className="p-3 bg-slate-950 rounded-2xl border border-slate-800 flex justify-between items-center font-mono">
+          <div className="p-3.5 bg-stone-50/90 rounded-2xl border border-stone-200 flex justify-between items-center">
             <div>
-              <span className="text-xs text-slate-300 font-bold uppercase block">
-                2. Bilangan {isDeliveryMode || fulfillmentType !== 'dine_in' ? 'Bungkusan / Pek' : 'Pinggan'} (Kuantiti)
+              <span className="text-xs text-slate-900 font-black uppercase tracking-wide block">
+                2. Bilangan {isDeliveryMode || fulfillmentType !== 'dine_in' ? 'Bungkusan / Pek' : 'Pinggan'}
               </span>
-              <span className="text-[10px] text-slate-500">Pilih berapa kuantiti untuk hidangan ini</span>
+              <span className="text-[11px] text-slate-500 font-medium">Pilih berapa kuantiti untuk hidangan ini</span>
             </div>
-            <div className="flex items-center gap-3 bg-slate-900 border border-slate-700 rounded-xl p-1">
+            <div className="flex items-center gap-2 bg-white border border-stone-200 rounded-xl p-1 shadow-sm">
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 onClick={() => updateQuantityClamped(quantity - 1)}
-                className="h-8 w-8 text-slate-300 hover:bg-slate-800 active:scale-95"
+                className="h-8 w-8 text-stone-600 hover:bg-stone-100 active:scale-95 rounded-lg"
               >
-                <Minus className="w-4 h-4" />
+                <Minus className="w-4 h-4 stroke-[2.5]" />
               </Button>
-              <span className="text-base font-black text-amber-400 w-8 text-center">{quantity}</span>
+              <span className="text-base font-black text-orange-600 w-7 text-center">{quantity}</span>
               <Button
                 type="button"
                 variant="ghost"
                 size="icon"
                 onClick={() => updateQuantityClamped(quantity + 1)}
-                className="h-8 w-8 text-slate-300 hover:bg-slate-800 active:scale-95"
+                className="h-8 w-8 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-lg shadow-sm active:scale-95"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4 stroke-[3]" />
               </Button>
             </div>
           </div>
 
           {/* 3. SPICE LEVEL SELECTOR */}
           <div className="space-y-2">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center justify-between">
+            <label className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center justify-between">
               <span>3. Tahap Kepedasan</span>
-              <span className="text-[10px] text-amber-400 font-normal">Pilihan Rasa</span>
+              <span className="text-[10px] text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">Pilihan Rasa</span>
             </label>
-            <div className="grid grid-cols-3 gap-2 font-mono">
-              {SPICE_LEVELS.map(lvl => (
-                <button
-                  key={lvl.id}
-                  type="button"
-                  onClick={() => setSpiceLevel(lvl.id as any)}
-                  className={`p-2.5 rounded-xl border text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
-                    spiceLevel === lvl.id
-                      ? 'bg-amber-500/20 border-amber-400 text-amber-300 ring-1 ring-amber-400 shadow-md'
-                      : 'bg-slate-950 border-slate-800 text-slate-400 hover:text-white'
-                  }`}
-                >
-                  <span>{lvl.icon}</span>
-                  <span>{lvl.id}</span>
-                </button>
-              ))}
+            <div className="grid grid-cols-3 gap-2">
+              {SPICE_LEVELS.map(lvl => {
+                const isSelected = spiceLevel === lvl.id;
+                let activeStyle = 'bg-amber-50 border-amber-500 text-amber-950 ring-2 ring-amber-500/20 shadow-sm';
+                if (lvl.id === 'Mild') activeStyle = 'bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-500/20 shadow-sm';
+                if (lvl.id === 'Hot') activeStyle = 'bg-rose-50 border-rose-500 text-rose-950 ring-2 ring-rose-500/20 shadow-sm';
+
+                return (
+                  <button
+                    key={lvl.id}
+                    type="button"
+                    onClick={() => setSpiceLevel(lvl.id as any)}
+                    className={`p-2.5 rounded-xl border text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 ${
+                      isSelected
+                        ? `${activeStyle} scale-[1.02]`
+                        : 'bg-stone-50 border-stone-200 text-stone-600 hover:bg-stone-100 hover:text-slate-900'
+                    }`}
+                  >
+                    <span>{lvl.icon}</span>
+                    <span>{lvl.id}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
+
+          {/* OPTIONAL ADD-ONS / SAMBINGAN SECTION */}
+          {availableAddons.filter(a => a.available).length > 0 && (
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-wider text-slate-900 flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-orange-500" /> Tambahan / Sampingan
+                </span>
+                <span className="text-[10px] text-slate-400 font-bold">Pilihan Tambahan</span>
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                {availableAddons.filter(a => a.available).map(addon => {
+                  const isChecked = selectedAddonIds.includes(addon.id);
+                  return (
+                    <button
+                      key={addon.id}
+                      type="button"
+                      onClick={() => toggleAddon(addon.id)}
+                      className={`p-2.5 rounded-xl border text-left text-xs transition-all flex items-center justify-between gap-1.5 ${
+                        isChecked
+                          ? 'bg-orange-50 border-orange-500 text-orange-950 ring-1 ring-orange-500/30 shadow-sm'
+                          : 'bg-stone-50 border-stone-200 text-stone-700 hover:border-orange-300'
+                      }`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <span className="font-bold text-[11px] block truncate">{addon.name}</span>
+                        <span className="text-[10px] text-orange-600 font-extrabold">+RM {addon.price.toFixed(2)}</span>
+                      </div>
+                      <div className={`w-5 h-5 rounded-md flex items-center justify-center text-[10px] font-black shrink-0 ${
+                        isChecked ? 'bg-orange-500 text-white' : 'border border-stone-300 bg-white text-transparent'
+                      }`}>
+                        ✓
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* 4. SPECIAL INSTRUCTIONS (PER-PLATE IF QTY > 1) */}
           <div className="space-y-2.5">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono">
+              <label className="text-xs font-black uppercase tracking-wider text-slate-900">
                 {quantity > 1 
-                  ? `4. Permintaan Khas Setiap ${fulfillmentType === 'dine_in' ? 'Pinggan' : 'Pek'} (1 hingga ${quantity})` 
-                  : '4. Permintaan Khas Dapur (Optional)'}
+                  ? `4. Permintaan Khas Setiap ${fulfillmentType === 'dine_in' ? 'Pinggan' : 'Pek'} (1 - ${quantity})` 
+                  : '4. Permintaan Khas Dapur (Pilihan)'}
               </label>
-              <span className="text-[10px] text-amber-400 font-mono">Pilihan Pantas 👇</span>
+              <span className="text-[10px] text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">Pilihan Pantas ⚡</span>
             </div>
 
             {quantity > 1 ? (
@@ -360,15 +407,15 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                 {Array.from({ length: quantity }).map((_, pIdx) => {
                   const curNote = plateNotes[pIdx] || '';
                   return (
-                    <div key={pIdx} className="p-3 rounded-2xl bg-slate-950 border border-slate-800 space-y-1.5 shadow-inner">
+                    <div key={pIdx} className="p-3 rounded-2xl bg-stone-50/90 border border-stone-200 space-y-2 shadow-sm">
                       <div className="flex justify-between items-center text-xs">
-                        <span className="font-black text-amber-400 font-mono flex items-center gap-1">
+                        <span className="font-black text-slate-800 flex items-center gap-1">
                           <span>{fulfillmentType === 'dine_in' ? '🍽️ Pinggan' : '🥡 Bungkusan'} #{pIdx + 1}</span>
-                          <span className="text-[10px] text-slate-500 font-normal">({pIdx + 1} daripada {quantity})</span>
+                          <span className="text-[10px] text-slate-400 font-normal">({pIdx + 1} daripada {quantity})</span>
                         </span>
                         {curNote && (
-                          <span className="text-[10px] text-emerald-400 font-bold">
-                            ✓ Nota Ditetapkan
+                          <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                            ✓ Nota Tersimpan
                           </span>
                         )}
                       </div>
@@ -376,8 +423,8 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                       <Textarea
                         value={curNote}
                         onChange={(e) => updateSpecificPlateNote(pIdx, e.target.value)}
-                        placeholder={`Nota Pinggan #${pIdx + 1} (cth: Tak nak lada, ekstra pedas, kuah banjir...)`}
-                        className="bg-slate-900 border-slate-800 text-white text-xs min-h-[45px] resize-none"
+                        placeholder={`Nota Pinggan #${pIdx + 1} (cth: Tak nak lada, sambal asing, kuah banjir...)`}
+                        className="bg-white border-stone-200 text-slate-900 text-xs min-h-[45px] resize-none rounded-xl focus:border-orange-500 focus:ring-1 focus:ring-orange-500 placeholder:text-stone-400"
                       />
 
                       {/* QUICK MODIFIER PILLS FOR THIS SPECIFIC PLATE */}
@@ -389,10 +436,10 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                               key={mod.id}
                               type="button"
                               onClick={() => togglePlateQuickModifier(pIdx, mod.tag)}
-                              className={`text-[10px] px-2 py-0.5 rounded-lg font-bold transition-all border flex items-center gap-1 ${
+                              className={`text-[10px] px-2 py-1 rounded-lg font-bold transition-all border flex items-center gap-1 ${
                                 isSelected
-                                  ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-sm scale-102'
-                                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-slate-200'
+                                  ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
+                                  : 'bg-white text-stone-700 border-stone-200 hover:border-orange-300 hover:text-orange-600'
                               }`}
                             >
                               <span>{mod.icon}</span>
@@ -406,7 +453,7 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                 })}
               </div>
             ) : (
-              <div className="space-y-1.5">
+              <div className="space-y-2">
                 {/* QUICK MODIFIER CHIPS */}
                 <div className="flex flex-wrap gap-1.5 pb-1">
                   {COMMON_MODIFIERS.map(mod => {
@@ -422,10 +469,10 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                             setSpecialInstructions(prev => prev ? `${prev}, ${mod.tag}` : mod.tag);
                           }
                         }}
-                        className={`text-[10px] px-2.5 py-1 rounded-lg font-bold transition-all border flex items-center gap-1 ${
+                        className={`text-[11px] px-2.5 py-1 rounded-xl font-bold transition-all border flex items-center gap-1 ${
                           isSelected
-                            ? 'bg-amber-500 text-slate-950 border-amber-400 font-black shadow-sm scale-105'
-                            : 'bg-slate-950 text-slate-300 border-slate-800 hover:border-slate-700'
+                            ? 'bg-orange-500 text-white border-orange-500 shadow-sm'
+                            : 'bg-stone-100 text-stone-700 border-stone-200 hover:border-orange-300 hover:text-orange-600'
                         }`}
                       >
                         <span>{mod.icon}</span>
@@ -439,23 +486,23 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                   value={specialInstructions}
                   onChange={(e) => setSpecialInstructions(e.target.value)}
                   placeholder="Contoh: Tak nak lada, sambal asing, kuah banjir..."
-                  className="bg-slate-950 border-slate-800 text-white text-xs min-h-[50px] resize-none"
+                  className="bg-stone-50 border-stone-200 text-slate-900 text-xs min-h-[50px] resize-none rounded-xl p-3 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 placeholder:text-stone-400"
                 />
               </div>
             )}
           </div>
 
           {/* ADD TO CART ACTION BUTTON OR VIEW ONLY NOTICE */}
-          <div className="pt-2 border-t border-slate-800 flex flex-col gap-2 font-mono">
+          <div className="pt-2 border-t border-stone-100 flex flex-col gap-2">
             {isViewOnly ? (
               <div className="space-y-2">
-                <div className="p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-center text-xs text-amber-300 font-medium">
-                  🍽️ Sila imbas Kod QR di atas meja anda atau pesan terus di kaunter Warung JNJ Penampang untuk menikmati hidangan ini!
+                <div className="p-3 bg-amber-50 border border-amber-200 rounded-2xl text-center text-xs text-amber-800 font-medium">
+                  🍽️ Sila imbas Kod QR di atas meja anda atau pesan terus di kaunter Warung J&J Penampang untuk menikmati hidangan ini!
                 </div>
                 <Button
                   type="button"
                   onClick={onClose}
-                  className="w-full bg-stone-800 hover:bg-stone-700 text-stone-200 font-bold py-3 rounded-xl active:scale-98 transition-all"
+                  className="w-full bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold py-3 rounded-2xl active:scale-98 transition-all"
                 >
                   Tutup Paparan Menu
                 </Button>
@@ -464,13 +511,13 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
               <Button
                 type="button"
                 onClick={handleConfirmAddToCart}
-                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-xl flex items-center justify-between text-sm active:scale-98 transition-all"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-black py-4 px-5 rounded-2xl shadow-lg shadow-orange-500/25 flex items-center justify-between text-sm active:scale-98 transition-all cursor-pointer"
               >
                 <div className="flex items-center gap-2">
                   <ShoppingBag className="w-4 h-4" />
-                  <span>Masukkan {quantity}x Hidangan ke Troli</span>
+                  <span>Masukkan {quantity}x ke Troli</span>
                 </div>
-                <span className="font-mono text-base font-black">RM {totalPrice.toFixed(2)}</span>
+                <span className="text-base font-black">RM {totalPrice.toFixed(2)}</span>
               </Button>
             )}
           </div>

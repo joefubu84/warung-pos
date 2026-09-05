@@ -137,28 +137,32 @@ export function CustomerOrderTracker({ orderId, onClose }: CustomerOrderTrackerP
   const currentStepIdx = getStepIndex(status);
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-6 space-y-6 text-white font-sans shadow-2xl relative overflow-hidden">
+    <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 space-y-5 text-slate-900 font-sans shadow-xl relative overflow-hidden">
       {/* HEADER & CLOSE */}
-      <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3.5">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl">
+          <div className="p-2.5 bg-orange-50 border border-orange-200 text-orange-600 rounded-2xl shadow-sm">
             <ChefHat className="w-6 h-6 animate-pulse" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-black text-white">Live Order Progress</h3>
-              <span className="text-[10px] font-mono font-bold bg-slate-800 text-emerald-400 px-2.5 py-0.5 rounded-full border border-slate-700">
-                #{orderId.slice(0, 8)}
+              <h3 className="text-lg font-black text-slate-900 tracking-tight">Status Pesanan Meja</h3>
+              <span className="text-[10px] font-bold bg-slate-100 text-slate-700 px-2.5 py-0.5 rounded-full border border-slate-200">
+                #{orderId.slice(0, 8).toUpperCase()}
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-mono mt-0.5">
-              {tableNumber ? `Dine-in Table ${tableNumber}` : 'Takeaway Order'}
+            <p className="text-xs text-slate-500 font-medium mt-0.5">
+              {tableNumber ? `Meja Makan #${tableNumber}` : 'Pesanan Bungkus / Takeaway'}
             </p>
           </div>
         </div>
 
         {onClose && (
-          <button onClick={onClose} className="p-2 text-slate-400 hover:text-white bg-slate-950 rounded-xl border border-slate-800">
+          <button 
+            onClick={onClose} 
+            className="p-2 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer"
+            title="Tutup Penjejak"
+          >
             <X className="w-4 h-4" />
           </button>
         )}
@@ -166,58 +170,58 @@ export function CustomerOrderTracker({ orderId, onClose }: CustomerOrderTrackerP
 
       {/* COUNTDOWN / READY BANNER */}
       {status === 'ready' ? (
-        <div className="bg-emerald-500/20 border-2 border-emerald-500 p-4 rounded-2xl text-center space-y-1 animate-pulse">
-          <div className="text-xl font-black text-emerald-300 flex items-center justify-center gap-2">
-            <Sparkles className="w-6 h-6 text-emerald-400" /> YOUR ORDER IS READY! 🎉
+        <div className="bg-emerald-50 border-2 border-emerald-500 p-4 rounded-2xl text-center space-y-1 animate-pulse">
+          <div className="text-xl font-black text-emerald-800 flex items-center justify-center gap-2">
+            <Sparkles className="w-6 h-6 text-emerald-600" /> HIDANGAN ANDA SUDAH SIAP! 🎉
           </div>
-          <p className="text-xs text-emerald-200">
-            {tableNumber ? `Our friendly staff will serve your food to Table #${tableNumber} shortly! 🍽️` : 'Please pick up your takeaway order at the counter! 🛍️'}
+          <p className="text-xs text-emerald-700 font-medium">
+            {tableNumber ? `Staf mesra kami akan menghantar hidangan panas ke Meja #${tableNumber} sebentar lagi! 🍽️` : 'Sila ambil bungkusan pesanan anda di kaunter! 🛍️'}
           </p>
         </div>
       ) : status === 'completed' ? (
-        <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl text-center space-y-1">
-          <div className="text-base font-bold text-slate-300 flex items-center justify-center gap-2">
-            <CheckCircle2 className="w-5 h-5 text-emerald-400" /> Order Completed & Served
+        <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl text-center space-y-1">
+          <div className="text-base font-bold text-slate-800 flex items-center justify-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-emerald-600" /> Pesanan Selesai & Dihantar
           </div>
-          <p className="text-xs text-slate-500">Thank you for dining with Warung J&J!</p>
+          <p className="text-xs text-slate-500">Terima kasih kerana menjamu selera di Warung J&J!</p>
         </div>
       ) : (
-        <div className="bg-slate-950 border border-slate-800 p-4 rounded-2xl flex items-center justify-between">
+        <div className="bg-amber-50/80 border border-amber-200 p-4 rounded-2xl flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Clock className="w-5 h-5 text-amber-400 animate-spin" />
+            <Clock className="w-5 h-5 text-amber-600 animate-spin" />
             <div>
-              <span className="text-xs font-mono text-slate-400 uppercase tracking-wider block">Estimated Ready In</span>
-              <span className="text-xl font-bold font-mono text-amber-400">
-                {minutes}:{seconds < 10 ? `0${seconds}` : seconds} <span className="text-xs font-normal">mins</span>
+              <span className="text-[11px] text-amber-800/80 uppercase font-black tracking-wider block">Anggaran Masa Siap</span>
+              <span className="text-xl font-black text-amber-900">
+                {minutes}:{seconds < 10 ? `0${seconds}` : seconds} <span className="text-xs font-semibold">minit</span>
               </span>
             </div>
           </div>
-          <span className="text-[11px] text-slate-400 font-mono bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800">
-            {status === 'preparing' ? '👨‍🍳 Cooking Now' : '⏳ Queued'}
+          <span className="text-xs font-bold text-amber-800 bg-white px-3 py-1.5 rounded-xl border border-amber-200 shadow-sm">
+            {status === 'preparing' ? '👨‍🍳 Sedang Dimasak' : '⏳ Dalam Giliran Dapur'}
           </span>
         </div>
       )}
 
       {/* ANIMATED STEPPER PROGRESS BAR */}
-      <div className="space-y-3 pt-2">
-        <div className="flex justify-between items-center relative font-mono text-xs">
+      <div className="space-y-2 pt-1">
+        <div className="flex justify-between items-center relative text-xs">
           {STEPS.map((step, idx) => {
             const IconComp = step.icon;
             const isDone = idx <= currentStepIdx;
             const isCurrent = idx === currentStepIdx;
 
             return (
-              <div key={step.id} className="flex flex-col items-center gap-2 z-10 w-1/4 text-center">
+              <div key={step.id} className="flex flex-col items-center gap-1.5 z-10 w-1/4 text-center">
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-500 ${
                   isCurrent 
-                    ? 'bg-amber-500 border-amber-400 text-slate-950 font-bold scale-110 shadow-lg shadow-amber-500/30 animate-pulse'
+                    ? 'bg-orange-500 border-orange-500 text-white font-bold scale-110 shadow-lg shadow-orange-500/30 animate-pulse'
                     : isDone
-                    ? 'bg-emerald-500 border-emerald-400 text-slate-950 font-bold'
-                    : 'bg-slate-950 border-slate-800 text-slate-600'
+                    ? 'bg-emerald-500 border-emerald-500 text-white font-bold'
+                    : 'bg-slate-100 border-slate-200 text-slate-400'
                 }`}>
                   <IconComp className="w-4 h-4" />
                 </div>
-                <span className={`text-[10px] font-bold ${isCurrent ? 'text-amber-400' : isDone ? 'text-emerald-400' : 'text-slate-500'}`}>
+                <span className={`text-[10px] font-black ${isCurrent ? 'text-orange-600' : isDone ? 'text-emerald-700' : 'text-slate-400'}`}>
                   {step.label}
                 </span>
               </div>
@@ -228,19 +232,19 @@ export function CustomerOrderTracker({ orderId, onClose }: CustomerOrderTrackerP
 
       {/* ORDER ITEMS SUMMARY */}
       {orderItems.length > 0 && (
-        <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-2 font-mono text-xs">
-          <div className="text-slate-400 uppercase text-[10px] font-bold tracking-wider flex justify-between">
-            <span>Order Summary</span>
-            <span>{orderItems.length} items</span>
+        <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200/90 space-y-2 text-xs">
+          <div className="text-slate-500 uppercase text-[10px] font-black tracking-wider flex justify-between">
+            <span>Ringkasan Hidangan</span>
+            <span>{orderItems.length} hidangan</span>
           </div>
-          <div className="divide-y divide-slate-800/60">
+          <div className="divide-y divide-slate-200/80">
             {orderItems.map((item, idx) => (
-              <div key={idx} className="py-2 flex justify-between items-center text-slate-200">
+              <div key={idx} className="py-2 flex justify-between items-center text-slate-800">
                 <div>
-                  <span className="font-bold text-white">{item.quantity}x {item.item_name || 'Dish'}</span>
-                  {item.notes && <p className="text-[10px] text-amber-400/80">{item.notes}</p>}
+                  <span className="font-bold text-slate-900">{item.quantity}x {item.item_name || 'Hidangan'}</span>
+                  {item.notes && <p className="text-[10px] text-amber-700 font-medium">{item.notes}</p>}
                 </div>
-                <span className="font-bold text-emerald-400">RM {Number(item.price || 0).toFixed(2)}</span>
+                <span className="font-extrabold text-orange-600">RM {Number(item.price || 0).toFixed(2)}</span>
               </div>
             ))}
           </div>
@@ -248,21 +252,21 @@ export function CustomerOrderTracker({ orderId, onClose }: CustomerOrderTrackerP
       )}
 
       {/* WHATSAPP RECEIPT ACTION BUTTON */}
-      <div className="pt-1 font-mono">
+      <div className="pt-1">
         <Button
           onClick={() => {
             const customerPhone = localStorage.getItem('warung_customer_phone') || '60172221784';
-            const itemsText = orderItems.map(i => `${i.quantity}x ${i.item_name || 'Dish'} (RM ${Number(i.price || 0).toFixed(2)})`).join('\n');
-            const receiptText = `🧾 *WARUNG J&J DIGITAL RECEIPT*\nTable: Table ${tableNumber || 'A1'}\nOrder ID: #${orderId.slice(0, 8).toUpperCase()}\n-------------------------------\n${itemsText}\nTotal Paid: RM ${Number(order?.total_amount || 0).toFixed(2)}\nStatus: ${status.toUpperCase()}\n-------------------------------\nThank you for dining with Warung J&J! 🌟`;
+            const itemsText = orderItems.map(i => `${i.quantity}x ${i.item_name || 'Hidangan'} (RM ${Number(i.price || 0).toFixed(2)})`).join('\n');
+            const receiptText = `🧾 *RESIT DIGITAL WARUNG J&J*\nMeja: Meja ${tableNumber || 'A1'}\nNo Pesanan: #${orderId.slice(0, 8).toUpperCase()}\n-------------------------------\n${itemsText}\nJumlah Bayaran: RM ${Number(order?.total_amount || 0).toFixed(2)}\nStatus: ${status.toUpperCase()}\n-------------------------------\nTerima kasih kerana menjamu selera bersama Warung J&J! 🌟`;
             
             const clean = customerPhone.replace(/\D/g, '');
             const waUrl = `https://wa.me/${clean}?text=${encodeURIComponent(receiptText)}`;
             window.open(waUrl, '_blank');
-            toast.success("💬 Opening WhatsApp to forward digital receipt!");
+            toast.success("💬 Membuka WhatsApp untuk menghantar resit digital!");
           }}
-          className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl shadow-lg flex items-center justify-center gap-2 text-xs font-mono"
+          className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-extrabold py-3.5 rounded-2xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 text-xs active:scale-[0.98] transition-all cursor-pointer"
         >
-          <Share2 className="w-4 h-4 text-white" /> Forward Digital Receipt via WhatsApp
+          <Share2 className="w-4 h-4 text-white" /> Hantar Resit Digital ke WhatsApp
         </Button>
       </div>
     </div>

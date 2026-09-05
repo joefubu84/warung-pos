@@ -786,9 +786,12 @@ export function TableQRPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-6 font-mono">
-        <Utensils className="w-12 h-12 text-emerald-400 animate-spin mb-4" />
-        <p className="text-sm text-slate-400">Loading Warung J&J Digital Menu...</p>
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col items-center justify-center p-6 font-sans">
+        <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center mb-4 shadow-sm border border-orange-200">
+          <Utensils className="w-7 h-7 text-orange-500 animate-bounce" />
+        </div>
+        <p className="text-sm font-bold text-slate-700">Loading Warung J&J Menu...</p>
+        <p className="text-xs text-slate-400 mt-1">Meja #{tableNumber || '..'}</p>
       </div>
     );
   }
@@ -797,36 +800,42 @@ export function TableQRPage() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans pb-28 md:pb-12 selection:bg-orange-500 selection:text-white">
       {/* CLOSED OVERLAY */}
       {isClosedForDay && (
-        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center text-white">
-          <div className="p-5 bg-rose-500/10 border border-rose-500/30 rounded-full text-rose-400 mb-4 animate-pulse">
-            <Lock className="w-12 h-12" />
-          </div>
-          <h2 className="text-2xl font-black mb-2 text-rose-400">⛔ ORDERS ARE CLOSED TODAY</h2>
-          <p className="text-slate-300 max-w-sm text-sm mb-6 font-mono">
-            Our cash register for today is closed. Please ask our friendly staff for assistance!
-          </p>
-          <div className="bg-slate-900 border border-slate-800 px-6 py-3 rounded-full text-xs font-mono text-slate-400">
-            Shift Closed • {storeName || 'Warung J&J'}
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full border border-slate-200 shadow-2xl space-y-4">
+            <div className="w-14 h-14 bg-rose-50 border border-rose-200 rounded-2xl text-rose-500 mx-auto flex items-center justify-center">
+              <Lock className="w-7 h-7" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-lg font-black text-slate-900">PESANAN DITUTUP HARI INI</h2>
+              <p className="text-slate-500 text-xs leading-relaxed">
+                Kaunter dan sistem pesanan untuk hari ini telah ditutup. Sila hubungi pelayan kami jika memerlukan bantuan.
+              </p>
+            </div>
+            <div className="bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl text-xs font-bold text-slate-600">
+              Shift Ditutup • {storeName || 'Warung J&J'}
+            </div>
           </div>
         </div>
       )}
 
       {/* OCCUPIED TABLE SESSION BLOCKED OVERLAY */}
       {sessionBlockedMessage && (
-        <div className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center text-white font-mono">
-          <div className="p-5 bg-amber-500/10 border border-amber-500/30 rounded-full text-amber-400 mb-4 animate-pulse">
-            <ShieldAlert className="w-12 h-12" />
-          </div>
-          <h2 className="text-2xl font-black mb-2 text-amber-400">⛔ TABLE CURRENTLY OCCUPIED</h2>
-          <p className="text-slate-300 max-w-md text-sm mb-6 leading-relaxed">
-            {sessionBlockedMessage}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center">
+          <div className="bg-white rounded-3xl p-6 max-w-sm w-full border border-slate-200 shadow-2xl space-y-4">
+            <div className="w-14 h-14 bg-amber-50 border border-amber-200 rounded-2xl text-amber-500 mx-auto flex items-center justify-center">
+              <ShieldAlert className="w-7 h-7" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-lg font-black text-slate-900">MEJA SEDANG DIGUNAKAN</h2>
+              <p className="text-slate-500 text-xs leading-relaxed">
+                {sessionBlockedMessage}
+              </p>
+            </div>
             <Button
               onClick={() => window.location.reload()}
-              className="bg-orange-500 hover:bg-orange-400 text-white font-bold px-6 py-3 rounded-xl gap-2 shadow-lg shadow-orange-500/20"
+              className="w-full bg-orange-500 hover:bg-orange-600 text-white font-extrabold py-3 rounded-xl gap-2 shadow-lg shadow-orange-500/20"
             >
-              <RefreshCw className="w-4 h-4" /> Re-check Table Status
+              <RefreshCw className="w-4 h-4" /> Semak Semula Status Meja
             </Button>
           </div>
         </div>
@@ -858,9 +867,9 @@ export function TableQRPage() {
             <button
               onClick={() => setIsMobileCartOpen(true)}
               className="relative p-2 text-slate-700 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-colors"
-              title="View Cart / Payment"
+              title="Bakul Pesanan"
             >
-              <CreditCard className="w-4 h-4" />
+              <ShoppingBag className="w-4 h-4" />
               {cart.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-md">
                   {cart.reduce((s, i) => s + i.quantity, 0)}
@@ -875,17 +884,15 @@ export function TableQRPage() {
                   setIsMemberModalOpen(true);
                 }
               }}
-              className="p-2 text-slate-700 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-colors"
-              title="VIP Loyalty & Offers"
+              className="relative p-2 text-slate-700 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-colors"
+              title={customerPhone ? `VIP Member: +${customerPhone}` : "VIP Loyalty & Ganjaran"}
             >
-              <Moon className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setIsMobileCartOpen(true)}
-              className="p-2 text-slate-700 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-colors"
-              title="Menu Options"
-            >
-              <Menu className="w-4 h-4" />
+              <Sparkles className={`w-4 h-4 ${customerPhone ? 'text-amber-500' : ''}`} />
+              {memberData && memberData.points > 0 && (
+                <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-black px-1 rounded-full flex items-center justify-center shadow-sm">
+                  {memberData.points}p
+                </span>
+              )}
             </button>
           </div>
         </div>
@@ -1043,7 +1050,7 @@ export function TableQRPage() {
                       </p>
                       <div className="mt-1.5 flex items-center gap-1.5">
                         <span className="text-sm font-extrabold text-orange-500">
-                          $ {item.price.toFixed(2)}
+                          RM {item.price.toFixed(2)}
                         </span>
                       </div>
                     </div>
@@ -1090,14 +1097,14 @@ export function TableQRPage() {
                     <span className="font-bold text-slate-800">{item.quantity}x {item.name}</span>
                     <span className="block text-[10px] text-slate-400">{item.fulfillmentType === 'takeaway' ? '🥡 Takeaway' : '🍽️ Dine-in'}</span>
                   </div>
-                  <span className="font-black text-slate-900">$ {(item.price * item.quantity).toFixed(2)}</span>
+                  <span className="font-black text-slate-900">RM {(item.price * item.quantity).toFixed(2)}</span>
                 </div>
               ))}
             </div>
 
             <div className="pt-2 border-t border-slate-100 flex justify-between items-center font-extrabold text-sm text-slate-900">
               <span>Total</span>
-              <span className="text-orange-500 text-base">$ {cartSubtotal.toFixed(2)}</span>
+              <span className="text-orange-500 text-base">RM {cartSubtotal.toFixed(2)}</span>
             </div>
 
             <Button
@@ -1120,7 +1127,7 @@ export function TableQRPage() {
             <span className="text-[10px] font-bold text-slate-400 block uppercase tracking-wider">
               Total ({cart.reduce((s, i) => s + i.quantity, 0)} items)
             </span>
-            <span className="text-lg font-black text-orange-500">$ {cartSubtotal.toFixed(2)}</span>
+            <span className="text-lg font-black text-orange-500">RM {cartSubtotal.toFixed(2)}</span>
           </div>
 
           <Button
@@ -1173,7 +1180,7 @@ export function TableQRPage() {
                       </div>
                       <div className="text-right shrink-0">
                         <span className="font-black text-orange-500 text-xs">
-                          $ {(item.price * qty).toFixed(2)}
+                          RM {(item.price * qty).toFixed(2)}
                         </span>
                         <div className="flex items-center gap-1.5 mt-1 justify-end">
                           {qty > 1 && (
@@ -1266,7 +1273,7 @@ export function TableQRPage() {
                           {addon.name}
                         </span>
                         <span className="text-[10px] text-orange-500 font-black">
-                          +$ {addon.price.toFixed(2)}
+                          +RM {addon.price.toFixed(2)}
                         </span>
                       </div>
                       <div className="w-6 h-6 rounded-lg bg-orange-100 text-orange-600 border border-orange-200 flex items-center justify-center shrink-0 group-hover:bg-orange-500 group-hover:text-white transition-colors text-xs font-black">
@@ -1281,13 +1288,13 @@ export function TableQRPage() {
             <div className="pt-3 border-t border-slate-100 space-y-2 text-xs">
               <div className="flex justify-between text-slate-500 font-medium">
                 <span>Subtotal ({cart.reduce((sum, i) => sum + i.quantity, 0)} dishes)</span>
-                <span className="font-bold text-slate-900">$ {cartSubtotal.toFixed(2)}</span>
+                <span className="font-bold text-slate-900">RM {cartSubtotal.toFixed(2)}</span>
               </div>
 
               {isRm8DiscountApplied && (
                 <div className="flex justify-between text-rose-600 font-bold bg-rose-50 p-2 rounded-lg border border-rose-200">
                   <span className="flex items-center gap-1"><Gift className="w-3.5 h-3.5 text-rose-500" /> Member Discount (60 pts)</span>
-                  <span>-$ 8.00</span>
+                  <span>-RM 8.00</span>
                 </div>
               )}
 
@@ -1298,7 +1305,7 @@ export function TableQRPage() {
 
               <div className="flex justify-between text-base font-black text-slate-900 pt-2 border-t border-slate-100">
                 <span>Total Amount</span>
-                <span className="text-orange-500 text-lg">$ {Math.max(0, cartSubtotal - (isRm8DiscountApplied ? 8.00 : 0)).toFixed(2)}</span>
+                <span className="text-orange-500 text-lg">RM {Math.max(0, cartSubtotal - (isRm8DiscountApplied ? 8.00 : 0)).toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -1321,34 +1328,44 @@ export function TableQRPage() {
 
       {/* MEMBER POINT TRANSACTION HISTORY MODAL */}
       <Dialog open={showTxHistory} onOpenChange={setShowTxHistory}>
-        <DialogContent className="bg-slate-900 text-white border-slate-800 max-w-md max-h-[80vh] overflow-y-auto font-mono p-5">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-lg font-bold text-amber-400">
-              <History className="w-5 h-5 text-emerald-400" /> Point Activity & Recent Orders
+        <DialogContent className="bg-white text-slate-900 border-slate-200 max-w-md max-h-[85vh] overflow-y-auto rounded-3xl p-6 shadow-2xl">
+          <DialogHeader className="text-left space-y-1">
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-center text-amber-600">
+                <Award className="w-5 h-5" />
+              </div>
+              {memberData && (
+                <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 font-extrabold text-xs">
+                  {memberData.points} Mata Terkumpul
+                </span>
+              )}
+            </div>
+            <DialogTitle className="text-lg font-black text-slate-900 tracking-tight pt-1">
+              Aktiviti Mata & Pesanan
             </DialogTitle>
-            <DialogDescription className="text-slate-400 text-xs">
-              Loyalty transactions & points log for +{customerPhone}
+            <DialogDescription className="text-slate-500 text-xs">
+              Log transaksi mata ganjaran bagi nombor +{customerPhone}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 my-2 text-xs">
             {getMembershipTransactions(customerPhone).length === 0 ? (
-              <div className="p-8 text-center text-slate-500 space-y-1">
-                <Gift className="w-8 h-8 mx-auto text-slate-700" />
-                <p>No transactions recorded yet.</p>
-                <p className="text-[10px] text-slate-600">Order dishes to earn 1 point per dish!</p>
+              <div className="py-10 text-center text-slate-400 space-y-2 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                <Gift className="w-8 h-8 mx-auto text-slate-300" />
+                <p className="font-semibold text-slate-600">Belum ada rekod transaksi.</p>
+                <p className="text-[11px] text-slate-400">Pesan makanan di meja untuk jana 1 mata setiap hidangan!</p>
               </div>
             ) : (
-              <div className="divide-y divide-slate-800">
+              <div className="space-y-2">
                 {getMembershipTransactions(customerPhone).map((tx) => (
-                  <div key={tx.id} className="py-2.5 flex justify-between items-center">
+                  <div key={tx.id} className="p-3 bg-slate-50 rounded-2xl border border-slate-200/80 flex justify-between items-center">
                     <div>
-                      <div className="font-bold text-white text-xs">{tx.description}</div>
-                      <div className="text-[10px] text-slate-400">
+                      <div className="font-bold text-slate-900 text-xs">{tx.description}</div>
+                      <div className="text-[10px] text-slate-400 mt-0.5">
                         {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {tx.type.replace('_', ' ')}
                       </div>
                     </div>
-                    <span className={`font-mono font-bold text-sm ${tx.pointsChange >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    <span className={`font-black text-sm px-2 py-0.5 rounded-lg ${tx.pointsChange >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                       {tx.pointsChange >= 0 ? `+${tx.pointsChange}` : tx.pointsChange} pts
                     </span>
                   </div>
@@ -1357,11 +1374,129 @@ export function TableQRPage() {
             )}
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowTxHistory(false)} className="border-slate-800 text-slate-300">
-              Close History
+          <DialogFooter className="pt-2">
+            <Button variant="outline" onClick={() => setShowTxHistory(false)} className="w-full border-slate-200 text-slate-700 font-bold rounded-xl">
+              Tutup
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* DIRECT SUPABASE VIP MEMBER REGISTRATION & PROFILE MODAL */}
+      <Dialog open={isMemberModalOpen} onOpenChange={setIsMemberModalOpen}>
+        <DialogContent className="bg-white text-slate-900 border-slate-200 max-w-sm rounded-3xl p-6 shadow-2xl">
+          <DialogHeader className="text-left space-y-1.5">
+            <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-orange-500 mb-1">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <DialogTitle className="text-lg font-black text-slate-900 tracking-tight">
+              {customerPhone ? 'Profil VIP Member' : 'Daftar / Log Masuk VIP'}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-500">
+              {customerPhone
+                ? 'Kumpul mata ganjaran & tebus diskaun hidangan percuma!'
+                : 'Masukkan nombor telefon untuk kumpul 1 mata setiap hidangan & tebus diskaun RM8!'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {customerPhone ? (
+            <div className="space-y-4 pt-2">
+              <div className="bg-gradient-to-br from-orange-500 to-amber-600 rounded-2xl p-4 text-white shadow-lg space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-orange-100">VIP Member Meja</span>
+                    <h3 className="font-extrabold text-base">{memberData?.name || 'Pelanggan Dihargai'}</h3>
+                    <p className="text-xs text-orange-100 font-mono">+{customerPhone}</p>
+                  </div>
+                  <div className="px-2.5 py-1 bg-white/20 backdrop-blur-sm rounded-xl text-xs font-black">
+                    {memberData?.tier || 'Gold VIP'}
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-white/20 flex justify-between items-end">
+                  <div>
+                    <span className="text-[10px] text-orange-100 block">Baki Mata Terkini</span>
+                    <span className="text-2xl font-black">{memberData?.points ?? 0} <span className="text-xs font-medium">mata</span></span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setIsMemberModalOpen(false);
+                      setShowTxHistory(true);
+                    }}
+                    className="text-white hover:bg-white/20 text-xs font-bold h-8 px-2.5 rounded-xl gap-1"
+                  >
+                    <History className="w-3.5 h-3.5" /> Sejarah
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    localStorage.removeItem('warung_customer_phone');
+                    setCustomerPhone('');
+                    setMemberData(undefined);
+                    toast.info('Log keluar akaun VIP berjaya.');
+                  }}
+                  className="w-full border-slate-200 text-slate-600 hover:text-rose-600 hover:bg-rose-50 text-xs font-bold rounded-2xl h-10 gap-1.5"
+                >
+                  <LogOut className="w-3.5 h-3.5" /> Tukar Nombor / Log Keluar
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleRegisterOrIdentifyMember} className="space-y-3 pt-2">
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Nama Anda (Pilihan)
+                </label>
+                <Input
+                  value={nameInput}
+                  onChange={(e) => setNameInput(e.target.value)}
+                  placeholder="Contoh: Joe Fubu"
+                  className="bg-slate-50 border-slate-200 text-slate-900 text-xs rounded-xl h-10 focus:border-orange-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-700 block mb-1">
+                  Nombor Telefon WhatsApp <span className="text-rose-500">*</span>
+                </label>
+                <Input
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  placeholder="Contoh: 0123456789 atau +6012..."
+                  type="tel"
+                  required
+                  className="bg-slate-50 border-slate-200 text-slate-900 text-xs rounded-xl h-10 focus:border-orange-500 font-medium"
+                />
+                <span className="text-[10px] text-slate-400 mt-1 block">
+                  Resit & kemas kini status pesanan akan dipautkan ke nombor ini.
+                </span>
+              </div>
+
+              <DialogFooter className="pt-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsMemberModalOpen(false)}
+                  className="w-full sm:w-auto border-slate-200 text-slate-600 text-xs font-bold rounded-xl h-10"
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmittingMember || !phoneInput.trim()}
+                  className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white text-xs font-black rounded-xl h-10 shadow-md shadow-orange-500/20"
+                >
+                  {isSubmittingMember ? 'Memproses...' : 'Sahkan & Simpan'}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -1375,48 +1510,53 @@ export function TableQRPage() {
 
       {/* EXISTING ORDER CONFIRMATION DIALOG */}
       <Dialog open={showOrderDialog} onOpenChange={setShowOrderDialog}>
-        <DialogContent className="bg-slate-900 text-white border-slate-800 max-w-md font-sans">
-          <DialogHeader>
-            <DialogTitle className="text-amber-400 flex items-center gap-2 text-lg font-bold">
-              <Utensils className="w-5 h-5" /> Existing Order Found on Table #{tableNumber}
+        <DialogContent className="bg-white text-slate-900 border-slate-200 max-w-md rounded-3xl p-6 shadow-2xl">
+          <DialogHeader className="text-left space-y-1">
+            <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-orange-500">
+              <Utensils className="w-5 h-5" />
+            </div>
+            <DialogTitle className="text-lg font-black text-slate-900 tracking-tight pt-1">
+              Pesanan Aktif Dikesan (Meja #{tableNumber})
             </DialogTitle>
-            <DialogDescription className="text-slate-400 text-xs font-mono">
-              There is already an active order for this table. Would you like to add these items to the existing bill or start a new bill?
+            <DialogDescription className="text-slate-500 text-xs">
+              Terdapat pesanan yang sedang diproses untuk meja ini. Anda boleh menambah hidangan baharu ke dalam bil yang sama.
             </DialogDescription>
           </DialogHeader>
 
           {existingOrder && (
-            <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 text-xs font-mono">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Order ID:</span>
-                <span className="font-bold text-white">#{existingOrder.id.slice(0, 8)}</span>
+            <div className="bg-orange-50/60 p-4 rounded-2xl border border-orange-200/80 space-y-2.5 text-xs text-slate-800">
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-medium">No. Pesanan:</span>
+                <span className="font-extrabold text-slate-900">#{existingOrder.id.slice(0, 8)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Current Status:</span>
-                <span className="font-bold text-amber-400 uppercase">{existingOrder.status}</span>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500 font-medium">Status Semasa:</span>
+                <span className="font-extrabold px-2 py-0.5 rounded bg-orange-100 text-orange-800 uppercase text-[10px] tracking-wide">
+                  {existingOrder.status}
+                </span>
               </div>
-              <div className="flex justify-between border-t border-slate-800 pt-2">
-                <span className="text-slate-400">Current Bill Total:</span>
-                <span className="font-bold text-emerald-400">RM {Number(existingOrder.total_amount || 0).toFixed(2)}</span>
+              <div className="flex justify-between items-center border-t border-orange-200/60 pt-2">
+                <span className="text-slate-600 font-semibold">Jumlah Bil Semasa:</span>
+                <span className="font-black text-slate-900 text-sm">RM {Number(existingOrder.total_amount || 0).toFixed(2)}</span>
               </div>
             </div>
           )}
 
-          <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-2 font-mono">
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 mt-3">
             <Button 
               variant="outline" 
               onClick={() => handlePlaceOrder(true)}
               disabled={isSubmitting}
-              className="border-slate-800 text-slate-300"
+              className="w-full sm:w-1/2 border-slate-200 text-slate-700 font-bold rounded-xl h-11"
             >
-              Start New Order
+              Mula Pesanan Baru
             </Button>
             <Button 
               onClick={handleAddToExisting}
               disabled={isSubmitting}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+              className="w-full sm:w-1/2 bg-orange-500 hover:bg-orange-600 text-white font-extrabold rounded-xl h-11 shadow-md shadow-orange-500/20"
             >
-              Add to Existing Bill
+              {isSubmitting ? 'Menambah...' : 'Tambah ke Bil Semasa'}
             </Button>
           </DialogFooter>
         </DialogContent>
