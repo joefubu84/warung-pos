@@ -51,17 +51,14 @@ function LandingPage() {
 
   useEffect(() => {
     const fetchFeatured = async () => {
-      // Fetch Homepage Settings and Store Info
-      const { data: storeData } = await supabase
-        .from("stores")
+      // Fetch data from landing_page_config
+      const { data: configData } = await supabase
+        .from("landing_page_config")
         .select("*")
-        .limit(1)
-        .maybeSingle();
-      
-      if (storeData) {
-        setStoreInfo(storeData);
-        const hp = (storeData as any)?.settings?.homepage || null;
-        setHomepageSettings(hp);
+        .single();
+
+      if (configData) {
+        setHomepageSettings(configData);
       }
 
       // Fetch Featured Items
@@ -97,7 +94,7 @@ function LandingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#1c1917] text-stone-100 selection:bg-orange-500/30 selection:text-orange-200 overflow-x-hidden font-sans">
+    <div className="min-h-screen bg-stone-50 text-stone-900 selection:bg-orange-500/30 selection:text-orange-900 overflow-x-hidden font-sans">
       
       {/* Navigation (Floating Island) */}
       <div className="fixed top-5 w-full z-50 px-4 pointer-events-none flex justify-center">
@@ -105,30 +102,30 @@ function LandingPage() {
           initial={{ y: -40, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.4, ease: "easeOut" }}
-          className="pointer-events-auto flex items-center justify-between gap-4 md:gap-8 px-3 py-2 rounded-full bg-[#292524]/90 backdrop-blur-xl border border-stone-700/60 shadow-[0_20px_40px_rgba(0,0,0,0.6)]"
+          className="pointer-events-auto flex items-center justify-between gap-4 md:gap-8 px-3 py-2 rounded-full bg-white/90 backdrop-blur-xl border border-stone-200 shadow-sm"
         >
           {/* Brand */}
           <Link to="/" className="flex items-center gap-2.5 pl-2 pr-1">
-            <div className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden border border-amber-500/40 shadow-inner shrink-0">
+            <div className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden border border-orange-200 shadow-inner shrink-0">
               <img src="/logo.png" alt="Warung J&J Logo" className="w-full h-full object-cover" />
             </div>
             <div className="hidden sm:block text-left">
-              <span className="text-[15px] font-bold text-white block leading-none font-heading">Warung J&J</span>
-              <span className="text-[10px] text-amber-400 font-bold">Penampang, Sabah</span>
+              <span className="text-[15px] font-bold text-stone-900 block leading-none font-heading">Warung J&J</span>
+              <span className="text-[10px] text-orange-600 font-bold">Penampang, Sabah</span>
             </div>
           </Link>
           
           {/* Links Box */}
-          <div className="hidden md:flex items-center gap-1 bg-black/40 p-1 rounded-full border border-stone-700/50">
-            <a href="#menu" className="px-4 py-1.5 rounded-full text-xs font-bold text-stone-300 hover:text-white hover:bg-stone-700/50 transition-all">Menu</a>
-            <a href="#keistimewaan" className="px-4 py-1.5 rounded-full text-xs font-bold text-stone-300 hover:text-white hover:bg-stone-700/50 transition-all">Keistimewaan</a>
-            <a href="#location" className="px-4 py-1.5 rounded-full text-xs font-bold text-stone-300 hover:text-white hover:bg-stone-700/50 transition-all">Lokasi & Waktu</a>
+          <div className="hidden md:flex items-center gap-1 bg-stone-100 p-1 rounded-full border border-stone-200">
+            <a href="#menu" className="px-4 py-1.5 rounded-full text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-white transition-all">Menu</a>
+            <a href="#keistimewaan" className="px-4 py-1.5 rounded-full text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-white transition-all">Keistimewaan</a>
+            <a href="#location" className="px-4 py-1.5 rounded-full text-xs font-bold text-stone-600 hover:text-stone-900 hover:bg-white transition-all">Lokasi & Waktu</a>
           </div>
 
           {/* CTAs */}
           <div className="flex items-center gap-2 pr-1">
             <a href="#menu">
-              <Button className="rounded-full px-5 h-9 bg-orange-600 hover:bg-orange-500 text-white font-bold text-xs tracking-tight transition-all shadow-[0_0_15px_rgba(234,88,12,0.4)] flex items-center gap-1.5">
+              <Button className="rounded-full px-5 h-9 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs tracking-tight transition-all shadow-sm flex items-center gap-1.5">
                 <UtensilsCrossed className="w-3.5 h-3.5" />
                 <span>Lihat Menu</span>
               </Button>
@@ -139,7 +136,7 @@ function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-16 md:pt-44 md:pb-28 px-6">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-orange-950/30 via-[#1c1917] to-[#1c1917] -z-10" />
+        <div className="absolute inset-0 bg-stone-50 -z-10" />
         
         <div className="max-w-7xl mx-auto flex flex-col-reverse lg:flex-row items-center gap-10 lg:gap-16">
           
@@ -152,24 +149,18 @@ function LandingPage() {
           >
             {/* Service Badges */}
             <motion.div variants={item} className="flex flex-wrap items-center justify-center lg:justify-start gap-2">
-              <div className="inline-flex items-center gap-1.5 py-1 px-3.5 rounded-full bg-orange-500/10 border border-orange-500/20 text-xs font-bold text-orange-400">
+              <div className="inline-flex items-center gap-1.5 py-1 px-3.5 rounded-full bg-orange-100 border border-orange-200 text-xs font-bold text-orange-700">
                 <Flame className="w-3.5 h-3.5" />
-                <span>Sambal Gesek & Rempah Asli Sabah</span>
-              </div>
-              <div className="inline-flex items-center gap-1.5 py-1 px-3.5 rounded-full bg-stone-800/80 border border-stone-700 text-xs font-bold text-stone-300">
-                <QrCode className="w-3.5 h-3.5 text-amber-400" />
-                <span>Dine-In & Takeaway Penampang</span>
+                <span>{homepageSettings?.hero_section?.badge_text || 'Open for Delivery'}</span>
               </div>
             </motion.div>
 
             {/* Main Headline */}
-            <motion.h1 variants={item} className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.15] text-stone-100 font-heading">
-              {homepageSettings?.hero_title ? (
-                <>{homepageSettings.hero_title}</>
-              ) : (
+            <motion.h1 variants={item} className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.15] text-stone-900 font-heading">
+              {homepageSettings?.hero_section?.headline || (
                 <>
                   Rasa Asli, Sambal Padu — <br className="hidden sm:inline" />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-500 to-red-500">
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-amber-600">
                     Dapur Warung J&J
                   </span>
                 </>
@@ -177,8 +168,8 @@ function LandingPage() {
             </motion.h1>
 
             {/* Subtitle */}
-            <motion.p variants={item} className="text-base md:text-lg text-stone-300 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
-              Nikmati hidangan Ayam Penyet, Ayam Geprek rangup, Ikan Talapia berlada, Telur Dadar Krikil, dan aneka lauk sampingan panas-panas. Disediakan segar setiap hari dengan sambal gesek asli resipi tersendiri.
+            <motion.p variants={item} className="text-base md:text-lg text-stone-600 max-w-xl mx-auto lg:mx-0 leading-relaxed font-medium">
+              {homepageSettings?.hero_section?.subheadline || 'Nikmati hidangan Ayam Penyet, Ayam Geprek rangup, Ikan Talapia berlada, dan aneka lauk sampingan panas-panas. Disediakan segar setiap hari.'}
             </motion.p>
 
             {/* Call to Actions */}
