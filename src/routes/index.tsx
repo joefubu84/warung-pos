@@ -51,11 +51,31 @@ function LandingPage() {
 
   useEffect(() => {
     const fetchFeatured = async () => {
-      // Fetch data from landing_page_config
-      const { data: configData } = await supabase
-        .from("landing_page_config")
-        .select("*")
-        .single();
+      // Fetch data from landing_page_config with stores.settings fallback
+      let configData: any = null;
+      try {
+        const { data: tableData, error: tableErr } = await supabase
+          .from("landing_page_config")
+          .select("*")
+          .limit(1)
+          .maybeSingle();
+        if (!tableErr && tableData) {
+          configData = tableData;
+        }
+      } catch (e) {}
+
+      if (!configData) {
+        try {
+          const { data: storeData } = await supabase
+            .from("stores")
+            .select("settings")
+            .limit(1)
+            .maybeSingle();
+          if ((storeData?.settings as any)?.landing_page_config) {
+            configData = (storeData.settings as any).landing_page_config;
+          }
+        } catch (e) {}
+      }
 
       if (configData) {
         setHomepageSettings(configData);

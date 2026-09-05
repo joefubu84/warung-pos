@@ -269,6 +269,7 @@ function SettingsPage() {
     | 'waiter_call'
     | 'store' 
     | 'appearance' 
+    | 'landing_page_editor'
     | 'refunds' 
     | 'security';
 
@@ -276,7 +277,7 @@ function SettingsPage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab') as SettingsSection;
-      if (tab && ['riders', 'payments', 'kitchen', 'checklist', 'addons', 'waiter_call', 'store', 'appearance', 'refunds', 'security'].includes(tab)) {
+      if (tab && ['riders', 'payments', 'kitchen', 'checklist', 'addons', 'waiter_call', 'store', 'appearance', 'landing_page_editor', 'refunds', 'security'].includes(tab)) {
         return tab;
       }
     }
