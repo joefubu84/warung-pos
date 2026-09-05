@@ -602,14 +602,14 @@ function SettingsPage() {
                       }}
                       className={`p-2.5 rounded-xl border text-left flex items-center gap-2.5 transition-all ${
                         isActive
-                          ? 'bg-slate-800 border-emerald-500/50 text-slate-900 shadow-md ring-1 ring-emerald-500/30'
-                          : 'bg-slate-50/60 border-slate-200/80 text-slate-500 hover:text-slate-900 hover:bg-slate-800/40'
+                          ? 'bg-orange-50 border-orange-300 text-orange-900 font-semibold shadow-xs ring-1 ring-orange-400/40'
+                          : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50'
                       }`}
                     >
                       <div className={`p-1.5 rounded-lg shrink-0 ${
-                        isActive ? 'bg-white text-emerald-700 border border-emerald-200' : 'bg-white text-slate-500 border border-slate-200'
+                        isActive ? 'bg-orange-100 text-orange-600 border border-orange-200' : 'bg-slate-100 text-slate-500 border border-slate-200'
                       }`}>
-                        <Icon className={`w-3.5 h-3.5 ${isActive ? item.color : ''}`} />
+                        <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-orange-600' : ''}`} />
                       </div>
                       <div className="min-w-0">
                         <div className="text-xs font-bold truncate">{item.label}</div>
@@ -633,11 +633,11 @@ function SettingsPage() {
                   onClick={() => setActiveSection(item.id)}
                   className={`px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-all ${
                     isActive
-                      ? 'bg-emerald-600 text-white shadow-md border border-emerald-400'
+                      ? 'bg-orange-500 text-white shadow-xs border border-orange-600'
                       : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-slate-900' : item.color}`} />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-white' : item.color}`} />
                   <span className="whitespace-nowrap">{item.label}</span>
                 </button>
               );
@@ -667,34 +667,34 @@ function SettingsPage() {
                       type="button"
                       className={`w-full text-left flex items-center justify-between p-2.5 sm:p-3 rounded-2xl transition-all ${
                         isActive
-                          ? 'bg-slate-800 text-slate-900 shadow-lg border border-slate-700 font-bold'
-                          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-800/50 border border-transparent font-medium'
+                          ? 'bg-orange-50 text-orange-950 shadow-xs border border-orange-200/90 font-bold'
+                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-transparent font-medium'
                       }`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <div className={`p-2 rounded-xl shrink-0 transition-colors ${
                           isActive 
-                            ? 'bg-slate-50 border border-slate-700 shadow-inner' 
-                            : 'bg-slate-50/70 border border-slate-200/60'
+                            ? 'bg-orange-100/80 border border-orange-200 shadow-xs' 
+                            : 'bg-slate-50 border border-slate-200'
                         }`}>
-                          <Icon className={`w-4 h-4 ${isActive ? item.color : 'text-slate-500'}`} />
+                          <Icon className={`w-4 h-4 ${isActive ? 'text-orange-600' : 'text-slate-500'}`} />
                         </div>
                         <div className="min-w-0 text-left">
                           <div className="text-xs font-bold truncate flex items-center gap-1.5">
-                            <span>{item.label}</span>
+                            <span className={isActive ? 'text-orange-950' : 'text-slate-900'}>{item.label}</span>
                             {item.badge && (
-                              <span className="text-[9px] px-1.5 py-0.5 bg-amber-500/20 text-amber-300 rounded-full font-mono font-semibold">
+                              <span className="text-[9px] px-1.5 py-0.5 bg-amber-500/20 text-amber-700 rounded-full font-mono font-semibold">
                                 {item.badge}
                               </span>
                             )}
                           </div>
-                          <div className="text-[10px] text-slate-500 truncate font-mono mt-0.5">
+                          <div className={`text-[10px] truncate font-mono mt-0.5 ${isActive ? 'text-orange-700/80' : 'text-slate-500'}`}>
                             {item.subtitle}
                           </div>
                         </div>
                       </div>
                       <ChevronRight className={`w-4 h-4 shrink-0 transition-transform ${
-                        isActive ? 'text-slate-900 translate-x-0.5' : 'text-slate-500 opacity-60'
+                        isActive ? 'text-orange-600 translate-x-0.5' : 'text-slate-400 opacity-60'
                       }`} />
                     </button>
                   );
@@ -2567,16 +2567,16 @@ function AdminRiderManagementCard() {
                   </div>
 
                   {/* ACTION BUTTONS & 1-CLICK APPROVAL */}
-                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200/80 text-xs">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-200/80 text-xs font-sans">
                     <div className="flex flex-wrap items-center gap-1.5">
                       {/* 1-CLICK APPROVE / REVOKE TOGGLE */}
                       <button
                         type="button"
                         onClick={() => toggleRiderApproval(rider.userId || rider.id, isApproved)}
-                        className={`px-2.5 py-1 rounded-xl text-xs font-bold transition-all shadow-sm flex items-center gap-1 ${
+                        className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all shadow-xs flex items-center gap-1.5 active:scale-95 ${
                           isApproved 
-                            ? 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/30 border border-rose-500/30' 
-                            : 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/30'
+                            ? 'bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100' 
+                            : 'bg-orange-500 hover:bg-orange-600 text-white shadow-xs'
                         }`}
                       >
                         {isApproved ? '⏸️ Nyahaktif' : '✅ Luluskan (Approve)'}
@@ -2587,10 +2587,10 @@ function AdminRiderManagementCard() {
                         size="sm"
                         variant="outline"
                         onClick={() => handleOpenEditModal(rider)}
-                        className="bg-amber-600/20 border-amber-500/30 text-amber-300 hover:bg-amber-600/30 hover:text-slate-900 text-xs h-7 px-2 rounded-xl gap-1"
+                        className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-xs h-8 px-2.5 rounded-xl gap-1 shadow-xs transition-all active:scale-95"
                         title="Kemaskini Butiran Rider"
                       >
-                        <Pencil className="w-3 h-3 text-amber-700" />
+                        <Pencil className="w-3.5 h-3.5 text-orange-600" />
                         <span>Edit</span>
                       </Button>
 
@@ -2599,9 +2599,9 @@ function AdminRiderManagementCard() {
                         size="sm"
                         variant="outline"
                         onClick={() => { setSelectedRider(rider); setIsDetailOpen(true); }}
-                        className="bg-white border-slate-200 text-slate-800 hover:text-slate-900 hover:bg-slate-800 text-xs h-7 px-2 rounded-xl gap-1"
+                        className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 font-medium text-xs h-8 px-2.5 rounded-xl gap-1 shadow-xs transition-all active:scale-95"
                       >
-                        <Eye className="w-3 h-3 text-sky-700" />
+                        <Eye className="w-3.5 h-3.5 text-sky-600" />
                         <span>Dossier</span>
                       </Button>
 
@@ -2610,10 +2610,10 @@ function AdminRiderManagementCard() {
                         size="sm"
                         variant="outline"
                         onClick={() => handleDeleteRider(rider)}
-                        className="bg-rose-950/40 border-rose-900/60 text-rose-700 hover:bg-rose-900/60 hover:text-slate-900 text-xs h-7 px-2 rounded-xl gap-1"
+                        className="bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 font-medium text-xs h-8 px-2.5 rounded-xl gap-1 shadow-xs transition-all active:scale-95"
                         title="Padam Profil Rider"
                       >
-                        <Trash2 className="w-3 h-3 text-rose-700" />
+                        <Trash2 className="w-3.5 h-3.5 text-rose-600" />
                       </Button>
                     </div>
 
@@ -2622,10 +2622,10 @@ function AdminRiderManagementCard() {
                         <button
                           type="button"
                           onClick={() => handleCopyAccount(rider.bankAccountNumber!, rider.id)}
-                          className="px-2 py-1 bg-white hover:bg-slate-800 text-amber-700 border border-slate-200 rounded-xl transition-all flex items-center gap-1 text-[10px] font-bold"
+                          className="px-2.5 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl transition-all shadow-xs flex items-center gap-1 text-xs font-medium active:scale-95"
                           title="Salin No. Akaun Bank untuk Gaji"
                         >
-                          {copiedBankId === rider.id ? <Check className="w-3 h-3 text-emerald-700" /> : <Copy className="w-3 h-3" />}
+                          {copiedBankId === rider.id ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-orange-600" />}
                           <span>{copiedBankId === rider.id ? 'Disalin' : 'Bank'}</span>
                         </button>
                       )}
