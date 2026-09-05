@@ -540,8 +540,8 @@ function SettingsPage() {
           </div>
         </div>
 
-        {/* MOBILE MODULE QUICK SWITCHER BAR (Visible on Mobile / Small Screens) */}
-        <div className="block lg:hidden space-y-3">
+        {/* MOBILE MODULE QUICK SWITCHER BAR (Visible ONLY on Mobile Phones < 768px) */}
+        <div className="block md:hidden space-y-3">
           {/* ACTIVE MODULE CARD & TOGGLE BUTTON */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-3 shadow-xs flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -645,11 +645,11 @@ function SettingsPage() {
           </div>
         </div>
 
-        {/* MAIN SIDEBAR + CONTENT GRID */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* MAIN SIDEBAR + CONTENT GRID (Desktop & Tablet Split Screen) */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-5 lg:gap-6 items-start">
           
-          {/* LEFT SIDEBAR NAVIGATION (Desktop) */}
-          <aside className="hidden lg:block lg:col-span-4 xl:col-span-3 lg:sticky lg:top-4 z-20 space-y-3">
+          {/* LEFT SIDEBAR NAVIGATION (Visible on Tablets >= 768px & Desktops) */}
+          <aside className="hidden md:block md:col-span-4 xl:col-span-3 md:sticky md:top-20 z-20 space-y-3">
             <div className="bg-white border border-slate-200/90 rounded-3xl p-3 shadow-xs space-y-1">
               <div className="px-3 py-2 text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 mb-2 flex items-center justify-between">
                 <span>Menu Tetapan</span>
@@ -671,7 +671,7 @@ function SettingsPage() {
                           : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-transparent font-medium'
                       }`}
                     >
-                      <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
                         <div className={`p-2 rounded-xl shrink-0 transition-colors ${
                           isActive 
                             ? 'bg-orange-100/80 border border-orange-200 shadow-xs' 
@@ -704,7 +704,7 @@ function SettingsPage() {
           </aside>
 
           {/* RIGHT DEDICATED CONTENT PANELS */}
-          <main className="lg:col-span-8 xl:col-span-9 space-y-6 min-w-0">
+          <main className="md:col-span-8 xl:col-span-9 space-y-6 min-w-0">
             
             {/* 1. RIDER & KYC MANAGEMENT */}
             {activeSection === 'riders' && (

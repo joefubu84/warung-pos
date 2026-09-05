@@ -314,31 +314,31 @@ export function EditExpenseModal({ isOpen, onClose, onSuccess, expense, dailyCas
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-slate-900 text-white border-slate-800 max-w-md font-sans">
+      <DialogContent className="bg-white text-slate-900 border-slate-200/90 max-w-md font-sans rounded-3xl p-6 shadow-2xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg font-bold text-amber-400">
-            <Pencil className="w-5 h-5" /> Edit Petty Cash Expense
+          <DialogTitle className="flex items-center gap-2 text-lg font-black text-slate-900">
+            <Pencil className="w-5 h-5 text-amber-600" /> Kemaskini Perbelanjaan Tunai (Petty Cash)
           </DialogTitle>
-          <DialogDescription className="text-slate-400 text-xs">
-            Modify amount, category, or replace receipt proof. All changes are logged into the audit trail.
+          <DialogDescription className="text-slate-500 text-xs">
+            Ubahsuai jumlah wang, kategori, atau gantikan bukti gambar resit. Semua perubahan direkodkan ke jejak audit.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* EXPENSE CATEGORY */}
           <div className="space-y-1.5 font-sans">
-            <label className="text-xs font-semibold text-slate-300">Expense Category</label>
+            <label className="text-xs font-bold text-slate-700">Kategori Perbelanjaan</label>
             <Select value={expenseType} onValueChange={setExpenseType}>
-              <SelectTrigger className="bg-slate-950 border-slate-800 text-white h-10">
-                <SelectValue placeholder="Select category" />
+              <SelectTrigger className="bg-white border-slate-200 text-slate-900 font-bold h-10 rounded-xl shadow-2xs">
+                <SelectValue placeholder="Pilih kategori" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-800 text-white">
+              <SelectContent className="bg-white border-slate-200 text-slate-900 font-bold rounded-xl shadow-xl">
                 {EXPENSE_CATEGORIES.map((cat) => {
                   const IconComp = cat.icon;
                   return (
-                    <SelectItem key={cat.id} value={cat.id} className="hover:bg-slate-800 cursor-pointer">
+                    <SelectItem key={cat.id} value={cat.id} className="hover:bg-slate-50 cursor-pointer">
                       <div className="flex items-center gap-2">
-                        <IconComp className="w-4 h-4 text-amber-400" />
+                        <IconComp className="w-4 h-4 text-amber-600" />
                         <span>{cat.label}</span>
                       </div>
                     </SelectItem>
@@ -350,7 +350,7 @@ export function EditExpenseModal({ isOpen, onClose, onSuccess, expense, dailyCas
 
           {/* AMOUNT INPUT */}
           <div className="space-y-1.5 font-sans">
-            <label className="text-xs font-semibold text-slate-300">Amount Withdrawn (RM)</label>
+            <label className="text-xs font-bold text-slate-700">Jumlah Dikeluarkan (RM)</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-mono text-sm font-bold">RM</span>
               <Input
@@ -359,7 +359,7 @@ export function EditExpenseModal({ isOpen, onClose, onSuccess, expense, dailyCas
                 min="0.01"
                 value={amountInput}
                 onChange={(e) => setAmountInput(e.target.value)}
-                className="bg-slate-950 border-slate-800 pl-10 text-white font-mono text-base font-bold h-10"
+                className="bg-white border-slate-200 pl-11 text-slate-900 font-mono text-base font-black h-10 rounded-xl shadow-2xs"
                 required
               />
             </div>
@@ -367,42 +367,42 @@ export function EditExpenseModal({ isOpen, onClose, onSuccess, expense, dailyCas
 
           {/* DESCRIPTION */}
           <div className="space-y-1.5 font-sans">
-            <label className="text-xs font-semibold text-slate-300">Description / Reason</label>
+            <label className="text-xs font-bold text-slate-700">Penerangan / Sebab</label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="bg-slate-950 border-slate-800 text-white text-xs min-h-[70px] resize-none"
-              placeholder="e.g. Bought 2 gas cylinders from Shell"
+              className="bg-white border-slate-200 text-slate-900 text-xs min-h-[70px] resize-none rounded-xl shadow-2xs"
+              placeholder="cth: Beli 2 tong gas dari stesen minyak Shell"
               required
             />
           </div>
 
           {/* RECEIPT MANAGEMENT SECTION */}
-          <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-2 font-sans">
-            <label className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-mono">
-              <Receipt className="w-4 h-4" /> Attached Receipt Photo
+          <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-2.5 font-sans">
+            <label className="text-xs font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1.5 font-mono">
+              <Receipt className="w-4 h-4 text-amber-600" /> Gambar Bukti Resit
             </label>
 
             {/* Existing Receipt Preview */}
             {existingReceiptUrl && !removeExistingReceipt && !newReceiptPreview && (
-              <div className="flex flex-col items-center gap-2 p-2 bg-slate-900 rounded-lg border border-slate-800">
+              <div className="flex flex-col items-center gap-2 p-2 bg-white rounded-xl border border-slate-200">
                 <img
                   src={existingReceiptUrl}
                   alt="Existing Receipt"
-                  className="w-full max-h-40 object-contain rounded border border-slate-800"
+                  className="w-full max-h-40 object-contain rounded-lg border border-slate-100"
                 />
                 <div className="flex items-center gap-2 w-full justify-between pt-1">
-                  <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
-                    <Receipt className="w-3 h-3" /> Current Receipt Attached
+                  <span className="text-[10px] text-emerald-700 font-mono font-bold flex items-center gap-1">
+                    <Receipt className="w-3 h-3" /> Resit Semasa Dilampirkan
                   </span>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={() => setRemoveExistingReceipt(true)}
-                    className="h-6 text-[10px] text-rose-400 hover:text-rose-300 hover:bg-rose-950/40"
+                    className="h-7 text-[10px] text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg font-bold"
                   >
-                    <Trash2 className="w-3 h-3 mr-1" /> Remove
+                    <Trash2 className="w-3 h-3 mr-1" /> Padam
                   </Button>
                 </div>
               </div>
@@ -410,22 +410,22 @@ export function EditExpenseModal({ isOpen, onClose, onSuccess, expense, dailyCas
 
             {/* New Replacement Receipt Preview */}
             {newReceiptPreview && (
-              <div className="flex flex-col items-center gap-2 p-2 bg-slate-900 rounded-lg border border-amber-500/40">
+              <div className="flex flex-col items-center gap-2 p-2 bg-white rounded-xl border border-amber-300">
                 <img
                   src={newReceiptPreview}
                   alt="New Replacement Receipt"
-                  className="w-full max-h-40 object-contain rounded border border-slate-800"
+                  className="w-full max-h-40 object-contain rounded-lg border border-slate-100"
                 />
                 <div className="flex items-center gap-2 w-full justify-between pt-1">
-                  <span className="text-[10px] text-amber-400 font-mono">New Replacement Photo Ready</span>
+                  <span className="text-[10px] text-amber-800 font-mono font-bold">Foto Pengganti Sedia Dilampirkan</span>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
                     onClick={handleDiscardNewPhoto}
-                    className="h-6 text-[10px] text-rose-400 hover:text-rose-300 hover:bg-rose-950/40"
+                    className="h-7 text-[10px] text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-lg font-bold"
                   >
-                    <X className="w-3 h-3 mr-1" /> Discard
+                    <X className="w-3 h-3 mr-1" /> Batal
                   </Button>
                 </div>
               </div>
@@ -452,16 +452,16 @@ export function EditExpenseModal({ isOpen, onClose, onSuccess, expense, dailyCas
               <div className="grid grid-cols-2 gap-2 pt-1">
                 <label
                   htmlFor="edit-camera-input"
-                  className="cursor-pointer bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center justify-center gap-1.5 py-2 rounded-lg text-center"
+                  className="cursor-pointer bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-center transition-all shadow-2xs"
                 >
-                  <Camera className="w-3.5 h-3.5 text-amber-400" /> TAKE NEW PHOTO
+                  <Camera className="w-3.5 h-3.5 text-amber-600" /> AMBIL FOTO BARU
                 </label>
 
                 <label
                   htmlFor="edit-file-input"
-                  className="cursor-pointer bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 font-bold text-xs flex items-center justify-center gap-1.5 py-2 rounded-lg text-center"
+                  className="cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-xs flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-center transition-all shadow-2xs"
                 >
-                  <Upload className="w-3.5 h-3.5 text-emerald-400" /> UPLOAD NEW
+                  <Upload className="w-3.5 h-3.5 text-emerald-600" /> MUAT NAIK BARU
                 </label>
               </div>
             )}
@@ -472,22 +472,22 @@ export function EditExpenseModal({ isOpen, onClose, onSuccess, expense, dailyCas
               type="button"
               variant="outline"
               onClick={onClose}
-              className="border-slate-800 text-slate-300 hover:bg-slate-800"
+              className="border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl"
               disabled={isSubmitting}
             >
-              Cancel
+              Batal
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="bg-amber-600 hover:bg-amber-500 text-white font-bold"
+              className="bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-sm shadow-amber-600/20"
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
-                  <Loader2 className="w-4 h-4 animate-spin" /> Saving Changes...
+                  <Loader2 className="w-4 h-4 animate-spin" /> Menyimpan Perubahan...
                 </span>
               ) : (
-                'Save Expense Edit'
+                'Simpan Kemaskini'
               )}
             </Button>
           </DialogFooter>

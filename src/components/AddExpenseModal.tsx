@@ -369,29 +369,29 @@ export function AddExpenseModal({ isOpen, onClose, onSuccess, dailyCashId, store
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-slate-900 text-white border-slate-800 max-w-md max-h-[90vh] overflow-y-auto">
+      <DialogContent className="bg-white text-slate-900 border-slate-200/90 max-w-md max-h-[90vh] overflow-y-auto rounded-3xl p-6 shadow-2xl font-sans">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold text-amber-400">
-            <DollarSign className="w-5 h-5" /> Record Cash Drawer Expense
+          <DialogTitle className="flex items-center gap-2 text-xl font-black text-slate-900">
+            <DollarSign className="w-5 h-5 text-amber-600" /> Rekod Perbelanjaan Tunai (Drawer Expense)
           </DialogTitle>
-          <DialogDescription className="text-slate-400 text-xs">
-            Log petty cash withdrawn from the register for emergency purchases or operational costs.
+          <DialogDescription className="text-slate-500 text-xs">
+            Catat wang tunai kecil (petty cash) yang dikeluarkan daripada laci tunai untuk pembelian kecemasan atau kos operasi.
           </DialogDescription>
         </DialogHeader>
 
         {/* RECEIPT CAPTURE & OCR SECTION */}
-        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-3 font-sans">
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3 font-sans">
           <div className="flex justify-between items-center">
-            <label className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5 font-mono">
-              <Receipt className="w-4 h-4" /> 1. Upload / Scan Receipt (OCR AI)
+            <label className="text-xs font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1.5 font-mono">
+              <Receipt className="w-4 h-4 text-amber-600" /> 1. Imbas / Muat Naik Resit (AI OCR)
             </label>
             {receiptPreviewUrl && (
               <button
                 type="button"
                 onClick={handleDiscardReceipt}
-                className="text-[10px] text-rose-400 hover:text-rose-300 font-mono flex items-center gap-1 bg-rose-950/60 px-2 py-0.5 rounded border border-rose-800"
+                className="text-[10px] text-rose-600 hover:text-rose-700 font-bold flex items-center gap-1 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-200"
               >
-                <X className="w-3 h-3" /> Discard
+                <X className="w-3 h-3" /> Buang
               </button>
             )}
           </div>
@@ -413,69 +413,69 @@ export function AddExpenseModal({ isOpen, onClose, onSuccess, dailyCashId, store
             onChange={handleFileSelect}
           />
 
-          {/* Capture / Upload Action Buttons (Native Label Touch Triggers) */}
+          {/* Capture / Upload Action Buttons */}
           {!receiptPreviewUrl ? (
             <div className="grid grid-cols-2 gap-2">
               <label
                 htmlFor="mobile-camera-capture-input"
-                className="cursor-pointer bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 border border-amber-500/30 font-bold text-xs flex items-center justify-center gap-2 py-3 rounded-xl shadow active:scale-95 transition-all text-center"
+                className="cursor-pointer bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs flex items-center justify-center gap-2 py-3 rounded-xl shadow-2xs active:scale-95 transition-all text-center"
               >
-                <Camera className="w-4 h-4 text-amber-400" /> 📷 TAKE PHOTO
+                <Camera className="w-4 h-4 text-amber-600" /> 📷 AMBIL FOTO
               </label>
 
               <label
                 htmlFor="mobile-gallery-upload-input"
-                className="cursor-pointer bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 font-bold text-xs flex items-center justify-center gap-2 py-3 rounded-xl shadow active:scale-95 transition-all text-center"
+                className="cursor-pointer bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-bold text-xs flex items-center justify-center gap-2 py-3 rounded-xl shadow-2xs active:scale-95 transition-all text-center"
               >
-                <Upload className="w-4 h-4 text-emerald-400" /> 📁 UPLOAD IMAGE
+                <Upload className="w-4 h-4 text-emerald-600" /> 📁 GALERI / FAIL
               </label>
             </div>
           ) : (
             /* Receipt Image Preview Container */
-            <div className="relative rounded-xl overflow-hidden border border-slate-800 bg-slate-900 p-2 flex flex-col items-center gap-2">
+            <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-white p-2 flex flex-col items-center gap-2">
               <img
                 src={receiptPreviewUrl}
                 alt="Receipt Preview"
-                className="w-full max-h-48 object-contain rounded-lg border border-slate-800"
+                className="w-full max-h-48 object-contain rounded-lg border border-slate-100"
               />
 
               {isScanningOcr ? (
-                <div className="w-full bg-slate-950 p-2.5 rounded-lg border border-amber-500/40 flex items-center justify-center gap-2 text-xs font-mono text-amber-300 animate-pulse">
-                  <Loader2 className="w-4 h-4 animate-spin text-amber-400" />
-                  <span>{ocrStatus || 'Scanning receipt with OCR...'}</span>
+                <div className="w-full bg-amber-50 p-2.5 rounded-xl border border-amber-200 flex items-center justify-center gap-2 text-xs font-mono text-amber-800 animate-pulse">
+                  <Loader2 className="w-4 h-4 animate-spin text-amber-600" />
+                  <span>{ocrStatus || 'Mengimbas resit melalui OCR...'}</span>
                 </div>
               ) : ocrDetectedInfo ? (
-                <div className="w-full bg-emerald-950/60 p-2 rounded-lg border border-emerald-500/40 text-[11px] font-mono text-emerald-300 space-y-0.5">
+                <div className="w-full bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 text-[11px] font-mono text-emerald-800 space-y-0.5">
                   <div className="flex justify-between font-bold">
-                    <span>Vendor: {ocrDetectedInfo.vendor || 'Detected'}</span>
-                    <span>Date: {ocrDetectedInfo.date || 'Auto'}</span>
+                    <span>Penjual: {ocrDetectedInfo.vendor || 'Dikesan'}</span>
+                    <span>Tarikh: {ocrDetectedInfo.date || 'Auto'}</span>
                   </div>
-                  <div className="flex justify-between text-white font-bold">
-                    <span>Detected Amount:</span>
-                    <span className="text-emerald-400">RM {ocrDetectedInfo.amount ? ocrDetectedInfo.amount.toFixed(2) : 'Check Manual'}</span>
+                  <div className="flex justify-between text-slate-900 font-black">
+                    <span>Jumlah Dikesan:</span>
+                    <span className="text-emerald-700 font-black text-sm">RM {ocrDetectedInfo.amount ? ocrDetectedInfo.amount.toFixed(2) : 'Sila Semak'}</span>
                   </div>
                 </div>
               ) : (
-                <span className="text-[10px] text-emerald-400 font-mono font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Receipt Attached ✓
+                <span className="text-[10px] text-emerald-700 font-mono font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Resit Dilampirkan ✓
                 </span>
               )}
             </div>
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-2 font-mono text-xs">
+        <form onSubmit={handleSubmit} className="space-y-4 py-2 text-xs">
           
           {/* CATEGORY SELECT */}
           <div>
-            <label className="text-slate-400 uppercase font-bold block mb-1 text-[11px]">
-              Expense Type *
+            <label className="text-slate-700 uppercase font-bold block mb-1 text-[11px]">
+              Kategori Perbelanjaan *
             </label>
             <Select value={expenseType} onValueChange={setExpenseType}>
-              <SelectTrigger className="bg-slate-950 border-slate-800 text-white font-bold">
-                <SelectValue placeholder="Select category..." />
+              <SelectTrigger className="bg-white border-slate-200 text-slate-900 font-bold rounded-xl h-10 shadow-2xs">
+                <SelectValue placeholder="Pilih kategori..." />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-800 text-white font-bold">
+              <SelectContent className="bg-white border-slate-200 text-slate-900 font-bold rounded-xl shadow-xl">
                 {EXPENSE_CATEGORIES.map(c => (
                   <SelectItem key={c.id} value={c.id}>
                     {c.label}
@@ -487,11 +487,11 @@ export function AddExpenseModal({ isOpen, onClose, onSuccess, dailyCashId, store
 
           {/* AMOUNT INPUT */}
           <div>
-            <label className="text-slate-400 uppercase font-bold block mb-1 text-[11px]">
-              Withdrawn Amount (RM) *
+            <label className="text-slate-700 uppercase font-bold block mb-1 text-[11px]">
+              Jumlah Dikeluarkan (RM) *
             </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-400 font-bold text-sm">RM</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-amber-600 font-black text-sm">RM</span>
               <Input
                 type="number"
                 step="0.10"
@@ -499,7 +499,7 @@ export function AddExpenseModal({ isOpen, onClose, onSuccess, dailyCashId, store
                 value={amountInput}
                 onChange={(e) => setAmountInput(e.target.value)}
                 placeholder="50.00"
-                className="pl-10 bg-slate-950 border-slate-800 text-white font-mono font-bold text-base text-amber-400"
+                className="pl-11 bg-white border-slate-200 text-slate-900 font-mono font-black text-base rounded-xl h-10 shadow-2xs"
                 required
               />
             </div>
@@ -507,31 +507,31 @@ export function AddExpenseModal({ isOpen, onClose, onSuccess, dailyCashId, store
 
           {/* DESCRIPTION */}
           <div>
-            <label className="text-slate-400 uppercase font-bold block mb-1 text-[11px]">
-              Description / Reason *
+            <label className="text-slate-700 uppercase font-bold block mb-1 text-[11px]">
+              Penerangan / Sebab *
             </label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g. Gas cylinder refill for cooking / Emergency ice bags"
-              className="bg-slate-950 border-slate-800 text-white text-xs"
+              placeholder="cth: Beli tong gas memasak / Ais kecemasan"
+              className="bg-white border-slate-200 text-slate-900 text-xs rounded-xl shadow-2xs"
               rows={2}
               required
             />
           </div>
 
           {/* RECORDED BY INFO */}
-          <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center text-slate-400">
-            <span>Recorded By:</span>
-            <span className="font-bold text-emerald-400">{staffName}</span>
+          <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 flex justify-between items-center text-slate-500 font-mono">
+            <span>Direkod Oleh:</span>
+            <span className="font-bold text-emerald-700">{staffName}</span>
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0 pt-2">
-            <Button type="button" variant="outline" onClick={onClose} className="border-slate-700 text-slate-300">
-              Cancel
+            <Button type="button" variant="outline" onClick={onClose} className="border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl">
+              Batal
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="bg-amber-600 hover:bg-amber-500 text-white font-bold">
-              {isSubmitting ? 'Recording Expense...' : 'Save Cash Expense'}
+            <Button type="submit" disabled={isSubmitting} className="bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-sm shadow-amber-600/20">
+              {isSubmitting ? 'Merekod Perbelanjaan...' : 'Simpan Perbelanjaan Tunai'}
             </Button>
           </DialogFooter>
 

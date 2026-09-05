@@ -130,71 +130,71 @@ export function ReopenRegisterModal({ isOpen, onClose, onSuccess, closedAt }: Re
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-slate-900 text-white border-slate-800 max-w-lg">
+      <DialogContent className="bg-white text-slate-900 border-slate-200/90 max-w-lg rounded-3xl p-6 shadow-2xl font-sans">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold text-amber-400">
-            <Unlock className="w-5 h-5" /> Reopen Register for Corrections?
+          <DialogTitle className="flex items-center gap-2 text-xl font-black text-slate-900">
+            <Unlock className="w-5 h-5 text-amber-600" /> Buka Semula Sesi Daftar Wang?
           </DialogTitle>
-          <DialogDescription className="text-slate-400 text-xs">
-            Emergency override: Unlock the register to edit or delete today's transactions.
+          <DialogDescription className="text-slate-500 text-xs">
+            Akses kecemasan: Membuka semula daftar tunai untuk menyunting atau membetulkan transaksi hari ini.
           </DialogDescription>
         </DialogHeader>
 
         {/* ROLE PERMISSION CHECK */}
         {!isAuthorized ? (
-          <div className="bg-rose-500/10 border border-rose-500/30 p-6 rounded-xl text-center space-y-3">
-            <ShieldAlert className="w-12 h-12 text-rose-400 mx-auto" />
-            <h3 className="text-lg font-bold text-rose-300">Reopen Locked — Contact Manager</h3>
-            <p className="text-xs text-slate-400">
-              Your role (<span className="font-bold text-white uppercase">{userRole || 'Staff'}</span>) is not authorized to reopen closed shifts. Please ask an Admin or Cashier to authorize this action.
+          <div className="bg-rose-50 border border-rose-200 p-6 rounded-2xl text-center space-y-3">
+            <ShieldAlert className="w-12 h-12 text-rose-600 mx-auto" />
+            <h3 className="text-lg font-black text-rose-950">Akses Dikunci — Sila Hubungi Pengurus</h3>
+            <p className="text-xs text-rose-700">
+              Peranan anda (<span className="font-bold uppercase">{userRole || 'Staff'}</span>) tidak dibenarkan membuka semula sesi yang telah ditutup. Sila minta Admin atau Juruwang membuka kunci ini.
             </p>
-            <Button onClick={onClose} variant="outline" className="border-slate-700 text-slate-300 mt-2">
-              Close
+            <Button onClick={onClose} variant="outline" className="border-slate-200 text-slate-700 mt-2 rounded-xl">
+              Tutup
             </Button>
           </div>
         ) : (
-          <div className="space-y-4 py-2 font-mono text-xs">
+          <div className="space-y-4 py-2 text-xs">
             
             {/* WARNING ALERT BANNER */}
-            <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-xl text-amber-300 space-y-1">
-              <div className="flex items-center gap-2 font-bold text-sm text-amber-400">
-                <AlertTriangle className="w-4 h-4" /> ⚠️ WARNING
+            <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-amber-950 space-y-1">
+              <div className="flex items-center gap-2 font-bold text-sm text-amber-800">
+                <AlertTriangle className="w-4 h-4 text-amber-600" /> ⚠️ PERINGATAN INTEGRITI POS
               </div>
-              <p>
-                This will unlock the counter and order management across all devices. You <strong>MUST</strong> re-close the register after making your corrections to ensure audit compliance.
+              <p className="text-amber-800">
+                Tindakan ini akan membuka semula kaunter dan pesanan merentasi semua tablet. Anda <strong>WAJIB</strong> menutup semula daftar tunai selepas pembetulan selesai untuk tujuan rekod audit.
               </p>
             </div>
 
             {/* STATUS INFO */}
-            <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 space-y-1">
-              <div className="flex justify-between text-slate-400">
-                <span>Current Status:</span>
-                <span className="font-bold text-rose-400">CLOSED</span>
+            <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-1.5 font-mono">
+              <div className="flex justify-between text-slate-500">
+                <span>Status Semasa:</span>
+                <span className="font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">DITUTUP (CLOSED)</span>
               </div>
               {closedAt && (
-                <div className="flex justify-between text-slate-400">
-                  <span>Closed At:</span>
-                  <span className="font-bold text-white">
+                <div className="flex justify-between text-slate-500">
+                  <span>Waktu Ditutup:</span>
+                  <span className="font-bold text-slate-800">
                     {new Date(closedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
               )}
-              <div className="flex justify-between text-slate-400">
-                <span>Authorized Staff:</span>
-                <span className="font-bold text-emerald-400">{userName} ({userRole?.toUpperCase()})</span>
+              <div className="flex justify-between text-slate-500">
+                <span>Staf Diberi Kuasa:</span>
+                <span className="font-bold text-emerald-700">{userName} ({userRole?.toUpperCase()})</span>
               </div>
             </div>
 
             {/* REASON DROPDOWN */}
             <div>
-              <label className="text-slate-400 uppercase font-bold block mb-1 text-[11px]">
-                Reason for Reopen * (Required)
+              <label className="text-slate-700 uppercase font-bold block mb-1 text-[11px]">
+                Sebab Buka Semula * (Wajib)
               </label>
               <Select value={reason} onValueChange={setReason}>
-                <SelectTrigger className="bg-slate-950 border-slate-800 text-white font-bold">
-                  <SelectValue placeholder="Select reason..." />
+                <SelectTrigger className="bg-white border-slate-200 text-slate-900 font-bold rounded-xl h-10 shadow-2xs">
+                  <SelectValue placeholder="Pilih sebab..." />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-800 text-white font-bold">
+                <SelectContent className="bg-white border-slate-200 text-slate-900 font-bold rounded-xl shadow-xl">
                   {REOPEN_REASONS.map(r => (
                     <SelectItem key={r} value={r}>{r}</SelectItem>
                   ))}
@@ -204,24 +204,24 @@ export function ReopenRegisterModal({ isOpen, onClose, onSuccess, closedAt }: Re
 
             {/* OPTIONAL NOTES */}
             <div>
-              <label className="text-slate-400 uppercase font-bold block mb-1 text-[11px]">
-                Additional Audit Notes (Optional)
+              <label className="text-slate-700 uppercase font-bold block mb-1 text-[11px]">
+                Catatan Tambahan Audit (Pilihan)
               </label>
               <Textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Details about customer request or error correction..."
-                className="bg-slate-950 border-slate-800 text-white text-xs"
+                placeholder="Butiran mengenai pembetulan atau permintaan pelanggan..."
+                className="bg-white border-slate-200 text-slate-900 text-xs rounded-xl shadow-2xs"
                 rows={2}
               />
             </div>
 
             <DialogFooter className="gap-2 sm:gap-0 pt-2">
-              <Button variant="outline" onClick={onClose} className="border-slate-700 text-slate-300">
-                No, Cancel
+              <Button variant="outline" onClick={onClose} className="border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl">
+                Batal
               </Button>
-              <Button onClick={handleReopen} disabled={isSubmitting} className="bg-amber-600 hover:bg-amber-500 text-white font-bold">
-                {isSubmitting ? 'Reopening...' : 'Yes, Reopen Register'}
+              <Button onClick={handleReopen} disabled={isSubmitting} className="bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-sm shadow-amber-600/20">
+                {isSubmitting ? 'Membuka Semula...' : 'Ya, Buka Semula Daftar'}
               </Button>
             </DialogFooter>
           </div>

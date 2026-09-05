@@ -258,15 +258,15 @@ export function DishAddonsCustomizer() {
 
   return (
     <>
-      <Card className="bg-slate-900 border-slate-800 text-white rounded-2xl shadow-xl overflow-hidden font-mono">
-        <CardHeader className="border-b border-slate-800 pb-4 bg-slate-950/40">
+      <Card className="bg-white border-slate-200/90 text-slate-900 rounded-3xl shadow-xs overflow-hidden font-sans">
+        <CardHeader className="border-b border-slate-100 pb-4 bg-slate-50/50">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <CardTitle className="text-xl font-black flex items-center gap-2 text-white">
-                <Utensils className="w-5 h-5 text-emerald-400" />
+              <CardTitle className="text-xl font-black flex items-center gap-2 text-slate-900">
+                <Utensils className="w-5 h-5 text-orange-600" />
                 <span>Pengurusan Tambahan Pilihan (*Dish Add-ons*)</span>
               </CardTitle>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-500 mt-1">
                 Urus, edit gambar, harga dan nama add-ons. Semua item diselaraskan secara automatik ke menu pelanggan (QR & Delivery).
               </p>
             </div>
@@ -277,7 +277,7 @@ export function DishAddonsCustomizer() {
                 size="sm"
                 disabled={isSyncing}
                 onClick={handleManualSync}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md"
+                className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm shadow-orange-500/20 rounded-xl h-8 px-3"
               >
                 {isSyncing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
                 <span>{isSyncing ? 'Sedang Selaras...' : 'Selaraskan ke Menu Utama'}</span>
@@ -287,7 +287,7 @@ export function DishAddonsCustomizer() {
                 variant="outline"
                 size="sm"
                 onClick={handleResetDefaults}
-                className="border-slate-800 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white text-xs flex items-center gap-1.5"
+                className="border-slate-200 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 text-xs flex items-center gap-1.5 rounded-xl h-8 px-3"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Reset Asal</span>
@@ -298,25 +298,25 @@ export function DishAddonsCustomizer() {
 
         <CardContent className="p-6 space-y-6">
           {/* ADD NEW ADD-ON FORM */}
-          <form onSubmit={handleAddAddon} className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-4 shadow-inner">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
+          <form onSubmit={handleAddAddon} className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-4 shadow-2xs">
+            <span className="text-xs font-bold uppercase tracking-wider text-orange-600 flex items-center gap-1.5">
               <Plus className="w-4 h-4" /> Tambah Add-on / Sampingan Baharu
             </span>
 
             {/* PHOTO PREVIEW & UPLOAD (DIRECT CAMERA OR GALLERY) */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-slate-900/70 rounded-xl border border-slate-800">
-              <div className="w-16 h-16 bg-slate-950 border border-slate-800 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-white rounded-xl border border-slate-200/90 shadow-2xs">
+              <div className="w-16 h-16 bg-slate-50 border border-slate-200 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
                 {newImageUrl ? (
                   <img src={newImageUrl} alt="Addon Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <ImageIcon className="w-7 h-7 text-slate-700" />
+                  <ImageIcon className="w-7 h-7 text-slate-400" />
                 )}
               </div>
 
               <div className="flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   {/* DIRECT CAMERA SNAP BUTTON */}
-                  <label className="cursor-pointer inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 active:scale-95 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md">
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs">
                     {uploadingNewPhoto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
                     <span>{uploadingNewPhoto ? 'Memproses...' : '📸 Ambil Gambar Terus (Kamera)'}</span>
                     <input 
@@ -330,7 +330,7 @@ export function DishAddonsCustomizer() {
                   </label>
 
                   {/* GALLERY / FILE PICKER BUTTON */}
-                  <label className="cursor-pointer inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all">
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 active:scale-95 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs">
                     <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
                     <span>Pilih dari Galeri / Fail</span>
                     <input 
@@ -346,14 +346,14 @@ export function DishAddonsCustomizer() {
                     <button 
                       type="button" 
                       onClick={() => setNewImageUrl('')} 
-                      className="text-xs text-rose-400 hover:underline px-2 py-1"
+                      className="text-xs text-rose-600 hover:underline px-2 py-1 font-bold"
                     >
                       Buang foto
                     </button>
                   )}
                 </div>
 
-                <p className="text-[10px] text-slate-400 font-mono">
+                <p className="text-[10px] text-slate-500 font-sans">
                   💡 Ambil gambar guna kamera telefon secara terus atau pilih gambar makanan yang sedia ada dari galeri.
                 </p>
               </div>
@@ -361,27 +361,27 @@ export function DishAddonsCustomizer() {
 
             <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
               <div className="sm:col-span-7">
-                <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Nama Add-on</label>
+                <label className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Nama Add-on</label>
                 <Input
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
                   placeholder="Contoh: Telur Dadar Crispy / Ekstra Sambal"
-                  className="bg-slate-900 border-slate-800 text-white text-xs h-9"
+                  className="bg-white border-slate-200 text-slate-900 text-xs h-9 rounded-xl shadow-2xs"
                   required
                 />
               </div>
 
               <div className="sm:col-span-3">
-                <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Harga Tambahan (RM)</label>
+                <label className="text-[10px] text-slate-500 uppercase font-bold block mb-1">Harga Tambahan (RM)</label>
                 <div className="relative">
-                  <span className="absolute left-2.5 top-2 text-xs text-slate-500 font-bold">RM</span>
+                  <span className="absolute left-2.5 top-2 text-xs text-slate-400 font-bold">RM</span>
                   <Input
                     type="number"
                     step="0.10"
                     min="0"
                     value={newPrice}
                     onChange={(e) => setNewPrice(e.target.value)}
-                    className="bg-slate-900 border-slate-800 text-white text-xs h-9 pl-9 font-bold"
+                    className="bg-white border-slate-200 text-slate-900 text-xs h-9 pl-9 font-bold rounded-xl shadow-2xs"
                     required
                   />
                 </div>
@@ -391,7 +391,7 @@ export function DishAddonsCustomizer() {
                 <Button
                   type="submit"
                   disabled={uploadingNewPhoto}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-9 text-xs flex items-center justify-center gap-1"
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold h-9 text-xs flex items-center justify-center gap-1 rounded-xl shadow-xs"
                 >
                   <Plus className="w-3.5 h-3.5" /> Tambah
                 </Button>
@@ -410,7 +410,7 @@ export function DishAddonsCustomizer() {
                       setNewName(preset.name);
                       setNewPrice(preset.price.toFixed(2));
                     }}
-                    className="text-[10px] bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 hover:border-slate-700 px-2 py-1 rounded-lg transition-all"
+                    className="text-[10px] bg-white hover:bg-orange-50 text-slate-700 border border-slate-200 hover:border-orange-300 px-2 py-1 rounded-lg transition-all shadow-2xs"
                   >
                     + {preset.name} (RM {preset.price.toFixed(2)})
                   </button>
@@ -422,14 +422,14 @@ export function DishAddonsCustomizer() {
           {/* EXISTING ADD-ONS LIST */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
                 Senarai Tambahan Pilihan Semasa ({addons.length} Add-on)
               </span>
-              <span className="text-[10px] text-slate-500">Auto-simpan & selaras serta-merta</span>
+              <span className="text-[10px] text-slate-500 font-mono">Auto-simpan & selaras serta-merta</span>
             </div>
 
             {addons.length === 0 ? (
-              <div className="p-8 text-center bg-slate-950/40 rounded-xl border border-slate-800/60 text-slate-500 text-xs">
+              <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200/80 text-slate-500 text-xs">
                 Tiada add-on didaftarkan. Sila tambah menggunakan borang di atas.
               </div>
             ) : (
@@ -437,20 +437,20 @@ export function DishAddonsCustomizer() {
                 {addons.map((addon) => (
                   <div
                     key={addon.id}
-                    className={`p-3.5 rounded-xl border transition-all flex items-center justify-between gap-3 ${
+                    className={`p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
                       addon.available
-                        ? 'bg-slate-950/90 border-slate-800 hover:border-slate-700 shadow-md'
-                        : 'bg-slate-950/30 border-slate-900 opacity-60'
+                        ? 'bg-white border-slate-200/90 hover:border-orange-200 shadow-2xs'
+                        : 'bg-slate-50/60 border-slate-200/60 opacity-60'
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       {/* THUMBNAIL PHOTO OR ICON */}
-                      <div className="w-11 h-11 rounded-lg bg-slate-900 border border-slate-800 overflow-hidden flex items-center justify-center shrink-0">
+                      <div className="w-11 h-11 rounded-xl bg-slate-50 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
                         {addon.imageUrl ? (
                           <img src={addon.imageUrl} alt={addon.name} className="w-full h-full object-cover" />
                         ) : (
                           <div className={`w-full h-full flex items-center justify-center ${
-                            addon.available ? 'text-emerald-400 bg-emerald-500/10' : 'text-slate-600 bg-slate-900'
+                            addon.available ? 'text-orange-600 bg-orange-50' : 'text-slate-400 bg-slate-100'
                           }`}>
                             <Utensils className="w-4 h-4" />
                           </div>
@@ -458,13 +458,13 @@ export function DishAddonsCustomizer() {
                       </div>
 
                       <div className="min-w-0">
-                        <h4 className="text-xs font-bold text-white truncate">{addon.name}</h4>
+                        <h4 className="text-xs font-bold text-slate-900 truncate">{addon.name}</h4>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[11px] font-black text-emerald-400">
+                          <span className="text-[11px] font-black text-orange-600 font-mono">
                             +RM {addon.price.toFixed(2)}
                           </span>
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
-                            addon.available ? 'bg-emerald-950 text-emerald-300 border border-emerald-500/20' : 'bg-rose-950 text-rose-300 border border-rose-500/20'
+                          <span className={`text-[9px] px-2 py-0.2 rounded-full font-bold uppercase ${
+                            addon.available ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'
                           }`}>
                             {addon.available ? 'Aktif' : 'Nyahaktif'}
                           </span>
@@ -476,10 +476,10 @@ export function DishAddonsCustomizer() {
                       {/* EDIT BUTTON (PENCIL) */}
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
                         onClick={() => handleOpenEdit(addon)}
-                        className="h-8 w-8 text-amber-400 hover:bg-amber-950/40 border border-amber-500/20 rounded-lg"
+                        className="h-8 w-8 text-amber-700 hover:bg-amber-50 border-amber-200 rounded-xl"
                         title="Edit nama, harga & gambar add-on"
                       >
                         <Pencil className="w-3.5 h-3.5" />
@@ -494,10 +494,10 @@ export function DishAddonsCustomizer() {
                       {/* REMOVE BUTTON */}
                       <Button
                         type="button"
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
                         onClick={() => handleRemoveAddon(addon.id)}
-                        className="h-8 w-8 text-rose-400 hover:bg-rose-950/40 border border-rose-500/20 rounded-lg"
+                        className="h-8 w-8 text-rose-700 hover:bg-rose-50 border-rose-200 rounded-xl"
                         title="Padam add-on ini"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -513,29 +513,29 @@ export function DishAddonsCustomizer() {
 
       {/* EDIT ADDON DIALOG MODAL */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="bg-slate-900 border-slate-800 text-white max-w-md font-sans">
+        <DialogContent className="bg-white border-slate-200/90 text-slate-900 max-w-md font-sans rounded-3xl p-6 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-white">
-              <Pencil className="w-4 h-4 text-amber-400" />
+            <DialogTitle className="text-lg font-black flex items-center gap-2 text-slate-900">
+              <Pencil className="w-4 h-4 text-orange-500" />
               <span>Edit Add-on / Sampingan</span>
             </DialogTitle>
           </DialogHeader>
 
           <form onSubmit={handleSaveEdit} className="space-y-4 pt-2">
             {/* PHOTO UPLOAD IN MODAL (DIRECT CAMERA OR GALLERY) */}
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-slate-950 rounded-xl border border-slate-800">
-              <div className="w-16 h-16 bg-slate-900 border border-slate-800 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 bg-slate-50 rounded-2xl border border-slate-200">
+              <div className="w-16 h-16 bg-white border border-slate-200 rounded-xl overflow-hidden flex items-center justify-center shrink-0">
                 {editImageUrl ? (
                   <img src={editImageUrl} alt="Addon Preview" className="w-full h-full object-cover" />
                 ) : (
-                  <ImageIcon className="w-7 h-7 text-slate-700" />
+                  <ImageIcon className="w-7 h-7 text-slate-400" />
                 )}
               </div>
 
               <div className="flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   {/* DIRECT CAMERA SNAP BUTTON */}
-                  <label className="cursor-pointer inline-flex items-center gap-1.5 bg-amber-600 hover:bg-amber-500 active:scale-95 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-md">
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 bg-orange-500 hover:bg-orange-600 active:scale-95 text-white px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-xs">
                     {uploadingEditPhoto ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
                     <span>{uploadingEditPhoto ? 'Memproses...' : '📸 Kamera Terus'}</span>
                     <input 
@@ -549,7 +549,7 @@ export function DishAddonsCustomizer() {
                   </label>
 
                   {/* GALLERY / FILE PICKER BUTTON */}
-                  <label className="cursor-pointer inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 active:scale-95 border border-slate-700 text-slate-200 px-3 py-1.5 rounded-xl text-xs font-bold transition-all">
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 bg-white hover:bg-slate-50 active:scale-95 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition-all shadow-2xs">
                     <ImageIcon className="w-3.5 h-3.5 text-slate-400" />
                     <span>Galeri / Fail</span>
                     <input 
@@ -565,46 +565,46 @@ export function DishAddonsCustomizer() {
                     <button 
                       type="button" 
                       onClick={() => setEditImageUrl('')} 
-                      className="text-xs text-rose-400 hover:underline px-2 py-1"
+                      className="text-xs text-rose-600 hover:underline px-2 py-1 font-bold"
                     >
                       Buang foto
                     </button>
                   )}
                 </div>
 
-                <p className="text-[10px] text-slate-400 font-mono">
+                <p className="text-[10px] text-slate-500 font-sans">
                   💡 Ambil foto makanan terus menggunakan kamera peranti atau muat naik dari storan fail.
                 </p>
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300">Nama Add-on</label>
+              <label className="text-xs font-bold text-slate-700">Nama Add-on</label>
               <Input
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="bg-slate-950 border-slate-800 text-white text-xs"
+                className="bg-white border-slate-200 text-slate-900 text-xs rounded-xl shadow-2xs"
                 required
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-300">Harga Tambahan (RM)</label>
+              <label className="text-xs font-bold text-slate-700">Harga Tambahan (RM)</label>
               <Input
                 type="number"
                 step="0.10"
                 min="0"
                 value={editPrice}
                 onChange={(e) => setEditPrice(e.target.value)}
-                className="bg-slate-950 border-slate-800 text-white text-xs font-mono font-bold text-emerald-400"
+                className="bg-white border-slate-200 text-orange-600 text-xs font-mono font-bold rounded-xl shadow-2xs"
                 required
               />
             </div>
 
-            <div className="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800">
+            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-2xl border border-slate-200">
               <div>
-                <span className="text-xs font-bold text-white block">Status Boleh Ditempah</span>
-                <span className="text-[10px] text-slate-400">Papar di menu QR & Delivery</span>
+                <span className="text-xs font-bold text-slate-900 block">Status Boleh Ditempah</span>
+                <span className="text-[10px] text-slate-500">Papar di menu QR & Delivery</span>
               </div>
               <Switch checked={editAvailable} onCheckedChange={setEditAvailable} />
             </div>
@@ -614,14 +614,14 @@ export function DishAddonsCustomizer() {
                 type="button"
                 variant="outline"
                 onClick={() => setIsEditModalOpen(false)}
-                className="border-slate-800 text-slate-300 hover:bg-slate-800"
+                className="border-slate-200 text-slate-600 hover:bg-slate-50 rounded-xl"
               >
                 Batal
               </Button>
               <Button
                 type="submit"
                 disabled={uploadingEditPhoto}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+                className="bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl shadow-sm shadow-orange-500/20"
               >
                 <Check className="w-4 h-4 mr-1.5" />
                 Simpan Perubahan
