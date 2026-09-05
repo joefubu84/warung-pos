@@ -539,7 +539,10 @@ const OrderCard = memo(({
   return prevProps.order.status === nextProps.order.status &&
          prevProps.order.order_items.length === nextProps.order.order_items.length &&
          prevProps.highlight?.type === nextProps.highlight?.type &&
-         prevProps.highlight?.timestamp === nextProps.highlight?.timestamp;
+         prevProps.highlight?.timestamp === nextProps.highlight?.timestamp &&
+         prevProps.tablesMap?.[prevProps.order.table_id] === nextProps.tablesMap?.[nextProps.order.table_id] &&
+         prevProps.tablesMap === nextProps.tablesMap &&
+         prevProps.menuMap === nextProps.menuMap;
 });
 
 function KitchenPage() {
