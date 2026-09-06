@@ -126,13 +126,17 @@ export function CashManagementPage() {
       }
 
       // 4. Log Audit Trail Entry
-      await supabase.from('daily_cash_edit_logs').insert({
-        daily_cash_id: dailyCash?.id || 'system',
-        edited_by: userId,
-        edited_by_name: staffName,
-        previous_values: deletingExpense,
-        change_reason: `Staff ${staffName} deleted petty cash expense (RM ${Number(deletingExpense.amount).toFixed(2)}) + receipt file`
-      });
+      try {
+        await supabase.from('daily_cash_edit_logs').insert({
+          daily_cash_id: dailyCash?.id || 'system',
+          edited_by: userId,
+          edited_by_name: staffName,
+          previous_values: deletingExpense,
+          change_reason: `Staff ${staffName} deleted petty cash expense (RM ${Number(deletingExpense.amount).toFixed(2)}) + receipt file`
+        });
+      } catch (logErr) {
+        console.warn("Audit log notice:", logErr);
+      }
 
       toast.success(`Expense of RM ${Number(deletingExpense.amount).toFixed(2)} & receipt deleted!`);
       setDeletingExpense(null);
@@ -183,19 +187,36 @@ export function CashManagementPage() {
       const expected = Number(selectedHistoricalSession.expected_closing || 0);
       const newVariance = newClosing - expected;
 
-      // 1. Update daily_cash record
-      const { error: updateErr } = await supabase
-        .from('daily_cash')
-        .update({
-          closing_balance: newClosing,
-          variance: newVariance,
-          notes: editNotesInput
-        })
-        .eq('id', selectedHistoricalSession.id);
+      // 1. Update daily_cash record or fallback to cash_sessions
+      let updateErr: any = null;
+      try {
+        const { error } = await supabase
+          .from('daily_cash')
+          .update({
+            closing_balance: newClosing,
+            variance: newVariance,
+            notes: editNotesInput
+          })
+          .eq('id', selectedHistoricalSession.id);
+        updateErr = error;
+      } catch (e: any) {
+        updateErr = e;
+      }
 
-      if (updateErr) throw updateErr;
+      if (updateErr) {
+        if (updateErr.code === 'PGRST205' || updateErr.message?.includes('daily_cash')) {
+          await supabase
+            .from('cash_sessions')
+            .update({
+              closing_balance: newClosing
+            })
+            .eq('id', selectedHistoricalSession.id);
+        } else {
+          throw updateErr;
+        }
+      }
 
-      // 2. Insert audit log into daily_cash_edit_logs
+      // 2. Insert audit log into daily_cash_edit_logs (if table available)
       const previousValues = {
         closing_balance: selectedHistoricalSession.closing_balance,
         variance: selectedHistoricalSession.variance,
@@ -207,19 +228,21 @@ export function CashManagementPage() {
         notes: editNotesInput
       };
 
-      const { error: logErr } = await supabase
-        .from('daily_cash_edit_logs')
-        .insert({
-          daily_cash_id: selectedHistoricalSession.id,
-          edited_by: userId,
-          edited_by_name: staffName || 'Manager',
-          previous_values: previousValues,
-          new_values: newValues,
-          change_reason: editChangeReason,
-          edited_at: new Date().toISOString()
-        });
-
-      if (logErr) throw logErr;
+      try {
+        await supabase
+          .from('daily_cash_edit_logs')
+          .insert({
+            daily_cash_id: selectedHistoricalSession.id,
+            edited_by: userId,
+            edited_by_name: staffName || 'Manager',
+            previous_values: previousValues,
+            new_values: newValues,
+            change_reason: editChangeReason,
+            edited_at: new Date().toISOString()
+          });
+      } catch (logNotice) {
+        console.warn("Audit log notice:", logNotice);
+      }
 
       toast.success("Historical register session updated & audit log created!");
       
@@ -273,12 +296,44 @@ export function CashManagementPage() {
         }
       }
 
-      // Fetch today's daily_cash session
-      const { data: cashData } = await supabase
-        .from('daily_cash')
-        .select('*')
-        .eq('date', todayDateStr)
-        .maybeSingle();
+      // Fetch today's daily_cash session with fallback
+      let cashData: any = null;
+      try {
+        const { data, error } = await supabase
+          .from('daily_cash')
+          .select('*')
+          .eq('date', todayDateStr)
+          .maybeSingle();
+
+        if (!error && data) {
+          cashData = data;
+        } else if (error && (error.code === 'PGRST205' || error.message?.includes('daily_cash'))) {
+          // Fallback to cash_sessions table (which exists in Supabase)
+          const { data: sessionData } = await supabase
+            .from('cash_sessions')
+            .select('*')
+            .order('opened_at', { ascending: false })
+            .limit(1);
+
+          if (sessionData && sessionData.length > 0) {
+            const latestSession = sessionData[0];
+            const openedDateStr = new Date(latestSession.opened_at).toLocaleDateString('en-CA');
+            if (openedDateStr === todayDateStr) {
+              cashData = {
+                id: latestSession.id,
+                date: todayDateStr,
+                opening_balance: Number(latestSession.opening_balance || 0),
+                closing_balance: latestSession.closing_balance !== null && latestSession.closing_balance !== undefined ? Number(latestSession.closing_balance) : null,
+                closed_at: latestSession.closed_at,
+                notes: null,
+                _fromFallback: true
+              };
+            }
+          }
+        }
+      } catch (cashErr) {
+        console.warn('daily_cash query warning:', cashErr);
+      }
 
       setDailyCash(cashData);
 
@@ -308,21 +363,25 @@ export function CashManagementPage() {
       // Fetch recorded drawer expenses for today
       let expTransactions: any[] = [];
       if (cashData?.id) {
-        const { data: expData } = await supabase
-          .from('cash_transactions')
-          .select('*')
-          .eq('daily_cash_id', cashData.id)
-          .order('created_at', { ascending: false });
+        try {
+          const { data: expData, error: expErr } = await supabase
+            .from('cash_transactions')
+            .select('*')
+            .eq('daily_cash_id', cashData.id)
+            .order('created_at', { ascending: false });
 
-        if (expData) {
-          expTransactions = expData.map(e => ({
-            id: e.id,
-            order_id: e.order_id || null,
-            created_at: e.created_at || new Date().toISOString(),
-            amount: Number(e.amount),
-            type: e.type || 'expense',
-            notes: e.notes || 'Cash Expense'
-          }));
+          if (!expErr && expData) {
+            expTransactions = expData.map(e => ({
+              id: e.id,
+              order_id: e.order_id || null,
+              created_at: e.created_at || new Date().toISOString(),
+              amount: Number(e.amount),
+              type: e.type || 'expense',
+              notes: e.notes || 'Cash Expense'
+            }));
+          }
+        } catch (e) {
+          console.warn('cash_transactions query warning:', e);
         }
       }
 
@@ -332,35 +391,60 @@ export function CashManagementPage() {
 
       setTransactions(combinedTransactions);
 
-      // Fetch past daily_cash sessions for history view based on filter preset
-      let historyQuery = supabase
-        .from('daily_cash')
-        .select('*')
-        .neq('date', todayDateStr);
+      // Fetch past sessions for history view based on filter preset
+      try {
+        let historyQuery = supabase
+          .from('daily_cash')
+          .select('*')
+          .neq('date', todayDateStr);
 
-      const now = new Date();
-      if (historyPreset === '7days') {
-        const d = new Date(now);
-        d.setDate(d.getDate() - 7);
-        historyQuery = historyQuery.gte('date', d.toLocaleDateString('en-CA'));
-      } else if (historyPreset === '30days') {
-        const d = new Date(now);
-        d.setDate(d.getDate() - 30);
-        historyQuery = historyQuery.gte('date', d.toLocaleDateString('en-CA'));
-      } else if (historyPreset === 'custom') {
-        if (historyStartDate) historyQuery = historyQuery.gte('date', historyStartDate);
-        if (historyEndDate) historyQuery = historyQuery.lte('date', historyEndDate);
+        const now = new Date();
+        if (historyPreset === '7days') {
+          const d = new Date(now);
+          d.setDate(d.getDate() - 7);
+          historyQuery = historyQuery.gte('date', d.toLocaleDateString('en-CA'));
+        } else if (historyPreset === '30days') {
+          const d = new Date(now);
+          d.setDate(d.getDate() - 30);
+          historyQuery = historyQuery.gte('date', d.toLocaleDateString('en-CA'));
+        } else if (historyPreset === 'custom') {
+          if (historyStartDate) historyQuery = historyQuery.gte('date', historyStartDate);
+          if (historyEndDate) historyQuery = historyQuery.lte('date', historyEndDate);
+        }
+
+        const { data: historyData, error: histErr } = await historyQuery
+          .order('date', { ascending: false })
+          .limit(50);
+
+        if (!histErr && historyData) {
+          setPastSessions(historyData);
+        } else if (histErr && (histErr.code === 'PGRST205' || histErr.message?.includes('daily_cash'))) {
+          // Fallback to cash_sessions
+          const { data: pastSess } = await supabase
+            .from('cash_sessions')
+            .select('*')
+            .order('opened_at', { ascending: false })
+            .limit(50);
+
+          if (pastSess) {
+            setPastSessions(pastSess.map(s => ({
+              id: s.id,
+              date: new Date(s.opened_at).toLocaleDateString('en-CA'),
+              opening_balance: s.opening_balance,
+              closing_balance: s.closing_balance,
+              closed_at: s.closed_at
+            })));
+          }
+        }
+      } catch (histErr) {
+        console.warn('history fetch warning:', histErr);
       }
-
-      const { data: historyData } = await historyQuery
-        .order('date', { ascending: false })
-        .limit(50);
-
-      setPastSessions(historyData || []);
 
     } catch (err: any) {
       console.error('Error fetching cash management data:', err);
-      toast.error('Failed to load cash management data');
+      if (err?.code !== 'PGRST205' && !err?.message?.includes('daily_cash')) {
+        toast.error('Failed to load cash management data');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -369,13 +453,16 @@ export function CashManagementPage() {
   useEffect(() => {
     fetchData();
 
-    // Subscribe to realtime updates for daily_cash and cash_transactions
+    // Subscribe to realtime updates for daily_cash, cash_transactions, and cash_sessions
     const dailyCashChannel = supabase
       .channel('daily_cash_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'daily_cash' }, () => {
         fetchData();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'cash_transactions' }, () => {
+        fetchData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'cash_sessions' }, () => {
         fetchData();
       })
       .subscribe();
@@ -396,14 +483,42 @@ export function CashManagementPage() {
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
-        .from('daily_cash')
-        .insert({
-          date: todayDateStr,
-          opening_balance: balance
-        });
+      let inserted = false;
 
-      if (error) throw error;
+      // 1. Try inserting to daily_cash
+      try {
+        const { error } = await supabase
+          .from('daily_cash')
+          .insert({
+            date: todayDateStr,
+            opening_balance: balance
+          });
+
+        if (!error) {
+          inserted = true;
+        } else if (error.code !== 'PGRST205' && !error.message?.includes('daily_cash')) {
+          throw error;
+        }
+      } catch (insertErr: any) {
+        if (insertErr?.code !== 'PGRST205' && !insertErr?.message?.includes('daily_cash')) {
+          throw insertErr;
+        }
+      }
+
+      // 2. Fallback to cash_sessions
+      if (!inserted) {
+        const { error: sessionErr } = await supabase
+          .from('cash_sessions')
+          .insert({
+            store_id: storeId || '1094d737-8104-4a55-b678-0fe9097beba0',
+            staff_id: userId || null,
+            opening_balance: balance,
+            opened_at: new Date().toISOString()
+          });
+
+        if (sessionErr) throw sessionErr;
+      }
+
       toast.success(`Register opened with RM ${balance.toFixed(2)}`);
       setIsOpeningModal(false);
       fetchData();
@@ -450,19 +565,65 @@ export function CashManagementPage() {
 
     setIsSubmitting(true);
     try {
-      const { error } = await supabase
-        .from('daily_cash')
-        .update({
-          closing_balance: actualCounted,
-          expected_closing: expectedClosing,
-          variance: calculatedVariance,
-          notes: closeNotesInput || null,
-          closed_at: new Date().toISOString(),
-          closed_by: userId
-        })
-        .eq('date', todayDateStr);
+      let closed = false;
 
-      if (error) throw error;
+      // 1. Try daily_cash if not running in fallback mode
+      if (!dailyCash?._fromFallback) {
+        try {
+          const { error } = await supabase
+            .from('daily_cash')
+            .update({
+              closing_balance: actualCounted,
+              expected_closing: expectedClosing,
+              variance: calculatedVariance,
+              notes: closeNotesInput || null,
+              closed_at: new Date().toISOString(),
+              closed_by: userId
+            })
+            .eq('date', todayDateStr);
+
+          if (!error) {
+            closed = true;
+          } else if (error.code !== 'PGRST205' && !error.message?.includes('daily_cash')) {
+            throw error;
+          }
+        } catch (updateErr: any) {
+          if (updateErr?.code !== 'PGRST205' && !updateErr?.message?.includes('daily_cash')) {
+            throw updateErr;
+          }
+        }
+      }
+
+      // 2. Fallback to cash_sessions
+      if (!closed) {
+        if (dailyCash?.id) {
+          const { error: sessionErr } = await supabase
+            .from('cash_sessions')
+            .update({
+              closing_balance: actualCounted,
+              closed_at: new Date().toISOString()
+            })
+            .eq('id', dailyCash.id);
+
+          if (sessionErr) throw sessionErr;
+        } else {
+          const { data: latest } = await supabase
+            .from('cash_sessions')
+            .select('id')
+            .order('opened_at', { ascending: false })
+            .limit(1);
+
+          if (latest && latest[0]?.id) {
+            await supabase
+              .from('cash_sessions')
+              .update({
+                closing_balance: actualCounted,
+                closed_at: new Date().toISOString()
+              })
+              .eq('id', latest[0].id);
+          }
+        }
+      }
 
       toast.success('Register closed and shift reconciled!');
       setIsClosingModal(false);

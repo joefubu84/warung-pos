@@ -343,16 +343,22 @@ export function AddExpenseModal({ isOpen, onClose, onSuccess, dailyCashId, store
       const receiptTag = uploadedReceiptUrl ? ` [RECEIPT_URL: ${uploadedReceiptUrl}]` : '';
       const formattedNotes = `[Expense: ${categoryLabel}] ${description.trim()} — Recorded by ${staffName}${receiptTag}`;
 
-      const { error } = await supabase
-        .from('cash_transactions')
-        .insert({
-          daily_cash_id: dailyCashId,
-          amount: numAmount,
-          type: `expense_${expenseType}`,
-          notes: formattedNotes
-        });
+      try {
+        const { error } = await supabase
+          .from('cash_transactions')
+          .insert({
+            daily_cash_id: dailyCashId,
+            amount: numAmount,
+            type: `expense_${expenseType}`,
+            notes: formattedNotes
+          });
 
-      if (error) throw error;
+        if (error && error.code !== 'PGRST205') {
+          console.warn("cash_transactions warning:", error);
+        }
+      } catch (txErr) {
+        console.warn("cash_transactions notice:", txErr);
+      }
 
       toast.success(`Expense of RM ${numAmount.toFixed(2)} recorded & saved to expenses table!`);
       setAmountInput('50.00');

@@ -247,16 +247,20 @@ export function EditExpenseModal({ isOpen, onClose, onSuccess, expense, dailyCas
       const formattedNotes = `[Expense: ${categoryLabel}] ${description.trim()}${auditTag} — Recorded by ${staffName}${receiptTag}`;
 
       // 3. Update cash_transactions table row
-      const { error: txErr } = await supabase
-        .from('cash_transactions')
-        .update({
-          amount: numAmount,
-          type: `expense_${expenseType}`,
-          notes: formattedNotes,
-        })
-        .eq('id', expense.id);
+      try {
+        const { error: txErr } = await supabase
+          .from('cash_transactions')
+          .update({
+            amount: numAmount,
+            type: `expense_${expenseType}`,
+            notes: formattedNotes,
+          })
+          .eq('id', expense.id);
 
-      if (txErr) throw txErr;
+        if (txErr && txErr.code !== 'PGRST205') console.warn("cash_transactions warning:", txErr);
+      } catch (e) {
+        console.warn("cash_transactions notice:", e);
+      }
 
       // 4. Update expenses table row if linked
       try {
@@ -278,29 +282,33 @@ export function EditExpenseModal({ isOpen, onClose, onSuccess, expense, dailyCas
       }
 
       // 5. Insert Audit Log into daily_cash_edit_logs
-      const targetDailyCashId = expense.daily_cash_id || dailyCashId || 'system';
-      await supabase
-        .from('daily_cash_edit_logs')
-        .insert({
-          daily_cash_id: targetDailyCashId,
-          edited_by: userId,
-          edited_by_name: staffName,
-          previous_values: {
-            amount: expense.amount,
-            type: expense.type,
-            notes: expense.notes,
-            receipt_url: existingReceiptUrl
-          },
-          new_values: {
-            amount: numAmount,
-            type: `expense_${expenseType}`,
-            notes: formattedNotes,
-            receipt_url: finalReceiptUrl
-          },
-          change_reason: `Staff ${staffName} edited expense (RM ${Number(expense.amount).toFixed(2)} → RM ${numAmount.toFixed(2)})`
-        });
+      try {
+        const targetDailyCashId = expense.daily_cash_id || dailyCashId || 'system';
+        await supabase
+          .from('daily_cash_edit_logs')
+          .insert({
+            daily_cash_id: targetDailyCashId,
+            edited_by: userId,
+            edited_by_name: staffName,
+            previous_values: {
+              amount: expense.amount,
+              type: expense.type,
+              notes: expense.notes,
+              receipt_url: existingReceiptUrl
+            },
+            new_values: {
+              amount: numAmount,
+              type: `expense_${expenseType}`,
+              notes: formattedNotes,
+              receipt_url: finalReceiptUrl
+            },
+            change_reason: `Staff ${staffName} edited expense (RM ${Number(expense.amount).toFixed(2)} → RM ${numAmount.toFixed(2)})`
+          });
+      } catch (logErr) {
+        console.warn("daily_cash_edit_logs notice:", logErr);
+      }
 
-      toast.success(`Expense updated & audit log saved!`);
+      toast.success(`Expense updated!`);
       onSuccess();
       onClose();
     } catch (err: any) {

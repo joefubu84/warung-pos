@@ -12,7 +12,7 @@ export async function getTodayCashStatus(storeId?: string | null): Promise<Daily
   const todayDateStr = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
 
   try {
-    // Query today's daily_cash session by exact YYYY-MM-DD date
+    // 1. Try querying daily_cash
     const { data, error } = await supabase
       .from('daily_cash')
       .select('*')
@@ -20,39 +20,55 @@ export async function getTodayCashStatus(storeId?: string | null): Promise<Daily
       .order('created_at', { ascending: false })
       .limit(1);
 
-    if (error || !data || data.length === 0) {
+    if (!error && data && data.length > 0) {
+      const latestRecord = data[0];
+      if (latestRecord.closed_at) {
+        return {
+          status: 'CLOSED',
+          dailyCash: latestRecord,
+          closedAt: latestRecord.closed_at,
+        };
+      }
       return {
-        status: 'NOT_OPENED',
-        dailyCash: null,
-        closedAt: null,
-      };
-    }
-
-    const latestRecord = data?.[0];
-
-    if (!latestRecord) {
-      return {
-        status: 'NOT_OPENED',
-        dailyCash: null,
-        closedAt: null,
-      };
-    }
-
-    if (latestRecord.closed_at) {
-      return {
-        status: 'CLOSED',
+        status: 'OPEN',
         dailyCash: latestRecord,
-        closedAt: latestRecord.closed_at,
+        closedAt: null,
       };
+    }
+
+    // 2. Fallback to cash_sessions table (which exists in Supabase)
+    const { data: sessionData, error: sessionErr } = await supabase
+      .from('cash_sessions')
+      .select('*')
+      .order('opened_at', { ascending: false })
+      .limit(1);
+
+    if (!sessionErr && sessionData && sessionData.length > 0) {
+      const latestSession = sessionData[0];
+      const openedDateStr = new Date(latestSession.opened_at).toLocaleDateString('en-CA');
+      if (openedDateStr === todayDateStr) {
+        if (latestSession.closed_at) {
+          return {
+            status: 'CLOSED',
+            dailyCash: latestSession,
+            closedAt: latestSession.closed_at,
+          };
+        }
+        return {
+          status: 'OPEN',
+          dailyCash: latestSession,
+          closedAt: null,
+        };
+      }
     }
 
     return {
-      status: 'OPEN',
-      dailyCash: latestRecord,
+      status: 'NOT_OPENED',
+      dailyCash: null,
       closedAt: null,
     };
   } catch (err) {
-    console.error('Error checking daily cash status:', err);
+    console.warn('Error checking daily cash status:', err);
     return {
       status: 'NOT_OPENED',
       dailyCash: null,

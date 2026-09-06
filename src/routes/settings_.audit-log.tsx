@@ -56,14 +56,26 @@ function AuditLogPage() {
   const { data: cashLogs, isLoading: isCashLoading, refetch: refetchCashLogs } = useQuery({
     queryKey: ['daily_cash_edit_logs'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('daily_cash_edit_logs')
-        .select('*')
-        .order('edited_at', { ascending: false })
-        .limit(100);
+      try {
+        const { data, error } = await supabase
+          .from('daily_cash_edit_logs')
+          .select('*')
+          .order('edited_at', { ascending: false })
+          .limit(100);
 
-      if (error) throw error;
-      return data || [];
+        if (error) {
+          if (error.code === 'PGRST205' || error.message?.includes('schema cache') || error.message?.includes('daily_cash_edit_logs')) {
+            return [];
+          }
+          throw error;
+        }
+        return data || [];
+      } catch (err: any) {
+        if (err?.code === 'PGRST205' || err?.message?.includes('schema cache') || err?.message?.includes('daily_cash_edit_logs')) {
+          return [];
+        }
+        throw err;
+      }
     },
     refetchInterval: 30000
   });

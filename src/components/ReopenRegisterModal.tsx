@@ -83,20 +83,44 @@ export function ReopenRegisterModal({ isOpen, onClose, onSuccess, closedAt }: Re
 
     setIsSubmitting(true);
     try {
-      // 1. Same-Day Reopen Enforcement
-      const { data: todayCash, error: fetchErr } = await supabase
-        .from('daily_cash')
-        .select('*')
-        .eq('date', todayDateStr)
-        .maybeSingle();
+      // 1. Same-Day Reopen Enforcement (with fallback to cash_sessions)
+      let todayCash: any = null;
+      let isFallback = false;
 
-      if (fetchErr || !todayCash) {
-        toast.error("No register session found for today");
-        return;
+      try {
+        const { data: dData, error: fetchErr } = await supabase
+          .from('daily_cash')
+          .select('*')
+          .eq('date', todayDateStr)
+          .maybeSingle();
+
+        if (!fetchErr && dData) {
+          todayCash = dData;
+        }
+      } catch (e) {
+        console.warn('daily_cash reopen fetch warning:', e);
       }
 
-      if (todayCash.date !== todayDateStr) {
-        toast.error("Security Rule: You can only reopen TODAY'S cash register session.");
+      if (!todayCash) {
+        // Check cash_sessions fallback
+        const { data: sData } = await supabase
+          .from('cash_sessions')
+          .select('*')
+          .order('opened_at', { ascending: false })
+          .limit(1);
+
+        if (sData && sData.length > 0) {
+          const s = sData[0];
+          const openedDateStr = new Date(s.opened_at).toLocaleDateString('en-CA');
+          if (openedDateStr === todayDateStr) {
+            todayCash = s;
+            isFallback = true;
+          }
+        }
+      }
+
+      if (!todayCash) {
+        toast.error("No register session found for today");
         return;
       }
 
@@ -104,19 +128,44 @@ export function ReopenRegisterModal({ isOpen, onClose, onSuccess, closedAt }: Re
       const timestampStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const newAuditNote = `[REOPENED at ${timestampStr} by ${userName} (${userRole}) - Reason: ${reason}${notes ? ` | Notes: ${notes}` : ''}]\n${todayCash.notes || ''}`;
 
-      // 3. Clear closed_at on daily_cash to restore OPEN status
-      const { error: updateErr } = await supabase
-        .from('daily_cash')
-        .update({
-          closed_at: null,
-          closing_balance: null,
-          expected_closing: null,
-          variance: null,
-          notes: newAuditNote
-        })
-        .eq('id', todayCash.id);
+      // 3. Clear closed_at to restore OPEN status
+      if (isFallback) {
+        const { error: sessionUpdateErr } = await supabase
+          .from('cash_sessions')
+          .update({
+            closed_at: null,
+            closing_balance: null
+          })
+          .eq('id', todayCash.id);
 
-      if (updateErr) throw updateErr;
+        if (sessionUpdateErr) throw sessionUpdateErr;
+      } else {
+        const { error: updateErr } = await supabase
+          .from('daily_cash')
+          .update({
+            closed_at: null,
+            closing_balance: null,
+            expected_closing: null,
+            variance: null,
+            notes: newAuditNote
+          })
+          .eq('id', todayCash.id);
+
+        if (updateErr) {
+          // If table error, fallback to cash_sessions
+          if (updateErr.code === 'PGRST205' || updateErr.message?.includes('daily_cash')) {
+            await supabase
+              .from('cash_sessions')
+              .update({
+                closed_at: null,
+                closing_balance: null
+              })
+              .eq('id', todayCash.id);
+          } else {
+            throw updateErr;
+          }
+        }
+      }
 
       toast.success("Cash register reopened! Remember to re-close after making corrections.");
       onSuccess();
