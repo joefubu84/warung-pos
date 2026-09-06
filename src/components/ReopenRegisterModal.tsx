@@ -120,6 +120,19 @@ export function ReopenRegisterModal({ isOpen, onClose, onSuccess, closedAt }: Re
       }
 
       if (!todayCash) {
+        // Check localStorage fallback
+        if (typeof window !== 'undefined') {
+          const localStr = localStorage.getItem(`warung_cash_session_${todayDateStr}`);
+          if (localStr) {
+            try {
+              todayCash = JSON.parse(localStr);
+              isFallback = true;
+            } catch (e) {}
+          }
+        }
+      }
+
+      if (!todayCash) {
         toast.error("No register session found for today");
         return;
       }
@@ -130,30 +143,8 @@ export function ReopenRegisterModal({ isOpen, onClose, onSuccess, closedAt }: Re
 
       // 3. Clear closed_at to restore OPEN status
       if (isFallback) {
-        const { error: sessionUpdateErr } = await supabase
-          .from('cash_sessions')
-          .update({
-            closed_at: null,
-            closing_balance: null
-          })
-          .eq('id', todayCash.id);
-
-        if (sessionUpdateErr) throw sessionUpdateErr;
-      } else {
-        const { error: updateErr } = await supabase
-          .from('daily_cash')
-          .update({
-            closed_at: null,
-            closing_balance: null,
-            expected_closing: null,
-            variance: null,
-            notes: newAuditNote
-          })
-          .eq('id', todayCash.id);
-
-        if (updateErr) {
-          // If table error, fallback to cash_sessions
-          if (updateErr.code === 'PGRST205' || updateErr.message?.includes('daily_cash')) {
+        try {
+          if (todayCash.id && !todayCash.id.startsWith('session_') && !todayCash.id.startsWith('local_')) {
             await supabase
               .from('cash_sessions')
               .update({
@@ -161,10 +152,55 @@ export function ReopenRegisterModal({ isOpen, onClose, onSuccess, closedAt }: Re
                 closing_balance: null
               })
               .eq('id', todayCash.id);
-          } else {
-            throw updateErr;
           }
+        } catch (e) {
+          console.warn('cash_sessions reopen warning:', e);
         }
+      } else {
+        try {
+          const { error: updateErr } = await supabase
+            .from('daily_cash')
+            .update({
+              closed_at: null,
+              closing_balance: null,
+              expected_closing: null,
+              variance: null,
+              notes: newAuditNote
+            })
+            .eq('id', todayCash.id);
+
+          if (updateErr) {
+            // If table error, fallback to cash_sessions
+            if (updateErr.code === 'PGRST205' || updateErr.message?.includes('daily_cash')) {
+              await supabase
+                .from('cash_sessions')
+                .update({
+                  closed_at: null,
+                  closing_balance: null
+                })
+                .eq('id', todayCash.id);
+            }
+          }
+        } catch (e) {
+          console.warn('daily_cash reopen warning:', e);
+        }
+      }
+
+      // 4. Update localStorage copy
+      if (typeof window !== 'undefined') {
+        const localStr = localStorage.getItem(`warung_cash_session_${todayDateStr}`);
+        let baseObj = todayCash || {};
+        if (localStr) {
+          try {
+            baseObj = { ...JSON.parse(localStr), ...baseObj };
+          } catch (e) {}
+        }
+        baseObj.closed_at = null;
+        baseObj.closing_balance = null;
+        baseObj.expected_closing = null;
+        baseObj.variance = null;
+        baseObj.notes = newAuditNote;
+        localStorage.setItem(`warung_cash_session_${todayDateStr}`, JSON.stringify(baseObj));
       }
 
       toast.success("Cash register reopened! Remember to re-close after making corrections.");

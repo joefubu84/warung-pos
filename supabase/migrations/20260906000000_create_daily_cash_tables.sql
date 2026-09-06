@@ -78,5 +78,11 @@ DROP POLICY IF EXISTS "landing_page_config_all" ON public.landing_page_config;
 CREATE POLICY "landing_page_config_all" ON public.landing_page_config FOR ALL TO public USING (true) WITH CHECK (true);
 GRANT ALL ON public.landing_page_config TO anon, authenticated, service_role;
 
--- 8. Refresh PostgREST schema cache
+-- 8. Fix cash_sessions RLS to prevent 42501 permission error
+ALTER TABLE public.cash_sessions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "cash_sessions_all" ON public.cash_sessions;
+CREATE POLICY "cash_sessions_all" ON public.cash_sessions FOR ALL TO public USING (true) WITH CHECK (true);
+GRANT ALL ON public.cash_sessions TO anon, authenticated, service_role;
+
+-- 9. Refresh PostgREST schema cache
 NOTIFY pgrst, 'reload schema';

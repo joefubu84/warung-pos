@@ -62,6 +62,30 @@ export async function getTodayCashStatus(storeId?: string | null): Promise<Daily
       }
     }
 
+    // 3. Emergency client-side resilience fallback
+    if (typeof window !== 'undefined') {
+      const localStr = localStorage.getItem(`warung_cash_session_${todayDateStr}`);
+      if (localStr) {
+        try {
+          const localSession = JSON.parse(localStr);
+          if (localSession.closed_at) {
+            return {
+              status: 'CLOSED',
+              dailyCash: localSession,
+              closedAt: localSession.closed_at,
+            };
+          }
+          return {
+            status: 'OPEN',
+            dailyCash: localSession,
+            closedAt: null,
+          };
+        } catch (e) {
+          console.warn('Local cash session parse warning:', e);
+        }
+      }
+    }
+
     return {
       status: 'NOT_OPENED',
       dailyCash: null,
@@ -69,6 +93,23 @@ export async function getTodayCashStatus(storeId?: string | null): Promise<Daily
     };
   } catch (err) {
     console.warn('Error checking daily cash status:', err);
+
+    if (typeof window !== 'undefined') {
+      const localStr = localStorage.getItem(`warung_cash_session_${todayDateStr}`);
+      if (localStr) {
+        try {
+          const localSession = JSON.parse(localStr);
+          return {
+            status: localSession.closed_at ? 'CLOSED' : 'OPEN',
+            dailyCash: localSession,
+            closedAt: localSession.closed_at || null,
+          };
+        } catch (e) {
+          // ignore
+        }
+      }
+    }
+
     return {
       status: 'NOT_OPENED',
       dailyCash: null,
