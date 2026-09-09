@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panduan Pengguna Admin — Warung J&J POS & Delivery</title>
+  <style>
+    :root {
+      --primary: #059669;
+      --primary-dark: #047857;
+      --primary-light: #d1fae5;
+      --secondary: #d97706;
+      --secondary-light: #fef3c7;
+      --dark: #0f172a;
+      --slate: #334155;
+      --light-slate: #64748b;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --danger: #e11d48;
+      --danger-light: #ffe4e6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: var(--slate);
+      background-color: var(--bg);
+      line-height: 1.65;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .top-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(15, 23, 42, 0.95);
+      backdrop-filter: blur(10px);
+      color: white;
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .top-toolbar .title {
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-print {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      border: none;
+      padding: 9px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      transition: all 0.2s ease;
+    }
+
+    .btn-print:hover {
+      background: linear-gradient(135deg, #059669, #047857);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 30px auto;
+      padding: 0 24px 60px 24px;
+    }
+
+    /* Cover Page / Header */
+    .cover-card {
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: white;
+      padding: 48px 40px;
+      border-radius: 24px;
+      box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.15);
+      margin-bottom: 40px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .cover-card::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0) 70%);
+      pointer-events: none;
+    }
+
+    .badge-pill {
+      display: inline-block;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 5px 14px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+    }
+
+    .cover-title {
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.25;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    .cover-sub {
+      color: #94a3b8;
+      font-size: 16px;
+      max-width: 680px;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 24px;
+    }
+
+    .meta-item .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #64748b;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .meta-item .val {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    /* Table of Contents */
+    .toc-card {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 40px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+    }
+
+    .toc-card h3 {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--dark);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .toc-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: #f8fafc;
+      color: var(--dark);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 600;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+
+    .toc-link:hover {
+      background: #f1f5f9;
+      border-color: var(--border);
+      color: var(--primary);
+      transform: translateX(3px);
+    }
+
+    .toc-num {
+      width: 24px;
+      height: 24px;
+      background: #e2e8f0;
+      color: var(--slate);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* Content Modules */
+    .module-section {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 36px 32px;
+      margin-bottom: 36px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+      break-inside: avoid;
+    }
+
+    .module-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      border-bottom: 1px solid #f1f5f9;
+      padding-bottom: 20px;
+      margin-bottom: 24px;
+    }
+
+    .module-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: var(--primary-light);
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+
+    .module-icon.amber {
+      background: var(--secondary-light);
+      color: var(--secondary);
+    }
+
+    .module-icon.red {
+      background: var(--danger-light);
+      color: var(--danger);
+    }
+
+    .module-title h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--dark);
+      letter-spacing: -0.3px;
+    }
+
+    .module-title p {
+      font-size: 13.5px;
+      color: var(--light-slate);
+      margin-top: 2px;
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--dark);
+      margin: 24px 0 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    p {
+      margin-bottom: 14px;
+      color: var(--slate);
+    }
+
+    /* Steps & Numbered Lists */
+    .step-list {
+      list-style: none;
+      counter-reset: step-counter;
+      margin: 16px 0 24px 0;
+    }
+
+    .step-list li {
+      counter-increment: step-counter;
+      position: relative;
+      padding-left: 44px;
+      margin-bottom: 18px;
+    }
+
+    .step-list li::before {
+      content: counter(step-counter);
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 30px;
+      height: 30px;
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 13px;
+      color: var(--dark);
+    }
+
+    .step-title {
+      font-weight: 700;
+      color: var(--dark);
+      font-size: 14.5px;
+      display: block;
+      margin-bottom: 3px;
+    }
+
+    .step-desc {
+      font-size: 13.5px;
+      color: var(--slate);
+      line-height: 1.55;
+    }
+
+    /* Alerts & Callouts */
+    .callout {
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin: 20px 0;
+      font-size: 13.5px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      line-height: 1.55;
+    }
+
+    .callout.tip {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+    }
+
+    .callout.warning {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
+    }
+
+    .callout.danger {
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      color: #9f1239;
+    }
+
+    .callout-icon {
+      font-size: 20px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* Tables */
+    .custom-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin: 18px 0 24px 0;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      font-size: 13.5px;
+    }
+
+    .custom-table th {
+      background: #f8fafc;
+      color: var(--dark);
+      font-weight: 700;
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .custom-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      color: var(--slate);
+    }
+
+    .custom-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .custom-table tr:nth-child(even) td {
+      background: #fafafa;
+    }
+
+    /* Feature Grid Cards */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+      margin: 18px 0;
+    }
+
+    .feature-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .feature-card h4 {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .feature-card p {
+      font-size: 13px;
+      color: var(--light-slate);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    /* Shortcut Tag */
+    .key-badge {
+      display: inline-block;
+      background: #e2e8f0;
+      border: 1px solid #cbd5e1;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-family: monospace;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 13px;
+      margin-top: 50px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    /* Print Stylesheet */
+    @media print {
+      body {
+        background: white;
+        color: #000;
+        font-size: 12pt;
+      }
+
+      .top-toolbar {
+        display: none !important;
+      }
+
+      .container {
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      .cover-card {
+        border-radius: 0;
+        background: #0f172a !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        padding: 30px;
+        page-break-after: always;
+      }
+
+      .module-section {
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: none;
+        page-break-inside: avoid;
+      }
+
+      .toc-card {
+        page-break-after: always;
+      }
+
+      .btn-print {
+        display: none !important;
+      }
+
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Sticky Bar for Screen View -->
+  <div class="top-toolbar">
+    <div class="title">
+      <span>🍜</span>
+      <span>WARUNG J&J — PANDUAN PENTADBIRAN SISTEM POS (ADMIN MANUAL)</span>
+    </div>
+    <button class="btn-print" onclick="window.print()">
+      🖨️ Cetak / Simpan PDF (Print to PDF)
+    </button>
+  </div>
+
+  <div class="container">
+
+    <!-- Cover Page Header -->
+    <div class="cover-card">
+      <span class="badge-pill">SOP & Manual Pentadbiran Restoran</span>
+      <h1 class="cover-title">PANDUAN OPERASI & PENGGUNAAN SISTEM POS (ADMIN USER MANUAL)</h1>
+      <p class="cover-sub">
+        Manual rasmi untuk pemilik restoran, pengurus, dan juruwang kanan. Meliputi tatacara pengoperasian kaunter, daftar wang tunai, kawalan stok, tiket dapur, kod QR meja, dan pengurusan pesanan penghantaran.
+      </p>
+
+      <div class="meta-grid">
+        <div class="meta-item">
+          <div class="label">Nama Premis</div>
+          <div class="val">Warung J&J (Penampang, Sabah)</div>
+        </div>
+        <div class="meta-item">
+          <div class="label">Pautan Portal Web</div>
+          <div class="val">https://warungjnj.online</div>
+        </div>
+        <div class="meta-item">
+          <div class="label">Akaun Pentadbir Rasmi</div>
+          <div class="val">teststaffa@test.com</div>
+        </div>
+        <div class="meta-item">
+          <div class="label">Versi Dokumen</div>
+          <div class="val">Edisi 2026 / v2.4 (Teratur & Lengkap)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="toc-card">
+      <h3>📑 Isi Kandungan Manual</h3>
+      <div class="toc-grid">
+        <a href="#sop-harian" class="toc-link">
+          <span class="toc-num">01</span>
+          <span>SOP Rutin Harian (Pagi, Operasi & Malam)</span>
+        </a>
+        <a href="#log-masuk" class="toc-link">
+          <span class="toc-num">02</span>
+          <span>Log Masuk & Keselamatan Akaun</span>
+        </a>
+        <a href="#cash-management" class="toc-link">
+          <span class="toc-num">03</span>
+          <span>Daftar Tunai & Buka/Tutup Kaunter</span>
+        </a>
+        <a href="#pos-counter" class="toc-link">
+          <span class="toc-num">04</span>
+          <span>Kaunter POS & Pengambilan Pesanan</span>
+        </a>
+        <a href="#kitchen-kds" class="toc-link">
+          <span class="toc-num">05</span>
+          <span>Sistem Paparan Dapur (KDS) & Notifikasi</span>
+        </a>
+        <a href="#table-qr" class="toc-link">
+          <span class="toc-num">06</span>
+          <span>Pengurusan Meja & Kod QR Pelanggan</span>
+        </a>
+        <a href="#menu-stock" class="toc-link">
+          <span class="toc-num">07</span>
+          <span>Pengurusan Menu, Harga & Stok Inventori</span>
+        </a>
+        <a href="#delivery-rider" class="toc-link">
+          <span class="toc-num">08</span>
+          <span>Pesanan Penghantaran & Portal Rider</span>
+        </a>
+        <a href="#dashboard-analytics" class="toc-link">
+          <span class="toc-num">09</span>
+          <span>Dashboard & Analitik Prestasi Jualan</span>
+        </a>
+        <a href="#audit-log" class="toc-link">
+          <span class="toc-num">10</span>
+          <span>Jejak Audit & Kawalan Pengubahsuaian</span>
+        </a>
+        <a href="#printer-settings" class="toc-link">
+          <span class="toc-num">11</span>
+          <span>Tetapan Resit & Pencetak Terma</span>
+        </a>
+        <a href="#troubleshooting" class="toc-link">
+          <span class="toc-num">12</span>
+          <span>Soalan Lazim & Tindakan Kecemasan</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- MODULE 1: SOP RUTIN HARIAN -->
+    <section id="sop-harian" class="module-section">
+      <div class="module-header">
+        <div class="module-icon">📋</div>
+        <div class="module-title">
+          <h2>01. SOP Rutin Harian Warung J&J</h2>
+          <p>Aliran kerja standard bagi menjamin ketepatan tunai, kelancaran servis dapur, dan rekod perniagaan yang bersih.</p>
+        </div>
+      </div>
+
+      <h3>☀️ A. Rutin Pagi (Sebelum Mula Berniaga)</h3>
+      <ol class="step-list">
+        <li>
+          <span class="step-title">Log Masuk ke Sistem</span>
+          <span class="step-desc">Buka pelayar di tablet/laptop kaunter dan layari <code>https://warungjnj.online/auth</code>. Masukkan emel pentadbir dan kata laluan.</span>
+        </li>
+        <li>
+          <span class="step-title">Wajib Buka Kaunter Tunai (Cash Register Float)</span>
+          <span class="step-desc">Navigasi ke menu <strong>Pengurusan Tunai (/cash-management)</strong>. Tekan butang <strong>"Buka Kaunter Sekarang"</strong>, masukkan jumlah wang apungan (contoh: <code>RM 100.00</code>) dan sahkan.</span>
+        </li>
+        <li>
+          <span class="step-title">Buka Skrin Dapur (KDS) di Ruang Memasak</span>
+          <span class="step-desc">Buka skrin dapur di <code>/kitchen</code> pada peranti dapur. Uji bunyi notifikasi (Beep Alert) dengan menekan skrin sekali untuk mengaktifkan kebenaran audio pelayar.</span>
+        </li>
+        <li>
+          <span class="step-title">Semak Ketersediaan Stok Menu</span>
+          <span class="step-desc">Buka menu <strong>Menu (/menu)</strong>. Pastikan bahan yang kehabisan ditandakan sebagai <em>Habis Stok (Out of Stock)</em> supaya pelanggan tidak memesan item yang tidak tersedia.</span>
+        </li>
+      </ol>
+
+      <h3>☕ B. Rutin Waktu Operasi (Semasa Berniaga)</h3>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>💵 Mengambil Pesanan POS</h4>
+          <p>Pilih mod Makan Sini / Bungkus. Tambah menu & varian. Terima bayaran Tunai atau imbas DuitNow QR. Resit dicetak serta-merta.</p>
+        </div>
+        <div class="feature-card">
+          <h4>🛎️ Pantau Buzzer Meja</h4>
+          <p>Jika pelanggan menekan loceng panggil pelayan di meja mereka, loceng amaran akan berbunyi di kaunter bersama nombor meja.</p>
+        </div>
+        <div class="feature-card">
+          <h4>💸 Rekod Belanja Laci (Petty Cash)</h4>
+          <p>Jika duit laci diambil untuk beli ais, sayur atau gas, rekodkan serta-merta di Pengurusan Tunai dan tangkap gambar resit.</p>
+        </div>
+      </div>
+
+      <h3>🌙 C. Rutin Malam (Penutupan Kedai & Syif)</h3>
+      <ol class="step-list">
+        <li>
+          <span class="step-title">Pastikan Semua Pesanan Dapur Selesai</span>
+          <span class="step-desc">Pastikan tiada tiket pesanan yang masih terapung dalam status <em>Cooking</em> atau <em>Pending</em> di KDS.</span>
+        </li>
+        <li>
+          <span class="step-title">Kira Duit Tunai Sebenar di Dalam Laci Fizikal</span>
+          <span class="step-desc">Buka laci tunai dan kira semua wang kertas serta syiling. Masukkan jumlah kiraan sebenar ke dalam borang <strong>Tutup Kaunter</strong> di <code>/cash-management</code>.</span>
+        </li>
+        <li>
+          <span class="step-title">Semak Varians (Lebihan / Kurangan)</span>
+          <span class="step-desc">Sistem akan membandingkan jumlah jangkaan (Expected) dengan jumlah kiraan sebenar. Jika ada perbezaan, wajib masukkan sebab pada ruangan nota.</span>
+        </li>
+        <li>
+          <span class="step-title">Tutup Kaunter & Kongsi Laporan WhatsApp</span>
+          <span class="step-desc">Tekan butang <strong>"Tutup Kaunter & Imbang Syif"</strong>. Klik ikon WhatsApp untuk menghantar rumusan jualan harian terus kepada nombor telefon pemilik warung.</span>
+        </li>
+      </ol>
+    </section>
+
+    <!-- MODULE 2: LOG MASUK & AUTH -->
+    <section id="log-masuk" class="module-section">
+      <div class="module-header">
+        <div class="module-icon">🔐</div>
+        <div class="module-title">
+          <h2>02. Log Masuk & Keselamatan Akaun</h2>
+          <p>Kawalan keselamatan berasaskan peranan (Role-Based Access) bagi melindungi transaksi dan data jualan.</p>
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <span class="callout-icon">💡</span>
+        <div>
+          <strong>Pautan Halaman Log Masuk:</strong> <code>https://warungjnj.online/auth</code><br>
+          Sistem menggunakan pengesahan kredensial sebenar secara terus ke pangkalan data Supabase tanpa jalan pintas 1-klik yang tidak selamat.
+        </div>
+      </div>
+
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Peranan (Role)</th>
+            <th>Akses Dibenarkan</th>
+            <th>Sekatan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Admin / Pemilik</strong></td>
+            <td>Akses penuh ke semua modul: Dashboard, POS, Kaunter Tunai, Tetapan, Menu, Audit Log, dan Laporan.</td>
+            <td>Tiada sekatan.</td>
+          </tr>
+          <tr>
+            <td><strong>Juruwang (Cashier)</strong></td>
+            <td>Buka/Tutup Kaunter, Ambil Pesanan POS, Pengurusan Meja, Cetak Resit, Rekod Perbelanjaan Kecil.</td>
+            <td>Tidak boleh mengubah tetapan kedai utama atau memadam log audit.</td>
+          </tr>
+          <tr>
+            <td><strong>Tukang Masak (Chef)</strong></td>
+            <td>Akses terus ke Skrin Dapur (KDS) di <code>/kitchen</code>, tandakan pesanan siap, kemas kini checklist dapur.</td>
+            <td>Tidak boleh mengakses data kutipan tunai atau dashboard jualan.</td>
+          </tr>
+          <tr>
+            <td><strong>Penghantar (Rider)</strong></td>
+            <td>Portal Rider di <code>/rider</code>, lihat senarai penghantaran yang ditugaskan, kemas kini POD.</td>
+            <td>Hanya melihat pesanan penghantaran milik sendiri.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- MODULE 3: CASH MANAGEMENT -->
+    <section id="cash-management" class="module-section">
+      <div class="module-header">
+        <div class="module-icon amber">💰</div>
+        <div class="module-title">
+          <h2>03. Pengurusan Daftar Wang Tunai (Cash Management)</h2>
+          <p>Kawalan ketat wang tunai: Buka syif, rekod pengeluaran laci, rekonsiliasi penutupan & pencegahan ketirisan.</p>
+        </div>
+      </div>
+
+      <div class="callout warning">
+        <span class="callout-icon">⚠️</span>
+        <div>
+          <strong>SYARAT KETAT SISTEM POS:</strong> Sistem POS tidak akan membenarkan sebarang transaksi jualan dibuat selagi kaunter belum dibuka pada hari berkenaan. Jika kaunter telah ditutup pada malam hari, pesanan disekat secara automatik bagi mengelakkan jualan tidak berekod.
+        </div>
+      </div>
+
+      <h3>A. Tatacara Membuka Kaunter (Buka Syif Pagi)</h3>
+      <ol class="step-list">
+        <li>Buka menu <strong>Pengurusan Tunai</strong> daripada bar navigasi sisi.</li>
+        <li>Jika kaunter belum dibuka, kad amaran merah akan tertera: <em>"Kaunter Tunai Belum Dibuka Hari Ini"</em>.</li>
+        <li>Tekan butang <strong>"Buka Kaunter Sekarang"</strong>.</li>
+        <li>Masukkan nilai wang apungan laci (contoh: <code>100.00</code>) dan tekan butang sahkan. Status kaunter akan bertukar hijau (<strong>BUKA / AKTIF</strong>).</li>
+      </ol>
+
+      <h3>B. Merekod Perbelanjaan Laci Tunai (Petty Cash Drawer Expense)</h3>
+      <p>Bila-bila masa wang tunai dikeluarkan dari laci (contoh: beli ais RM 10, bayar gas RM 32, upah membaiki lampu):</p>
+      <ol class="step-list">
+        <li>Di halaman Pengurusan Tunai, tekan butang <strong>"+ Rekod Perbelanjaan Laci"</strong>.</li>
+        <li>Pilih Kategori Perbelanjaan (Bahan Basah / Ais / Minyak & Pengangkutan / Utiliti / Lain-lain).</li>
+        <li>Masukkan jumlah wang yang dikeluarkan (RM).</li>
+        <li>Taipkan keterangan ringkas (contoh: <em>"Beli 2 beg ais kiub kedai sebelah"</em>).</li>
+        <li>Tangkap gambar atau muat naik foto resit sebagai bukti audit. Tekan <strong>"Simpan Perbelanjaan"</strong>.</li>
+      </ol>
+
+      <div class="callout tip">
+        <span class="callout-icon">📸</span>
+        <div>
+          <strong>Resit Digital Kekal:</strong> Resit yang dimuat naik disimpan ke storan awan Supabase dan dipautkan terus ke dalam rekod audit. Pemilik boleh menyemak semula gambar resit pada bila-bila masa.
+        </div>
+      </div>
+
+      <h3>C. Penutupan Kaunter & Pengimbangan Syif (Closing Reconciliation)</h3>
+      <ol class="step-list">
+        <li>Di penghujung hari, klik butang <strong>"Tutup Kaunter & Imbang Syif"</strong>.</li>
+        <li>Sistem akan memaparkan formula pengiraan:
+          <br><code>Baki Jangkaan = (Wang Apungan + Jumlah Jualan Tunai) - Jumlah Perbelanjaan Laci - Bayaran Balik</code>
+        </li>
+        <li>Kira wang tunai fizikal dalam laci dan taipkan jumlahnya ke dalam medan <strong>"Jumlah Tunai Sebenar Dikira (RM)"</strong>.</li>
+        <li><strong>Status Varians:</strong>
+          <ul>
+            <li><strong>Padanan Sempurna (RM 0.00):</strong> Warna hijau — tiada ketirisan duit.</li>
+            <li><strong>Kurangan (-RM XX.XX):</strong> Warna merah — duit dalam laci kurang daripada jualan sistem. Wajib taipkan penjelasan di medan nota.</li>
+            <li><strong>Lebihan (+RM XX.XX):</strong> Warna biru — duit dalam laci lebih daripada rekod sistem.</li>
+          </ul>
+        </li>
+        <li>Tekan <strong>"Sahkan & Tutup Kaunter"</strong>. Laporan ditutup dan dikunci.</li>
+      </ol>
+
+      <h3>D. Akses Pembukaan Semula Kecemasan (Emergency Reopen)</h3>
+      <p>Jika staf terlupa memasukkan satu transaksi jualan atau terdapat pemulangan wang pelanggan selepas kaunter ditutup, Admin atau Juruwang Kanan boleh menekan butang <strong>"Buka Semula Sesi Daftar Wang"</strong> di bahagian atas kaunter POS. Masukkan sebab pembukaan semula (wajib) untuk direkodkan dalam jejak audit.</p>
+    </section>
+
+    <!-- MODULE 4: POS COUNTER -->
+    <section id="pos-counter" class="module-section">
+      <div class="module-header">
+        <div class="module-icon">🖥️</div>
+        <div class="module-title">
+          <h2>04. Kaunter POS & Pengambilan Pesanan</h2>
+          <p>Antaramuka pesanan pantas, carian hidangan dinamik, pilihan varian makanan, dan pengesahan bayaran.</p>
+        </div>
+      </div>
+
+      <h3>A. Langkah Mengambil Pesanan</h3>
+      <ol class="step-list">
+        <li>
+          <span class="step-title">Pilih Jenis Pesanan</span>
+          <span class="step-desc">Pilih tab sama ada <strong>Makan Sini (Dine-In)</strong>, <strong>Bungkus (Takeaway)</strong>, atau <strong>Penghantaran (Delivery)</strong>. Jika Dine-In, pilih nombor meja yang diduduki pelanggan.</span>
+        </li>
+        <li>
+          <span class="step-title">Pilih Menu & Ubah Varian</span>
+          <span class="step-desc">Klik pada kad makanan/minuman. Modal ubah suai akan muncul untuk memilih saiz (Regular/Large), tahap pedas, atau add-ons (contoh: tambah telur mata, sup ekstra).</span>
+        </li>
+        <li>
+          <span class="step-title">Semak Troli Pesanan</span>
+          <span class="step-desc">Di sebelah kanan skrin, semak senarai item, kuantiti, dan jumlah harga subtotal. Anda boleh menambah diskaun sekiranya pelanggan ahli warung.</span>
+        </li>
+        <li>
+          <span class="step-title">Pilih Kaedah Bayaran & Selesai</span>
+          <span class="step-desc">
+            Tekan butang <strong>"Bayar Tunai"</strong> (masukkan jumlah duit pelanggan untuk kalkulator baki automatik) ATAU tekan <strong>"DuitNow QR"</strong> untuk memaparkan kod QR bank bagi imbasan pelanggan.
+          </span>
+        </li>
+      </ol>
+
+      <h3>B. Kawalan Suis Pesanan Online (Buka / Tutup Online)</h3>
+      <p>Di bahagian atas skrin kaunter POS terdapat butang suis togol <strong>"Pesanan Online: BUKA / TUTUP"</strong>:</p>
+      <ul>
+        <li><strong>🟢 Hijau (Buka):</strong> Pelanggan boleh membuat pesanan melalui kod QR meja dan penghantaran online.</li>
+        <li><strong>🔴 Merah (Tutup):</strong> Jika dapur mengalami kesesakan luar biasa (peak hour rush), Admin boleh menutup suis ini. Pelanggan yang cuba memesan melalui telefon akan dimaklumkan bahawa pesanan online ditutup sementara waktu.</li>
+      </ul>
+    </section>
+
+    <!-- MODULE 5: KITCHEN DISPLAY (KDS) -->
+    <section id="kitchen-kds" class="module-section">
+      <div class="module-header">
+        <div class="module-icon">👨‍🍳</div>
+        <div class="module-title">
+          <h2>05. Sistem Paparan Dapur (KDS - Kitchen Display)</h2>
+          <p>Paparan pintar tiket pesanan tukang masak dengan amaran bunyi loceng masa nyata.</p>
+        </div>
+      </div>
+
+      <div class="callout tip">
+        <span class="callout-icon">🔔</span>
+        <div>
+          <strong>Penting untuk Audio Bunyi Dapur:</strong> Pastikan tukang masak menyentuh skrin KDS (klik mana-mana butang) sekali pada waktu pagi semasa mula membuka halaman <code>/kitchen</code>. Ini membolehkan pelayar mengaktifkan kebenaran audio notifikasi loceng (Web Audio API) secara automatik setiap kali pesanan baharu masuk.
+        </div>
+      </div>
+
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Status Tiket Dapur</th>
+            <th>Warna Kad</th>
+            <th>Tindakan Tukang Masak</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Menunggu (Pending)</strong></td>
+            <td>Kuning / Amber</td>
+            <td>Pesanan baharu masuk dengan bunyi loceng. Tukang masak menyemak butiran dan menekan butang <strong>"Mula Masak (Start Cooking)"</strong>.</td>
+          </tr>
+          <tr>
+            <td><strong>Sedang Masak (Cooking)</strong></td>
+            <td>Biru</td>
+            <td>Makanan sedang disediakan. Pemasa (timer) mengira tempoh masa sejak pesanan diambil bagi memastikan makanan siap mengikut masa sasaran.</td>
+          </tr>
+          <tr>
+            <td><strong>Sedia Dihidang (Ready)</strong></td>
+            <td>Hijau</td>
+            <td>Makanan siap dimasak dan diletakkan di kaunter serahan. Pelayan atau juruwang akan mengambil makanan untuk dihidang ke meja.</td>
+          </tr>
+          <tr>
+            <td><strong>Selesai (Served)</strong></td>
+            <td>Kelabu</td>
+            <td>Tiket dialihkan ke arkib pesanan selesai secara automatik bagi memastikan skrin dapur kekal kemas.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- MODULE 6: TABLE & QR CODE -->
+    <section id="table-qr" class="module-section">
+      <div class="module-header">
+        <div class="module-icon">🪑</div>
+        <div class="module-title">
+          <h2>06. Pengurusan Meja & Kod QR Meja</h2>
+          <p>Penjanaan kod QR meja unik, pesanan layan diri di meja makan, dan butang panggil pelayan.</p>
+        </div>
+      </div>
+
+      <h3>A. Cara Menjana & Mencetak Kod QR Meja</h3>
+      <ol class="step-list">
+        <li>Buka menu <strong>Meja (/tables)</strong> daripada bar menu.</li>
+        <li>Senarai meja A1, A2, A3, A4 (atau meja tambahan) akan dipaparkan berserta status semasa.</li>
+        <li>Klik pada mana-mana meja dan tekan butang <strong>"Cetak Kod QR Meja"</strong>.</li>
+        <li>Pelekat kod QR boleh dicetak dan ditampal terus di atas meja pelanggan.</li>
+        <li>Format pautan kod QR: <code>https://warungjnj.online/t/[token-meja]</code>.</li>
+      </ol>
+
+      <h3>B. Pengalaman Pelanggan di Meja Makan</h3>
+      <ul>
+        <li>Pelanggan hanya perlu membuka kamera telefon pintar dan mengimbas kod QR di atas meja mereka.</li>
+        <li>Menu Warung J&J akan terbuka di telefon mereka tanpa perlu memuat turun sebarang aplikasi.</li>
+        <li>Pelanggan boleh menekan butang <strong>"🛎️ Panggil Pelayan"</strong> di telefon mereka. Notifikasi segera akan berbunyi di kaunter juruwang berserta nombor meja yang memanggil.</li>
+      </ul>
+    </section>
+
+    <!-- MODULE 7: MENU & INVENTORY -->
+    <section id="menu-stock" class="module-section">
+      <div class="module-header">
+        <div class="module-icon">🍲</div>
+        <div class="module-title">
+          <h2>07. Pengurusan Menu, Harga & Stok Inventori</h2>
+          <p>Kawalan menyeluruh item hidangan, kategori masakan, penetapan had amaran stok, dan gambar menu.</p>
+        </div>
+      </div>
+
+      <ol class="step-list">
+        <li>
+          <span class="step-title">Menambah Menu Baharu</span>
+          <span class="step-desc">Di halaman <code>/menu</code>, tekan butang <strong>"+ Tambah Menu"</strong>. Masukkan Nama Menu, Kategori (cth: Makanan Utama, Mee & Sup, Minuman, Kuih-Muih), Harga Jualan (RM), dan Gambar Hidangan.</span>
+        </li>
+        <li>
+          <span class="step-title">Kawalan Stok Fizikal & Had Rendah (Low Stock Threshold)</span>
+          <span class="step-desc">
+            Masukkan baki bilangan unit stok (contoh: 50 mangkuk Mee Sup). Tetapkan <em>Low Stock Threshold</em> (contoh: 5). Apabila baki stok tinggal 5 atau kurang, sistem akan memaparkan lencana amaran kuning di dashboard.
+          </span>
+        </li>
+        <li>
+          <span class="step-title">Togol Ketersediaan Segera (In Stock / Out of Stock)</span>
+          <span class="step-desc">
+            Jika sesuatu hidangan habis sebelum waktu operasi tamat, Admin boleh mematikan suis item tersebut. Item akan dipadamkan daripada pilihan pelanggan di kaunter dan meja serta-merta tanpa perlu memadam rekod menu.
+          </span>
+        </li>
+      </ol>
+    </section>
+
+    <!-- MODULE 8: DELIVERY & RIDER -->
+    <section id="delivery-rider" class="module-section">
+      <div class="module-header">
+        <div class="module-icon">🛵</div>
+        <div class="module-title">
+          <h2>08. Pesanan Penghantaran (Delivery) & Portal Rider</h2>
+          <p>Pengiraan caj jarak GPS automatik, penugasan rider, dan bukti serahan pesanan (POD).</p>
+        </div>
+      </div>
+
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Parameter Penghantaran</th>
+            <th>Kadar & Tetapan Cawangan Penampang</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Kadar Caj Per Kilometer</strong></td>
+            <td>RM 1.00 bagi setiap 1 KM jarak perjalanan.</td>
+          </tr>
+          <tr>
+            <td><strong>Caj Minimum Penghantaran</strong></td>
+            <td>RM 2.00 (bagi jarak 0 – 2.0 KM).</td>
+          </tr>
+          <tr>
+            <td><strong>Had Radius Maksimum</strong></td>
+            <td>15.0 KM dari koordinat Warung J&J Penampang (5.918° N, 116.082° E).</td>
+          </tr>
+          <tr>
+            <td><strong>Pesanan Minimum Penghantaran</strong></td>
+            <td>RM 15.00 bagi setiap pesanan penghantaran.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>Aliran Penugasan Rider & Bukti Serahan (POD)</h3>
+      <ol class="step-list">
+        <li>Pesanan penghantaran yang dibayar akan muncul di halaman <strong>Penghantaran (/delivery)</strong>.</li>
+        <li>Admin menugaskan pesanan kepada mana-mana Rider aktif (cth: Rider A atau Rider Sendiri).</li>
+        <li>Rider membuka portal <code>/rider</code> di telefon pintar mereka untuk melihat alamat pelanggan, pautan navigasi peta GPS, dan nombor WhatsApp pelanggan.</li>
+        <li>Selepas menyerahkan makanan kepada pelanggan, Rider mengambil gambar serahan makanan di pintu rumah pelanggan dan menekan <strong>"Sahkan Bukti Serahan (POD)"</strong>. Status pesanan selesai 100%.</li>
+      </ol>
+    </section>
+
+    <!-- MODULE 9: DASHBOARD & ANALYTICS -->
+    <section id="dashboard-analytics" class="module-section">
+      <div class="module-header">
+        <div class="module-icon">📊</div>
+        <div class="module-title">
+          <h2>09. Dashboard Analitik & Prestasi Jualan</h2>
+          <p>Pusat kawalan metrik hasil jualan harian, perbandingan prestasi, dan laporan inventori.</p>
+        </div>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>📈 Jumlah Jualan Hari Ini</h4>
+          <p>Hasil kasar harian yang diperbaharui secara masa nyata (Realtime) termasuk pecahan bayaran Tunai vs DuitNow QR.</p>
+        </div>
+        <div class="feature-card">
+          <h4>⚖️ Perbandingan Semalam</h4>
+          <p>Menunjukkan peratusan kenaikan atau penurunan hasil jualan hari ini berbanding hari semalam pada waktu yang sama.</p>
+        </div>
+        <div class="feature-card">
+          <h4>🏆 Menu Paling Laris</h4>
+          <p>Senarai 5 hidangan paling popular bagi membantu pemilik merancang pembelian bahan mentah mingguan.</p>
+        </div>
+        <div class="feature-card">
+          <h4>🚨 Amaran Stok Habis</h4>
+          <p>Notifikasi segera apabila ada menu yang mencecah paras had stok rendah bagi tindakan restock segera.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODULE 10: AUDIT LOG -->
+    <section id="audit-log" class="module-section">
+      <div class="module-header">
+        <div class="module-icon red">🛡️</div>
+        <div class="module-title">
+          <h2>10. Jejak Audit & Kawalan Pengubahsuaian</h2>
+          <p>Sistem rakaman keselamatan tanpa padam bagi memantau sebarang suntingan harga, diskaun, atau pembatalan.</p>
+        </div>
+      </div>
+
+      <p>Bagi melindungi perniagaan daripada salah laku atau ketirisan dalaman, sistem Warung J&J merakam setiap tindakan kritikal secara automatik ke dalam modul <strong>Log Audit (/settings/audit-log)</strong>:</p>
+
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Tindakan Diperiksa</th>
+            <th>Data Yang Dirakamkan</th>
+            <th>Tujuan Kawalan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Pengeditan Jumlah Pesanan</strong></td>
+            <td>Nilai asal, nilai baharu, nama staf penyunting, tarikh, masa, dan sebab wajib.</td>
+            <td>Mencegah pengubahan harga selepas menerima duit tunai pelanggan.</td>
+          </tr>
+          <tr>
+            <td><strong>Pemadaman Perbelanjaan Laci</strong></td>
+            <td>Nilai perbelanjaan yang dipadam, bukti resit asal, staf yang memadam.</td>
+            <td>Mengesan jika ada cubaan menuntut perbelanjaan palsu.</td>
+          </tr>
+          <tr>
+            <td><strong>Buka Semula Kaunter (Reopen)</strong></td>
+            <td>Masa pembukaan semula, staf yang meluluskan, sebab pembukaan semula.</td>
+            <td>Mengelakkan wang disunting secara senyap selepas syif ditutup.</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- MODULE 11: PRINTER SETTINGS -->
+    <section id="printer-settings" class="module-section">
+      <div class="module-header">
+        <div class="module-icon">🖨️</div>
+        <div class="module-title">
+          <h2>11. Tetapan Resit & Pencetak Terma (Thermal Printer)</h2>
+          <p>Konfigurasi percetakan resit juruwang dan tiket dapur saiz 58mm atau 80mm.</p>
+        </div>
+      </div>
+
+      <ol class="step-list">
+        <li>Buka menu <strong>Tetapan (/settings)</strong>.</li>
+        <li>Di bahagian <strong>Konfigurasi Pencetak</strong>, pilih saiz kertas yang digunakan di kedai:
+          <ul>
+            <li><strong>58mm (Kecil / Mudah Alih):</strong> Sesuai untuk printer Bluetooth mini atau kaunter sempit.</li>
+            <li><strong>80mm (Standard POS):</strong> Resit penuh dengan butiran lengkap item dan alamat warung.</li>
+          </ul>
+        </li>
+        <li>Tekan butang <strong>"Cetak Resit Ujian (Test Print)"</strong> untuk memastikan teks tidak terpotong dan logo warung muncul dengan jelas.</li>
+        <li>Aktifkan pilihan <strong>"Cetak Automatik Selepas Bayaran"</strong> sekiranya anda mahu resit keluar secara automatik sejurus selepas transaksi tunai disahkan.</li>
+      </ol>
+    </section>
+
+    <!-- MODULE 12: TROUBLESHOOTING -->
+    <section id="troubleshooting" class="module-section">
+      <div class="module-header">
+        <div class="module-icon amber">❓</div>
+        <div class="module-title">
+          <h2>12. Soalan Lazim & Tindakan Kecemasan (Troubleshooting)</h2>
+          <p>Panduan penyelesaian pantas sekiranya berlaku gangguan internet, peranti, atau sistem.</p>
+        </div>
+      </div>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <h4>🌐 Apa jadi jika internet warung terputus?</h4>
+          <p>Sistem Warung J&J dilengkapi dengan perlindungan storan tempatan (localStorage fallback). Buka dan tutup kaunter tetap boleh berfungsi di peranti tanpa tersekat. Sebaik sahaja talian internet kembali pulih, data akan diselaraskan secara automatik ke awan Supabase.</p>
+        </div>
+        <div class="feature-card">
+          <h4>🔊 Skrin dapur tidak berbunyi apabila pesanan masuk?</h4>
+          <p>Pelayar web moden (Google Chrome / Safari) menyekat audio automatik jika pengguna belum menyentuh skrin. Pastikan staf dapur menekan mana-mana butang pada skrin KDS sekali pada waktu pagi semasa mula membuka tablet.</p>
+        </div>
+        <div class="feature-card">
+          <h4>💵 Duit laci tidak seimbang semasa tutup kaunter?</h4>
+          <p>Semak senarai perbelanjaan laci di Pengurusan Tunai. Kebiasaannya terdapat pembelian bahan basah atau ais yang staf terlupa rekodkan. Masukkan perbelanjaan tersebut dan nilai varians akan kembali seimbang.</p>
+        </div>
+        <div class="feature-card">
+          <h4>📱 Cara pelanggan bayar guna DuitNow QR?</h4>
+          <p>Di skrin POS, klik "DuitNow QR". Kod QR akaun rasmi Warung J&J akan tertera. Pelanggan boleh mengimbas kod tersebut menggunakan sebarang aplikasi perbankan (Maybank, CIMB, Touch 'n Go eWallet, dll). Selepas disahkan, tekan butang bayaran selesai.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p><strong>Warung J&J — Sistem Tempat Jualan (POS) & Penghantaran Makanan</strong></p>
+      <p>Jalan Penampang, 89500 Penampang, Sabah, Malaysia | Tel: 017-222 1784</p>
+      <p style="margin-top: 8px; font-size: 11.5px;">Dokumen ini adalah hak milik dalaman Warung J&J. Dilarang menyalin atau mengedarkan kepada pihak ketiga tanpa kebenaran.</p>
+    </div>
+
+  </div>
+
+</body>
+</html>
