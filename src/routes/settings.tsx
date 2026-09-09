@@ -57,8 +57,23 @@ import {
   Menu,
   Loader2,
   Pencil,
-  Trash2
+  Trash2,
+  Bluetooth,
+  Usb,
+  Wifi,
+  Play
 } from 'lucide-react';
+import {
+  connectBluetoothPrinter,
+  connectSerialPrinter,
+  disconnectPrinter,
+  getSavedPrinterInfo,
+  isBluetoothSupported,
+  isSerialSupported,
+  isPrinterConnected,
+  printTestReceipt,
+  type ConnectedPrinterInfo
+} from '@/lib/printer-connector';
 import {
   Dialog,
   DialogContent,
@@ -432,6 +447,73 @@ function SettingsPage() {
     }
   };
 
+  const [isConnectingBt, setIsConnectingBt] = useState(false);
+  const [isConnectingUsb, setIsConnectingUsb] = useState(false);
+  const [isTestingPrint, setIsTestingPrint] = useState(false);
+  const [connectedPrinter, setConnectedPrinter] = useState<ConnectedPrinterInfo | null>(() => getSavedPrinterInfo());
+
+  useEffect(() => {
+    // Refresh connected printer info on mount
+    const saved = getSavedPrinterInfo();
+    if (saved) setConnectedPrinter(saved);
+  }, []);
+
+  const handleConnectBluetooth = async () => {
+    try {
+      setIsConnectingBt(true);
+      const info = await connectBluetoothPrinter();
+      setConnectedPrinter(info);
+      setPrinterForm(prev => ({
+        ...prev,
+        printer_name: info.name
+      }));
+      toast.success(`Pencetak Bluetooth "${info.name}" berjaya disambungkan! 🖨️`);
+    } catch (err: any) {
+      if (err?.name !== 'NotFoundError') {
+        toast.error(err?.message || 'Gagal menyambung Bluetooth printer');
+      }
+    } finally {
+      setIsConnectingBt(false);
+    }
+  };
+
+  const handleConnectUsb = async () => {
+    try {
+      setIsConnectingUsb(true);
+      const info = await connectSerialPrinter();
+      setConnectedPrinter(info);
+      setPrinterForm(prev => ({
+        ...prev,
+        printer_name: info.name
+      }));
+      toast.success(`Pencetak USB/Serial berjaya disambungkan! 🔌`);
+    } catch (err: any) {
+      if (err?.name !== 'NotFoundError') {
+        toast.error(err?.message || 'Gagal menyambung USB/Serial printer');
+      }
+    } finally {
+      setIsConnectingUsb(false);
+    }
+  };
+
+  const handleDisconnectPrinter = async () => {
+    await disconnectPrinter();
+    setConnectedPrinter(null);
+    toast.info('Sambungan pencetak telah diputuskan.');
+  };
+
+  const handleTestPrintReceipt = async () => {
+    try {
+      setIsTestingPrint(true);
+      await printTestReceipt(storeForm.name || 'Warung J&J');
+      toast.success('Ujian cetakan resit dihantar ke pencetak! 📄');
+    } catch (err: any) {
+      toast.error(`Ralat cetakan: ${err.message || String(err)}`);
+    } finally {
+      setIsTestingPrint(false);
+    }
+  };
+
   const SIDEBAR_ITEMS: {
     id: SettingsSection;
     label: string;
@@ -800,11 +882,118 @@ function SettingsPage() {
                     <span>Tetapan Pencetak Thermal & Penggera Dapur</span>
                   </h2>
                   
+                  {/* DIRECT PRINTER CONNECTION CONTROLLER (BLUETOOTH / USB / BROWSER) */}
+                  <div className="bg-gradient-to-br from-slate-50 to-sky-50/40 border border-sky-200/80 rounded-2xl p-4.5 space-y-4 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-sky-200/60">
+                      <div>
+                        <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                          <Printer className="w-4 h-4 text-sky-600" />
+                          <span>Sambungan Terus Pencetak (Hardware Connection)</span>
+                        </h3>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          Sambungkan thermal printer terus melalui Bluetooth, wayar USB, atau guna dialog cetak pelayar.
+                        </p>
+                      </div>
+
+                      {/* Connection Status Badge */}
+                      <div>
+                        {connectedPrinter ? (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-black">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>{connectedPrinter.type.toUpperCase()}: {connectedPrinter.name}</span>
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-300 text-slate-600 text-xs font-bold">
+                            <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                            <span>Tiada Peranti Tersambung</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Action Buttons: Connect Bluetooth, Connect USB, Test Print */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                      <Button
+                        type="button"
+                        onClick={handleConnectBluetooth}
+                        disabled={isConnectingBt}
+                        className="bg-sky-600 hover:bg-sky-500 text-white font-bold h-11 rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                      >
+                        {isConnectingBt ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Mengimbas BT...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Bluetooth className="w-4 h-4" />
+                            <span>Sambung Bluetooth</span>
+                          </>
+                        )}
+                      </Button>
+
+                      <Button
+                        type="button"
+                        onClick={handleConnectUsb}
+                        disabled={isConnectingUsb}
+                        variant="outline"
+                        className="bg-white hover:bg-slate-50 border-slate-300 text-slate-800 font-bold h-11 rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                      >
+                        {isConnectingUsb ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <span>Menyambung USB...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Usb className="w-4 h-4 text-slate-700" />
+                            <span>Sambung Wayar USB</span>
+                          </>
+                        )}
+                      </Button>
+
+                      <Button
+                        type="button"
+                        onClick={handleTestPrintReceipt}
+                        disabled={isTestingPrint}
+                        variant="outline"
+                        className="bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-800 font-bold h-11 rounded-xl shadow-xs flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                      >
+                        {isTestingPrint ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin text-emerald-600" />
+                            <span>Mencetak...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Play className="w-3.5 h-3.5 fill-emerald-700 text-emerald-700" />
+                            <span>Uji Cetak Resit 📄</span>
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    {connectedPrinter && (
+                      <div className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-200 text-xs">
+                        <span className="text-slate-600 font-mono text-[11px]">
+                          Tersambung sejak: {new Date(connectedPrinter.connectedAt).toLocaleTimeString()}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={handleDisconnectPrinter}
+                          className="text-rose-600 hover:text-rose-700 font-bold text-xs underline cursor-pointer"
+                        >
+                          Putuskan Sambungan
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="printer_name" className="text-slate-700 font-bold">Nama Thermal Printer</Label>
                     <Input
                       id="printer_name"
-                      placeholder='cth: "POS-5810dd Counter"'
+                      placeholder='cth: "POS-5810dd Counter" atau "Bluetooth Thermal POS"'
                       value={printerForm.printer_name}
                       onChange={(e) => setPrinterForm(prev => ({ ...prev, printer_name: e.target.value }))}
                       className="bg-slate-50 border-slate-200 text-slate-900 placeholder-slate-400 rounded-xl font-mono text-sm"
