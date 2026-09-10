@@ -12,6 +12,27 @@ export interface ConnectedPrinterInfo {
   connectedAt: string;
 }
 
+export interface ReceiptItemData {
+  name: string;
+  price: number;
+  quantity: number;
+  container_size?: string | null;
+  container_charge?: number;
+  notes?: string | null;
+}
+
+export interface ReceiptOrderData {
+  id: string;
+  created_at: string;
+  total_amount: number;
+  type: string;
+  customer_name?: string | null;
+  table_id?: string | null;
+  status: string;
+  delivery_fee?: number | null;
+  delivery_service?: string | null;
+}
+
 // ESC/POS Command Constants
 const ESC = 0x1B;
 const GS = 0x1D;
@@ -256,6 +277,128 @@ function textToBytes(text: string): Uint8Array {
 }
 
 /**
+ * Format line with text on left and text on right for 32-column receipt (standard 58mm)
+ */
+function formatTwoColumns(left: string, right: string, width: number = 32): string {
+  const leftLen = left.length;
+  const rightLen = right.length;
+  if (leftLen + rightLen >= width) {
+    return left.slice(0, width - rightLen - 1) + ' ' + right + '\n';
+  }
+  const spaces = ' '.repeat(width - leftLen - rightLen);
+  return left + spaces + right + '\n';
+}
+
+/**
+ * Print order directly to Bluetooth or USB Thermal Printer using ESC/POS commands
+ * If no direct printer is connected, it cleanly falls back to opening the receipt print window.
+ */
+export async function printOrderDirectThermal(
+  order: ReceiptOrderData,
+  store: { name: string; phone_number?: string | null; phone_number_2?: string | null },
+  cashierName: string = 'Staff',
+  items: ReceiptItemData[]
+): Promise<{ success: boolean; mode: 'bluetooth' | 'usb' | 'system' }> {
+  // Check if a direct hardware printer is connected
+  if (!isPrinterConnected()) {
+    // Fallback to standard print dialog
+    const { generateReceiptHTML } = await import('@/lib/receipt');
+    const storeInfo = {
+      name: store.name || 'Warung J&J',
+      logo_url: typeof window !== 'undefined' ? window.location.origin + '/logo.png' : '',
+      phone_number: store.phone_number || '',
+      phone_number_2: store.phone_number_2 || '',
+    };
+    const html = generateReceiptHTML(order as any, storeInfo, cashierName, items);
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(html);
+      printWindow.document.close();
+    }
+    return { success: true, mode: 'system' };
+  }
+
+  const orderDate = new Date(order.created_at);
+  const dateStr = orderDate.toLocaleDateString('en-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const timeStr = orderDate.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' });
+  const orderIdShort = order.id.split('-')[0]!.toUpperCase();
+  const typeLabel = order.type === 'delivery' ? 'DELIVERY' : order.type === 'dine_in' ? 'MAKAN SINI' : 'TAPAU / TAKEAWAY';
+
+  const chunks: Uint8Array[] = [
+    ESC_POS_COMMANDS.INIT,
+    ESC_POS_COMMANDS.ALIGN_CENTER,
+    ESC_POS_COMMANDS.DOUBLE_SIZE,
+    textToBytes(`${store.name || 'Warung J&J'}\n`),
+    ESC_POS_COMMANDS.NORMAL_TEXT,
+    textToBytes('Resit Rasmi Pesanan\n'),
+    textToBytes('================================\n'),
+    ESC_POS_COMMANDS.ALIGN_LEFT,
+    textToBytes(formatTwoColumns(`No. Resit: #${orderIdShort}`, typeLabel)),
+    textToBytes(formatTwoColumns(`Tarikh   : ${dateStr}`, timeStr)),
+    textToBytes(formatTwoColumns(`Juruwang : ${cashierName}`, order.table_id ? `Meja: ${order.table_id}` : '')),
+    textToBytes('--------------------------------\n'),
+  ];
+
+  // Print Items
+  items.forEach(item => {
+    const itemTotal = (item.price * item.quantity).toFixed(2);
+    chunks.push(
+      ESC_POS_COMMANDS.EMPHASIZE_ON,
+      textToBytes(`${item.name}\n`),
+      ESC_POS_COMMANDS.EMPHASIZE_OFF,
+      textToBytes(formatTwoColumns(`  ${item.quantity}x @ RM${item.price.toFixed(2)}`, `RM ${itemTotal}`))
+    );
+
+    if (item.notes) {
+      chunks.push(textToBytes(`  -> Nota: ${item.notes}\n`));
+    }
+
+    if (item.container_charge && item.container_charge > 0) {
+      const cTotal = (item.container_charge * item.quantity).toFixed(2);
+      chunks.push(textToBytes(formatTwoColumns(`  Tapau (${item.container_size || 'Bekas'})`, `RM ${cTotal}`)));
+    }
+  });
+
+  chunks.push(textToBytes('--------------------------------\n'));
+
+  // Delivery fee if applicable
+  if (order.delivery_fee && Number(order.delivery_fee) > 0) {
+    const subtotal = (order.total_amount - Number(order.delivery_fee)).toFixed(2);
+    chunks.push(
+      textToBytes(formatTwoColumns('Subtotal', `RM ${subtotal}`)),
+      textToBytes(formatTwoColumns('Caj Penghantaran', `RM ${Number(order.delivery_fee).toFixed(2)}`)),
+      textToBytes('--------------------------------\n')
+    );
+  }
+
+  // Grand Total
+  chunks.push(
+    ESC_POS_COMMANDS.EMPHASIZE_ON,
+    ESC_POS_COMMANDS.DOUBLE_HEIGHT,
+    textToBytes(formatTwoColumns('JUMLAH BESAR:', `RM ${order.total_amount.toFixed(2)}`)),
+    ESC_POS_COMMANDS.NORMAL_TEXT,
+    ESC_POS_COMMANDS.EMPHASIZE_OFF,
+    textToBytes('================================\n'),
+    ESC_POS_COMMANDS.ALIGN_CENTER,
+    textToBytes('Terima Kasih Atas Kunjungan Anda!\nSila Datang Lagi.\n\n\n\n'),
+    ESC_POS_COMMANDS.CUT_PAPER
+  );
+
+  // Merge chunks into single Uint8Array
+  const totalLength = chunks.reduce((acc, c) => acc + c.length, 0);
+  const fullPayload = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const c of chunks) {
+    fullPayload.set(c, offset);
+    offset += c.length;
+  }
+
+  await sendRawBytesToPrinter(fullPayload);
+  const info = getSavedPrinterInfo();
+  return { success: true, mode: (info?.type as any) || 'bluetooth' };
+}
+
+/**
  * Print a test receipt page to test connectivity
  */
 export async function printTestReceipt(storeName: string = 'Warung J&J'): Promise<void> {
@@ -301,17 +444,17 @@ export async function printTestReceipt(storeName: string = 'Warung J&J'): Promis
     ESC_POS_COMMANDS.INIT,
     ESC_POS_COMMANDS.ALIGN_CENTER,
     ESC_POS_COMMANDS.DOUBLE_SIZE,
-    textToBytes(`${storeName}\\n`),
+    textToBytes(`${storeName}\n`),
     ESC_POS_COMMANDS.NORMAL_TEXT,
-    textToBytes('UJIAN SAMBUNGAN PENCETAK\\n'),
-    textToBytes('--------------------------------\\n'),
+    textToBytes('UJIAN SAMBUNGAN PENCETAK\n'),
+    textToBytes('--------------------------------\n'),
     ESC_POS_COMMANDS.ALIGN_LEFT,
-    textToBytes(`Tarikh : ${new Date().toLocaleDateString('en-MY')}\\n`),
-    textToBytes(`Masa   : ${new Date().toLocaleTimeString('en-MY')}\\n`),
-    textToBytes('Status : SAMBUNGAN BERJAYA! ✓\\n'),
-    textToBytes('--------------------------------\\n'),
+    textToBytes(`Tarikh : ${new Date().toLocaleDateString('en-MY')}\n`),
+    textToBytes(`Masa   : ${new Date().toLocaleTimeString('en-MY')}\n`),
+    textToBytes('Status : SAMBUNGAN BERJAYA! ✓\n'),
+    textToBytes('--------------------------------\n'),
     ESC_POS_COMMANDS.ALIGN_CENTER,
-    textToBytes('Sistem POS Warung J&J Siap Sedia\\n\\n\\n\\n'),
+    textToBytes('Sistem POS Warung J&J Siap Sedia\n\n\n\n'),
     ESC_POS_COMMANDS.CUT_PAPER,
   ];
 

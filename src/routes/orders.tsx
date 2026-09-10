@@ -962,20 +962,30 @@ function OrdersPage() {
                           History
                         </button>
                         <button 
-                          onClick={() => {
-                            import('@/lib/receipt').then(({ generateReceiptHTML }) => {
-                              const store = { name: "Warung J&J", logo_url: window.location.origin + "/favicon.png", phone_number: "60172221784", phone_number_2: "60178284578" };
+                          onClick={async () => {
+                            try {
+                              const { printOrderDirectThermal, isPrinterConnected } = await import('@/lib/printer-connector');
+                              const store = { name: "Warung J&J", phone_number: "60172221784", phone_number_2: "60178284578" };
                               const itemsForPrint = (order.order_items || []).map(i => ({
-                                name: i.menu_items?.name || 'Item', price: i.price_at_order, quantity: i.quantity, container_size: (i as any).container_size, container_charge: (i as any).container_charge, notes: (i as any).notes
+                                name: i.menu_items?.name || 'Item', 
+                                price: i.price_at_order, 
+                                quantity: i.quantity, 
+                                container_size: (i as any).container_size, 
+                                container_charge: (i as any).container_charge, 
+                                notes: (i as any).notes
                               }));
-                              const html = generateReceiptHTML(order as any, store, "Staff", itemsForPrint);
-                              const printWindow = window.open('', '_blank');
-                              if (printWindow) { printWindow.document.write(html); printWindow.document.close(); }
-                            });
+                              
+                              const res = await printOrderDirectThermal(order as any, store, "Staff", itemsForPrint);
+                              if (res.mode === 'bluetooth' || res.mode === 'usb') {
+                                toast.success(`Resit #${order.id.slice(0, 8)} berjaya dihantar ke pencetak ${res.mode.toUpperCase()}! 🖨️`);
+                              }
+                            } catch (printErr: any) {
+                              toast.error(`Ralat cetakan: ${printErr?.message || String(printErr)}`);
+                            }
                           }}
-                          className="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 px-3.5 py-1.5 rounded-xl text-xs font-black shadow-xs active:scale-95 transition-all"
+                          className="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 px-3.5 py-1.5 rounded-xl text-xs font-black shadow-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
                         >
-                          PRINT
+                          PRINT 🖨️
                         </button>
                       </div>
                     </div>
