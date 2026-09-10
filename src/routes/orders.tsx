@@ -975,9 +975,15 @@ function OrdersPage() {
                                 notes: (i as any).notes
                               }));
                               
-                              const res = await printOrderDirectThermal(order as any, store, "Staff", itemsForPrint);
+                              const tableObj = tables.find(t => t.id === order.table_id);
+                              const orderForPrint = {
+                                ...order,
+                                table_number: tableObj ? tableObj.table_number : (order.table_id || null)
+                              };
+
+                              const res = await printOrderDirectThermal(orderForPrint as any, store, "Staff", itemsForPrint);
                               if (res.mode === 'bluetooth' || res.mode === 'usb') {
-                                toast.success(`Resit #${order.id.slice(0, 8)} berjaya dihantar ke pencetak ${res.mode.toUpperCase()}! 🖨️`);
+                                toast.success(`Resit #${order.id.slice(0, 8)} berjaya dicetak ke peranti ${res.mode.toUpperCase()}! 🖨️`);
                               }
                             } catch (printErr: any) {
                               toast.error(`Ralat cetakan: ${printErr?.message || String(printErr)}`);

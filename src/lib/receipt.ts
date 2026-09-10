@@ -21,9 +21,12 @@ export interface Order {
   type: string;
   customer_name?: string | null;
   table_id?: string | null;
+  table_number?: string | null;
   status: string;
   delivery_fee?: number | null;
   delivery_service?: string | null;
+  paid?: boolean;
+  payment_method?: string | null;
 }
 
 export function generateReceiptHTML(
@@ -39,36 +42,49 @@ export function generateReceiptHTML(
   const formattedTime = orderDate.toLocaleTimeString('en-MY', {
     hour: '2-digit', minute: '2-digit'
   });
-  const orderIdShort = order.id.split('-')[0]!.toUpperCase();
+  const orderIdShort = order.id.slice(0, 8).toUpperCase();
+  const totalItemCount = items.reduce((sum, i) => sum + i.quantity, 0);
+
+  let typeDisplay = 'TAKEAWAY / BUNGKUS';
+  if (order.type === 'dine_in') {
+    const tbl = order.table_number || (order.table_id && order.table_id.length < 10 ? order.table_id : 'Meja');
+    typeDisplay = `DINE-IN [ MEJA ${tbl} ]`;
+  } else if (order.type === 'delivery') {
+    const svc = (order.delivery_service || 'GRAB/PANDA').toUpperCase();
+    typeDisplay = `DELIVERY [ ${svc} ]`;
+  }
 
   const itemsHtml = items.map(item => {
     const itemTotal = (item.price * item.quantity).toFixed(2);
     let itemHtml = `
-      <tr>
-        <td class="item-name" colspan="3">${item.name}</td>
-      </tr>
-      <tr>
-        <td class="item-qty">${item.quantity}x</td>
-        <td class="item-price">RM ${item.price.toFixed(2)}</td>
-        <td class="item-total">RM ${itemTotal}</td>
+      <tr style="border-top: 1px dashed #e2e8f0;">
+        <td class="item-name bold" colspan="2" style="padding-top: 6px;">[${item.quantity}x] ${item.name}</td>
+        <td class="item-total bold" style="padding-top: 6px;">RM ${itemTotal}</td>
       </tr>
     `;
 
-    if (item.notes) {
+    if (item.quantity > 1) {
       itemHtml += `
         <tr>
-          <td class="item-qty"></td>
-          <td class="item-price indent" colspan="2" style="font-style: italic;">&rarr; ${item.notes}</td>
+          <td colspan="3" style="font-size: 10px; color: #555; padding-left: 12px;">@ RM ${item.price.toFixed(2)} setiap satu</td>
+        </tr>
+      `;
+    }
+
+    if (item.notes && item.notes.trim() !== '') {
+      itemHtml += `
+        <tr>
+          <td colspan="3" class="indent" style="font-style: italic; color: #333;">&bull; Nota: ${item.notes.trim()}</td>
         </tr>
       `;
     }
 
     if (item.container_charge && item.container_charge > 0) {
       const containerTotal = (item.container_charge * item.quantity).toFixed(2);
+      const sizeName = item.container_size ? item.container_size.toUpperCase() : 'BEKAS';
       itemHtml += `
         <tr>
-          <td class="item-qty"></td>
-          <td class="item-price indent">Tapau (${item.container_size || 'large'})</td>
+          <td colspan="2" class="indent">+ Caj Bungkus (${sizeName})</td>
           <td class="item-total">RM ${containerTotal}</td>
         </tr>
       `;
@@ -76,13 +92,16 @@ export function generateReceiptHTML(
     return itemHtml;
   }).join('');
 
+  const paymentMethod = order.payment_method ? order.payment_method.toUpperCase() : 'TUNAI';
+  const payStatus = order.paid ? `SUDAH BAYAR (${paymentMethod})` : 'BELUM DIBAYAR';
+
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Receipt - ${orderIdShort}</title>
+  <title>Receipt - #${orderIdShort}</title>
   <style>
     @page {
       margin: 0;
@@ -91,7 +110,7 @@ export function generateReceiptHTML(
     body {
       font-family: 'Courier New', Courier, monospace;
       font-size: 12px;
-      line-height: 1.2;
+      line-height: 1.25;
       color: #000;
       margin: 0;
       padding: 10px;
@@ -103,22 +122,45 @@ export function generateReceiptHTML(
     .bold { font-weight: bold; }
     
     .logo {
-      max-width: 80%;
+      max-width: 70%;
       height: auto;
       margin: 0 auto 5px auto;
       display: block;
-      filter: grayscale(100%) contrast(1.2); /* Optimize for thermal */
+      filter: grayscale(100%) contrast(1.2);
     }
     
     .store-name {
-      font-size: 14px;
-      font-weight: bold;
-      margin: 5px 0;
+      font-size: 15px;
+      font-weight: 900;
+      margin: 4px 0 2px 0;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .order-banner {
+      border: 1px solid #000;
+      padding: 6px 4px;
+      margin: 8px 0;
+      text-align: center;
+    }
+    .order-id {
+      font-size: 16px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+    .order-type {
+      font-size: 12px;
+      font-weight: 800;
+      margin-top: 2px;
     }
     
     .divider {
       border-top: 1px dashed #000;
+      margin: 6px 0;
+    }
+
+    .divider-double {
+      border-top: 2px solid #000;
       margin: 8px 0;
     }
     
@@ -126,7 +168,7 @@ export function generateReceiptHTML(
       display: grid;
       grid-template-columns: auto 1fr;
       gap: 2px 8px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       font-size: 11px;
     }
     
@@ -142,24 +184,22 @@ export function generateReceiptHTML(
       word-wrap: break-word;
     }
     
-    .item-qty { width: 15%; }
-    .item-price { width: 50%; }
     .item-total { width: 35%; text-align: right; }
-    .indent { padding-left: 10px; font-size: 11px; }
+    .indent { padding-left: 12px; font-size: 11px; }
     
-    .totals-table { margin-top: 10px; }
-    .totals-table td { padding: 2px 0; }
+    .totals-table { margin-top: 6px; }
+    .totals-table td { padding: 2px 0; font-size: 11px; }
     
     .grand-total {
-      font-size: 14px;
-      font-weight: bold;
-      padding: 5px 0;
+      font-size: 15px;
+      font-weight: 900;
+      padding: 6px 0;
     }
     
     .footer {
       margin-top: 15px;
       font-size: 11px;
-      margin-bottom: 30px; /* Space for tearing */
+      margin-bottom: 30px;
     }
   </style>
 </head>
@@ -167,56 +207,64 @@ export function generateReceiptHTML(
   <div class="text-center">
     ${store.logo_url ? `<img src="${store.logo_url}" class="logo" alt="Logo" />` : ''}
     <div class="store-name">${store.name}</div>
-    ${store.phone_number ? `<div>Tel: ${store.phone_number}</div>` : ''}
-    ${store.phone_number_2 ? `<div>Tel 2: ${store.phone_number_2}</div>` : ''}
+    <div style="font-size: 10px;">Penampang, Sabah</div>
+    ${store.phone_number ? `<div style="font-size: 10px;">Tel: ${store.phone_number}</div>` : ''}
   </div>
 
-  <br/>
+  <div class="order-banner">
+    <div class="order-id">ORDER #${orderIdShort}</div>
+    <div class="order-type">${typeDisplay}</div>
+  </div>
+
   <div class="info-grid">
-    <div>Order:</div><div>#${orderIdShort}</div>
-    <div>Date:</div><div>${formattedDate} ${formattedTime}</div>
-    <div>Type:</div><div>${order.type === 'delivery' ? `Delivery (${order.delivery_service === 'foodpanda' ? 'Food Panda' : order.delivery_service === 'shopeefood' ? 'Shopee' : 'Grab'})` : order.type === 'dine_in' ? `Dine In ${order.table_id ? `(Table ${order.table_id})` : ''}` : 'Takeaway'}</div>
-    ${order.customer_name ? `<div>Cust:</div><div>${order.customer_name}</div>` : ''}
-    <div>Cashier:</div><div>${cashierName}</div>
+    <div>Masa:</div><div>${formattedTime} &nbsp;&nbsp; ${formattedDate}</div>
+    ${order.customer_name ? `<div>Pelanggan:</div><div>${order.customer_name}</div>` : ''}
+    <div>Juruwang:</div><div>${cashierName} (${totalItemCount} Item)</div>
   </div>
 
-  <div class="divider"></div>
+  <div class="divider-double"></div>
 
   <table>
     ${itemsHtml}
   </table>
 
-  <div class="divider"></div>
+  <div class="divider-double"></div>
   <table class="totals-table">
+    <tr>
+      <td>Jumlah Kuantiti</td>
+      <td class="text-right">${totalItemCount} item</td>
+    </tr>
     ${order.delivery_fee && Number(order.delivery_fee) > 0 ? `
     <tr>
       <td>Subtotal</td>
       <td class="text-right">RM ${(order.total_amount - Number(order.delivery_fee)).toFixed(2)}</td>
     </tr>
     <tr>
-      <td>Delivery</td>
+      <td>Caj Penghantaran</td>
       <td class="text-right">RM ${Number(order.delivery_fee).toFixed(2)}</td>
     </tr>
-    <tr>
-      <td colspan="2"><div class="divider" style="margin: 5px 0;"></div></td>
-    </tr>
     ` : ''}
+    <tr>
+      <td colspan="2"><div class="divider"></div></td>
+    </tr>
     <tr class="grand-total">
-      <td>TOTAL</td>
+      <td>JUMLAH BESAR</td>
       <td class="text-right">RM ${order.total_amount.toFixed(2)}</td>
+    </tr>
+    <tr>
+      <td>Status Bayaran</td>
+      <td class="text-right bold">${payStatus}</td>
     </tr>
   </table>
   <div class="divider"></div>
 
   <div class="text-center footer">
-    <p>Thank you for your visit!</p>
-    <p>Please come again.</p>
+    <p class="bold">Terima Kasih Atas Pesanan Anda!</p>
+    <p>Sila Datang Lagi.</p>
   </div>
   
   <script>
-    // Optional: Auto-print when loaded in a hidden iframe
     window.onload = function() {
-      // Small delay to ensure images/fonts load
       setTimeout(function() {
         window.print();
       }, 500);

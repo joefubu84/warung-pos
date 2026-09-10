@@ -28,9 +28,12 @@ export interface ReceiptOrderData {
   type: string;
   customer_name?: string | null;
   table_id?: string | null;
+  table_number?: string | null;
   status: string;
   delivery_fee?: number | null;
   delivery_service?: string | null;
+  paid?: boolean;
+  payment_method?: string | null;
 }
 
 // ESC/POS Command Constants
@@ -60,67 +63,52 @@ let activeBluetoothCharacteristic: any = null;
 let activeSerialPort: any = null;
 
 /**
- * Check if Web Bluetooth is supported in current browser
+ * Check if Web Bluetooth is available
  */
 export function isBluetoothSupported(): boolean {
   return typeof navigator !== 'undefined' && 'bluetooth' in navigator;
 }
 
 /**
- * Check if Web Serial is supported in current browser
+ * Check if Web Serial is available
  */
 export function isSerialSupported(): boolean {
-  return typeof navigator !== 'undefined' && 'serial' in navigator;
+  return typeof navigator !== 'undefined' && 'serial' in (navigator as any);
 }
 
 /**
- * Request and Connect to Bluetooth Thermal Printer
+ * Common Bluetooth Service UUIDs used by Thermal Receipt Printers
+ */
+const PRINTER_BLE_SERVICES = [
+  '000018f0-0000-1000-8000-00805f9b34fb', // Standard POS Printer Service
+  'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // Common Chinese 58mm/80mm BLE Printers
+  '49535343-fe7d-4ae5-8fa9-9fafd205e455', // ISSC Transparent (MTP-II, etc.)
+  '0000ff00-0000-1000-8000-00805f9b34fb', // Custom ESC/POS 1
+  '0000fee7-0000-1000-8000-00805f9b34fb', // Custom ESC/POS 2
+];
+
+/**
+ * Connect to Bluetooth Thermal Printer
  */
 export async function connectBluetoothPrinter(): Promise<ConnectedPrinterInfo> {
   if (!isBluetoothSupported()) {
-    throw new Error('Web Bluetooth tidak disokong pada pelayar ini. Sila gunakan Google Chrome di Android / PC.');
+    throw new Error('Web Bluetooth tidak disokong pada pelayar ini. Sila gunakan Google Chrome atau pelayar Chromium di Android/PC.');
   }
 
   try {
-    // Standard Bluetooth Serial Port Profile (SPP) and Common BLE Printer Service UUIDs
-    const PRINTER_SERVICES = [
-      '000018f0-0000-1000-8000-00805f9b34fb', // Standard Print service
-      'e7810a71-73ae-499d-8c15-faa9aef0c3f2', // Posnet / Xprinter
-      '49535343-fe7d-4ae5-8fa9-9fafd205e455', // ISSC Transparent
-      '0000ff00-0000-1000-8000-00805f9b34fb', // Common 58mm POS printer
-      '0000ffe0-0000-1000-8000-00805f9b34fb', // HMSoft / Feasycom BLE
-      '00001101-0000-1000-8000-00805f9b34fb', // Serial Port Profile (SPP)
-    ];
-
     const device = await (navigator as any).bluetooth.requestDevice({
-      filters: [
-        { namePrefix: 'POS' },
-        { namePrefix: 'MPT' },
-        { namePrefix: 'RPP' },
-        { namePrefix: 'MTP' },
-        { namePrefix: 'XP' },
-        { namePrefix: 'Printer' },
-        { namePrefix: 'Thermal' },
-        { namePrefix: 'BlueTooth' },
-        { namePrefix: 'SPP' },
-      ],
-      optionalServices: PRINTER_SERVICES,
-    }).catch(async () => {
-      // Fallback: Show all devices if filter returns none
-      return await (navigator as any).bluetooth.requestDevice({
-        acceptAllDevices: true,
-        optionalServices: PRINTER_SERVICES,
-      });
+      acceptAllDevices: true,
+      optionalServices: PRINTER_BLE_SERVICES,
     });
 
-    if (!device) throw new Error('Peranti Bluetooth tidak dipilih');
+    if (!device) {
+      throw new Error('Tiada peranti dipilih');
+    }
 
     const server = await device.gatt.connect();
-    activeBluetoothDevice = device;
-    activeBluetoothServer = server;
 
-    // Discover the writable characteristic
-    let foundChar: any = null;
+    // Discover writable characteristic
+    let printerChar: any = null;
     const services = await server.getPrimaryServices();
 
     for (const service of services) {
@@ -128,25 +116,27 @@ export async function connectBluetoothPrinter(): Promise<ConnectedPrinterInfo> {
         const characteristics = await service.getCharacteristics();
         for (const char of characteristics) {
           if (char.properties.write || char.properties.writeWithoutResponse) {
-            foundChar = char;
+            printerChar = char;
             break;
           }
         }
-        if (foundChar) break;
-      } catch (e) {
-        // continue search
+        if (printerChar) break;
+      } catch (err) {
+        // continue search in next service
       }
     }
 
-    if (!foundChar) {
-      throw new Error(`Pencetak Bluetooth "${device.name}" berjaya disambung, tetapi tiada writable characteristic ditemui.`);
+    if (!printerChar) {
+      throw new Error('Gagal menemui saluran tulisan ESC/POS pada peranti ini.');
     }
 
-    activeBluetoothCharacteristic = foundChar;
+    activeBluetoothDevice = device;
+    activeBluetoothServer = server;
+    activeBluetoothCharacteristic = printerChar;
 
     const info: ConnectedPrinterInfo = {
       type: 'bluetooth',
-      name: device.name || 'Bluetooth POS Printer',
+      name: device.name || 'Pencetak Bluetooth POS',
       connectedAt: new Date().toISOString(),
     };
 
@@ -231,12 +221,13 @@ export function isPrinterConnected(): boolean {
 
 /**
  * Send raw byte buffer to connected thermal printer
+ * Uses safe 64-byte chunks with delays to avoid BLE RX FIFO buffer overflow
  */
 export async function sendRawBytesToPrinter(buffer: Uint8Array): Promise<boolean> {
   // 1. Direct Bluetooth
   if (activeBluetoothCharacteristic) {
     try {
-      const CHUNK_SIZE = 512;
+      const CHUNK_SIZE = 64; // Safe size for 58mm Bluetooth thermal printers
       for (let i = 0; i < buffer.length; i += CHUNK_SIZE) {
         const chunk = buffer.slice(i, i + CHUNK_SIZE);
         if (activeBluetoothCharacteristic.properties.writeWithoutResponse) {
@@ -244,6 +235,8 @@ export async function sendRawBytesToPrinter(buffer: Uint8Array): Promise<boolean
         } else {
           await activeBluetoothCharacteristic.writeValue(chunk);
         }
+        // Small delay between chunks to let printer buffer process
+        await new Promise((resolve) => setTimeout(resolve, 25));
       }
       return true;
     } catch (btErr) {
@@ -283,7 +276,7 @@ function formatTwoColumns(left: string, right: string, width: number = 32): stri
   const leftLen = left.length;
   const rightLen = right.length;
   if (leftLen + rightLen >= width) {
-    return left.slice(0, width - rightLen - 1) + ' ' + right + '\n';
+    return left.slice(0, Math.max(0, width - rightLen - 1)) + ' ' + right + '\n';
   }
   const spaces = ' '.repeat(width - leftLen - rightLen);
   return left + spaces + right + '\n';
@@ -291,7 +284,7 @@ function formatTwoColumns(left: string, right: string, width: number = 32): stri
 
 /**
  * Print order directly to Bluetooth or USB Thermal Printer using ESC/POS commands
- * If no direct printer is connected, it cleanly falls back to opening the receipt print window.
+ * Modeled after GrabFood's clean, high-detail structured thermal receipt format
  */
 export async function printOrderDirectThermal(
   order: ReceiptOrderData,
@@ -321,66 +314,119 @@ export async function printOrderDirectThermal(
   const orderDate = new Date(order.created_at);
   const dateStr = orderDate.toLocaleDateString('en-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
   const timeStr = orderDate.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' });
-  const orderIdShort = order.id.split('-')[0]!.toUpperCase();
-  const typeLabel = order.type === 'delivery' ? 'DELIVERY' : order.type === 'dine_in' ? 'MAKAN SINI' : 'TAPAU / TAKEAWAY';
+  const orderIdShort = order.id.slice(0, 8).toUpperCase();
+  
+  // Format destination / dining type cleanly like Grab
+  let typeHeader = 'TAKEAWAY / BUNGKUS';
+  if (order.type === 'dine_in') {
+    const tableDisplay = order.table_number || (order.table_id && order.table_id.length < 10 ? order.table_id : 'Meja');
+    typeHeader = `DINE-IN [ MEJA ${tableDisplay} ]`;
+  } else if (order.type === 'delivery') {
+    const svc = (order.delivery_service || 'GRAB/PANDA').toUpperCase();
+    typeHeader = `DELIVERY [ ${svc} ]`;
+  }
+
+  const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   const chunks: Uint8Array[] = [
     ESC_POS_COMMANDS.INIT,
+    
+    // Store Header
     ESC_POS_COMMANDS.ALIGN_CENTER,
+    ESC_POS_COMMANDS.EMPHASIZE_ON,
     ESC_POS_COMMANDS.DOUBLE_SIZE,
-    textToBytes(`${store.name || 'Warung J&J'}\n`),
+    textToBytes(`${store.name || 'WARUNG J&J'}\n`),
     ESC_POS_COMMANDS.NORMAL_TEXT,
-    textToBytes('Resit Rasmi Pesanan\n'),
+    ESC_POS_COMMANDS.EMPHASIZE_OFF,
+    textToBytes('Penampang, Sabah\n'),
+    store.phone_number ? textToBytes(`Tel: ${store.phone_number}\n`) : new Uint8Array([]),
     textToBytes('================================\n'),
-    ESC_POS_COMMANDS.ALIGN_LEFT,
-    textToBytes(formatTwoColumns(`No. Resit: #${orderIdShort}`, typeLabel)),
-    textToBytes(formatTwoColumns(`Tarikh   : ${dateStr}`, timeStr)),
-    textToBytes(formatTwoColumns(`Juruwang : ${cashierName}`, order.table_id ? `Meja: ${order.table_id}` : '')),
+    
+    // Grab Style Big Order Number & Type
+    ESC_POS_COMMANDS.ALIGN_CENTER,
+    ESC_POS_COMMANDS.EMPHASIZE_ON,
+    ESC_POS_COMMANDS.DOUBLE_HEIGHT,
+    textToBytes(`ORDER #${orderIdShort}\n`),
+    ESC_POS_COMMANDS.NORMAL_TEXT,
+    textToBytes(`${typeHeader}\n`),
+    ESC_POS_COMMANDS.EMPHASIZE_OFF,
     textToBytes('--------------------------------\n'),
+
+    // Customer & Metadata Info
+    ESC_POS_COMMANDS.ALIGN_LEFT,
+    order.customer_name ? textToBytes(`Pelanggan: ${order.customer_name}\n`) : new Uint8Array([]),
+    textToBytes(formatTwoColumns(`Masa: ${timeStr}`, dateStr)),
+    textToBytes(formatTwoColumns(`Juruwang: ${cashierName}`, `${totalItemCount} Item`)),
+    textToBytes('================================\n'),
   ];
 
-  // Print Items
-  items.forEach(item => {
+  // Items List (Clean Grab-style with [1x] prefix and indented modifiers)
+  items.forEach((item) => {
     const itemTotal = (item.price * item.quantity).toFixed(2);
+    
+    // Item Title & Price
     chunks.push(
       ESC_POS_COMMANDS.EMPHASIZE_ON,
-      textToBytes(`${item.name}\n`),
-      ESC_POS_COMMANDS.EMPHASIZE_OFF,
-      textToBytes(formatTwoColumns(`  ${item.quantity}x @ RM${item.price.toFixed(2)}`, `RM ${itemTotal}`))
+      textToBytes(formatTwoColumns(`[${item.quantity}x] ${item.name}`, `RM ${itemTotal}`)),
+      ESC_POS_COMMANDS.EMPHASIZE_OFF
     );
 
-    if (item.notes) {
-      chunks.push(textToBytes(`  -> Nota: ${item.notes}\n`));
+    // Unit Price if quantity > 1
+    if (item.quantity > 1) {
+      chunks.push(textToBytes(`     @ RM ${item.price.toFixed(2)} setiap satu\n`));
     }
 
+    // Indented Notes / Customization
+    if (item.notes && item.notes.trim() !== '') {
+      chunks.push(textToBytes(`   * Nota: ${item.notes.trim()}\n`));
+    }
+
+    // Container charge (Tapau packaging)
     if (item.container_charge && item.container_charge > 0) {
       const cTotal = (item.container_charge * item.quantity).toFixed(2);
-      chunks.push(textToBytes(formatTwoColumns(`  Tapau (${item.container_size || 'Bekas'})`, `RM ${cTotal}`)));
+      const sizeLabel = item.container_size ? item.container_size.toUpperCase() : 'BEKAS';
+      chunks.push(textToBytes(formatTwoColumns(`   + Caj Bungkus (${sizeLabel})`, `RM ${cTotal}`)));
     }
+
+    // Light spacer between items
+    chunks.push(textToBytes(' - - - - - - - - - - - - - - - -\n'));
   });
 
-  chunks.push(textToBytes('--------------------------------\n'));
+  // Summary / Totals Breakdown
+  chunks.push(
+    ESC_POS_COMMANDS.ALIGN_LEFT,
+    textToBytes(formatTwoColumns('Jumlah Kuantiti', `${totalItemCount} item`))
+  );
 
-  // Delivery fee if applicable
   if (order.delivery_fee && Number(order.delivery_fee) > 0) {
     const subtotal = (order.total_amount - Number(order.delivery_fee)).toFixed(2);
     chunks.push(
       textToBytes(formatTwoColumns('Subtotal', `RM ${subtotal}`)),
-      textToBytes(formatTwoColumns('Caj Penghantaran', `RM ${Number(order.delivery_fee).toFixed(2)}`)),
-      textToBytes('--------------------------------\n')
+      textToBytes(formatTwoColumns('Caj Penghantaran', `RM ${Number(order.delivery_fee).toFixed(2)}`))
     );
   }
 
-  // Grand Total
+  chunks.push(textToBytes('--------------------------------\n'));
+
+  // Big Prominent Grand Total
   chunks.push(
     ESC_POS_COMMANDS.EMPHASIZE_ON,
     ESC_POS_COMMANDS.DOUBLE_HEIGHT,
     textToBytes(formatTwoColumns('JUMLAH BESAR:', `RM ${order.total_amount.toFixed(2)}`)),
     ESC_POS_COMMANDS.NORMAL_TEXT,
-    ESC_POS_COMMANDS.EMPHASIZE_OFF,
+    ESC_POS_COMMANDS.EMPHASIZE_OFF
+  );
+
+  // Payment Status & Method
+  const paymentMethodStr = order.payment_method ? order.payment_method.toUpperCase() : 'TUNAI';
+  const payStatusStr = order.paid ? `SUDAH BAYAR (${paymentMethodStr})` : 'BELUM DIBAYAR';
+  
+  chunks.push(
+    textToBytes('--------------------------------\n'),
+    textToBytes(formatTwoColumns('Status Bayaran:', payStatusStr)),
     textToBytes('================================\n'),
     ESC_POS_COMMANDS.ALIGN_CENTER,
-    textToBytes('Terima Kasih Atas Kunjungan Anda!\nSila Datang Lagi.\n\n\n\n'),
+    textToBytes('Terima Kasih Atas Pesanan Anda!\nSila Datang Lagi.\n\n\n\n'),
     ESC_POS_COMMANDS.CUT_PAPER
   );
 
