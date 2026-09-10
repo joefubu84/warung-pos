@@ -85,7 +85,7 @@ import { getToyyibPayConfig, saveToyyibPayConfig, type ToyyibPayConfig } from '@
 import { KitchenChecklistCustomizer } from '@/components/KitchenChecklistCustomizer';
 import { DishAddonsCustomizer } from '@/components/DishAddonsCustomizer';
 import { CallWaiterCustomizer } from '@/components/CallWaiterCustomizer';
-import { Route as LandingPageEditorRoute } from './settings.landing-page-editor'; // New import for the landing page editor
+import { LandingPageEditor } from '@/components/LandingPageEditor';
 
 export const Route = createFileRoute('/settings')({
   ssr: false,
@@ -450,10 +450,10 @@ function SettingsPage() {
   const [isConnectingBt, setIsConnectingBt] = useState(false);
   const [isConnectingUsb, setIsConnectingUsb] = useState(false);
   const [isTestingPrint, setIsTestingPrint] = useState(false);
-  const [connectedPrinter, setConnectedPrinter] = useState<ConnectedPrinterInfo | null>(() => getSavedPrinterInfo());
+  const [connectedPrinter, setConnectedPrinter] = useState<ConnectedPrinterInfo | null>(null);
 
   useEffect(() => {
-    // Refresh connected printer info on mount
+    // Refresh connected printer info on mount (client-side only)
     const saved = getSavedPrinterInfo();
     if (saved) setConnectedPrinter(saved);
   }, []);
@@ -1300,7 +1300,7 @@ function SettingsPage() {
             {/* 7B. LANDING PAGE EDITOR */}
             {activeSection === 'landing_page_editor' && (
               <div className="transition-all duration-300 animate-in fade-in">
-                <LandingPageEditorRoute /> {/* This renders the content of settings.landing-page-editor.tsx */}
+                <LandingPageEditor />
               </div>
             )}
 
