@@ -827,7 +827,14 @@ function KitchenPage() {
         if (hasChanges) {
           setHighlightedOrders(prev => ({ ...prev, ...newHighlights }));
           setHighlightedItems(prev => ({ ...prev, ...newItemHighlights }));
-          // Note: Kitchen bell sound is reserved strictly for when food is ready to serve
+          
+          // ALARM / LOCENG ORDER MASUK DARI CUSTOMER
+          const settings = settingsRef.current;
+          if (settings && settings.sound_choice) {
+            playKitchenSound(settings.sound_choice, settings.sound_file_url);
+          } else {
+            playKitchenSound('kitchen_bell');
+          }
         }
         
         const hasContentChanged = JSON.stringify(newOrdersData) !== JSON.stringify(ordersRef.current);
@@ -880,7 +887,8 @@ function KitchenPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
         console.log('⚡ Realtime event received: orders table', payload);
         fetchActiveOrders(true);
-        // Loceng hanya berbunyi bila makanan siap dihidang (ready to serve), bukan pesanan masuk
+        const s = settingsRef.current;
+        playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, (payload) => {
         console.log('⚡ Realtime event received: order_items table', payload);
@@ -925,7 +933,8 @@ function KitchenPage() {
       .on('broadcast', { event: 'new_order_placed' }, (msg) => {
         console.log('⚡ Instant Kitchen broadcast received: new order placed!', msg);
         fetchActiveOrders(true);
-        // Makluman visual tanpa bunyian loceng (loceng khusus untuk makanan siap)
+        const s = settingsRef.current;
+        playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
         toast.info('⚡ Pesanan Baru Diterima Dari Meja!', { duration: 4000 });
       })
       .subscribe();
