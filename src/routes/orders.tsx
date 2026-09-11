@@ -222,6 +222,52 @@ function OrdersPage() {
       })
       .subscribe();
 
+    // Table Service Buzzer Channel (Cross-tab & Live Orders screen)
+    const playOrderBeep = () => {
+      try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContextClass) {
+          const ctx = new AudioContextClass();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.35);
+          gain.gain.setValueAtTime(0.35, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.35);
+        }
+      } catch (e) {
+        console.warn('Buzzer sound notice:', e);
+      }
+    };
+
+    const buzzerChannel = supabase.channel('warung_table_buzzer')
+      .on('broadcast', { event: 'call_waiter' }, (payload: any) => {
+        const detail = payload?.payload;
+        if (detail) {
+          playOrderBeep();
+          toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, {
+            duration: 8000,
+          });
+        }
+      })
+      .subscribe();
+
+    const handleLocalOrdersBuzzer = (e: any) => {
+      const detail = e?.detail;
+      if (detail) {
+        playOrderBeep();
+        toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, {
+          duration: 8000,
+        });
+      }
+    };
+    window.addEventListener('warung_call_waiter_alert', handleLocalOrdersBuzzer);
+
     // Periodic safety sync every 5 seconds
     const interval = setInterval(() => {
       fetchOrders();
@@ -230,6 +276,8 @@ function OrdersPage() {
     return () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(broadcastChannel);
+      supabase.removeChannel(buzzerChannel);
+      window.removeEventListener('warung_call_waiter_alert', handleLocalOrdersBuzzer);
       clearInterval(interval);
     };
   }, []);

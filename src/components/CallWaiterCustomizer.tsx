@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -57,6 +58,67 @@ export function CallWaiterCustomizer() {
 
   // Preview Selected State (for interactive mobile mock)
   const [previewSelectedId, setPreviewSelectedId] = useState<string>('waiter');
+  const [isTestingCall, setIsTestingCall] = useState(false);
+
+  const handleTestPreviewCall = async () => {
+    try {
+      setIsTestingCall(true);
+      const selected = reasons.find(r => r.id === previewSelectedId) || reasons[0];
+      const message = selected ? selected.title : 'Panggilan Meja (Ujian)';
+      
+      const testPayload = {
+        table_number: 'A3 (Ujian Tetapan)',
+        service_type: previewSelectedId,
+        message: message,
+        timestamp: new Date().toISOString()
+      };
+
+      // 1. Play sound locally in admin browser
+      try {
+        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+        if (AudioContextClass) {
+          const ctx = new AudioContextClass();
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(880, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.35);
+          gain.gain.setValueAtTime(0.3, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.35);
+        }
+      } catch (audioErr) {
+        console.warn("Test call audio notice:", audioErr);
+      }
+
+      // 2. Dispatch cross-tab & Supabase broadcast
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('warung_call_waiter_alert', { detail: testPayload }));
+      }
+
+      const channel = supabase.channel('warung_table_buzzer');
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          channel.send({
+            type: 'broadcast',
+            event: 'call_waiter',
+            payload: testPayload
+          }).catch(console.warn);
+        }
+      });
+
+      toast.success(`🛎️ Ujian Berjaya! Panggilan "${message}" dihantar ke Kaunter & Dapur!`, {
+        duration: 4000
+      });
+    } catch (err: any) {
+      toast.error('Gagal menghantar ujian: ' + (err?.message || 'Ralat'));
+    } finally {
+      setTimeout(() => setIsTestingCall(false), 600);
+    }
+  };
 
   // Load from Supabase on mount
   useEffect(() => {
@@ -591,14 +653,22 @@ export function CallWaiterCustomizer() {
                 })}
               </div>
 
-              {/* MOCK ACTION BUTTON */}
+              {/* MOCK ACTION BUTTON / TEST BUZZER */}
               <div className="pt-2 border-t border-slate-100">
                 <button
                   type="button"
-                  disabled={!previewSelectedId}
-                  className="w-full py-2.5 rounded-xl font-bold text-xs bg-orange-500 text-white disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-all"
+                  disabled={!previewSelectedId || isTestingCall}
+                  onClick={handleTestPreviewCall}
+                  className="w-full py-2.5 rounded-xl font-bold text-xs bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
                 >
-                  🛎️ Hantar Panggilan
+                  {isTestingCall ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Menghantar Ujian...</span>
+                    </>
+                  ) : (
+                    <span>🛎️ Hantar Panggilan (Ujian Langsung)</span>
+                  )}
                 </button>
               </div>
 

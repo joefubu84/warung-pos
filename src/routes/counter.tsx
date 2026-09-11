@@ -117,6 +117,9 @@ const addSplitPayment = () => {
   const isSplitBalanced = splitDeltaCents === 0;
 
   const beepAudio = useRef<HTMLAudioElement | null>(null);
+
+
+
   const { storeId, cashStatus: initialCashStatus } = Route.useRouteContext() as any;
   const [cashStatus, setCashStatus] = useState<CashStatus>(initialCashStatus?.status || 'NOT_OPENED');
   const [closedAtTime, setClosedAtTime] = useState<string | null>(initialCashStatus?.closedAt || null);
@@ -280,10 +283,40 @@ const addSplitPayment = () => {
     }
   };
 
+  const playSynthesizedBeep = () => {
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (AudioContextClass) {
+        const ctx = new AudioContextClass();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(900, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(450, ctx.currentTime + 0.35);
+        gain.gain.setValueAtTime(0.35, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.35);
+      }
+    } catch (e) {
+      console.warn('Audio synthesis warning:', e);
+    }
+  };
+
   const playBeep = () => {
-    if (beepAudio.current) {
-      beepAudio.current.currentTime = 0;
-      beepAudio.current.play().catch((e: any) => console.log('Audio play failed:', e));
+    try {
+      if (beepAudio.current) {
+        beepAudio.current.currentTime = 0;
+        beepAudio.current.play().catch(() => {
+          playSynthesizedBeep();
+        });
+      } else {
+        playSynthesizedBeep();
+      }
+    } catch {
+      playSynthesizedBeep();
     }
   };
 

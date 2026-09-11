@@ -795,11 +795,36 @@ function KitchenPage() {
 
     // Table Service Buzzer Channel for Kitchen Display
     const buzzerChannel = supabase.channel('kitchen_table_buzzer')
-      .on('broadcast', { event: 'call_waiter' }, () => {
+      .on('broadcast', { event: 'call_waiter' }, (payload: any) => {
+        const detail = payload?.payload;
         const s = settingsRef.current;
         playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
+        if (detail) {
+          toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, { duration: 6000 });
+        }
       })
       .subscribe();
+
+    const warungBuzzerChannel = supabase.channel('warung_table_buzzer')
+      .on('broadcast', { event: 'call_waiter' }, (payload: any) => {
+        const detail = payload?.payload;
+        const s = settingsRef.current;
+        playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
+        if (detail) {
+          toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, { duration: 6000 });
+        }
+      })
+      .subscribe();
+
+    const handleLocalKitchenBuzzer = (e: any) => {
+      const detail = e?.detail;
+      const s = settingsRef.current;
+      playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
+      if (detail) {
+        toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, { duration: 6000 });
+      }
+    };
+    window.addEventListener('warung_call_waiter_alert', handleLocalKitchenBuzzer);
 
     // Instant Customer Order Broadcast Channel for Zero-Delay Notification
     const broadcastChannel = supabase.channel('kitchen_realtime_broadcast')
@@ -819,7 +844,9 @@ function KitchenPage() {
     return () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(buzzerChannel);
+      supabase.removeChannel(warungBuzzerChannel);
       supabase.removeChannel(broadcastChannel);
+      window.removeEventListener('warung_call_waiter_alert', handleLocalKitchenBuzzer);
       clearInterval(intervalId);
     };
   }, [fetchPrinterSettings, fetchActiveOrders, fetchLookupData]);

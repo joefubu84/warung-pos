@@ -68,14 +68,31 @@ export function CallWaiterModal({ isOpen, onClose, tableNumber, storeId }: CallW
         timestamp: new Date().toISOString()
       };
 
-      const channel = supabase.channel('warung_table_buzzer');
-      await channel.send({
-        type: 'broadcast',
-        event: 'call_waiter',
-        payload: buzzerPayload
+      // 1. Send via warung_table_buzzer channel
+      const buzzerChannel = supabase.channel('warung_table_buzzer');
+      buzzerChannel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          buzzerChannel.send({
+            type: 'broadcast',
+            event: 'call_waiter',
+            payload: buzzerPayload
+          }).catch(console.warn);
+        }
       });
 
-      // Also trigger a local event in case multiple tabs are running
+      // 2. Send via kitchen_table_buzzer channel for kitchen displays
+      const kitchenBuzzerChannel = supabase.channel('kitchen_table_buzzer');
+      kitchenBuzzerChannel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          kitchenBuzzerChannel.send({
+            type: 'broadcast',
+            event: 'call_waiter',
+            payload: buzzerPayload
+          }).catch(console.warn);
+        }
+      });
+
+      // 3. Also trigger a local event for instant UI reaction if POS is open in same/another window
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('warung_call_waiter_alert', { detail: buzzerPayload }));
       }
