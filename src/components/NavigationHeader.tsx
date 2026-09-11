@@ -35,8 +35,14 @@ export function NavigationHeader() {
     };
   }, []);
 
-  // Hide navigation on auth, customer digital menu, and rider portal pages
-  if (location.pathname.startsWith('/auth') || location.pathname.startsWith('/t/') || location.pathname.startsWith('/rider')) {
+  // Hide navigation on auth, customer digital menu, userlogin, and rider portal pages
+  if (
+    location.pathname.startsWith('/auth') || 
+    location.pathname.startsWith('/userlogin') || 
+    location.pathname.startsWith('/authrider') || 
+    location.pathname.startsWith('/t/') || 
+    location.pathname.startsWith('/rider')
+  ) {
     return null;
   }
 

@@ -54,22 +54,6 @@ function AuthRiderPage() {
 
     setIsSubmitting(true);
     try {
-      if (loginEmail.trim() === 'rider.test@warungjnj.online') {
-        const testUser = {
-          id: 'rider-test-account-jnj',
-          email: 'rider.test@warungjnj.online',
-          user_metadata: {
-            name: 'Rider Test Warung J&J',
-            phone_number: '0123456789',
-            role: 'rider',
-          },
-        };
-        localStorage.setItem('warung_test_rider_active', 'true');
-        toast.success('⚡ Log Masuk Rider Ujian Berjaya! Selamat bertugas.');
-        navigate({ to: '/rider' });
-        return;
-      }
-
       const { data, error: authErr } = await supabase.auth.signInWithPassword({
         email: loginEmail.trim(),
         password: loginPassword.trim(),

@@ -125,15 +125,6 @@ function AuthPage() {
       });
 
       if (signInError) {
-        // Fallback for emergency staff credentials if Supabase auth user not yet seeded in auth.users
-        if (
-          (email.trim().toLowerCase() === 'ogyic84@gmail.com' || email.trim().toLowerCase() === 'teststaffa@test.com' || email.trim().toLowerCase() === 'joefubu84@gmail.com') &&
-          password === 'warungjnj2026'
-        ) {
-          handleForceStaffLogin();
-          return;
-        }
-
         setError(signInError.message || 'Log masuk gagal. Sila periksa emel dan kata laluan.');
         setLoading(false);
         return;

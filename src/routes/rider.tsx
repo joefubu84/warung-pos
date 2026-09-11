@@ -221,21 +221,6 @@ function RiderPortalPage() {
 
   const fetchRiderProfile = async (userId: string) => {
     try {
-      // If it is the test rider account
-      if (userId === 'rider-test-account-jnj') {
-        setRiderProfile({
-          id: 'rider-test-account-jnj',
-          rider_db_id: 'rider-test-account-jnj',
-          name: 'Rider Test Warung J&J',
-          phone_number: '0123456789',
-          role: 'rider',
-          is_approved: true,
-        });
-        setIsOnline(true);
-        setIsLoadingAuth(false);
-        return;
-      }
-
       // 1. Fetch user profile
       const { data: userData } = await supabase
         .from('users')
@@ -580,36 +565,9 @@ function RiderPortalPage() {
 
     setIsAuthSubmitting(true);
     try {
-      // Check for test rider shortcut
-      if (loginEmail === 'rider.test@warungjnj.online') {
-        const testUser = {
-          id: 'rider-test-account-jnj',
-          email: 'rider.test@warungjnj.online',
-          user_metadata: {
-            name: 'Rider Test Warung J&J',
-            phone_number: '0123456789',
-            role: 'rider',
-          },
-        };
-        localStorage.setItem('warung_test_rider_active', 'true');
-        setSessionUser(testUser);
-        setRiderProfile({
-          id: 'rider-test-account-jnj',
-          rider_db_id: 'rider-test-account-jnj',
-          name: 'Rider Test Warung J&J',
-          phone_number: '0123456789',
-          role: 'rider',
-          is_approved: true,
-        });
-        setIsOnline(true);
-        toast.success('Selamat bertugas, Rider Test Warung J&J!');
-        await fetchDeliveryOrders();
-        return;
-      }
-
       const { data: authRes, error: authErr } = await supabase.auth.signInWithPassword({
-        email: loginEmail,
-        password: loginPassword,
+        email: loginEmail.trim(),
+        password: loginPassword.trim(),
       });
 
       if (authErr) throw authErr;
@@ -621,38 +579,6 @@ function RiderPortalPage() {
       }
     } catch (err: any) {
       toast.error(err.message || 'Log masuk gagal. Sila semak emel & kata laluan.');
-    } finally {
-      setIsAuthSubmitting(false);
-    }
-  };
-
-  // 1-Click Fast Test Rider Login
-  const handleTestRiderLogin = async () => {
-    setIsAuthSubmitting(true);
-    try {
-      const testUserId = 'rider-test-account-jnj';
-      const testUser = {
-        id: testUserId,
-        email: 'rider.test@warungjnj.online',
-        user_metadata: {
-          name: 'Rider Test Warung J&J',
-          phone_number: '0123456789',
-          role: 'rider',
-        },
-      };
-      localStorage.setItem('warung_test_rider_active', 'true');
-      setSessionUser(testUser);
-      setRiderProfile({
-        id: testUserId,
-        rider_db_id: testUserId,
-        name: 'Rider Test Warung J&J',
-        phone_number: '0123456789',
-        role: 'rider',
-        is_approved: true,
-      });
-      setIsOnline(true);
-      toast.success('⚡ Log Masuk Rider Ujian Berjaya! Selamat bertugas.');
-      await fetchDeliveryOrders();
     } finally {
       setIsAuthSubmitting(false);
     }

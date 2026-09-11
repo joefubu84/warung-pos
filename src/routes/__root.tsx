@@ -351,12 +351,15 @@ function RootComponent() {
     }
   }, []);
 
-  // Hide the POS admin header on customer and rider portal pages
+  // Hide the POS admin header on customer, rider portal, and auth pages
   const isCustomerFacing = 
     location.pathname === '/' || 
     location.pathname === '/delivery' || 
     location.pathname.startsWith('/t/') ||
-    location.pathname.startsWith('/rider');
+    location.pathname.startsWith('/rider') ||
+    location.pathname.startsWith('/userlogin') ||
+    location.pathname.startsWith('/authrider') ||
+    location.pathname.startsWith('/auth');
 
   return (
     <QueryClientProvider client={queryClient}>
