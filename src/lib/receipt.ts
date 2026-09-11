@@ -12,6 +12,8 @@ export interface OrderItem {
   container_size?: string | null;
   container_charge?: number;
   notes?: string | null;
+  addons?: { name: string; price: number }[] | null;
+  selectedAddons?: { name: string; price: number }[] | null;
 }
 
 export interface Order {
@@ -61,7 +63,7 @@ export function generateReceiptHTML(
   const itemsHtml = items.map(item => {
     const itemTotal = (item.price * item.quantity).toFixed(2);
     let itemHtml = `
-      <tr style="border-top: 1px dashed #e2e8f0;">
+      <tr style="border-top: 1px dashed #000;">
         <td class="item-name bold" colspan="2" style="padding-top: 6px;">[${item.quantity}x] ${item.name}</td>
         <td class="item-total bold" style="padding-top: 6px;">RM ${itemTotal}</td>
       </tr>
@@ -70,7 +72,7 @@ export function generateReceiptHTML(
     if (item.quantity > 1) {
       itemHtml += `
         <tr>
-          <td colspan="3" style="font-size: 10px; color: #555; padding-left: 12px;">@ RM ${item.price.toFixed(2)} setiap satu</td>
+          <td colspan="3" style="font-size: 10px; color: #444; padding-left: 12px;">@ RM ${item.price.toFixed(2)} setiap satu</td>
         </tr>
       `;
     }
@@ -81,6 +83,20 @@ export function generateReceiptHTML(
           <td colspan="3" class="indent" style="font-style: italic; color: #333;">&bull; Nota: ${item.notes.trim()}</td>
         </tr>
       `;
+    }
+
+    // Explicit Add-on breakdown (e.g. Sambal, Telur, Extra Cheese)
+    const itemAddons = item.addons || item.selectedAddons || [];
+    if (Array.isArray(itemAddons) && itemAddons.length > 0) {
+      itemAddons.forEach((addon: any) => {
+        const addonTotal = (Number(addon.price || 0) * item.quantity).toFixed(2);
+        itemHtml += `
+          <tr>
+            <td colspan="2" class="indent" style="font-weight: 600; color: #222;">+ [Add-on] ${addon.name}</td>
+            <td class="item-total" style="font-weight: 600;">RM ${addonTotal}</td>
+          </tr>
+        `;
+      });
     }
 
     if (item.container_charge && item.container_charge > 0) {
@@ -259,7 +275,7 @@ export function generateReceiptHTML(
       <td colspan="2"><div class="divider"></div></td>
     </tr>
     <tr class="grand-total">
-      <td>JUMLAH BESAR</td>
+      <td>Total</td>
       <td class="text-right">RM ${order.total_amount.toFixed(2)}</td>
     </tr>
     <tr>
@@ -360,9 +376,175 @@ export async function convertReceiptToPNG(htmlString: string): Promise<Blob> {
   });
 }
 
+import { jsPDF } from 'jspdf';
+
+/**
+ * Converts an HTML receipt string into a crisp, non-truncated single continuous PDF Blob
+ * sized precisely for thermal receipts (58mm width, dynamic height matching content).
+ * 
+ * @param htmlString The raw HTML string representing the receipt
+ * @returns A Promise that resolves to a Blob containing the PDF
+ */
+export async function convertReceiptToPDF(htmlString: string): Promise<Blob> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'absolute';
+      iframe.style.top = '-9999px';
+      iframe.style.left = '-9999px';
+      iframe.style.width = '300px';
+      iframe.style.height = '1800px';
+      document.body.appendChild(iframe);
+
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!iframeDoc) throw new Error("Could not access iframe document");
+
+      iframeDoc.open();
+      iframeDoc.write(htmlString);
+      iframeDoc.close();
+
+      // Wait for rendering
+      await new Promise(res => setTimeout(res, 500));
+
+      const container = iframeDoc.body;
+      container.style.backgroundColor = '#FFFFFF';
+      container.style.width = '280px';
+      container.style.padding = '15px';
+      container.style.margin = '0';
+      container.style.boxSizing = 'border-box';
+
+      const contentHeight = container.scrollHeight;
+      iframe.style.height = contentHeight + 'px';
+
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#FFFFFF',
+        height: contentHeight,
+        windowHeight: contentHeight,
+        logging: false
+      });
+
+      document.body.removeChild(iframe);
+
+      // Create continuous PDF: width 58mm, height proportional to content + 10mm margin
+      // 1px canvas ~= 0.264583 mm
+      const imgWidthMm = 58;
+      const imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
+      const pdfHeightMm = Math.max(80, imgHeightMm + 8); // Extra safety padding so never cut off
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [imgWidthMm, pdfHeightMm]
+      });
+
+      const imgData = canvas.toDataURL('image/png', 1.0);
+      // Center and fit precisely
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidthMm, imgHeightMm);
+
+      const pdfBlob = pdf.output('blob');
+      resolve(pdfBlob);
+    } catch (error) {
+      console.error("Error converting receipt to PDF:", error);
+      reject(error);
+    }
+  });
+}
+
+/**
+ * Generates the receipt as a clean, continuous PDF file and shares it via WhatsApp.
+ * On mobile, it triggers Web Share API with the PDF file directly.
+ * On desktop, it downloads the PDF and opens WhatsApp with the order summary.
+ */
+export async function shareReceiptWhatsAppPDF(
+  order: Order,
+  store: Store,
+  cashierName: string,
+  items: OrderItem[]
+): Promise<void> {
+  try {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    let whatsappWindow: Window | null = null;
+
+    if (!isMobile) {
+      whatsappWindow = window.open('about:blank', '_blank');
+      if (whatsappWindow) {
+        whatsappWindow.document.write("Menjana fail PDF resit, sila tunggu...");
+      }
+    }
+
+    // 1. Get HTML
+    const htmlString = generateReceiptHTML(order, store, cashierName, items);
+
+    // 2. Generate PDF Blob
+    const pdfBlob = await convertReceiptToPDF(htmlString);
+
+    // 3. Format Date/Time
+    const orderDate = new Date(order.created_at);
+    const dateStr = orderDate.toLocaleDateString('en-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const timeStr = orderDate.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' });
+    const orderShort = order.id.slice(0, 8).toUpperCase();
+
+    // 4. Create Message
+    const typeLabel = order.type === 'delivery' ? 'Delivery' : order.type === 'dine_in' ? 'Dine-In' : 'Takeaway';
+    const deliveryFeeStr = order.type === 'delivery' && order.delivery_fee ? `Subtotal: RM ${(order.total_amount - Number(order.delivery_fee)).toFixed(2)}\nDelivery: RM ${Number(order.delivery_fee).toFixed(2)}\n────────────────────\n` : '';
+    const message = `*Resit Pesanan Rasmi (PDF)*\nKedai: ${store.name}\nNo. Pesanan: #${orderShort}\nTarikh: ${dateStr} ${timeStr}\nJuruwang: ${cashierName}\nJenis: ${typeLabel}\n\n${deliveryFeeStr}*Total: RM ${order.total_amount.toFixed(2)}*\n\nTerima kasih atas kunjungan anda!`;
+
+    const fileName = `Resit_Warung_JJ_${orderShort}.pdf`;
+
+    // 5. Try Native Web Share API first (Native on Mobile/Tablet)
+    if (isMobile && navigator.share) {
+      const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: `Resit Pesanan #${orderShort}`,
+            text: message
+          });
+          return;
+        } catch (shareError) {
+          console.log("Native PDF share cancelled or failed, falling back to download & URL", shareError);
+        }
+      }
+    }
+
+    // 6. Trigger PDF download
+    const downloadUrl = URL.createObjectURL(pdfBlob);
+    const downloadLink = document.createElement('a');
+    downloadLink.href = downloadUrl;
+    downloadLink.download = fileName;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    setTimeout(() => URL.revokeObjectURL(downloadUrl), 1500);
+
+    // 7. Open WhatsApp
+    const encodedMessage = encodeURIComponent(message);
+    const phone = store.phone_number ? store.phone_number.replace(/\D/g, '') : '';
+    let whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
+    if (!phone) {
+      whatsappUrl = `https://api.whatsapp.com/send?text=${encodedMessage}`;
+    }
+
+    if (isMobile) {
+      window.location.href = whatsappUrl;
+    } else if (whatsappWindow) {
+      whatsappWindow.location.href = whatsappUrl;
+    }
+  } catch (error: any) {
+    console.error("Failed to share PDF receipt via WhatsApp:", error);
+    if (error?.name !== 'AbortError') {
+      alert("Gagal menjana PDF resit: " + (error?.message || String(error)));
+    }
+  }
+}
+
 /**
  * Generates the receipt, attempts to convert it to an image (for user to manually attach),
  * and automatically triggers WhatsApp to open with a pre-filled summary message.
+ * Also defaults to PDF when requested.
  * 
  * @param order The order data object
  * @param store The store config object
@@ -375,84 +557,6 @@ export async function shareReceiptWhatsApp(
   cashierName: string, 
   items: OrderItem[]
 ): Promise<void> {
-  try {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    let whatsappWindow: Window | null = null;
-    
-    // On desktop, open a window immediately to bypass popup blockers
-    if (!isMobile) {
-      whatsappWindow = window.open('about:blank', '_blank');
-      if (!whatsappWindow) {
-        alert("Please allow popups for this site to share via WhatsApp.");
-        return;
-      }
-      whatsappWindow.document.write("Generating receipt image, please wait...");
-    }
-
-    // 1. Get the HTML string
-    const htmlString = generateReceiptHTML(order, store, cashierName, items);
-
-    // 2. Generate the PNG Blob
-    const imageBlob = await convertReceiptToPNG(htmlString);
-    
-    // 3. Format Date/Time
-    const orderDate = new Date(order.created_at);
-    const dateStr = orderDate.toLocaleDateString('en-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
-    const timeStr = orderDate.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' });
-
-    // 4. Create Pre-filled Message Summary
-    const typeLabel = order.type === 'delivery' ? 'Delivery' : order.type === 'dine_in' ? 'Dine-In' : 'Takeaway';
-    const deliveryFeeStr = order.type === 'delivery' && order.delivery_fee ? `Subtotal: RM ${(order.total_amount - Number(order.delivery_fee)).toFixed(2)}\nDelivery: RM ${Number(order.delivery_fee).toFixed(2)}\n────────────────────\n` : '';
-    const message = `*Order Summary*\nStore: ${store.name}\nOrder ID: #${order.id.split('-')[0]!.toUpperCase()}\nDate: ${dateStr} ${timeStr}\nType: ${typeLabel}\n\n${deliveryFeeStr}*Total: RM ${order.total_amount.toFixed(2)}*\n\nThank you for your visit!`;
-
-    // 5. Try Native Web Share API first (Perfect for Mobile)
-    if (isMobile && navigator.share) {
-      const file = new File([imageBlob], `Receipt_${order.id.split('-')[0]!.toUpperCase()}.png`, { type: 'image/png' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: `Receipt for Order #${order.id.split('-')[0]!.toUpperCase()}`,
-            text: message
-          });
-          return; // Native share successful, we are done!
-        } catch (shareError) {
-          console.log("Native share cancelled or failed, falling back to URL", shareError);
-        }
-      }
-    }
-
-    // 6. Trigger a download (Fallback if native share didn't work, usually desktop)
-    const downloadUrl = URL.createObjectURL(imageBlob);
-    const downloadLink = document.createElement('a');
-    downloadLink.href = downloadUrl;
-    downloadLink.download = `Receipt_${order.id.split('-')[0]!.toUpperCase()}.png`;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-    setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
-
-    // 7. Build WhatsApp URL
-    const encodedMessage = encodeURIComponent(message);
-    const phone = store.phone_number ? store.phone_number.replace(/\D/g, '') : '';
-    let whatsappUrl = `https://wa.me/${phone}?text=${encodedMessage}`;
-    if (!phone) {
-      whatsappUrl = `https://api.whatsapp.com/send?text=${encodedMessage}`;
-    }
-
-    // 8. Redirect to WhatsApp
-    if (isMobile) {
-      // On mobile, navigate in the SAME tab so intents aren't blocked by Safari/Chrome
-      window.location.href = whatsappUrl;
-    } else if (whatsappWindow) {
-      // On desktop, redirect the previously opened tab
-      whatsappWindow.location.href = whatsappUrl;
-    }
-
-  } catch (error: any) {
-    console.error("Failed to share receipt via WhatsApp:", error);
-    if (error?.name !== 'AbortError') {
-      alert("Failed to generate receipt image. Error: " + (error?.message || String(error)));
-    }
-  }
+  // Directly use the superior PDF sharing so receipt is never truncated
+  return shareReceiptWhatsAppPDF(order, store, cashierName, items);
 }

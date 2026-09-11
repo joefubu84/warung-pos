@@ -407,6 +407,10 @@ export function ReceiptCustomizer({ storeId, storeData }: ReceiptCustomizerProps
                     * Nota: DINE IN (Makan Sini) | "tambah nasi"
                   </div>
                 )}
+                <div className="text-[9px] text-slate-700 pl-2 flex justify-between">
+                  <span>+ Extra Sambal Belacan</span>
+                  <span>RM 1.00</span>
+                </div>
               </div>
 
               <div className="py-2 text-[10px] space-y-1 border-b-2 border-black">
@@ -416,8 +420,8 @@ export function ReceiptCustomizer({ storeId, storeData }: ReceiptCustomizerProps
                 </div>
                 <div className="border-t border-dashed border-black my-1"></div>
                 <div className="flex justify-between font-black text-xs">
-                  <span>JUMLAH BESAR</span>
-                  <span>RM 10.00</span>
+                  <span>Total</span>
+                  <span>RM 11.00</span>
                 </div>
                 <div className="flex justify-between font-bold">
                   <span>Status Bayaran</span>

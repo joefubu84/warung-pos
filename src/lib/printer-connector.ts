@@ -21,6 +21,8 @@ export interface ReceiptItemData {
   container_size?: string | null;
   container_charge?: number;
   notes?: string | null;
+  addons?: { name: string; price: number }[] | null;
+  selectedAddons?: { name: string; price: number }[] | null;
 }
 
 export interface ReceiptOrderData {
@@ -392,6 +394,15 @@ export async function printOrderDirectThermal(
       chunks.push(textToBytes(`   * Nota: ${item.notes.trim()}\n`));
     }
 
+    // Add-on items (Sambal, Telur, Cheese, Extra Rice, etc.)
+    const itemAddons = item.addons || item.selectedAddons || [];
+    if (Array.isArray(itemAddons) && itemAddons.length > 0) {
+      itemAddons.forEach((addon: any) => {
+        const addonTotal = (Number(addon.price || 0) * item.quantity).toFixed(2);
+        chunks.push(textToBytes(formatTwoColumns(`   + ${addon.name}`, `RM ${addonTotal}`)));
+      });
+    }
+
     // Container charge (Tapau packaging)
     if (item.container_charge && item.container_charge > 0) {
       const cTotal = (item.container_charge * item.quantity).toFixed(2);
@@ -423,7 +434,7 @@ export async function printOrderDirectThermal(
   chunks.push(
     ESC_POS_COMMANDS.EMPHASIZE_ON,
     ESC_POS_COMMANDS.DOUBLE_HEIGHT,
-    textToBytes(formatTwoColumns('JUMLAH BESAR:', `RM ${order.total_amount.toFixed(2)}`)),
+    textToBytes(formatTwoColumns('Total:', `RM ${order.total_amount.toFixed(2)}`)),
     ESC_POS_COMMANDS.NORMAL_TEXT,
     ESC_POS_COMMANDS.EMPHASIZE_OFF
   );
@@ -440,7 +451,7 @@ export async function printOrderDirectThermal(
     textToBytes(`${footer1}\n`),
     footer2 ? textToBytes(`${footer2}\n`) : new Uint8Array([]),
     customFooter ? textToBytes(`${customFooter}\n`) : new Uint8Array([]),
-    textToBytes('\n\n\n\n'),
+    textToBytes('\n\n\n\n\n\n'),
     ESC_POS_COMMANDS.CUT_PAPER
   );
 

@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from 'sonner';
+import { getActiveStaffUser } from '@/lib/staff-access-config';
+import { shareReceiptWhatsAppPDF } from '@/lib/receipt';
 
 export const Route = createFileRoute('/orders')({
   ssr: false,
@@ -109,6 +111,10 @@ function OrdersPage() {
   const [activeTab, setActiveTab] = useState<'pending' | 'preparing' | 'ready' | 'completed' | 'all'>('all');
   const [dateFilter, setDateFilter] = useState<'today' | 'yesterday' | 'last7days' | 'all' | 'custom'>('today');
   const [customDate, setCustomDate] = useState<string>('');
+  const [cashierName, setCashierName] = useState<string>(() => {
+    const active = getActiveStaffUser();
+    return active?.name || 'Staff';
+  });
 
   // Form & Cart state
   const [customerName, setCustomerName] = useState('');
@@ -163,6 +169,32 @@ function OrdersPage() {
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          const { data: profile } = await supabase
+            .from('users')
+            .select('name')
+            .eq('id', session.user.id)
+            .maybeSingle();
+          if (profile?.name) {
+            setCashierName(profile.name);
+          }
+        }
+        // Also check if daily register has opened_by_name in local storage
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        const localSession = localStorage.getItem(`warung_cash_session_${todayStr}`);
+        if (localSession) {
+          try {
+            const parsed = JSON.parse(localSession);
+            if (parsed.opened_by_name) {
+              setCashierName(parsed.opened_by_name);
+            }
+          } catch (e) {}
+        }
+      } catch (e) {
+        console.warn("Cashier name load notice:", e);
+      }
       await Promise.all([
         fetchOrders(),
         fetchTables(),
@@ -970,16 +1002,33 @@ function OrdersPage() {
                         <button 
                           onClick={async () => {
                             try {
-                              const { printOrderDirectThermal, isPrinterConnected } = await import('@/lib/printer-connector');
+                              const { printOrderDirectThermal } = await import('@/lib/printer-connector');
                               const store = { name: "Warung J&J", phone_number: "60172221784", phone_number_2: "60178284578" };
-                              const itemsForPrint = (order.order_items || []).map(i => ({
-                                name: i.menu_items?.name || 'Item', 
-                                price: i.price_at_order, 
-                                quantity: i.quantity, 
-                                container_size: (i as any).container_size, 
-                                container_charge: (i as any).container_charge, 
-                                notes: (i as any).notes
-                              }));
+                              const itemsForPrint = (order.order_items || []).map(i => {
+                                const anyItem = i as any;
+                                let parsedAddons = anyItem.addons || anyItem.selectedAddons || [];
+                                if ((!parsedAddons || parsedAddons.length === 0) && anyItem.notes && anyItem.notes.includes('+')) {
+                                  const lines = anyItem.notes.split('\n');
+                                  parsedAddons = lines
+                                    .filter((l: string) => l.trim().startsWith('+'))
+                                    .map((l: string) => {
+                                      const clean = l.replace(/^\+\s*/, '').trim();
+                                      const priceMatch = clean.match(/RM\s*([\d.]+)/i);
+                                      const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                                      const name = clean.replace(/(\(RM\s*[\d.]+\)|RM\s*[\d.]+)/i, '').trim();
+                                      return { name, price };
+                                    });
+                                }
+                                return {
+                                  name: i.menu_items?.name || 'Item', 
+                                  price: i.price_at_order, 
+                                  quantity: i.quantity, 
+                                  container_size: anyItem.container_size, 
+                                  container_charge: anyItem.container_charge, 
+                                  notes: anyItem.notes,
+                                  addons: parsedAddons
+                                };
+                              });
                               
                               const tableObj = tables.find(t => t.id === order.table_id);
                               const orderForPrint = {
@@ -987,7 +1036,7 @@ function OrdersPage() {
                                 table_number: tableObj ? tableObj.table_number : (order.table_id || null)
                               };
 
-                              const res = await printOrderDirectThermal(orderForPrint as any, store, "Staff", itemsForPrint);
+                              const res = await printOrderDirectThermal(orderForPrint as any, store, cashierName, itemsForPrint);
                               if (res.mode === 'bluetooth' || res.mode === 'usb') {
                                 toast.success(`Resit #${order.id.slice(0, 8)} berjaya dicetak ke peranti ${res.mode.toUpperCase()}! 🖨️`);
                               }
@@ -995,9 +1044,66 @@ function OrdersPage() {
                               toast.error(`Ralat cetakan: ${printErr?.message || String(printErr)}`);
                             }
                           }}
-                          className="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 px-3.5 py-1.5 rounded-xl text-xs font-black shadow-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+                          className="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-black shadow-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+                          title="Cetak Resit Thermal"
                         >
                           PRINT 🖨️
+                        </button>
+
+                        <button 
+                          onClick={async () => {
+                            try {
+                              const store = { name: "Warung J&J", phone_number: "60172221784", phone_number_2: "60178284578" };
+                              const itemsForPrint = (order.order_items || []).map(i => {
+                                const anyItem = i as any;
+                                let parsedAddons = anyItem.addons || anyItem.selectedAddons || [];
+                                if ((!parsedAddons || parsedAddons.length === 0) && anyItem.notes && anyItem.notes.includes('+')) {
+                                  const lines = anyItem.notes.split('\n');
+                                  parsedAddons = lines
+                                    .filter((l: string) => l.trim().startsWith('+'))
+                                    .map((l: string) => {
+                                      const clean = l.replace(/^\+\s*/, '').trim();
+                                      const priceMatch = clean.match(/RM\s*([\d.]+)/i);
+                                      const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                                      const name = clean.replace(/(\(RM\s*[\d.]+\)|RM\s*[\d.]+)/i, '').trim();
+                                      return { name, price };
+                                    });
+                                }
+                                return {
+                                  id: i.id,
+                                  order_id: i.order_id,
+                                  menu_item_id: i.menu_item_id,
+                                  name: i.menu_items?.name || 'Item', 
+                                  price: i.price_at_order, 
+                                  price_at_order: i.price_at_order,
+                                  quantity: i.quantity, 
+                                  fulfillment_type: i.fulfillment_type,
+                                  container_size: anyItem.container_size, 
+                                  container_charge: anyItem.container_charge, 
+                                  notes: anyItem.notes,
+                                  addons: parsedAddons
+                                };
+                              });
+
+                              const tableObj = tables.find(t => t.id === order.table_id);
+                              const orderForPrint = {
+                                ...order,
+                                table_number: tableObj ? tableObj.table_number : (order.table_id || null)
+                              };
+
+                              toast.loading(`Menjana PDF resit #${order.id.slice(0, 8)}...`, { id: `pdf-${order.id}` });
+                              await shareReceiptWhatsAppPDF(orderForPrint as any, store, cashierName, itemsForPrint as any);
+                              toast.dismiss(`pdf-${order.id}`);
+                              toast.success(`Resit PDF #${order.id.slice(0, 8)} sedia dikongsi ke WhatsApp! 📱`);
+                            } catch (waErr: any) {
+                              toast.dismiss(`pdf-${order.id}`);
+                              toast.error(`Gagal berkongsi PDF: ${waErr?.message || String(waErr)}`);
+                            }
+                          }}
+                          className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1.5 rounded-xl text-xs font-black shadow-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
+                          title="Kongsi Fail Resit PDF via WhatsApp"
+                        >
+                          WA PDF 📱
                         </button>
                       </div>
                     </div>
