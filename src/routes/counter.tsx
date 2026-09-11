@@ -17,9 +17,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Minus, Search, Trash2, ShoppingCart, CheckCircle2, Lock, Unlock, AlertTriangle, Split, Globe, Radio, Bell } from "lucide-react";
+import { Plus, Minus, Search, Trash2, ShoppingCart, CheckCircle2, Lock, Unlock, AlertTriangle, Split, Globe, Radio, Bell, Flame } from "lucide-react";
 import { COMMON_MODIFIERS, detectModifierBadges } from "@/lib/kitchen-checklist-config";
-import { QuickStockBar } from "@/components/QuickStockBar";
+import { QuickStockModal } from "@/components/QuickStockModal";
 import { toast } from 'sonner';
 
 export const Route = createFileRoute('/counter')({
@@ -124,6 +124,8 @@ const addSplitPayment = () => {
   const [showDuitNowModal, setShowDuitNowModal] = useState(false);
   const [isOnlineOrderingEnabled, setIsOnlineOrderingEnabled] = useState<boolean>(true);
   const [isUpdatingOnlineStatus, setIsUpdatingOnlineStatus] = useState<boolean>(false);
+  const [isStockModalOpen, setIsStockModalOpen] = useState(false);
+  const [soldOutCount, setSoldOutCount] = useState<number>(0);
 
   const fetchCashStatus = useCallback(async () => {
     const res = await getTodayCashStatus(storeId);
@@ -254,14 +256,27 @@ const addSplitPayment = () => {
   };
 
   const fetchMenuItems = async () => {
-    const { data, error } = await supabase
-      .from('menu_items')
-      .select('id, name, price, category, stock_count, image_url')
-      .eq('is_available', true)
-      .order('name', { ascending: true });
-    
-    if (!error && data) {
-      setMenuItems(data as MenuItem[]);
+    try {
+      const [menuRes, soldOutRes] = await Promise.all([
+        supabase
+          .from('menu_items')
+          .select('id, name, price, category, stock_count, image_url')
+          .eq('is_available', true)
+          .order('name', { ascending: true }),
+        supabase
+          .from('menu_items')
+          .select('id', { count: 'exact', head: true })
+          .or('is_available.eq.false,stock_count.eq.0')
+      ]);
+
+      if (!menuRes.error && menuRes.data) {
+        setMenuItems(menuRes.data as MenuItem[]);
+      }
+      if (soldOutRes.count !== null && soldOutRes.count !== undefined) {
+        setSoldOutCount(soldOutRes.count);
+      }
+    } catch (err) {
+      console.error('Error in fetchMenuItems:', err);
     }
   };
 
@@ -757,6 +772,31 @@ const addSplitPayment = () => {
               </span>
             </button>
 
+            {/* PANTU STOK PANTAS (86 / SOLD OUT) TRIGGER */}
+            <button
+              type="button"
+              onClick={() => setIsStockModalOpen(true)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all border shadow-2xs active:scale-95 cursor-pointer ${
+                soldOutCount > 0
+                  ? 'bg-rose-50 text-rose-800 border-rose-300 hover:bg-rose-100 ring-1 ring-rose-200'
+                  : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-white hover:border-orange-300'
+              }`}
+              title="Klik untuk Pantau & Tukar Status Stok Pantas (86 / Sold Out)"
+            >
+              <Flame className={`w-3.5 h-3.5 ${soldOutCount > 0 ? 'text-rose-600 animate-pulse' : 'text-orange-500'}`} />
+              <span className="tracking-tight hidden sm:inline">Urus Stok (86)</span>
+              <span className="tracking-tight sm:hidden">Stok</span>
+              {soldOutCount > 0 ? (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-rose-600 text-white">
+                  {soldOutCount} Habis
+                </span>
+              ) : (
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800">
+                  Ada
+                </span>
+              )}
+            </button>
+
             <button 
               onClick={clearCart}
               disabled={cart.length === 0}
@@ -774,7 +814,7 @@ const addSplitPayment = () => {
           <div className="w-[60%] bg-[#f8fafc] flex flex-col border-r border-slate-200/90 relative">
             
             {/* STICKY SEARCH BAR CONTAINER */}
-            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-slate-200/90 p-3 shrink-0 shadow-2xs space-y-2.5">
+            <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md border-b border-slate-200/90 p-3 shrink-0 shadow-2xs">
               <div className="relative w-full">
                 <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                 <input 
@@ -784,9 +824,6 @@ const addSplitPayment = () => {
                   className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 rounded-xl text-sm font-medium focus:border-orange-500 focus:bg-white focus:ring-1 focus:ring-orange-500 outline-none transition-all shadow-2xs"
                 />
               </div>
-
-              {/* QUICK STOCK 86 / SOLD OUT ACCORDION */}
-              <QuickStockBar onItemUpdated={fetchMenuItems} />
             </div>
 
             {/* Category Tabs */}
@@ -1343,6 +1380,13 @@ const addSplitPayment = () => {
         onClose={() => setIsReopenModalOpen(false)}
         onSuccess={fetchCashStatus}
         closedAt={closedAtTime}
+      />
+
+      {/* QUICK STOCK 86 / INVENTORY MODAL */}
+      <QuickStockModal
+        isOpen={isStockModalOpen}
+        onClose={() => setIsStockModalOpen(false)}
+        onItemUpdated={fetchMenuItems}
       />
     </div>
   );

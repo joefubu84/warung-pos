@@ -182,6 +182,7 @@ export interface NavItemConfig {
 
 export const DEFAULT_NAV_ORDER: NavItemConfig[] = [
   { id: 'counter', label: 'Counter', path: '/counter', emoji: '🛒', visible: true },
+  { id: 'inventory', label: 'Inventory', path: '/inventory', emoji: '📦', visible: true },
   { id: 'menu', label: 'Menu', path: '/menu', emoji: '🍱', visible: true },
   { id: 'orders', label: 'Orders', path: '/orders', emoji: '📋', visible: true },
   { id: 'kitchen', label: 'Kitchen', path: '/kitchen', emoji: '🍳', visible: true },

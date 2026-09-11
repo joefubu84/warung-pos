@@ -16,6 +16,7 @@ import { Route as CashManagementRouteImport } from './routes/cash-management'
 import { Route as CounterRouteImport } from './routes/counter'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as DeliveryRouteImport } from './routes/delivery'
+import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as KitchenRouteImport } from './routes/kitchen'
 import { Route as LoyaltyRouteImport } from './routes/loyalty'
 import { Route as MenuRouteImport } from './routes/menu'
@@ -60,6 +61,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const DeliveryRoute = DeliveryRouteImport.update({
   id: '/delivery',
   path: '/delivery',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoryRoute = InventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
   getParentRoute: () => rootRouteImport,
 } as any)
 const KitchenRoute = KitchenRouteImport.update({
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/counter': typeof CounterRoute
   '/dashboard': typeof DashboardRoute
   '/delivery': typeof DeliveryRoute
+  '/inventory': typeof InventoryRoute
   '/kitchen': typeof KitchenRoute
   '/loyalty': typeof LoyaltyRoute
   '/menu': typeof MenuRoute
@@ -140,6 +147,7 @@ export interface FileRoutesByTo {
   '/counter': typeof CounterRoute
   '/dashboard': typeof DashboardRoute
   '/delivery': typeof DeliveryRoute
+  '/inventory': typeof InventoryRoute
   '/kitchen': typeof KitchenRoute
   '/loyalty': typeof LoyaltyRoute
   '/menu': typeof MenuRoute
@@ -160,6 +168,7 @@ export interface FileRoutesById {
   '/counter': typeof CounterRoute
   '/dashboard': typeof DashboardRoute
   '/delivery': typeof DeliveryRoute
+  '/inventory': typeof InventoryRoute
   '/kitchen': typeof KitchenRoute
   '/loyalty': typeof LoyaltyRoute
   '/menu': typeof MenuRoute
@@ -181,6 +190,7 @@ export interface FileRouteTypes {
     | '/counter'
     | '/dashboard'
     | '/delivery'
+    | '/inventory'
     | '/kitchen'
     | '/loyalty'
     | '/menu'
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/counter'
     | '/dashboard'
     | '/delivery'
+    | '/inventory'
     | '/kitchen'
     | '/loyalty'
     | '/menu'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/counter'
     | '/dashboard'
     | '/delivery'
+    | '/inventory'
     | '/kitchen'
     | '/loyalty'
     | '/menu'
@@ -239,6 +251,7 @@ export interface RootRouteChildren {
   CounterRoute: typeof CounterRoute
   DashboardRoute: typeof DashboardRoute
   DeliveryRoute: typeof DeliveryRoute
+  InventoryRoute: typeof InventoryRoute
   KitchenRoute: typeof KitchenRoute
   LoyaltyRoute: typeof LoyaltyRoute
   MenuRoute: typeof MenuRoute
@@ -300,6 +313,13 @@ declare module '@tanstack/react-router' {
       path: '/delivery'
       fullPath: '/delivery'
       preLoaderRoute: typeof DeliveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory': {
+      id: '/inventory'
+      path: '/inventory'
+      fullPath: '/inventory'
+      preLoaderRoute: typeof InventoryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/kitchen': {
@@ -383,6 +403,7 @@ const rootRouteChildren: RootRouteChildren = {
   CounterRoute: CounterRoute,
   DashboardRoute: DashboardRoute,
   DeliveryRoute: DeliveryRoute,
+  InventoryRoute: InventoryRoute,
   KitchenRoute: KitchenRoute,
   LoyaltyRoute: LoyaltyRoute,
   MenuRoute: MenuRoute,
