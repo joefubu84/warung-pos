@@ -14,7 +14,8 @@ import {
   Clock,
   Receipt,
   Utensils,
-  Bell
+  Bell,
+  Printer
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,6 +23,7 @@ import { cn } from '@/lib/utils';
 import { requireStaffAuth } from '@/lib/auth-guard';
 import { getTodayCashStatus, CashStatus } from '@/lib/cash-guard';
 import { ReopenRegisterModal } from '@/components/ReopenRegisterModal';
+import { TableQrPrintModal } from '@/components/TableQrPrintModal';
 import { Lock, Unlock } from 'lucide-react';
 import { useCallback } from 'react';
 import {
@@ -134,6 +136,8 @@ function TablesPage() {
   const [cashStatus, setCashStatus] = useState<CashStatus>(initialCashStatus?.status || 'NOT_OPENED');
   const [closedAtTime, setClosedAtTime] = useState<string | null>(initialCashStatus?.closedAt || null);
   const [isReopenModalOpen, setIsReopenModalOpen] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [tableToPrint, setTableToPrint] = useState<Table | null>(null);
 
   const fetchCashStatus = useCallback(async () => {
     const res = await getTodayCashStatus(storeId);
@@ -420,28 +424,41 @@ function TablesPage() {
       )}
 
       {/* HEADER CARD */}
-      <div className={`bg-white border border-slate-200/90 p-6 rounded-3xl shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4 ${cashStatus !== 'OPEN' ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className="bg-white border border-slate-200/90 p-6 rounded-3xl shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
             <span>Table Management</span>
             <span className="text-xs font-mono font-bold bg-orange-100 text-orange-700 px-2.5 py-0.5 rounded-full border border-orange-200">
-              POS
+              {tables.length} Meja
             </span>
           </h1>
-          <p className="text-xs text-slate-500 font-mono mt-1">Monitor live dine-in table status & QR ordering codes</p>
+          <p className="text-xs text-slate-500 font-mono mt-1">Pantau status meja & cetak pelekat QR kod pesanan Warung J&J</p>
         </div>
         
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setTableToPrint(null);
+              setIsPrintModalOpen(true);
+            }}
+            className="px-4 py-2 rounded-2xl text-xs font-black bg-orange-500 hover:bg-orange-600 text-white shadow-md shadow-orange-500/20 transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
+            title="Cetak pelekat QR kod meja untuk Warung J&J (Standee / Sticker)"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Cetak Pelekat QR (15 Meja)</span>
+          </button>
+
           <div className="flex bg-slate-100 p-1 rounded-2xl border border-slate-200/80">
             <button 
               onClick={() => setActiveTab('grid')}
-              className={cn("px-5 py-2 rounded-xl text-xs md:text-sm font-bold transition-all", activeTab === 'grid' ? "bg-orange-500 shadow-sm text-white font-black" : "text-slate-600 hover:text-slate-900")}
+              className={cn("px-5 py-2 rounded-xl text-xs md:text-sm font-bold transition-all cursor-pointer", activeTab === 'grid' ? "bg-orange-500 shadow-sm text-white font-black" : "text-slate-600 hover:text-slate-900")}
             >
               Live Grid
             </button>
             <button 
               onClick={() => setActiveTab('manage')}
-              className={cn("px-5 py-2 rounded-xl text-xs md:text-sm font-bold transition-all", activeTab === 'manage' ? "bg-orange-500 shadow-sm text-white font-black" : "text-slate-600 hover:text-slate-900")}
+              className={cn("px-5 py-2 rounded-xl text-xs md:text-sm font-bold transition-all cursor-pointer", activeTab === 'manage' ? "bg-orange-500 shadow-sm text-white font-black" : "text-slate-600 hover:text-slate-900")}
             >
               Manage Setup
             </button>
@@ -454,7 +471,7 @@ function TablesPage() {
             title="Ubahsuai Pilihan Bantuan Meja (Buzzer)"
           >
             <Bell className="w-3.5 h-3.5 text-amber-600 animate-bounce" />
-            <span>Tetapan Panggil Pelayan</span>
+            <span>Panggil Pelayan</span>
           </Link>
         </div>
       </div>
@@ -576,16 +593,28 @@ function TablesPage() {
                 </div>
                 
                 <div className="flex items-center gap-2">
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      setTableToPrint(table);
+                      setIsPrintModalOpen(true);
+                    }} 
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 rounded-xl text-xs font-bold transition-all active:scale-95 shadow-2xs cursor-pointer"
+                    title={`Cetak Pelekat QR Meja ${table.table_number}`}
+                  >
+                    <Printer className="w-3.5 h-3.5 text-orange-600" />
+                    <span>Cetak Pelekat</span>
+                  </button>
                   <button onClick={() => {
-                    const newNum = prompt("Enter new table number:", table.table_number);
+                    const newNum = prompt("Masukkan nombor meja baharu:", table.table_number);
                     if (newNum) {
                       setEditValue(newNum);
                       handleSaveEdit(table.id);
                     }
-                  }} className="p-2.5 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-800 transition-colors">
+                  }} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-800 transition-colors cursor-pointer" title="Ubah Nombor Meja">
                     <Edit2 className="w-4 h-4" />
                   </button>
-                  <button onClick={() => handleDeleteTable(table)} className="p-2.5 hover:bg-rose-50 text-rose-600 rounded-xl transition-colors">
+                  <button onClick={() => handleDeleteTable(table)} className="p-2 hover:bg-rose-50 text-rose-600 rounded-xl transition-colors cursor-pointer" title="Padam Meja">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -658,17 +687,32 @@ function TablesPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-6 text-center">
-                    <div className="bg-slate-50 border border-slate-200/80 rounded-3xl p-6 flex flex-col items-center">
-                      <p className="text-xs text-slate-500 font-bold uppercase mb-3 tracking-widest font-mono">Digital Menu QR Code</p>
-                      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs mb-4">
-                        <QRCodeSVG value={`${appBaseUrl}/t/${selectedTable.qr_token}`} size={160} />
+                  <div className="space-y-4 text-center">
+                    <div className="bg-slate-50 border border-slate-200/80 rounded-3xl p-5 flex flex-col items-center">
+                      <div className="flex items-center gap-2 mb-3">
+                        <img src="/logo.png" alt="Warung J&J" className="w-8 h-8 rounded-full border border-orange-400" />
+                        <span className="text-xs font-black text-slate-900 font-mono">Meja {selectedTable.table_number}</span>
                       </div>
-                      <p className="text-xs text-slate-400 font-mono">Scan for customer self-ordering</p>
+                      <div className="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-xs mb-3">
+                        <QRCodeSVG value={`${appBaseUrl}/t/${selectedTable.qr_token}`} size={160} level="H" />
+                      </div>
+                      <p className="text-[11px] text-slate-500 font-medium">Imbas untuk pesanan meja Warung J&J</p>
                     </div>
                     
-                    <a href={`/t/${selectedTable.qr_token}`} target="_blank" rel="noreferrer" className="block w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl font-black transition-colors shadow-md shadow-orange-500/20 text-center">
-                      Open Digital Menu
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTableToPrint(selectedTable);
+                        setIsPrintModalOpen(true);
+                      }}
+                      className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-2xl font-black text-xs transition-colors shadow-xs active:scale-95 cursor-pointer"
+                    >
+                      <Printer className="w-4 h-4 text-orange-400" />
+                      <span>Cetak Pelekat Meja {selectedTable.table_number} (QR Sticker)</span>
+                    </button>
+
+                    <a href={`/t/${selectedTable.qr_token}`} target="_blank" rel="noreferrer" className="block w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-2xl font-black text-xs transition-colors shadow-md shadow-orange-500/20 text-center">
+                      Buka Menu Digital Meja
                     </a>
                   </div>
                 )}
@@ -684,6 +728,18 @@ function TablesPage() {
         onClose={() => setIsReopenModalOpen(false)}
         onSuccess={fetchCashStatus}
         closedAt={closedAtTime}
+      />
+
+      {/* TABLE QR PRINT STICKER MODAL */}
+      <TableQrPrintModal
+        isOpen={isPrintModalOpen}
+        onClose={() => {
+          setIsPrintModalOpen(false);
+          setTableToPrint(null);
+        }}
+        tables={tables}
+        selectedTable={tableToPrint}
+        appBaseUrl={appBaseUrl}
       />
       </div>
     </div>
