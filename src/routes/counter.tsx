@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Minus, Search, Trash2, ShoppingCart, CheckCircle2, Lock, Unlock, AlertTriangle, Split, Globe, Radio, Bell, Flame } from "lucide-react";
+import { Plus, Minus, Search, Trash2, ShoppingCart, CheckCircle2, Lock, Unlock, AlertTriangle, Split, Globe, Radio, Bell, Flame, Maximize, Minimize, Volume2 } from "lucide-react";
 import { COMMON_MODIFIERS, detectModifierBadges } from "@/lib/kitchen-checklist-config";
 import { QuickStockModal } from "@/components/QuickStockModal";
 import { toast } from 'sonner';
@@ -129,6 +129,65 @@ const addSplitPayment = () => {
   const [isUpdatingOnlineStatus, setIsUpdatingOnlineStatus] = useState<boolean>(false);
   const [isStockModalOpen, setIsStockModalOpen] = useState(false);
   const [soldOutCount, setSoldOutCount] = useState<number>(0);
+  
+  // Large Table Call Waiter Alert Modal / Banner state
+  const [activeWaiterAlert, setActiveWaiterAlert] = useState<{
+    id: string;
+    tableNumber: string;
+    message: string;
+    timestamp: string;
+  } | null>(null);
+
+  // Fullscreen state
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(() => {
+    if (typeof document !== 'undefined') {
+      return !!document.fullscreenElement;
+    }
+    return false;
+  });
+
+  const toggleFullscreen = () => {
+    try {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch((err) => {
+          console.warn('Fullscreen request failed:', err);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen().catch((err) => {
+            console.warn('Exit fullscreen failed:', err);
+          });
+        }
+      }
+    } catch (e) {
+      console.warn('Fullscreen toggle error:', e);
+    }
+  };
+
+  useEffect(() => {
+    const handleFsChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  // Try auto fullscreen on user's first click or tap on counter
+  useEffect(() => {
+    const triggerAutoFullscreen = () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {
+          // Browsers require explicit user interaction; if suppressed, ignore safely
+        });
+      }
+    };
+    window.addEventListener('click', triggerAutoFullscreen, { once: true });
+    window.addEventListener('touchstart', triggerAutoFullscreen, { once: true });
+    return () => {
+      window.removeEventListener('click', triggerAutoFullscreen);
+      window.removeEventListener('touchstart', triggerAutoFullscreen);
+    };
+  }, []);
 
   const fetchCashStatus = useCallback(async () => {
     const res = await getTodayCashStatus(storeId);
@@ -214,6 +273,12 @@ const addSplitPayment = () => {
         playBeep();
         toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, {
           duration: 8000,
+        });
+        setActiveWaiterAlert({
+          id: `buzzer_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+          tableNumber: String(detail.table_number || '?'),
+          message: detail.message || 'Panggilan Pelayan',
+          timestamp: detail.timestamp || new Date().toISOString()
         });
       }
     };
@@ -840,6 +905,30 @@ const addSplitPayment = () => {
               )}
             </button>
 
+            {/* FULLSCREEN AUTO/MANUAL TOGGLE */}
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black transition-all border shadow-2xs active:scale-95 cursor-pointer ${
+                isFullscreen
+                  ? 'bg-orange-50 text-orange-800 border-orange-300 hover:bg-orange-100'
+                  : 'bg-slate-900 text-white border-slate-800 hover:bg-slate-800'
+              }`}
+              title={isFullscreen ? 'Keluar Mod Skrin Penuh' : 'Buka Mod Skrin Penuh (Kiosk POS)'}
+            >
+              {isFullscreen ? (
+                <>
+                  <Minimize className="w-3.5 h-3.5 text-orange-600" />
+                  <span className="tracking-tight hidden sm:inline">Keluar Skrin Penuh</span>
+                </>
+              ) : (
+                <>
+                  <Maximize className="w-3.5 h-3.5 text-orange-400" />
+                  <span className="tracking-tight hidden sm:inline">Skrin Penuh (Kiosk)</span>
+                </>
+              )}
+            </button>
+
             <button 
               onClick={clearCart}
               disabled={cart.length === 0}
@@ -1431,6 +1520,57 @@ const addSplitPayment = () => {
         onClose={() => setIsStockModalOpen(false)}
         onItemUpdated={fetchMenuItems}
       />
+
+      {/* PROMINENT HIGH-IMPACT TABLE WAITER CALL ALERT MODAL */}
+      <Dialog 
+        open={!!activeWaiterAlert} 
+        onOpenChange={(open) => {
+          if (!open) setActiveWaiterAlert(null);
+        }}
+      >
+        <DialogContent className="bg-white border-4 border-amber-500 max-w-lg rounded-3xl p-6 sm:p-8 text-center shadow-2xl z-50 animate-in fade-in zoom-in-95 duration-200">
+          <div className="flex flex-col items-center space-y-4">
+            {/* GIANT ANIMATED BELL ICON */}
+            <div className="relative">
+              <div className="w-24 h-24 rounded-3xl bg-amber-500 text-white flex items-center justify-center shadow-xl shadow-amber-500/40 animate-bounce">
+                <Bell className="w-14 h-14 stroke-[2.5]" />
+              </div>
+              <span className="absolute -top-2 -right-2 flex h-6 w-6">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-6 w-6 bg-rose-500 text-white text-[11px] font-black items-center justify-center">!</span>
+              </span>
+            </div>
+
+            <div className="space-y-2">
+              <span className="inline-block px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-xs font-black uppercase tracking-wider font-mono">
+                🔔 PANGGILAN PELAYAN SEGERA
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                MEJA #{activeWaiterAlert?.tableNumber}
+              </h2>
+              <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-slate-900 font-bold text-base sm:text-lg">
+                "{activeWaiterAlert?.message}"
+              </div>
+              <p className="text-xs text-slate-400 font-mono">
+                Masa: {activeWaiterAlert?.timestamp ? new Date(activeWaiterAlert.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : ''}
+              </p>
+            </div>
+
+            <div className="w-full pt-2 flex flex-col gap-2">
+              <Button
+                type="button"
+                onClick={() => {
+                  playBeep();
+                  setActiveWaiterAlert(null);
+                }}
+                className="w-full bg-amber-500 hover:bg-amber-600 active:scale-95 text-white font-black py-4 rounded-2xl text-base shadow-lg shadow-amber-500/30 transition-all cursor-pointer"
+              >
+                ✓ SAYA PERGI KE MEJA INI (SELESAI)
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
