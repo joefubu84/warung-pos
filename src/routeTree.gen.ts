@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthriderRouteImport } from './routes/authrider'
 import { Route as CashRouteImport } from './routes/cash'
 import { Route as CashManagementRouteImport } from './routes/cash-management'
 import { Route as CounterRouteImport } from './routes/counter'
@@ -36,6 +37,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthriderRoute = AuthriderRouteImport.update({
+  id: '/authrider',
+  path: '/authrider',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CashRoute = CashRouteImport.update({
@@ -122,6 +128,7 @@ const ApiPublicMcpRoute = ApiPublicMcpRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/authrider': typeof AuthriderRoute
   '/cash': typeof CashRoute
   '/cash-management': typeof CashManagementRoute
   '/counter': typeof CounterRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/authrider': typeof AuthriderRoute
   '/cash': typeof CashRoute
   '/cash-management': typeof CashManagementRoute
   '/counter': typeof CounterRoute
@@ -163,6 +171,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/authrider': typeof AuthriderRoute
   '/cash': typeof CashRoute
   '/cash-management': typeof CashManagementRoute
   '/counter': typeof CounterRoute
@@ -185,6 +194,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/authrider'
     | '/cash'
     | '/cash-management'
     | '/counter'
@@ -205,6 +215,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/authrider'
     | '/cash'
     | '/cash-management'
     | '/counter'
@@ -225,6 +236,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/authrider'
     | '/cash'
     | '/cash-management'
     | '/counter'
@@ -246,6 +258,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  AuthriderRoute: typeof AuthriderRoute
   CashRoute: typeof CashRoute
   CashManagementRoute: typeof CashManagementRoute
   CounterRoute: typeof CounterRoute
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/authrider': {
+      id: '/authrider'
+      path: '/authrider'
+      fullPath: '/authrider'
+      preLoaderRoute: typeof AuthriderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cash': {
@@ -398,6 +418,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  AuthriderRoute: AuthriderRoute,
   CashRoute: CashRoute,
   CashManagementRoute: CashManagementRoute,
   CounterRoute: CounterRoute,
