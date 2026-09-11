@@ -369,6 +369,17 @@ function SettingsPage() {
     }
   }, [printerSettings, store]);
 
+  const [isConnectingBt, setIsConnectingBt] = useState(false);
+  const [isConnectingUsb, setIsConnectingUsb] = useState(false);
+  const [isTestingPrint, setIsTestingPrint] = useState(false);
+  const [connectedPrinter, setConnectedPrinter] = useState<ConnectedPrinterInfo | null>(null);
+
+  useEffect(() => {
+    // Refresh connected printer info on mount (client-side only)
+    const saved = getSavedPrinterInfo();
+    if (saved) setConnectedPrinter(saved);
+  }, []);
+
   if (storeLoading || printerLoading || menuLoading) return <div className="p-8 text-center">Loading settings...</div>;
 
   const handleToggleStatus = (status: string) => {
@@ -447,16 +458,6 @@ function SettingsPage() {
     }
   };
 
-  const [isConnectingBt, setIsConnectingBt] = useState(false);
-  const [isConnectingUsb, setIsConnectingUsb] = useState(false);
-  const [isTestingPrint, setIsTestingPrint] = useState(false);
-  const [connectedPrinter, setConnectedPrinter] = useState<ConnectedPrinterInfo | null>(null);
-
-  useEffect(() => {
-    // Refresh connected printer info on mount (client-side only)
-    const saved = getSavedPrinterInfo();
-    if (saved) setConnectedPrinter(saved);
-  }, []);
 
   const handleConnectBluetooth = async () => {
     try {
