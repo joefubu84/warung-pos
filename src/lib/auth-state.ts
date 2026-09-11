@@ -16,9 +16,9 @@ export const EMERGENCY_ADMIN_SESSION: any = {
     id: '0f81ea5a-e622-4343-a188-62f90dc1ef14',
     aud: 'authenticated',
     role: 'authenticated',
-    email: 'teststaffa@test.com',
+    email: 'ogyic84@gmail.com',
     user_metadata: {
-      name: 'Staff A (Admin)',
+      name: 'Admin Warung J&J',
       role: 'admin'
     },
     app_metadata: {

@@ -28,11 +28,12 @@ async function getUserProfile(session: any) {
 
   if (!session?.user) return { userProfile: null, error: null };
 
-  // Emergency / Staff A instant bypass
+  // Emergency / Official Admin instant bypass
   if (
     session.user.id === '0f81ea5a-e622-4343-a188-62f90dc1ef14' ||
-    session.user.email === 'teststaffa@test.com' ||
+    session.user.email === 'ogyic84@gmail.com' ||
     session.user.email === 'joefubu84@gmail.com' ||
+    session.user.email === 'teststaffa@test.com' ||
     session.access_token === 'emergency_warung_staff_token'
   ) {
     return {
@@ -40,7 +41,7 @@ async function getUserProfile(session: any) {
         id: session.user.id || '0f81ea5a-e622-4343-a188-62f90dc1ef14',
         role: 'admin',
         store_id: DEFAULT_STORE_ID,
-        email: session.user.email || 'teststaffa@test.com'
+        email: session.user.email || 'ogyic84@gmail.com'
       },
       error: null
     };
@@ -95,7 +96,7 @@ async function getUserProfile(session: any) {
   // 5. Admin fallback for store owner / admin accounts
   if (!userProfile && session.user.email) {
     const emailLower = session.user.email.toLowerCase();
-    if (emailLower.includes('admin') || emailLower === 'joefubu84@gmail.com' || emailLower.endsWith('@warungjnj.online')) {
+    if (emailLower.includes('admin') || emailLower === 'ogyic84@gmail.com' || emailLower === 'joefubu84@gmail.com' || emailLower.endsWith('@warungjnj.online')) {
       userProfile = {
         id: session.user.id,
         role: 'admin',
