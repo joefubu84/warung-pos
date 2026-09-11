@@ -408,8 +408,8 @@ function MenuPage() {
           
           {/* EDITOR FORM SIDEBAR */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-24 bg-white border border-slate-200/90 text-slate-900 rounded-3xl shadow-xs">
-              <CardHeader className="border-b border-slate-100">
+            <Card className="sticky top-20 lg:top-24 max-h-[calc(100dvh-6rem)] overflow-y-auto overscroll-contain bg-white border border-slate-200/90 text-slate-900 rounded-3xl shadow-xs scrollbar-thin">
+              <CardHeader className="border-b border-slate-100 shrink-0">
                 <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-900">
                   {editingId ? <><Edit2 className="w-5 h-5 text-amber-600"/> Edit Dish</> : <><Plus className="w-5 h-5 text-orange-600"/> Add New Menu Item</>}
                 </CardTitle>
@@ -417,7 +417,7 @@ function MenuPage() {
                   {editingId ? "Update dish price, image, or inventory stock." : "Add a new item to your digital menu."}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="pt-4">
+              <CardContent className="pt-4 pb-6">
                 <form onSubmit={handleSubmit} className="space-y-4 font-mono text-xs">
                   
                   {/* Photo Upload with Camera & Gallery */}
