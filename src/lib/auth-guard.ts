@@ -69,7 +69,6 @@ async function getUserProfile(session: any) {
 
   // 3. Check metadata role from Supabase auth
   const metaRole = session.user.user_metadata?.role || session.user.app_metadata?.role;
-const DEFAULT_STORE_ID = '1094d737-8104-4a55-b678-0fe9097beba0';
 
   if (!userProfile && metaRole) {
     userProfile = {
