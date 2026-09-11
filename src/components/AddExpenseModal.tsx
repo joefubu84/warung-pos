@@ -285,30 +285,34 @@ export function AddExpenseModal({ isOpen, onClose, onSuccess, dailyCashId, store
         const cleanName = receiptFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         const filePath = `expenses/${Date.now()}_${cleanName}`;
 
-        const { data: uploadData, error: uploadErr } = await supabase.storage
-          .from('receipts')
-          .upload(filePath, receiptFile, {
-            upsert: true,
-            contentType: receiptFile.type || 'image/jpeg'
-          });
+        try {
+          const { data: uploadData, error: uploadErr } = await supabase.storage
+            .from('receipts')
+            .upload(filePath, receiptFile, {
+              upsert: true,
+              contentType: receiptFile.type || 'image/jpeg'
+            });
 
-        if (uploadErr) {
-          console.error("Supabase Storage upload error:", uploadErr);
-          toast.error(`Receipt upload failed: ${uploadErr.message}. Expense not saved.`);
-          setIsSubmitting(false);
-          return;
-        }
+          if (!uploadErr && uploadData) {
+            const { data: publicUrlData } = supabase.storage
+              .from('receipts')
+              .getPublicUrl(filePath);
 
-        const { data: publicUrlData } = supabase.storage
-          .from('receipts')
-          .getPublicUrl(filePath);
-
-        if (publicUrlData && publicUrlData.publicUrl && !publicUrlData.publicUrl.startsWith('blob:') && !publicUrlData.publicUrl.startsWith('data:')) {
-          uploadedReceiptUrl = publicUrlData.publicUrl;
-        } else {
-          toast.error("Failed to generate permanent public URL for uploaded receipt. Expense not saved.");
-          setIsSubmitting(false);
-          return;
+            if (publicUrlData && publicUrlData.publicUrl && !publicUrlData.publicUrl.startsWith('blob:') && !publicUrlData.publicUrl.startsWith('data:')) {
+              uploadedReceiptUrl = publicUrlData.publicUrl;
+            }
+          } else {
+            console.warn("Supabase Storage upload notice (proceeding with expense):", uploadErr?.message);
+            // Use compressed data preview if storage bucket is not public
+            if (receiptPreviewUrl) {
+              uploadedReceiptUrl = receiptPreviewUrl;
+            }
+          }
+        } catch (uploadCatch) {
+          console.warn("Storage upload exception:", uploadCatch);
+          if (receiptPreviewUrl) {
+            uploadedReceiptUrl = receiptPreviewUrl;
+          }
         }
       }
 

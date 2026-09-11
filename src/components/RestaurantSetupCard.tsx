@@ -28,24 +28,31 @@ export function RestaurantSetupCard() {
   const checkSetupStatus = async () => {
     try {
       setLoading(true);
+      const localToyyibPay = typeof window !== 'undefined' ? localStorage.getItem('toyyibpay_config') : null;
+      let hasToyyib = false;
+      try {
+        if (localToyyibPay) {
+          const parsed = JSON.parse(localToyyibPay);
+          hasToyyib = !!(parsed?.userSecretKey && parsed?.categoryCode);
+        }
+      } catch {}
+
       const [
         { data: stores },
         { count: menuItemsCount },
         { count: tablesCount },
-        { data: paymentConfig },
         { data: printerConfig }
       ] = await Promise.all([
         supabase.from('stores').select('id, name, logo_url, phone_number').limit(1).maybeSingle(),
         supabase.from('menu_items').select('*', { count: 'exact', head: true }),
         supabase.from('tables').select('*', { count: 'exact', head: true }),
-        supabase.from('store_payment_config').select('store_id, toyyibpay_secret').limit(1).maybeSingle(),
         supabase.from('printer_settings').select('store_id, printer_name').limit(1).maybeSingle()
       ]);
 
       setStoreData(stores);
       setMenuCount(menuItemsCount || 0);
       setTableCount(tablesCount || 0);
-      setHasPaymentConfig(!!paymentConfig?.toyyibpay_secret);
+      setHasPaymentConfig(hasToyyib);
       setHasPrinterConfig(!!printerConfig?.printer_name);
     } catch (err) {
       console.error('Error fetching setup checklist status:', err);

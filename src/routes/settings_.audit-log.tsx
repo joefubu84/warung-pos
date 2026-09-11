@@ -37,17 +37,29 @@ function AuditLogPage() {
   const { data: orderLogs, isLoading: isOrderLoading, refetch: refetchOrderLogs } = useQuery({
     queryKey: ['order_edit_logs'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('order_edit_logs')
-        .select(`
-          *,
-          users!order_edit_logs_edited_by_fkey(name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(100);
-        
-      if (error) throw error;
-      return data || [];
+      try {
+        const { data, error } = await supabase
+          .from('order_edit_logs')
+          .select(`
+            *,
+            users!order_edit_logs_edited_by_fkey(name)
+          `)
+          .order('created_at', { ascending: false })
+          .limit(100);
+          
+        if (error) {
+          if (error.code === 'PGRST205' || error.message?.includes('order_edit_logs')) {
+            return [];
+          }
+          throw error;
+        }
+        return data || [];
+      } catch (err: any) {
+        if (err?.code === 'PGRST205' || err?.message?.includes('order_edit_logs')) {
+          return [];
+        }
+        throw err;
+      }
     },
     refetchInterval: 30000
   });

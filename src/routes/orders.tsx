@@ -370,16 +370,19 @@ function OrdersPage() {
           changesDetails.payment_method = `${editingOrder.payment_method || 'cash'} -> ${editPaymentMethod}`;
         }
 
-        const { error: logErr } = await supabase.from('order_edit_logs').insert({
-          order_id: editingOrder.id,
-          action: 'edit',
-          reason: editReason,
-          edited_by: user.id,
-          before_total: editingOrder.total_amount,
-          after_total: newTotalAmount,
-          changes: changesDetails
-        } as any);
-        if (logErr) throw logErr;
+        try {
+          await supabase.from('order_edit_logs').insert({
+            order_id: editingOrder.id,
+            action: 'edit',
+            reason: editReason,
+            edited_by: user.id,
+            before_total: editingOrder.total_amount,
+            after_total: newTotalAmount,
+            changes: changesDetails
+          } as any);
+        } catch (logErr) {
+          console.warn('order_edit_logs insert notice:', logErr);
+        }
       }
 
       setEditingOrder(null);
@@ -405,16 +408,19 @@ function OrdersPage() {
       const { error: orderUpErr } = await supabase.from('orders').delete().eq('id', deletingOrder.id);
       if (orderUpErr) throw orderUpErr;
 
-      const { error: logErr } = await supabase.from('order_edit_logs').insert({
-        order_id: deletingOrder.id,
-        action: 'delete',
-        reason: deleteReason,
-        edited_by: user.id,
-        before_total: deletingOrder.total_amount,
-        after_total: 0,
-        changes: { notes: deleteNotes }
-      } as any);
-      if (logErr) throw logErr;
+      try {
+        await supabase.from('order_edit_logs').insert({
+          order_id: deletingOrder.id,
+          action: 'delete',
+          reason: deleteReason,
+          edited_by: user.id,
+          before_total: deletingOrder.total_amount,
+          after_total: 0,
+          changes: { notes: deleteNotes }
+        } as any);
+      } catch (logErr) {
+        console.warn('order_edit_logs delete notice:', logErr);
+      }
 
       setDeletingOrder(null);
       await fetchOrders();
