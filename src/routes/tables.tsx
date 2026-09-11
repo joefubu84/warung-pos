@@ -19,7 +19,7 @@ import {
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { requireOrderingAuth } from '@/lib/auth-guard';
+import { requireStaffAuth } from '@/lib/auth-guard';
 import { getTodayCashStatus, CashStatus } from '@/lib/cash-guard';
 import { ReopenRegisterModal } from '@/components/ReopenRegisterModal';
 import { Lock, Unlock } from 'lucide-react';
@@ -36,7 +36,7 @@ import {
 export const Route = createFileRoute('/tables')({
   ssr: false,
   beforeLoad: async ({ context, location }) => {
-    return await requireOrderingAuth(location, context.auth);
+    return await requireStaffAuth(location, context.auth);
   },
   errorComponent: ({ error }) => (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-background">
@@ -198,7 +198,7 @@ function TablesPage() {
         setTables(prev => {
           const newRow = payload.new as any;
           const oldRow = payload.old as any;
-          if (payload.eventType === 'INSERT') return [...prev, newRow as Table].sort((a,b) => a.table_number.localeCompare(b.table_number));
+          if (payload.eventType === 'INSERT') return [...prev, newRow as Table].sort((a,b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));
           if (payload.eventType === 'UPDATE') return prev.map(t => t.id === newRow.id ? newRow as Table : t);
           if (payload.eventType === 'DELETE') return prev.filter(t => t.id !== oldRow.id);
           return prev;
@@ -217,14 +217,17 @@ function TablesPage() {
     
     try {
       const [{ data: tablesData }, { data: ordersData }] = await Promise.all([
-        supabase.from('tables').select('*').order('table_number', { ascending: true }),
+        supabase.from('tables').select('*'),
         supabase.from('orders')
           .select('id, table_id, status, total_amount, created_at')
           .eq('type', 'dine_in')
           .neq('status', 'completed')
       ]);
 
-      if (tablesData) setTables(tablesData as Table[]);
+      if (tablesData) {
+        const sorted = (tablesData as Table[]).sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));
+        setTables(sorted);
+      }
       if (ordersData) setActiveOrders(ordersData);
     } catch (err) {
       console.error(err);
@@ -236,34 +239,35 @@ function TablesPage() {
   const handleAddTable = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTableNumber.trim()) return;
-    if (cashStatus !== 'OPEN') {
-      toast.error(cashStatus === 'NOT_OPENED' 
-        ? "Kaunter belum dibuka! Sila buka kaunter terlebih dahulu di Pengurusan Tunai." 
-        : "Kaunter telah ditutup! Urus niaga meja disekat.");
-      return;
-    }
 
     setIsAdding(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No session');
-
-      const { data: user } = await supabase
-        .from('users')
-        .select('store_id')
-        .eq('id', session.user.id)
-        .single();
-      
-      if (!user) throw new Error('User store not found');
+      let targetStoreId = storeId;
+      if (!targetStoreId) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user?.id) {
+            const { data: user } = await supabase
+              .from('users')
+              .select('store_id')
+              .eq('id', session.user.id)
+              .maybeSingle();
+            if (user?.store_id) targetStoreId = user.store_id;
+          }
+        } catch (e) {}
+      }
+      if (!targetStoreId) {
+        targetStoreId = '1094d737-8104-4a55-b678-0fe9097beba0';
+      }
 
       const qrToken = crypto.randomUUID();
 
       const { data, error } = await supabase
         .from('tables')
         .insert([{
-          table_number: newTableNumber,
+          table_number: newTableNumber.trim(),
           qr_token: qrToken,
-          store_id: user.store_id,
+          store_id: targetStoreId,
           status: 'available'
         }])
         .select()
@@ -271,11 +275,11 @@ function TablesPage() {
 
       if (error) throw error;
       
-      setTables([...tables, data as Table]);
+      setTables(prev => [...prev, data as Table].sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' })));
       setNewTableNumber('');
-      toast.success(`Table ${newTableNumber} added`);
+      toast.success(`Meja ${newTableNumber.trim()} berjaya ditambah!`);
     } catch (err: any) {
-      toast.error(err.message || 'Failed to add table');
+      toast.error(err.message || 'Gagal menambah meja');
     } finally {
       setIsAdding(false);
     }
@@ -295,13 +299,13 @@ function TablesPage() {
 
   const handleSaveEdit = async (id: string) => {
     if (!editValue.trim()) return;
-    const { error } = await supabase.from('tables').update({ table_number: editValue }).eq('id', id);
+    const { error } = await supabase.from('tables').update({ table_number: editValue.trim() }).eq('id', id);
     if (error) {
-      toast.error('Failed to update table number');
+      toast.error('Gagal mengemas kini nombor meja: ' + error.message);
     } else {
-      setTables(tables.map(t => t.id === id ? { ...t, table_number: editValue } : t));
+      setTables(prev => prev.map(t => t.id === id ? { ...t, table_number: editValue.trim() } : t).sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' })));
       setEditingId(null);
-      toast.success('Table updated');
+      toast.success('Nombor meja berjaya dikemas kini');
     }
   };
   

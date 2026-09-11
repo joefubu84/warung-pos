@@ -247,11 +247,11 @@ const addSplitPayment = () => {
   const fetchTables = async () => {
     const { data, error } = await supabase
       .from('tables')
-      .select('*')
-      .order('table_number', { ascending: true });
+      .select('*');
     
     if (!error && data) {
-      setTables(data as Table[]);
+      const sorted = (data as Table[]).sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));
+      setTables(sorted);
     }
   };
 
