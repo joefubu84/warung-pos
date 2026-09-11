@@ -29,13 +29,13 @@ export function NavigationHeader() {
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/90 text-slate-900 shadow-xs shrink-0">
         <div className="max-w-7xl mx-auto px-2 sm:px-4 py-1.5 md:py-2 flex items-center justify-between gap-1.5 sm:gap-3">
           
-          {/* BRANDING */}
+          {/* BRANDING: LOGO ONLY */}
           <Link 
             to="/counter" 
-            className="flex items-center gap-2 sm:gap-2.5 font-black text-base sm:text-lg text-slate-900 tracking-wide shrink-0 pr-2 sm:pr-3 border-r border-slate-200/90"
+            className="flex items-center shrink-0 pr-2 sm:pr-3 border-r border-slate-200/90 hover:opacity-90 active:scale-95 transition-all"
+            title="Warung J&J POS - Ke Kaunter"
           >
-            <img src="/logo.png" alt="Warung J&J Logo" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-orange-500 shadow-xs shrink-0" />
-            <span className="tracking-tight hidden xs:inline sm:inline whitespace-nowrap">Warung J&J</span>
+            <img src="/logo.png" alt="Warung J&J Logo" className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border-2 border-orange-500 shadow-xs shrink-0" />
           </Link>
 
           {/* TOP NAVIGATION LINKS (Contained & Smoothly Scrollable on Small/Tablet) */}
