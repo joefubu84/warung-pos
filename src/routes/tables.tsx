@@ -202,6 +202,7 @@ function TablesPage() {
         setTables(prev => {
           const newRow = payload.new as any;
           const oldRow = payload.old as any;
+          if (newRow?.table_number?.startsWith('_')) return prev;
           if (payload.eventType === 'INSERT') return [...prev, newRow as Table].sort((a,b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));
           if (payload.eventType === 'UPDATE') return prev.map(t => t.id === newRow.id ? newRow as Table : t);
           if (payload.eventType === 'DELETE') return prev.filter(t => t.id !== oldRow.id);
@@ -221,7 +222,7 @@ function TablesPage() {
     
     try {
       const [{ data: tablesData }, { data: ordersData }] = await Promise.all([
-        supabase.from('tables').select('*'),
+        supabase.from('tables').select('*').not('table_number', 'like', '_%'),
         supabase.from('orders')
           .select('id, table_id, status, total_amount, created_at')
           .eq('type', 'dine_in')

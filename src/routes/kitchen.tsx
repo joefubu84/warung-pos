@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { requireChefAuth } from '@/lib/auth-guard';
 import { playKitchenSound, unlockAudio } from '@/lib/sounds';
 import { resolveDishComponents, detectModifierBadges } from '@/lib/kitchen-checklist-config';
+import { toast } from 'sonner';
 
 export const Route = createFileRoute('/kitchen')({
   ssr: false,
@@ -596,6 +597,18 @@ function KitchenPage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [tablesMap, setTablesMap] = useState<Record<string, string>>({});
   const [menuMap, setMenuMap] = useState<Record<string, string>>({});
+  
+  // Active waiter calls / table buzzer alerts for kitchen display
+  const [activeWaiterCalls, setActiveWaiterCalls] = useState<Array<{
+    id: string;
+    tableNumber: string;
+    message: string;
+    timestamp: string;
+  }>>([]);
+
+  const dismissWaiterCall = useCallback((callId: string) => {
+    setActiveWaiterCalls(prev => prev.filter(c => c.id !== callId));
+  }, []);
 
   const fetchLookupData = useCallback(async () => {
     try {
@@ -779,15 +792,50 @@ function KitchenPage() {
     fetchPrinterSettings();
     fetchActiveOrders();
 
+    const handleBuzzerTrigger = (detail: any) => {
+      if (!detail) return;
+      const s = settingsRef.current;
+      playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
+      toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, { duration: 8000 });
+      setActiveWaiterCalls(prev => {
+        // avoid duplicate alerts within 10 seconds
+        const exists = prev.some(c => c.tableNumber === detail.table_number && (Date.now() - new Date(c.timestamp).getTime() < 10000));
+        if (exists) return prev;
+        return [
+          {
+            id: `call_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+            tableNumber: detail.table_number || '?',
+            message: detail.message || 'Panggilan Pelayan',
+            timestamp: detail.timestamp || new Date().toISOString()
+          },
+          ...prev
+        ];
+      });
+    };
+
     const channelName = `kitchen_orders_${Date.now()}`;
     const channel = supabase.channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
         console.log('⚡ Realtime event received: orders table', payload);
         fetchActiveOrders(true);
+        const s = settingsRef.current;
+        playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, (payload) => {
         console.log('⚡ Realtime event received: order_items table', payload);
         fetchActiveOrders(true);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, (payload) => {
+        const newRow = payload.new as any;
+        if (newRow?.status && typeof newRow.status === 'string' && newRow.status.startsWith('BUZZER:')) {
+          try {
+            const rawJson = newRow.status.slice('BUZZER:'.length);
+            const parsed = JSON.parse(rawJson);
+            handleBuzzerTrigger(parsed);
+          } catch (e) {
+            console.warn('Error parsing BUZZER status in kitchen:', e);
+          }
+        }
       })
       .subscribe((status, err) => {
         console.log('📡 Kitchen Realtime Status:', status, err);
@@ -796,33 +844,18 @@ function KitchenPage() {
     // Table Service Buzzer Channel for Kitchen Display
     const buzzerChannel = supabase.channel('kitchen_table_buzzer')
       .on('broadcast', { event: 'call_waiter' }, (payload: any) => {
-        const detail = payload?.payload;
-        const s = settingsRef.current;
-        playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
-        if (detail) {
-          toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, { duration: 6000 });
-        }
+        handleBuzzerTrigger(payload?.payload);
       })
       .subscribe();
 
     const warungBuzzerChannel = supabase.channel('warung_table_buzzer')
       .on('broadcast', { event: 'call_waiter' }, (payload: any) => {
-        const detail = payload?.payload;
-        const s = settingsRef.current;
-        playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
-        if (detail) {
-          toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, { duration: 6000 });
-        }
+        handleBuzzerTrigger(payload?.payload);
       })
       .subscribe();
 
     const handleLocalKitchenBuzzer = (e: any) => {
-      const detail = e?.detail;
-      const s = settingsRef.current;
-      playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
-      if (detail) {
-        toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, { duration: 6000 });
-      }
+      handleBuzzerTrigger(e?.detail);
     };
     window.addEventListener('warung_call_waiter_alert', handleLocalKitchenBuzzer);
 
@@ -833,6 +866,7 @@ function KitchenPage() {
         fetchActiveOrders(true);
         const s = settingsRef.current;
         playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
+        toast.info('⚡ Pesanan Baru Diterima Dari Meja!', { duration: 4000 });
       })
       .subscribe();
 
@@ -987,6 +1021,37 @@ function KitchenPage() {
           </button>
         </div>
       </div>
+
+      {/* ACTIVE WAITER CALLS BANNER (PANGGIL PELAYAN MEJA) */}
+      {activeWaiterCalls.length > 0 && (
+        <div className="space-y-2">
+          {activeWaiterCalls.map((call) => (
+            <div 
+              key={call.id}
+              className="p-4 rounded-2xl bg-amber-500 text-white shadow-lg flex items-center justify-between gap-4 animate-bounce"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">🛎️</span>
+                <div>
+                  <h3 className="font-black text-base text-white tracking-wide">
+                    PANGGILAN DARI MEJA #{call.tableNumber}
+                  </h3>
+                  <p className="text-xs text-amber-100 font-medium">
+                    Tujuan: <span className="font-bold underline text-white">{call.message}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => dismissWaiterCall(call.id)}
+                className="px-4 py-2 bg-white text-amber-900 hover:bg-amber-100 font-black text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95"
+              >
+                ✓ Selesai / Tutup
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ERROR BANNER IF OCCURRED */}
       {fetchError && (

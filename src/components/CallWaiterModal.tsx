@@ -92,7 +92,20 @@ export function CallWaiterModal({ isOpen, onClose, tableNumber, storeId }: CallW
         }
       });
 
-      // 3. Also trigger a local event for instant UI reaction if POS is open in same/another window
+      // 3. Guaranteed Database Sync: update table row status in Supabase so postgres_changes reliably triggers everywhere
+      try {
+        const buzzerDbStatus = 'BUZZER:' + JSON.stringify(buzzerPayload);
+        // Update matching table number (case-insensitive or exact)
+        const cleanTableNum = (tableNumber || '').trim();
+        await supabase
+          .from('tables')
+          .update({ status: buzzerDbStatus } as any)
+          .ilike('table_number', cleanTableNum);
+      } catch (dbBuzzerErr) {
+        console.warn('DB buzzer update notice:', dbBuzzerErr);
+      }
+
+      // 4. Also trigger a local event for instant UI reaction if POS is open in same/another window
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('warung_call_waiter_alert', { detail: buzzerPayload }));
       }

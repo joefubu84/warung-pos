@@ -245,26 +245,35 @@ function OrdersPage() {
       }
     };
 
-    const buzzerChannel = supabase.channel('warung_table_buzzer')
-      .on('broadcast', { event: 'call_waiter' }, (payload: any) => {
-        const detail = payload?.payload;
-        if (detail) {
-          playOrderBeep();
-          toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, {
-            duration: 8000,
-          });
-        }
-      })
-      .subscribe();
-
-    const handleLocalOrdersBuzzer = (e: any) => {
-      const detail = e?.detail;
+    const handleOrdersBuzzer = (detail: any) => {
       if (detail) {
         playOrderBeep();
         toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, {
           duration: 8000,
         });
       }
+    };
+
+    const buzzerChannel = supabase.channel('warung_table_buzzer')
+      .on('broadcast', { event: 'call_waiter' }, (payload: any) => {
+        handleOrdersBuzzer(payload?.payload);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, (payload: any) => {
+        const newRow = payload.new as any;
+        if (newRow?.status && typeof newRow.status === 'string' && newRow.status.startsWith('BUZZER:')) {
+          try {
+            const rawJson = newRow.status.slice('BUZZER:'.length);
+            const parsed = JSON.parse(rawJson);
+            handleOrdersBuzzer(parsed);
+          } catch (e) {
+            console.warn('Error parsing BUZZER status in orders:', e);
+          }
+        }
+      })
+      .subscribe();
+
+    const handleLocalOrdersBuzzer = (e: any) => {
+      handleOrdersBuzzer(e?.detail);
     };
     window.addEventListener('warung_call_waiter_alert', handleLocalOrdersBuzzer);
 

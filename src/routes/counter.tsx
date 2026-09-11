@@ -208,27 +208,36 @@ const addSplitPayment = () => {
       })
       .subscribe();
 
-    // Table Service Buzzer Channel
-    const buzzerChannel = supabase.channel('warung_table_buzzer')
-      .on('broadcast', { event: 'call_waiter' }, (payload: any) => {
-        const detail = payload?.payload;
-        if (detail) {
-          playBeep();
-          toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, {
-            duration: 8000,
-          });
-        }
-      })
-      .subscribe();
-
-    const handleLocalBuzzer = (e: any) => {
-      const detail = e?.detail;
+    // Table Service Buzzer Channel & Database Status Listener
+    const handleBuzzerNotice = (detail: any) => {
       if (detail) {
         playBeep();
         toast.warning(`🛎️ Meja #${detail.table_number}: ${detail.message}`, {
           duration: 8000,
         });
       }
+    };
+
+    const buzzerChannel = supabase.channel('warung_table_buzzer')
+      .on('broadcast', { event: 'call_waiter' }, (payload: any) => {
+        handleBuzzerNotice(payload?.payload);
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, (payload: any) => {
+        const newRow = payload.new as any;
+        if (newRow?.status && typeof newRow.status === 'string' && newRow.status.startsWith('BUZZER:')) {
+          try {
+            const rawJson = newRow.status.slice('BUZZER:'.length);
+            const parsed = JSON.parse(rawJson);
+            handleBuzzerNotice(parsed);
+          } catch (e) {
+            console.warn('Error parsing BUZZER status in counter:', e);
+          }
+        }
+      })
+      .subscribe();
+
+    const handleLocalBuzzer = (e: any) => {
+      handleBuzzerNotice(e?.detail);
     };
 
     window.addEventListener('warung_call_waiter_alert', handleLocalBuzzer);
@@ -250,7 +259,8 @@ const addSplitPayment = () => {
   const fetchTables = async () => {
     const { data, error } = await supabase
       .from('tables')
-      .select('*');
+      .select('*')
+      .not('table_number', 'like', '_%');
     
     if (!error && data) {
       const sorted = (data as Table[]).sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));

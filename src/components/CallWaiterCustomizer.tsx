@@ -94,7 +94,7 @@ export function CallWaiterCustomizer() {
         console.warn("Test call audio notice:", audioErr);
       }
 
-      // 2. Dispatch cross-tab & Supabase broadcast
+      // 2. Dispatch cross-tab, kitchen channel & Supabase broadcast
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('warung_call_waiter_alert', { detail: testPayload }));
       }
@@ -109,6 +109,27 @@ export function CallWaiterCustomizer() {
           }).catch(console.warn);
         }
       });
+
+      const kitchenChannel = supabase.channel('kitchen_table_buzzer');
+      kitchenChannel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          kitchenChannel.send({
+            type: 'broadcast',
+            event: 'call_waiter',
+            payload: testPayload
+          }).catch(console.warn);
+        }
+      });
+
+      // 3. Database status trigger for postgres_changes
+      try {
+        await supabase
+          .from('tables')
+          .update({ status: 'BUZZER:' + JSON.stringify(testPayload) } as any)
+          .eq('table_number', 'A3');
+      } catch (dbErr) {
+        console.warn('DB test buzzer update notice:', dbErr);
+      }
 
       toast.success(`🛎️ Ujian Berjaya! Panggilan "${message}" dihantar ke Kaunter & Dapur!`, {
         duration: 4000
