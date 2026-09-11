@@ -405,35 +405,15 @@ function AuthPage() {
         )}
 
         {/* Footer Navigation */}
-        <div className="pt-2 border-t border-slate-100 flex flex-col gap-2.5 text-xs text-slate-500">
-          <div className="flex items-center justify-between">
-            <button
-              type="button"
-              onClick={() => navigate({ to: '/' })}
-              className="inline-flex items-center gap-1.5 hover:text-slate-900 transition-colors font-medium cursor-pointer"
-            >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Kembali ke Utama</span>
-            </button>
-            
-            <button
-              type="button"
-              onClick={() => navigate({ to: '/delivery' })}
-              className="text-orange-600 hover:text-orange-700 hover:underline font-bold cursor-pointer"
-            >
-              Pesanan Delivery 🛵
-            </button>
-          </div>
-
-          <div className="pt-2 border-t border-slate-100 text-center">
-            <button
-              type="button"
-              onClick={() => navigate({ to: '/rider' })}
-              className="text-xs font-bold text-orange-600 hover:text-orange-700 hover:underline cursor-pointer"
-            >
-              🛵 Anda Rider Delivery? Daftar & Log Masuk Portal Rider di Sini →
-            </button>
-          </div>
+        <div className="pt-2 border-t border-slate-100 flex items-center justify-center text-xs text-slate-500">
+          <button
+            type="button"
+            onClick={() => navigate({ to: '/' })}
+            className="inline-flex items-center gap-1.5 hover:text-slate-900 transition-colors font-medium cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Kembali ke Utama</span>
+          </button>
         </div>
       </div>
     </div>
