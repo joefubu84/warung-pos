@@ -827,13 +827,7 @@ function KitchenPage() {
         if (hasChanges) {
           setHighlightedOrders(prev => ({ ...prev, ...newHighlights }));
           setHighlightedItems(prev => ({ ...prev, ...newItemHighlights }));
-          
-          const settings = settingsRef.current;
-          if (settings && settings.sound_choice) {
-            playKitchenSound(settings.sound_choice, settings.sound_file_url);
-          } else {
-            playKitchenSound('kitchen_bell');
-          }
+          // Note: Kitchen bell sound is reserved strictly for when food is ready to serve
         }
         
         const hasContentChanged = JSON.stringify(newOrdersData) !== JSON.stringify(ordersRef.current);
@@ -886,8 +880,7 @@ function KitchenPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
         console.log('⚡ Realtime event received: orders table', payload);
         fetchActiveOrders(true);
-        const s = settingsRef.current;
-        playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
+        // Loceng hanya berbunyi bila makanan siap dihidang (ready to serve), bukan pesanan masuk
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, (payload) => {
         console.log('⚡ Realtime event received: order_items table', payload);
@@ -932,8 +925,7 @@ function KitchenPage() {
       .on('broadcast', { event: 'new_order_placed' }, (msg) => {
         console.log('⚡ Instant Kitchen broadcast received: new order placed!', msg);
         fetchActiveOrders(true);
-        const s = settingsRef.current;
-        playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
+        // Makluman visual tanpa bunyian loceng (loceng khusus untuk makanan siap)
         toast.info('⚡ Pesanan Baru Diterima Dari Meja!', { duration: 4000 });
       })
       .subscribe();
@@ -972,6 +964,13 @@ function KitchenPage() {
       ordersRef.current = newOrders;
       return newOrders;
     });
+
+    // When food status reaches 'ready', play the chime/bell: MAKANAN SIAP DIHIDANG (Ready to Serve)
+    if (nextStatus === 'ready') {
+      const s = settingsRef.current;
+      playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
+      toast.success('🛎️ Makanan Siap Dihidang! Loceng dibunyikan untuk pelayan & pelanggan.', { duration: 5000 });
+    }
 
     let updateSuccess = false;
     try {
