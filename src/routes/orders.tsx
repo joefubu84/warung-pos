@@ -64,6 +64,9 @@ interface Order {
   delivery_fee?: number;
   paid?: boolean;
   payment_method?: string | null;
+  payment_status?: string | null;
+  customer_phone?: string | null;
+  payment_proof_url?: string | null;
   payments?: Payment[];
   order_items?: OrderItem[];
 }
@@ -300,6 +303,9 @@ function OrdersPage() {
         status, 
         table_id, 
         customer_name, 
+        customer_phone,
+        payment_proof_url,
+        payment_status,
         total_amount, 
         delivery_fee,
         delivery_service,
@@ -325,11 +331,25 @@ function OrdersPage() {
         .update({
           paid: true,
           status: 'preparing',
+          payment_status: 'paid'
         } as any)
         .eq('id', orderId);
 
       if (error) throw error;
-      toast.success('🎉 Bayaran disahkan! Pesanan kini dibuka ke dapur dan rider di /rider.');
+
+      // Broadcast to kitchen so kitchen bell rings immediately!
+      try {
+        const broadcastChannel = supabase.channel('kitchen_realtime_broadcast');
+        await broadcastChannel.send({
+          type: 'broadcast',
+          event: 'new_order_placed',
+          payload: { orderId, type: 'delivery' }
+        });
+      } catch (bErr) {
+        console.warn('Kitchen broadcast error:', bErr);
+      }
+
+      toast.success('🎉 Bayaran disahkan! Pesanan kini dihantar ke dapur dan rider di /rider.');
       await fetchOrders();
     } catch (e: any) {
       toast.error('Gagal mengesahkan bayaran: ' + e.message);
@@ -1017,16 +1037,47 @@ function OrdersPage() {
 
                       {/* ANTI-SCAM: STAFF ONE-CLICK VERIFY DELIVERY PAYMENT */}
                       {order.type === 'delivery' && (!order.paid || (order as any).payment_status === 'pending' || order.status === 'pending_payment' || order.status === 'pending_verification') && (
-                        <div className="mb-3 p-2.5 bg-amber-50 border border-amber-200 rounded-2xl space-y-1.5">
-                          <div className="flex items-center justify-between text-[11px] font-bold text-amber-900">
-                            <span>🛡️ Delivery Menunggu Pengesahan Resit</span>
+                        <div className="mb-3 p-3 bg-amber-50 border border-amber-300/80 rounded-2xl space-y-2">
+                          <div className="flex items-center justify-between text-[11px] font-black text-amber-950 uppercase tracking-wider">
+                            <span className="flex items-center gap-1.5">
+                              <span>🛡️</span>
+                              <span>PENGESAHAN BAYARAN DELIVERY</span>
+                            </span>
+                            <span className="bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded-full font-mono text-[10px]">
+                              SEMAK DAHULU
+                            </span>
                           </div>
+
+                          {/* Customer Contact & Proof Quick Links */}
+                          <div className="flex flex-wrap gap-2 text-xs font-mono">
+                            {order.customer_phone && (
+                              <a
+                                href={`https://wa.me/${order.customer_phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Halo ${order.customer_name || 'Pelanggan'}, kami dari kaunter Warung J&J mengenai pesanan delivery #${order.id.slice(0, 8)}. Sila hantar bukti pembayaran anda.`)}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2.5 py-1 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 rounded-lg font-bold flex items-center gap-1 transition-all"
+                              >
+                                <span>💬 WhatsApp Pelanggan ({order.customer_phone})</span>
+                              </a>
+                            )}
+                            {order.payment_proof_url && (
+                              <a
+                                href={order.payment_proof_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2.5 py-1 bg-sky-100 hover:bg-sky-200 text-sky-800 rounded-lg font-bold flex items-center gap-1 transition-all"
+                              >
+                                <span>🧾 Lihat Resit Bayaran</span>
+                              </a>
+                            )}
+                          </div>
+
                           <button
                             type="button"
                             onClick={() => handleVerifyDeliveryPayment(order.id)}
-                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs active:scale-95 transition-all"
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 active:scale-95 transition-all uppercase tracking-wider"
                           >
-                            <span>✓ Sahkan Bayaran & Buka Job Rider</span>
+                            <span>✓ Sahkan Bayaran (Hantar ke Dapur & Buka Job Rider)</span>
                           </button>
                         </div>
                       )}

@@ -2847,13 +2847,23 @@ function CustomerDeliveryPage() {
               <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
                 <Button
                   type="button"
+                  onClick={handleSendWhatsAppProof}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 rounded-2xl text-xs active:scale-95 transition-all font-heading shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2"
+                >
+                  <MessageCircle className="w-4 h-4 text-white" />
+                  <span>Hantar Resit ke WhatsApp Warung J&J (Wajib)</span>
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="outline"
                   onClick={() => {
                     setShowDuitNowModal(false);
-                    toast.success('Pesanan anda telah direkodkan. Admin sedang menyemak bayaran.');
+                    toast.success('Pesanan anda telah direkodkan. Admin kaunter sedang menyemak bukti bayaran WhatsApp.');
                   }}
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-11 rounded-2xl text-xs active:scale-95 transition-all font-heading shadow-md shadow-emerald-500/20"
+                  className="w-full border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-bold h-10 rounded-2xl text-xs active:scale-95 transition-all"
                 >
-                  <CheckCircle2 className="w-4 h-4 mr-1.5" /> Saya Dah Selesai Bayar & Hantar Resit
+                  <CheckCircle2 className="w-4 h-4 mr-1.5 text-emerald-600" /> Selesai & Pantau Status
                 </Button>
               </div>
             </div>
@@ -2931,6 +2941,17 @@ function CustomerDeliveryPage() {
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Sahkan & Mula Memesan (50 Pts VIP)</span>
               </Button>
+
+              <div className="text-center pt-1">
+                <Link
+                  to="/userlogin"
+                  search={{ redirect: '/delivery' }}
+                  onClick={() => setShowAuthModal(false)}
+                  className="text-xs font-semibold text-orange-600 hover:text-orange-700 hover:underline"
+                >
+                  Buka Halaman Penuh Log Masuk / Daftar Pelanggan 🔐 →
+                </Link>
+              </div>
 
               <Button
                 type="button"

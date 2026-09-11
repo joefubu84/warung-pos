@@ -777,12 +777,26 @@ function KitchenPage() {
           console.error('Error fetching kitchen orders:', error);
           setFetchError(error.message);
         } else if (data) {
-          ordersData = data;
+          // Delivery orders are ONLY sent to kitchen once verified and paid by cashier!
+          ordersData = data.filter((o: any) => {
+            if (o.type === 'delivery') {
+              return (o.paid === true || o.payment_status === 'paid') && o.status === 'preparing';
+            }
+            return true;
+          });
         }
       }
 
       if (ordersData) {
-        const newOrdersData = ordersData as unknown as Order[];
+        // Also ensure RPC data filters unverified delivery orders
+        const filteredList = (ordersData as any[]).filter((o: any) => {
+          if (o.type === 'delivery') {
+            return (o.paid === true || o.payment_status === 'paid') && o.status === 'preparing';
+          }
+          return true;
+        });
+
+        const newOrdersData = filteredList as unknown as Order[];
         const now = Date.now();
         let hasNewOrder = false;
         let hasUpdatedOrder = false;
@@ -886,6 +900,14 @@ function KitchenPage() {
     const channel = supabase.channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
         console.log('⚡ Realtime event received: orders table', payload);
+        const newRow = payload.new as any;
+        // Don't ring kitchen bell if it's an unverified/unpaid delivery order!
+        if (newRow?.type === 'delivery') {
+          const isVerified = (newRow.paid === true || newRow.payment_status === 'paid') && newRow.status === 'preparing';
+          if (!isVerified) {
+            return;
+          }
+        }
         fetchActiveOrders(true);
         const s = settingsRef.current;
         playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);

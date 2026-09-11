@@ -25,6 +25,7 @@ import { Route as OrdersRouteImport } from './routes/orders'
 import { Route as RiderRouteImport } from './routes/rider'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TablesRouteImport } from './routes/tables'
+import { Route as UserloginRouteImport } from './routes/userlogin'
 import { Route as SettingsAuditLogRouteImport } from './routes/settings_.audit-log'
 import { Route as TTokenRouteImport } from './routes/t.$token'
 import { Route as ApiPublicMcpRouteImport } from './routes/api/public/mcp'
@@ -109,6 +110,11 @@ const TablesRoute = TablesRouteImport.update({
   path: '/tables',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UserloginRoute = UserloginRouteImport.update({
+  id: '/userlogin',
+  path: '/userlogin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsAuditLogRoute = SettingsAuditLogRouteImport.update({
   id: '/settings_/audit-log',
   path: '/settings/audit-log',
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/rider': typeof RiderRoute
   '/settings': typeof SettingsRoute
   '/tables': typeof TablesRoute
+  '/userlogin': typeof UserloginRoute
   '/settings/audit-log': typeof SettingsAuditLogRoute
   '/t/$token': typeof TTokenRoute
   '/api/public/mcp': typeof ApiPublicMcpRoute
@@ -163,6 +170,7 @@ export interface FileRoutesByTo {
   '/rider': typeof RiderRoute
   '/settings': typeof SettingsRoute
   '/tables': typeof TablesRoute
+  '/userlogin': typeof UserloginRoute
   '/settings/audit-log': typeof SettingsAuditLogRoute
   '/t/$token': typeof TTokenRoute
   '/api/public/mcp': typeof ApiPublicMcpRoute
@@ -185,6 +193,7 @@ export interface FileRoutesById {
   '/rider': typeof RiderRoute
   '/settings': typeof SettingsRoute
   '/tables': typeof TablesRoute
+  '/userlogin': typeof UserloginRoute
   '/settings_/audit-log': typeof SettingsAuditLogRoute
   '/t/$token': typeof TTokenRoute
   '/api/public/mcp': typeof ApiPublicMcpRoute
@@ -208,6 +217,7 @@ export interface FileRouteTypes {
     | '/rider'
     | '/settings'
     | '/tables'
+    | '/userlogin'
     | '/settings/audit-log'
     | '/t/$token'
     | '/api/public/mcp'
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/rider'
     | '/settings'
     | '/tables'
+    | '/userlogin'
     | '/settings/audit-log'
     | '/t/$token'
     | '/api/public/mcp'
@@ -250,6 +261,7 @@ export interface FileRouteTypes {
     | '/rider'
     | '/settings'
     | '/tables'
+    | '/userlogin'
     | '/settings_/audit-log'
     | '/t/$token'
     | '/api/public/mcp'
@@ -272,6 +284,7 @@ export interface RootRouteChildren {
   RiderRoute: typeof RiderRoute
   SettingsRoute: typeof SettingsRoute
   TablesRoute: typeof TablesRoute
+  UserloginRoute: typeof UserloginRoute
   SettingsAuditLogRoute: typeof SettingsAuditLogRoute
   TTokenRoute: typeof TTokenRoute
   ApiPublicMcpRoute: typeof ApiPublicMcpRoute
@@ -391,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TablesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/userlogin': {
+      id: '/userlogin'
+      path: '/userlogin'
+      fullPath: '/userlogin'
+      preLoaderRoute: typeof UserloginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings_/audit-log': {
       id: '/settings_/audit-log'
       path: '/settings/audit-log'
@@ -432,6 +452,7 @@ const rootRouteChildren: RootRouteChildren = {
   RiderRoute: RiderRoute,
   SettingsRoute: SettingsRoute,
   TablesRoute: TablesRoute,
+  UserloginRoute: UserloginRoute,
   SettingsAuditLogRoute: SettingsAuditLogRoute,
   TTokenRoute: TTokenRoute,
   ApiPublicMcpRoute: ApiPublicMcpRoute,
