@@ -86,6 +86,7 @@ import { KitchenChecklistCustomizer } from '@/components/KitchenChecklistCustomi
 import { DishAddonsCustomizer } from '@/components/DishAddonsCustomizer';
 import { CallWaiterCustomizer } from '@/components/CallWaiterCustomizer';
 import { LandingPageEditor } from '@/components/LandingPageEditor';
+import { TableQrCustomizer } from '@/components/TableQrCustomizer';
 
 export const Route = createFileRoute('/settings')({
   ssr: false,
@@ -1123,6 +1124,9 @@ function SettingsPage() {
                     {updatePrinterMutation.isPending ? 'Menyimpan...' : 'Simpan Tetapan Pencetak & Dapur 💾'}
                   </Button>
                 </div>
+
+                {/* 🪧 TETAPAN AYAT & PELEKAT KOD QR MEJA (TABLE STANDEE / STICKER) */}
+                <TableQrCustomizer storeId={storeId} />
               </div>
             )}
 

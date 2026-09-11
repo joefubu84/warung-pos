@@ -19,9 +19,16 @@ import {
   Check, 
   Sparkles,
   HelpCircle,
-  FileText
+  FileText,
+  Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { 
+  TableQrConfig, 
+  DEFAULT_TABLE_QR_CONFIG, 
+  getTableQrConfig, 
+  fetchTableQrConfigFromSupabase 
+} from '@/lib/table-qr-config';
 
 export interface TableItem {
   id: string;
@@ -396,6 +403,19 @@ export function TableQrPrintModal({
   const [printMode, setPrintMode] = useState<'single' | 'all'>('single');
   const [activeTable, setActiveTable] = useState<TableItem | null>(selectedTable || (tables[0] || null));
   const [isPrinting, setIsPrinting] = useState(false);
+  const [qrConfig, setQrConfig] = useState<TableQrConfig>(() => getTableQrConfig());
+
+  React.useEffect(() => {
+    fetchTableQrConfigFromSupabase().then((cfg) => {
+      if (cfg) setQrConfig(cfg);
+    });
+
+    const handleConfigUpdate = (e: any) => {
+      if (e?.detail) setQrConfig(e.detail);
+    };
+    window.addEventListener('warung_table_qr_config_updated', handleConfigUpdate);
+    return () => window.removeEventListener('warung_table_qr_config_updated', handleConfigUpdate);
+  }, []);
 
   React.useEffect(() => {
     if (selectedTable) {
@@ -605,6 +625,14 @@ export function TableQrPrintModal({
           </div>
 
           <div className="flex items-center gap-2">
+            <a
+              href="/settings?tab=kitchen"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all active:scale-95 cursor-pointer"
+              title="Ubah ayat pelekat di Tetapan > Tetapan Pencetak Thermal & Penggera Dapur"
+            >
+              <Settings className="w-3.5 h-3.5 text-slate-500" />
+              <span className="hidden sm:inline">Ubah Ayat</span>
+            </a>
             <button
               type="button"
               onClick={handleOpenNewTab}
@@ -920,7 +948,7 @@ export function TableQrPrintModal({
                           Warung J&amp;J
                         </div>
                         <span className="sticker-stall-sub">
-                          Masakan Panas &amp; Minuman
+                          {qrConfig.stall_subtitle || 'Masakan Panas & Minuman'}
                         </span>
                       </div>
                     </div>
@@ -949,25 +977,25 @@ export function TableQrPrintModal({
                   {/* FRIENDLY CALL TO ACTION */}
                   <div className="sticker-cta-box">
                     <p className="sticker-cta-title">
-                      📲 IMBAS UNTUK LIHAT MENU &amp; PESAN
+                      {qrConfig.cta_title || '📲 IMBAS UNTUK LIHAT MENU & PESAN'}
                     </p>
                     <p className="sticker-cta-sub">
-                      Scan me to view &amp; order at Warung J&amp;J
+                      {qrConfig.cta_subtitle || 'Scan me to view & order at Warung J&J'}
                     </p>
                   </div>
 
                   {/* COURTEOUS SHARED TABLE NOTICE (RESPECT NEIGHBOR STALLS) */}
                   <div className="sticker-notice-box">
                     <p className="sticker-notice-text">
-                      🤝 <strong className="sticker-notice-strong">Meja Kongsi:</strong> Anda dialu-alukan menikmati makanan daripada mana-mana gerai pilihan anda. Pesanan menu <strong>Warung J&amp;J</strong> akan terus dihantar ke meja ini oleh kru kami!
+                      🤝 {qrConfig.shared_table_notice || 'Meja Kongsi: Anda dialu-alukan menikmati makanan daripada mana-mana gerai pilihan anda. Pesanan menu Warung J&J akan terus dihantar ke meja ini oleh kru kami!'}
                     </p>
                   </div>
 
                   {/* 3 STEPS INSTRUCTIONS */}
                   <div className="sticker-steps-grid">
-                    <div className="sticker-step-item">1. Buka Kamera</div>
-                    <div className="sticker-step-item">2. Imbas QR</div>
-                    <div className="sticker-step-item">3. Pilih &amp; Pesan</div>
+                    <div className="sticker-step-item">{qrConfig.step_1 || '1. Buka Kamera'}</div>
+                    <div className="sticker-step-item">{qrConfig.step_2 || '2. Imbas QR'}</div>
+                    <div className="sticker-step-item">{qrConfig.step_3 || '3. Pilih & Pesan'}</div>
                   </div>
 
                   {/* FOOTER CUTTING GUIDE NOTE */}
@@ -980,7 +1008,7 @@ export function TableQrPrintModal({
                     >
                       Salin Link
                     </button>
-                    <span>✂️ Gunting ikut garisan</span>
+                    <span>{qrConfig.footer_note || '✂️ Gunting ikut garisan'}</span>
                   </div>
                 </div>
               );
