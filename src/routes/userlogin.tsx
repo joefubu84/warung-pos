@@ -319,7 +319,8 @@ function UserLoginPage() {
                   id="customer_login_password"
                   autoComplete="new-password"
                   data-lpignore="true"
-                  placeholder="Masukkan kata laluan akaun anda"
+                  data-form-type="other"
+                  placeholder="••••••••"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
                   required
@@ -352,13 +353,18 @@ function UserLoginPage() {
           </form>
         ) : (
           /* Form: REGISTER */
-          <form onSubmit={handleRegister} className="space-y-3.5">
+          <form onSubmit={handleRegister} className="space-y-3.5" autoComplete="off">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5 font-heading">
                 <User className="w-3.5 h-3.5 text-slate-400" /> Nama Penuh Anda *
               </label>
               <Input
                 type="text"
+                name="customer_register_name"
+                id="customer_register_name"
+                autoComplete="off"
+                data-lpignore="true"
+                data-form-type="other"
                 placeholder="cth: Siti Sarah"
                 value={regName}
                 onChange={(e) => setRegName(e.target.value)}
@@ -373,6 +379,11 @@ function UserLoginPage() {
               </label>
               <Input
                 type="tel"
+                name="customer_register_phone"
+                id="customer_register_phone"
+                autoComplete="off"
+                data-lpignore="true"
+                data-form-type="other"
                 placeholder="cth: 0198887766"
                 value={regPhone}
                 onChange={(e) => setRegPhone(e.target.value)}
@@ -388,6 +399,11 @@ function UserLoginPage() {
               </label>
               <Input
                 type="email"
+                name="customer_register_email"
+                id="customer_register_email"
+                autoComplete="off"
+                data-lpignore="true"
+                data-form-type="other"
                 placeholder="cth: sitisarah@gmail.com (atau kosongkan)"
                 value={regEmail}
                 onChange={(e) => setRegEmail(e.target.value)}
@@ -402,7 +418,12 @@ function UserLoginPage() {
               <div className="relative">
                 <Input
                   type={showRegPassword ? 'text' : 'password'}
-                  placeholder="Sekurang-kurangnya 6 aksara"
+                  name="customer_register_pwd"
+                  id="customer_register_pwd"
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                  data-form-type="other"
+                  placeholder="••••••••"
                   value={regPassword}
                   onChange={(e) => setRegPassword(e.target.value)}
                   required

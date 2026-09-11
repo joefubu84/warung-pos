@@ -2893,7 +2893,12 @@ function CustomerDeliveryPage() {
                   </label>
                   <Input
                     type="text"
-                    placeholder="Contoh: Joe Fubu"
+                    name="cust_full_name_input"
+                    id="cust_full_name_input"
+                    autoComplete="off"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    placeholder="Contoh: Siti Sarah"
                     value={authNameInput || customerName}
                     onChange={(e) => {
                       setAuthNameInput(e.target.value);
@@ -2910,7 +2915,12 @@ function CustomerDeliveryPage() {
                   </label>
                   <Input
                     type="tel"
-                    placeholder="Contoh: 01125251817"
+                    name="cust_whatsapp_input"
+                    id="cust_whatsapp_input"
+                    autoComplete="off"
+                    data-lpignore="true"
+                    data-form-type="other"
+                    placeholder="Contoh: 0198887766"
                     value={authPhoneInput || customerPhone}
                     onChange={(e) => {
                       setAuthPhoneInput(e.target.value);
