@@ -2,8 +2,30 @@ import { redirect } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import type { AuthState } from '@/lib/auth-state';
 import { getTodayCashStatus } from '@/lib/cash-guard';
+import { 
+  getActiveStaffUser, 
+  isPageAllowedForUser, 
+  getPrimaryPageForRole 
+} from '@/lib/staff-access-config';
+
+const DEFAULT_STORE_ID = '1094d737-8104-4a55-b678-0fe9097beba0';
 
 async function getUserProfile(session: any) {
+  // 0. Active staff user session (PIN quick login or POS staff selector)
+  const activeStaff = getActiveStaffUser();
+  if (activeStaff && activeStaff.active) {
+    return {
+      userProfile: {
+        id: activeStaff.id,
+        role: activeStaff.role,
+        store_id: DEFAULT_STORE_ID,
+        email: activeStaff.email,
+        name: activeStaff.name,
+      },
+      error: null
+    };
+  }
+
   if (!session?.user) return { userProfile: null, error: null };
 
   // Emergency / Staff A instant bypass
@@ -17,7 +39,7 @@ async function getUserProfile(session: any) {
       userProfile: {
         id: session.user.id || '0f81ea5a-e622-4343-a188-62f90dc1ef14',
         role: 'admin',
-        store_id: '1094d737-8104-4a55-b678-0fe9097beba0',
+        store_id: DEFAULT_STORE_ID,
         email: session.user.email || 'teststaffa@test.com'
       },
       error: null
@@ -126,6 +148,20 @@ export async function requireAuth(location: { pathname: string }, auth: AuthStat
         reason: 'unauthorized'
       },
     });
+  }
+
+  // Check granular page permission configured by Admin
+  if (userProfile.role !== 'admin') {
+    const activeStaff = getActiveStaffUser();
+    if (!isPageAllowedForUser(location.pathname, userProfile.role, activeStaff)) {
+      const fallbackTarget = getPrimaryPageForRole(userProfile.role, activeStaff);
+      if (fallbackTarget !== location.pathname) {
+        throw redirect({
+          to: fallbackTarget as any,
+          search: { reason: 'page_restricted' },
+        });
+      }
+    }
   }
 
   return { session, role: userProfile.role, storeId: userProfile.store_id || DEFAULT_STORE_ID };

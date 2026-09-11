@@ -1,19 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from '@tanstack/react-router';
 import { getNavOrderConfig, NavItemConfig } from '@/lib/addons-config';
-import { SlidersHorizontal, LogOut } from 'lucide-react';
+import { SlidersHorizontal, LogOut, UserCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { NavCustomizerModal } from './NavCustomizerModal';
+import { 
+  getActiveStaffUser, 
+  setActiveStaffUser, 
+  isPageAllowedForUser, 
+  StaffUser 
+} from '@/lib/staff-access-config';
 
 export function NavigationHeader() {
   const location = useLocation();
   const [navItems, setNavItems] = useState<NavItemConfig[]>(getNavOrderConfig());
+  const [activeStaff, setActiveStaff] = useState<StaffUser | null>(getActiveStaffUser());
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
-    const handleUpdate = () => setNavItems(getNavOrderConfig());
-    window.addEventListener('warung_nav_order_updated', handleUpdate);
-    return () => window.removeEventListener('warung_nav_order_updated', handleUpdate);
+    const handleNavUpdate = () => setNavItems(getNavOrderConfig());
+    const handleStaffUpdate = () => {
+      setActiveStaff(getActiveStaffUser());
+      setNavItems(getNavOrderConfig());
+    };
+
+    window.addEventListener('warung_nav_order_updated', handleNavUpdate);
+    window.addEventListener('warung_staff_permissions_updated', handleStaffUpdate);
+    window.addEventListener('warung_active_staff_updated', handleStaffUpdate);
+
+    return () => {
+      window.removeEventListener('warung_nav_order_updated', handleNavUpdate);
+      window.removeEventListener('warung_staff_permissions_updated', handleStaffUpdate);
+      window.removeEventListener('warung_active_staff_updated', handleStaffUpdate);
+    };
   }, []);
 
   // Hide navigation on auth, customer digital menu, and rider portal pages
@@ -21,7 +40,12 @@ export function NavigationHeader() {
     return null;
   }
 
-  const visibleItems = navItems.filter(i => i.visible);
+  // Filter visible items: must be visible AND allowed for the active staff/role
+  const visibleItems = navItems.filter(item => {
+    if (!item.visible) return false;
+    return isPageAllowedForUser(item.path, activeStaff?.role || 'admin', activeStaff);
+  });
+
   const isSettingsPage = location.pathname.startsWith('/settings');
 
   return (
@@ -31,14 +55,14 @@ export function NavigationHeader() {
           
           {/* BRANDING: LOGO ONLY */}
           <Link 
-            to="/counter" 
+            to={activeStaff?.role === 'chef' ? '/kitchen' : '/counter'} 
             className="flex items-center shrink-0 pr-2 sm:pr-3 border-r border-slate-200/90 hover:opacity-90 active:scale-95 transition-all"
-            title="Warung J&J POS - Ke Kaunter"
+            title="Warung J&J POS"
           >
             <img src="/logo.png" alt="Warung J&J Logo" className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border-2 border-orange-500 shadow-xs shrink-0" />
           </Link>
 
-          {/* TOP NAVIGATION LINKS (Contained & Smoothly Scrollable on Small/Tablet) */}
+          {/* TOP NAVIGATION LINKS (Filtered by Admin-configured Permissions) */}
           <nav className="flex-1 min-w-0 flex items-center gap-1 sm:gap-1.5 overflow-x-auto scrollbar-none py-0.5">
             {visibleItems.map((item) => {
               const isActive = location.pathname === item.path;
@@ -62,6 +86,17 @@ export function NavigationHeader() {
 
           {/* RIGHT ACTIONS: ALWAYS ANCHORED & NEVER PUSHED OFF-SCREEN */}
           <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 pl-1.5 border-l border-slate-200/90">
+            {/* ACTIVE STAFF BADGE */}
+            {activeStaff && (
+              <div 
+                title={`Staf Semasa: ${activeStaff.name} (${activeStaff.role.toUpperCase()})`}
+                className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-xl text-[11px] font-black border bg-slate-50 border-slate-200 text-slate-700 shrink-0"
+              >
+                <UserCheck className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+                <span className="truncate max-w-[100px]">{activeStaff.name.split(' ')[0]}</span>
+              </div>
+            )}
+
             {/* REARRANGE BUTTON — ONLY VISIBLE ON SETTINGS PAGE */}
             {isSettingsPage && (
               <button
@@ -78,6 +113,7 @@ export function NavigationHeader() {
             <button
               onClick={async () => {
                 try {
+                  setActiveStaffUser(null);
                   localStorage.removeItem('warung_emergency_staff_session');
                 } catch (e) {}
                 await supabase.auth.signOut();

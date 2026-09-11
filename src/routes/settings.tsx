@@ -42,6 +42,7 @@ import {
   PlusCircle,
   Upload,
   User,
+  Users,
   Bike,
   CreditCard,
   Landmark,
@@ -87,6 +88,7 @@ import { DishAddonsCustomizer } from '@/components/DishAddonsCustomizer';
 import { CallWaiterCustomizer } from '@/components/CallWaiterCustomizer';
 import { LandingPageEditor } from '@/components/LandingPageEditor';
 import { TableQrCustomizer } from '@/components/TableQrCustomizer';
+import { StaffManagementCustomizer } from '@/components/StaffManagementCustomizer';
 
 export const Route = createFileRoute('/settings')({
   ssr: false,
@@ -277,6 +279,7 @@ function SettingsPage() {
   });
 
   type SettingsSection = 
+    | 'staff'
     | 'riders' 
     | 'payments' 
     | 'kitchen' 
@@ -293,11 +296,11 @@ function SettingsPage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab') as SettingsSection;
-      if (tab && ['riders', 'payments', 'kitchen', 'checklist', 'addons', 'waiter_call', 'store', 'appearance', 'landing_page_editor', 'refunds', 'security'].includes(tab)) {
+      if (tab && ['staff', 'riders', 'payments', 'kitchen', 'checklist', 'addons', 'waiter_call', 'store', 'appearance', 'landing_page_editor', 'refunds', 'security'].includes(tab)) {
         return tab;
       }
     }
-    return 'riders';
+    return 'staff';
   });
   const [showMobileModules, setShowMobileModules] = useState(false);
 
@@ -524,6 +527,14 @@ function SettingsPage() {
     color: string;
     badge?: string;
   }[] = [
+    {
+      id: 'staff',
+      label: 'Kakitangan & Akses Staf',
+      subtitle: 'Urus Staf Kaunter & Dapur (Auto-Pages)',
+      icon: Users,
+      color: 'text-blue-600',
+      badge: 'Auto-Pages'
+    },
     {
       id: 'riders',
       label: 'Rider & KYC (Gaji)',
@@ -799,6 +810,13 @@ function SettingsPage() {
           {/* RIGHT DEDICATED CONTENT PANELS */}
           <main className="md:col-span-8 xl:col-span-9 space-y-6 min-w-0">
             
+            {/* 0. STAFF & ROLE PAGE ACCESS MANAGEMENT */}
+            {activeSection === 'staff' && (
+              <div className="transition-all duration-300 animate-in fade-in">
+                <StaffManagementCustomizer storeId={storeId} />
+              </div>
+            )}
+
             {/* 1. RIDER & KYC MANAGEMENT */}
             {activeSection === 'riders' && (
               <div className="transition-all duration-300 animate-in fade-in">
