@@ -197,8 +197,25 @@ function UserLoginPage() {
     }
   };
 
+  useEffect(() => {
+    // HARD SUPPRESSION: Ensure POS NavigationHeader is completely hidden on this customer portal
+    if (typeof document !== 'undefined') {
+      const header = document.querySelector('header');
+      // If the parent root navigation header is rendered, hide it
+      const navHeader = document.querySelector('header:not(.customer-login-header)');
+      if (navHeader) {
+        (navHeader as HTMLElement).style.display = 'none';
+      }
+      return () => {
+        if (navHeader) {
+          (navHeader as HTMLElement).style.display = '';
+        }
+      };
+    }
+  }, []);
+
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col justify-center items-center p-4 sm:p-6 font-sans selection:bg-orange-500/20">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-[#f8fafc] text-slate-900 flex flex-col justify-center items-center p-4 sm:p-6 font-sans selection:bg-orange-500/20">
       
       {/* Top Back Link */}
       <div className="w-full max-w-md mb-4 flex items-center justify-between">
