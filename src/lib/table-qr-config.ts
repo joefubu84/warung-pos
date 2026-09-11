@@ -23,6 +23,7 @@ export const DEFAULT_TABLE_QR_CONFIG: TableQrConfig = {
 };
 
 const STORAGE_KEY = 'warung_table_qr_config_v1';
+const DEFAULT_STORE_ID = '1094d737-8104-4a55-b678-0fe9097beba0';
 
 export function getTableQrConfig(): TableQrConfig {
   if (typeof localStorage === 'undefined') return DEFAULT_TABLE_QR_CONFIG;
@@ -52,44 +53,109 @@ export async function syncTableQrConfigToSupabase(config: TableQrConfig, customS
   const merged = { ...DEFAULT_TABLE_QR_CONFIG, ...config };
   saveTableQrConfigLocally(merged);
 
+  let success = false;
+  const storeId = customStoreId || DEFAULT_STORE_ID;
+
+  // 1. Primary Sync: public.landing_page_config (Permissive RLS, 100% accessible to public & staff)
   try {
-    let storeId = customStoreId;
-    let currentSettings: any = {};
+    const { data: existingLpc } = await (supabase
+      .from('landing_page_config' as any)
+      .select('id, config') as any)
+      .eq('store_id', storeId)
+      .limit(1)
+      .maybeSingle();
 
-    if (!storeId) {
-      const { data: storeData } = await supabase.from('stores').select('id, settings').limit(1).maybeSingle();
-      storeId = storeData?.id || '1094d737-8104-4a55-b678-0fe9097beba0';
-      currentSettings = (storeData?.settings as any) || {};
-    } else {
-      const { data: storeData } = await supabase.from('stores').select('settings').eq('id', storeId).maybeSingle();
-      currentSettings = (storeData?.settings as any) || {};
-    }
-
-    const { error } = await supabase.from('stores').update({
-      settings: {
-        ...currentSettings,
+    if (existingLpc) {
+      const updatedConfig = {
+        ...((existingLpc.config as any) || {}),
         table_qr: merged
-      }
-    } as any).eq('id', storeId);
+      };
+      const { error: lpcUpdateErr } = await (supabase
+        .from('landing_page_config' as any)
+        .update({ config: updatedConfig, updated_at: new Date().toISOString() }) as any)
+        .eq('id', existingLpc.id);
 
-    if (error) {
-      console.error("Error saving table QR config to Supabase:", error);
-      return false;
+      if (!lpcUpdateErr) {
+        success = true;
+      }
+    } else {
+      const { error: lpcInsertErr } = await (supabase
+        .from('landing_page_config' as any)
+        .insert({
+          store_id: storeId,
+          config: { table_qr: merged },
+          updated_at: new Date().toISOString()
+        }) as any);
+
+      if (!lpcInsertErr) {
+        success = true;
+      }
     }
-    return true;
-  } catch (err) {
-    console.error("Failed to sync table QR config to database:", err);
-    return false;
+  } catch (lpcErr) {
+    console.warn("Sync to landing_page_config error:", lpcErr);
   }
+
+  // 2. Secondary Sync: stores.settings.table_qr (For authenticated admin roles)
+  try {
+    const { data: storeData } = await supabase
+      .from('stores')
+      .select('id, settings')
+      .eq('id', storeId)
+      .limit(1)
+      .maybeSingle();
+
+    const currentSettings = (storeData?.settings as any) || {};
+    const { error: storeUpdateErr } = await supabase
+      .from('stores')
+      .update({
+        settings: {
+          ...currentSettings,
+          table_qr: merged
+        }
+      } as any)
+      .eq('id', storeId);
+
+    if (!storeUpdateErr) {
+      success = true;
+    }
+  } catch (storeErr) {
+    console.warn("Secondary sync to stores.settings error:", storeErr);
+  }
+
+  return success;
 }
 
 export async function fetchTableQrConfigFromSupabase(customStoreId?: string): Promise<TableQrConfig> {
+  const storeId = customStoreId || DEFAULT_STORE_ID;
+
+  // 1. Check landing_page_config first
   try {
-    let query = supabase.from('stores').select('settings');
-    if (customStoreId) {
-      query = query.eq('id', customStoreId);
+    const { data: lpcData } = await (supabase
+      .from('landing_page_config' as any)
+      .select('config') as any)
+      .eq('store_id', storeId)
+      .limit(1)
+      .maybeSingle();
+
+    const lpcTableQr = (lpcData?.config as any)?.table_qr;
+    if (lpcTableQr && typeof lpcTableQr === 'object') {
+      const merged = { ...DEFAULT_TABLE_QR_CONFIG, ...lpcTableQr };
+      saveTableQrConfigLocally(merged);
+      return merged;
     }
-    const { data: storeData } = await query.limit(1).maybeSingle();
+  } catch (err) {
+    console.warn("Could not fetch table QR config from landing_page_config:", err);
+  }
+
+  // 2. Fallback check stores.settings.table_qr
+  try {
+    const { data: storeData } = await supabase
+      .from('stores')
+      .select('settings')
+      .eq('id', storeId)
+      .limit(1)
+      .maybeSingle();
+
     const remoteConfig = (storeData?.settings as any)?.table_qr;
     if (remoteConfig && typeof remoteConfig === 'object') {
       const merged = { ...DEFAULT_TABLE_QR_CONFIG, ...remoteConfig };
@@ -97,8 +163,9 @@ export async function fetchTableQrConfigFromSupabase(customStoreId?: string): Pr
       return merged;
     }
   } catch (err) {
-    console.warn("Could not fetch table QR config from Supabase, using local fallback:", err);
+    console.warn("Could not fetch table QR config from stores, using local fallback:", err);
   }
+
   return getTableQrConfig();
 }
 
