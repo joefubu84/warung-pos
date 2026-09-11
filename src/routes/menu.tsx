@@ -8,7 +8,15 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Edit2, Trash2, Plus, Image as ImageIcon, Loader2, UtensilsCrossed, Sparkles, RefreshCw, Search, Camera, UploadCloud, X } from 'lucide-react';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription,
+  DialogFooter 
+} from '@/components/ui/dialog';
+import { Edit2, Trash2, Plus, Image as ImageIcon, Loader2, UtensilsCrossed, Sparkles, RefreshCw, Search, Camera, UploadCloud, X, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
   getAddonsConfig, 
@@ -53,6 +61,11 @@ function MenuPage() {
   
   // Edit state
   const [editingId, setEditingId] = useState<string | null>(null);
+  
+  // Modal Popup states
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [deleteTargetItem, setDeleteTargetItem] = useState<MenuItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Form state
   const [name, setName] = useState('');
@@ -249,6 +262,11 @@ function MenuPage() {
     }
   };
 
+  const handleOpenAddNew = () => {
+    cancelEdit();
+    setIsFormModalOpen(true);
+  };
+
   const startEditing = (item: MenuItem) => {
     setEditingId(item.id);
     setName(item.name);
@@ -265,8 +283,9 @@ function MenuPage() {
     setIsHalal(existingBadge.isHalal ?? true);
     setIsChefSpecial(existingBadge.isChefSpecial ?? false);
     setCustomTag(existingBadge.customTag || '');
+    setError(null);
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setIsFormModalOpen(true);
   };
 
   const cancelEdit = () => {
@@ -283,14 +302,20 @@ function MenuPage() {
     setIsChefSpecial(false);
     setCustomTag('');
     setError(null);
+    setIsFormModalOpen(false);
   };
 
-  const handleDelete = async (id: string) => {
-    const itemToDelete = items.find(item => item.id === id);
-    const itemName = itemToDelete?.name || 'Menu item';
+  const handleOpenDeleteModal = (item: MenuItem) => {
+    setDeleteTargetItem(item);
+  };
 
-    if (!window.confirm(`Adakah anda pasti mahu memadam hidangan "${itemName}"?`)) return;
-    
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetItem) return;
+    const itemToDelete = deleteTargetItem;
+    const id = itemToDelete.id;
+    const itemName = itemToDelete.name || 'Menu item';
+
+    setIsDeleting(true);
     try {
       // 1. Bersihkan rujukan child records dalam order_items jika ada
       try {
@@ -322,13 +347,17 @@ function MenuPage() {
 
         toast.success(`"${itemName}" telah dinyahaktifkan (OFF Menu & Disembunyikan).`);
         await fetchMenuItems();
+        setDeleteTargetItem(null);
         return;
       }
 
       toast.success(`Hidangan "${itemName}" telah berjaya dipadam.`);
       await fetchMenuItems();
+      setDeleteTargetItem(null);
     } catch (err: any) {
       toast.error('Gagal memadam menu: ' + (err.message || 'Sila cuba lagi'));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -397,313 +426,100 @@ function MenuPage() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 font-mono text-xs text-orange-700 bg-orange-50 border border-orange-200 px-4 py-2 rounded-full font-bold shadow-xs">
-              <UtensilsCrossed className="w-4 h-4 text-orange-600" /> {items.length} Menu Dishes Tracked
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                onClick={handleOpenAddNew}
+                className="bg-orange-600 hover:bg-orange-700 active:scale-[0.98] text-white font-bold text-xs px-4 py-2 rounded-2xl shadow-sm transition-all flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah Menu Baharu</span>
+              </Button>
+
+              <div className="flex items-center gap-2 font-mono text-xs text-orange-700 bg-orange-50 border border-orange-200 px-4 py-2 rounded-full font-bold shadow-xs">
+                <UtensilsCrossed className="w-4 h-4 text-orange-600" /> {items.length} Menu Dishes Tracked
+              </div>
             </div>
           </div>
         </div>
 
-        {/* MAIN 2-COLUMN LAYOUT: FORM (LEFT) & DISHES GRID (RIGHT) */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* MENU DISHES GRID & FILTERS (FULL WIDTH) */}
+        <div className="space-y-4">
           
-          {/* EDITOR FORM SIDEBAR */}
-          <div className="lg:col-span-1">
-            <Card className="sticky top-20 lg:top-24 max-h-[calc(100dvh-6rem)] overflow-y-auto overscroll-contain bg-white border border-slate-200/90 text-slate-900 rounded-3xl shadow-xs scrollbar-thin">
-              <CardHeader className="border-b border-slate-100 shrink-0">
-                <CardTitle className="text-lg font-bold flex items-center gap-2 text-slate-900">
-                  {editingId ? <><Edit2 className="w-5 h-5 text-amber-600"/> Edit Dish</> : <><Plus className="w-5 h-5 text-orange-600"/> Add New Menu Item</>}
-                </CardTitle>
-                <CardDescription className="text-slate-500 text-xs font-mono">
-                  {editingId ? "Update dish price, image, or inventory stock." : "Add a new item to your digital menu."}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-4 pb-6">
-                <form onSubmit={handleSubmit} className="space-y-4 font-mono text-xs">
-                  
-                  {/* Photo Upload with Camera & Gallery */}
-                  <div className="space-y-2.5 p-3 rounded-2xl bg-slate-50/80 border border-slate-200">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
-                        <Camera className="w-3.5 h-3.5 text-orange-600" />
-                        <span>Gambar Hidangan (Dish Photo)</span>
-                      </Label>
-                      {imageUrl && (
-                        <button
-                          type="button"
-                          onClick={() => setImageUrl('')}
-                          className="text-[10px] text-rose-600 hover:text-rose-700 flex items-center gap-1 hover:underline font-bold"
-                        >
-                          <X className="w-3 h-3" /> Buang Gambar
-                        </button>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      {imageUrl ? (
-                        <div className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-emerald-500/50 bg-slate-50 shrink-0 flex items-center justify-center p-1 shadow-md">
-                          <img src={imageUrl} alt="Preview" className="w-full h-full object-cover rounded-lg" />
-                        </div>
-                      ) : (
-                        <div className="w-20 h-20 rounded-xl border border-dashed border-slate-300 bg-slate-50/60 flex flex-col items-center justify-center text-slate-500 shrink-0 gap-1">
-                          <ImageIcon className="w-6 h-6 text-slate-600" />
-                          <span className="text-[9px] text-slate-500">Tiada Foto</span>
-                        </div>
-                      )}
-
-                      <div className="flex-1 space-y-2">
-                        {/* Hidden Inputs */}
-                        <input
-                          ref={cameraInputRef}
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          onChange={handlePhotoUpload}
-                          className="hidden"
-                        />
-                        <input
-                          ref={galleryInputRef}
-                          type="file"
-                          accept="image/*"
-                          onChange={handlePhotoUpload}
-                          className="hidden"
-                        />
-
-                        {/* Action Buttons with WCAG AA Compliant High Contrast */}
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            disabled={uploadingPhoto}
-                            onClick={() => cameraInputRef.current?.click()}
-                            className="h-9 px-3 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-medium text-xs rounded-xl inline-flex items-center justify-center gap-2 transition-colors duration-150 shadow-sm focus-visible:ring-2 focus-visible:ring-orange-500 border border-transparent"
-                          >
-                            <Camera className="w-4 h-4 text-white shrink-0" />
-                            <span>Kamera</span>
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={uploadingPhoto}
-                            onClick={() => galleryInputRef.current?.click()}
-                            className="h-9 px-3 bg-white hover:bg-amber-50/80 active:scale-[0.98] border border-amber-300 hover:border-amber-400 text-amber-950 font-medium text-xs rounded-xl inline-flex items-center justify-center gap-2 transition-colors duration-150 shadow-sm focus-visible:ring-2 focus-visible:ring-amber-500"
-                          >
-                            <UploadCloud className="w-4 h-4 text-amber-800 shrink-0" />
-                            <span>Galeri / Fail</span>
-                          </Button>
-                        </div>
-
-                        {uploadingPhoto ? (
-                          <p className="text-xs text-amber-600 font-bold flex items-center gap-1">
-                            <Loader2 className="w-3 h-3 animate-spin"/> Memproses gambar...
-                          </p>
-                        ) : (
-                          <input
-                            type="text"
-                            placeholder="Atau tampal URL gambar di sini..."
-                            value={imageUrl}
-                            onChange={e => setImageUrl(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-[10px] text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500"
-                          />
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-700">Dish Name</Label>
-                    <Input 
-                      value={name} 
-                      onChange={e => setName(e.target.value)} 
-                      required 
-                      placeholder="e.g. Nasi Ayam Butter Special" 
-                      className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-700">Category</Label>
-                      <Input 
-                        value={category} 
-                        onChange={e => setCategory(e.target.value)} 
-                        required 
-                        placeholder="e.g. Chicken" 
-                        className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-700">Price (RM)</Label>
-                      <Input 
-                        type="number" 
-                        step="0.01" 
-                        value={price} 
-                        onChange={e => setPrice(e.target.value)} 
-                        required 
-                        placeholder="12.50" 
-                        className="bg-slate-50 border-slate-200 text-slate-900 text-xs font-bold text-orange-600"
-                      />
-                    </div>
-                  </div>
-
-                  {/* DISH BADGES CONFIGURATION */}
-                  <div className="p-3.5 bg-slate-50/80 rounded-xl space-y-3 border border-slate-200 font-mono">
-                    <Label className="text-xs font-bold text-slate-800 uppercase tracking-wider block border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Customer Menu Badges
-                    </Label>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-700 font-medium">🔥 Popular / Best Seller Badge</span>
-                        <Switch checked={isPopular} onCheckedChange={setIsPopular} />
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-slate-700 font-medium">⭐ Chef Special Badge</span>
-                        <Switch checked={isChefSpecial} onCheckedChange={setIsChefSpecial} />
-                      </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-slate-200 space-y-1">
-                      <Label className="text-[10px] text-slate-500 uppercase font-bold">Custom Badge Tag (Optional)</Label>
-                      <Input 
-                        value={customTag} 
-                        onChange={e => setCustomTag(e.target.value)} 
-                        placeholder="e.g. 🌶️ Super Spicy or 🥤 Free Drink" 
-                        className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
-                      />
-                    </div>
-                  </div>
-
-                  {/* INVENTORY / STOCK CONTROL */}
-                  <div className="p-3 bg-slate-50/80 border border-slate-200 rounded-xl space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-800">Stock Inventory Control</span>
-                      <span className="text-[10px] text-slate-500 font-mono">Leave empty for unlimited</span>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 font-mono">
-                      <div className="space-y-1">
-                        <Label className="text-[10px] text-slate-500 uppercase font-bold">Stock Count</Label>
-                        <Input 
-                          type="number" 
-                          value={stockCount} 
-                          onChange={e => setStockCount(e.target.value)} 
-                          placeholder="Unlimited" 
-                          className="bg-slate-50 border-slate-200 text-slate-900 text-xs rounded-lg"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px] text-slate-500 uppercase font-bold">Low Alert At</Label>
-                        <Input 
-                          type="number" 
-                          value={lowStockThreshold} 
-                          onChange={e => setLowStockThreshold(e.target.value)} 
-                          placeholder="5" 
-                          className="bg-slate-50 border-slate-200 text-slate-900 text-xs rounded-lg"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between pt-2">
-                      <Label className="text-xs font-bold text-slate-900 block">Available for Ordering</Label>
-                      <Switch checked={isAvailable} onCheckedChange={setIsAvailable} />
-                    </div>
-                  </div>
-
-                  {error && <p className="text-rose-600 text-xs font-bold">{error}</p>}
-                  
-                  {/* Primary Action Button */}
-                  <div className="flex gap-2 pt-2">
-                    <Button 
-                      type="submit" 
-                      disabled={isSubmitting || uploadingPhoto} 
-                      className="flex-1 bg-orange-600 hover:bg-orange-700 active:scale-[0.98] text-white font-semibold rounded-xl py-2 transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-orange-500"
-                    >
-                      {isSubmitting ? 'Saving...' : (editingId ? 'Save Changes' : '+ Add Dish to Menu')}
-                    </Button>
-                    {editingId && (
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        onClick={cancelEdit} 
-                        className="border border-slate-300 bg-white hover:bg-slate-100 active:scale-[0.98] text-slate-700 font-medium rounded-xl transition-all"
-                      >
-                        Cancel
-                      </Button>
-                    )}
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* MENU DISHES GRID */}
-          <div className="lg:col-span-2 space-y-4">
-            
-            {/* SEARCH & FILTER BAR */}
-            <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-slate-50/80 p-3 rounded-2xl border border-slate-200">
-              <div className="relative w-full sm:w-72">
-                <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
-                <Input
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="Cari hidangan atau kategori..."
-                  className="bg-slate-50 border-slate-200 text-slate-900 text-xs pl-9 rounded-xl w-full"
-                />
-              </div>
-
-              {/* Filter tags / Active tab pills */}
-              <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
-                <button
-                  type="button"
-                  onClick={() => setMenuFilter('all')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold font-mono transition-all active:scale-[0.98] shrink-0 ${
-                    menuFilter === 'all'
-                      ? 'bg-orange-600 hover:bg-orange-700 text-white shadow-sm'
-                      : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
-                  }`}
-                >
-                  Semua ({items.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMenuFilter('active')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold font-mono transition-all active:scale-[0.98] shrink-0 ${
-                    menuFilter === 'active'
-                      ? 'bg-orange-600 hover:bg-orange-700 text-white shadow-sm'
-                      : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
-                  }`}
-                >
-                  ON Menu ({activeCount})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMenuFilter('archived')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold font-mono transition-all active:scale-[0.98] shrink-0 ${
-                    menuFilter === 'archived'
-                      ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-sm'
-                      : 'bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
-                  }`}
-                >
-                  OFF Menu ({archivedCount})
-                </button>
-              </div>
+          {/* SEARCH & FILTER BAR */}
+          <div className="flex flex-col sm:flex-row gap-3 items-center justify-between bg-white p-4 rounded-3xl border border-slate-200/90 shadow-xs">
+            <div className="relative w-full sm:w-80">
+              <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Input
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Cari hidangan atau kategori..."
+                className="bg-slate-50 border-slate-200 text-slate-900 text-xs pl-9 rounded-xl w-full"
+              />
             </div>
 
-            {filteredItems.length === 0 ? (
-              <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 space-y-2">
-                <UtensilsCrossed className="w-12 h-12 mx-auto text-slate-400 mb-3" />
-                <h3 className="text-lg font-bold text-slate-900">Tiada Hidangan Dijumpai</h3>
-                <p className="text-xs font-mono text-slate-500">
-                  {searchQuery ? `Tiada padanan untuk "${searchQuery}".` : 'Sila tambah hidangan baharu atau tukar penapis.'}
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {filteredItems.map((item) => {
-                  const isLowStock = (item.stock_count ?? null) !== null && (item.low_stock_threshold ?? null) !== null && (item.stock_count ?? 0) <= (item.low_stock_threshold ?? 0);
-                  const isOutOfStock = item.stock_count === 0 || !item.is_available;
+            {/* Filter tags / Active tab pills */}
+            <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
+              <button
+                type="button"
+                onClick={() => setMenuFilter('all')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold font-mono transition-all active:scale-[0.98] shrink-0 ${
+                  menuFilter === 'all'
+                    ? 'bg-orange-600 hover:bg-orange-700 text-white shadow-xs'
+                    : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                Semua ({items.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setMenuFilter('active')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold font-mono transition-all active:scale-[0.98] shrink-0 ${
+                  menuFilter === 'active'
+                    ? 'bg-orange-600 hover:bg-orange-700 text-white shadow-xs'
+                    : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                ON Menu ({activeCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => setMenuFilter('archived')}
+                className={`px-3.5 py-2 rounded-xl text-xs font-semibold font-mono transition-all active:scale-[0.98] shrink-0 ${
+                  menuFilter === 'archived'
+                    ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-xs'
+                    : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                OFF Menu ({archivedCount})
+              </button>
+            </div>
+          </div>
 
-                  return (
-                    <Card key={item.id} className={`bg-white border-slate-200 text-slate-900 rounded-2xl overflow-hidden hover:border-orange-300 transition-all duration-300 shadow-xs group ${isOutOfStock ? 'opacity-60 grayscale-[0.4]' : ''}`}>
+          {filteredItems.length === 0 ? (
+            <div className="text-center py-20 bg-white rounded-3xl border border-dashed border-slate-200 text-slate-500 space-y-3 p-6 shadow-xs">
+              <UtensilsCrossed className="w-12 h-12 mx-auto text-slate-300" />
+              <h3 className="text-lg font-bold text-slate-900">Tiada Hidangan Dijumpai</h3>
+              <p className="text-xs font-mono text-slate-500">
+                {searchQuery ? `Tiada padanan untuk "${searchQuery}".` : 'Sila tekan "+ Tambah Menu Baharu" untuk mula menambah hidangan.'}
+              </p>
+              <Button
+                type="button"
+                onClick={handleOpenAddNew}
+                className="bg-orange-600 hover:bg-orange-700 text-white font-semibold text-xs rounded-xl px-4 py-2 mt-2"
+              >
+                <Plus className="w-4 h-4 mr-1.5" /> Tambah Hidangan Sekarang
+              </Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filteredItems.map((item) => {
+                const isLowStock = (item.stock_count ?? null) !== null && (item.low_stock_threshold ?? null) !== null && (item.stock_count ?? 0) <= (item.low_stock_threshold ?? 0);
+                const isOutOfStock = item.stock_count === 0 || !item.is_available;
+
+                return (
+                  <Card key={item.id} className={`bg-white border border-slate-200/90 text-slate-900 rounded-3xl overflow-hidden hover:border-orange-300 transition-all duration-300 shadow-xs group flex flex-col justify-between ${isOutOfStock ? 'opacity-65 grayscale-[0.3]' : ''}`}>
+                    <div>
                       {/* UNCROPPED IMAGE CONTAINER */}
                       <div className="h-44 bg-slate-50 relative border-b border-slate-100 flex items-center justify-center p-2">
                         {item.image_url ? (
@@ -726,12 +542,12 @@ function MenuPage() {
                       </div>
                       
                       <CardContent className="p-4 space-y-3">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-bold text-slate-900 text-base tracking-tight line-clamp-1">{item.name}</h3>
-                            <p className="text-xs text-slate-500 font-mono">{item.category}</p>
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="min-w-0">
+                            <h3 className="font-bold text-slate-900 text-sm md:text-base tracking-tight truncate" title={item.name}>{item.name}</h3>
+                            <p className="text-xs text-slate-500 font-mono truncate">{item.category}</p>
                           </div>
-                          <p className="font-black text-orange-600 text-base font-mono">RM {item.price.toFixed(2)}</p>
+                          <p className="font-black text-orange-600 text-sm md:text-base font-mono shrink-0">RM {item.price.toFixed(2)}</p>
                         </div>
 
                         {/* INVENTORY BADGES */}
@@ -748,47 +564,384 @@ function MenuPage() {
                             </span>
                           )}
                         </div>
-
-                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 font-mono">
-                          <div className="flex items-center gap-2 text-xs">
-                            <Switch 
-                              checked={item.is_available} 
-                              onCheckedChange={() => toggleAvailability(item.id, item.is_available)}
-                            />
-                            <span className={item.is_available ? 'text-slate-800 font-medium' : 'text-slate-400'}>
-                              {item.is_available ? 'Active' : 'Hidden'}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              onClick={() => startEditing(item)} 
-                              className="h-8 w-8 text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-all active:scale-95"
-                              title="Edit dish"
-                            >
-                              <Edit2 className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              onClick={() => handleDelete(item.id)} 
-                              className="h-8 w-8 text-rose-700 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-all active:scale-95"
-                              title="Delete dish"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
-                        </div>
                       </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </div>
+                    </div>
 
+                    <div className="px-4 pb-4">
+                      <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2 font-mono">
+                        <div className="flex items-center gap-2 text-xs">
+                          <Switch 
+                            checked={item.is_available} 
+                            onCheckedChange={() => toggleAvailability(item.id, item.is_available)}
+                          />
+                          <span className={item.is_available ? 'text-slate-800 font-medium' : 'text-slate-400'}>
+                            {item.is_available ? 'Active' : 'Hidden'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            onClick={() => startEditing(item)} 
+                            className="h-8 w-8 text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-lg transition-all active:scale-95"
+                            title="Edit dish"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            onClick={() => handleOpenDeleteModal(item)} 
+                            className="h-8 w-8 text-rose-700 hover:text-rose-800 bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-lg transition-all active:scale-95"
+                            title="Delete dish"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </div>
+
+        {/* ============================================================ */}
+        {/* POPUP MODAL DIALOG: TAMBAH / EDIT MENU ITEM                 */}
+        {/* ============================================================ */}
+        <Dialog open={isFormModalOpen} onOpenChange={(open) => {
+          if (!open) {
+            cancelEdit();
+          } else {
+            setIsFormModalOpen(true);
+          }
+        }}>
+          <DialogContent className="max-w-xl w-full max-h-[90vh] flex flex-col p-0 overflow-hidden bg-white rounded-3xl border border-slate-200 shadow-2xl z-50">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-100 bg-slate-50/70 shrink-0">
+              <DialogTitle className="text-xl font-black text-slate-900 flex items-center gap-2">
+                {editingId ? (
+                  <>
+                    <span className="p-2 bg-amber-100 text-amber-700 rounded-xl"><Edit2 className="w-5 h-5"/></span>
+                    <span>Edit Maklumat Hidangan</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="p-2 bg-orange-100 text-orange-700 rounded-xl"><Plus className="w-5 h-5"/></span>
+                    <span>Tambah Menu Baharu</span>
+                  </>
+                )}
+              </DialogTitle>
+              <DialogDescription className="text-xs text-slate-500 font-mono mt-1">
+                {editingId ? "Kemaskini harga, foto, custom tag atau stok inventori hidangan ini." : "Lengkapkan maklumat hidangan di bawah untuk dipaparkan pada menu digital."}
+              </DialogDescription>
+            </div>
+
+            {/* Modal Scrollable Form Body */}
+            <div className="overflow-y-auto flex-1 p-6 space-y-4 font-mono text-xs overscroll-contain">
+              <form id="menu-dish-form" onSubmit={handleSubmit} className="space-y-4">
+                
+                {/* Photo Upload with Camera & Gallery */}
+                <div className="space-y-2.5 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                      <Camera className="w-3.5 h-3.5 text-orange-600" />
+                      <span>Gambar Hidangan (Dish Photo)</span>
+                    </Label>
+                    {imageUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setImageUrl('')}
+                        className="text-[10px] text-rose-600 hover:text-rose-700 flex items-center gap-1 hover:underline font-bold"
+                      >
+                        <X className="w-3 h-3" /> Buang Gambar
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {imageUrl ? (
+                      <div className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-emerald-500/50 bg-slate-50 shrink-0 flex items-center justify-center p-1 shadow-md">
+                        <img src={imageUrl} alt="Preview" className="w-full h-full object-cover rounded-lg" />
+                      </div>
+                    ) : (
+                      <div className="w-20 h-20 rounded-xl border border-dashed border-slate-300 bg-slate-50/60 flex flex-col items-center justify-center text-slate-500 shrink-0 gap-1">
+                        <ImageIcon className="w-6 h-6 text-slate-600" />
+                        <span className="text-[9px] text-slate-500">Tiada Foto</span>
+                      </div>
+                    )}
+
+                    <div className="flex-1 space-y-2">
+                      {/* Hidden Inputs */}
+                      <input
+                        ref={cameraInputRef}
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+                      <input
+                        ref={galleryInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoUpload}
+                        className="hidden"
+                      />
+
+                      {/* Action Buttons with WCAG AA Compliant High Contrast */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={uploadingPhoto}
+                          onClick={() => cameraInputRef.current?.click()}
+                          className="h-9 px-3 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white font-medium text-xs rounded-xl inline-flex items-center justify-center gap-2 transition-colors duration-150 shadow-sm focus-visible:ring-2 focus-visible:ring-orange-500 border border-transparent"
+                        >
+                          <Camera className="w-4 h-4 text-white shrink-0" />
+                          <span>Kamera</span>
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={uploadingPhoto}
+                          onClick={() => galleryInputRef.current?.click()}
+                          className="h-9 px-3 bg-white hover:bg-amber-50/80 active:scale-[0.98] border border-amber-300 hover:border-amber-400 text-amber-950 font-medium text-xs rounded-xl inline-flex items-center justify-center gap-2 transition-colors duration-150 shadow-sm focus-visible:ring-2 focus-visible:ring-amber-500"
+                        >
+                          <UploadCloud className="w-4 h-4 text-amber-800 shrink-0" />
+                          <span>Galeri / Fail</span>
+                        </Button>
+                      </div>
+
+                      {uploadingPhoto ? (
+                        <p className="text-xs text-amber-600 font-bold flex items-center gap-1">
+                          <Loader2 className="w-3 h-3 animate-spin"/> Memproses gambar...
+                        </p>
+                      ) : (
+                        <input
+                          type="text"
+                          placeholder="Atau tampal URL gambar di sini..."
+                          value={imageUrl}
+                          onChange={e => setImageUrl(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-[10px] text-slate-700 placeholder:text-slate-400 focus:outline-none focus:border-orange-500"
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-bold uppercase tracking-wider text-slate-700">Nama Hidangan (Dish Name)</Label>
+                  <Input 
+                    value={name} 
+                    onChange={e => setName(e.target.value)} 
+                    required 
+                    placeholder="Contoh: Nasi Goreng Kampung Meletup" 
+                    className="bg-slate-50 border-slate-200 text-slate-900 text-xs rounded-xl"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-700">Kategori (Category)</Label>
+                    <Input 
+                      value={category} 
+                      onChange={e => setCategory(e.target.value)} 
+                      required 
+                      placeholder="Contoh: Makanan / Minuman" 
+                      className="bg-slate-50 border-slate-200 text-slate-900 text-xs rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-700">Harga Jualan (RM)</Label>
+                    <Input 
+                      type="number" 
+                      step="0.01" 
+                      value={price} 
+                      onChange={e => setPrice(e.target.value)} 
+                      required 
+                      placeholder="12.50" 
+                      className="bg-slate-50 border-slate-200 text-slate-900 text-xs font-bold text-orange-600 rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                {/* DISH BADGES CONFIGURATION */}
+                <div className="p-3.5 bg-slate-50/80 rounded-2xl space-y-3 border border-slate-200 font-mono">
+                  <Label className="text-xs font-bold text-slate-800 uppercase tracking-wider block border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Customer Menu Badges
+                  </Label>
+
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-700 font-medium">🔥 Popular / Best Seller Badge</span>
+                      <Switch checked={isPopular} onCheckedChange={setIsPopular} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-700 font-medium">⭐ Chef Special Badge</span>
+                      <Switch checked={isChefSpecial} onCheckedChange={setIsChefSpecial} />
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-200 space-y-1">
+                    <Label className="text-[10px] text-slate-500 uppercase font-bold">Custom Badge Tag (Optional)</Label>
+                    <Input 
+                      value={customTag} 
+                      onChange={e => setCustomTag(e.target.value)} 
+                      placeholder="Contoh: 🌶️ Pedas Berapi atau 🥤 Percuma Air" 
+                      className="bg-slate-50 border-slate-200 text-slate-900 text-xs rounded-xl"
+                    />
+                  </div>
+                </div>
+
+                {/* INVENTORY / STOCK CONTROL */}
+                <div className="p-3.5 bg-slate-50/80 border border-slate-200 rounded-2xl space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800">Stock Inventory Control</span>
+                    <span className="text-[10px] text-slate-500 font-mono">Kosongkan untuk kuantiti tanpa had (unlimited)</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 font-mono">
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-slate-500 uppercase font-bold">Baki Stok</Label>
+                      <Input 
+                        type="number" 
+                        value={stockCount} 
+                        onChange={e => setStockCount(e.target.value)} 
+                        placeholder="Tanpa had" 
+                        className="bg-slate-50 border-slate-200 text-slate-900 text-xs rounded-xl"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] text-slate-500 uppercase font-bold">Amaran Baki Rendah</Label>
+                      <Input 
+                        type="number" 
+                        value={lowStockThreshold} 
+                        onChange={e => setLowStockThreshold(e.target.value)} 
+                        placeholder="5" 
+                        className="bg-slate-50 border-slate-200 text-slate-900 text-xs rounded-xl"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <Label className="text-xs font-bold text-slate-900 block">Buka untuk pesanan pelanggan (Available)</Label>
+                    <Switch checked={isAvailable} onCheckedChange={setIsAvailable} />
+                  </div>
+                </div>
+
+                {error && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs font-bold">
+                    {error}
+                  </div>
+                )}
+              </form>
+            </div>
+
+            {/* Modal Footer / Action Buttons */}
+            <div className="p-4 border-t border-slate-100 bg-slate-50/70 flex items-center justify-end gap-2 shrink-0">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={cancelEdit} 
+                className="border border-slate-300 bg-white hover:bg-slate-100 active:scale-[0.98] text-slate-700 font-medium rounded-xl px-4 py-2 transition-all text-xs"
+              >
+                Batal
+              </Button>
+              <Button 
+                type="submit" 
+                form="menu-dish-form"
+                disabled={isSubmitting || uploadingPhoto} 
+                className="bg-orange-600 hover:bg-orange-700 active:scale-[0.98] text-white font-bold rounded-xl px-5 py-2 transition-all shadow-sm focus-visible:ring-2 focus-visible:ring-orange-500 text-xs flex items-center gap-1.5"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Menyimpan...</span>
+                  </>
+                ) : (
+                  editingId ? 'Simpan Perubahan 💾' : '+ Tambah Hidangan 🍽️'
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* ============================================================ */}
+        {/* POPUP MODAL DIALOG: PENGESAHAN PADAM HIDANGAN                */}
+        {/* ============================================================ */}
+        <Dialog open={Boolean(deleteTargetItem)} onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setDeleteTargetItem(null);
+          }
+        }}>
+          <DialogContent className="max-w-md w-full p-6 bg-white rounded-3xl border border-slate-200 shadow-2xl z-50">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shadow-xs">
+                <AlertTriangle className="w-7 h-7" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-black text-slate-900">
+                  Padam Hidangan Menu?
+                </DialogTitle>
+                <DialogDescription className="text-xs text-slate-500 font-mono mt-1.5 leading-relaxed">
+                  Adakah anda pasti mahu memadam hidangan berikut daripada pangkalan data dan menu digital?
+                </DialogDescription>
+              </div>
+
+              {deleteTargetItem && (
+                <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 flex items-center gap-3 text-left">
+                  {deleteTargetItem.image_url ? (
+                    <img 
+                      src={deleteTargetItem.image_url} 
+                      alt={deleteTargetItem.name} 
+                      className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-xl bg-slate-200 flex items-center justify-center text-slate-500 shrink-0">
+                      <UtensilsCrossed className="w-5 h-5" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-slate-900 truncate">{deleteTargetItem.name}</p>
+                    <p className="text-[10px] text-slate-500 font-mono">{deleteTargetItem.category}</p>
+                    <p className="text-xs font-black text-orange-600 font-mono mt-0.5">RM {deleteTargetItem.price.toFixed(2)}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-2 w-full pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isDeleting}
+                  onClick={() => setDeleteTargetItem(null)}
+                  className="w-full border-slate-200 bg-white hover:bg-slate-100 rounded-xl text-xs font-semibold text-slate-700 h-10"
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="button"
+                  disabled={isDeleting}
+                  onClick={handleConfirmDelete}
+                  className="w-full bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold h-10 shadow-sm flex items-center justify-center gap-1.5"
+                >
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Memadam...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      <span>Ya, Padam 🗑️</span>
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* CUSTOM ADD-ONS & PROMO BANNERS MANAGER */}
         <div className="mt-8 border-t border-slate-200 pt-8">
