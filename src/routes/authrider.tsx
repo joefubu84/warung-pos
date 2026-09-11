@@ -212,13 +212,18 @@ function AuthRiderPage() {
             </Button>
           </div>
         ) : mode === 'login' ? (
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4" autoComplete="off">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-300">Emel Rider</label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <Input
                   type="email"
+                  name="rider_login_email"
+                  id="rider_login_email"
+                  autoComplete="off"
+                  data-lpignore="true"
+                  data-form-type="other"
                   placeholder="rider@warungjnj.online"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
@@ -234,6 +239,11 @@ function AuthRiderPage() {
                 <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <Input
                   type={showLoginPassword ? 'text' : 'password'}
+                  name="rider_security_token"
+                  id="rider_security_token"
+                  autoComplete="new-password"
+                  data-lpignore="true"
+                  data-form-type="other"
                   placeholder="••••••••"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}

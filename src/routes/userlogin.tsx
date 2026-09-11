@@ -287,13 +287,17 @@ function UserLoginPage() {
 
         {/* Form: LOGIN */}
         {mode === 'login' ? (
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-4" autoComplete="off">
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 flex items-center gap-1.5 font-heading">
                 <Mail className="w-3.5 h-3.5 text-slate-400" /> Emel atau No. Telefon WhatsApp
               </label>
               <Input
                 type="text"
+                name="customer_login_identifier"
+                id="customer_login_identifier"
+                autoComplete="off"
+                data-lpignore="true"
                 placeholder="cth: 0198887766 atau emel@gmail.com"
                 value={loginIdentifier}
                 onChange={(e) => setLoginIdentifier(e.target.value)}
@@ -311,6 +315,10 @@ function UserLoginPage() {
               <div className="relative">
                 <Input
                   type={showLoginPassword ? 'text' : 'password'}
+                  name="customer_login_password"
+                  id="customer_login_password"
+                  autoComplete="new-password"
+                  data-lpignore="true"
                   placeholder="Masukkan kata laluan akaun anda"
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
