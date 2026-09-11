@@ -208,6 +208,7 @@ function calculateHaversineKm(lat1: number, lon1: number, lat2: number, lon2: nu
 const IS_DELIVERY_ENABLED = false;
 
 function CustomerDeliveryPage() {
+  const navigate = useNavigate();
 
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
@@ -1348,10 +1349,10 @@ function CustomerDeliveryPage() {
       return;
     }
 
-    // 1. MUST LOGIN WITH GOOGLE FIRST
+    // 1. MUST LOGIN FIRST
     if (!currentUser) {
-      setShowAuthModal(true);
-      toast.error('Sila log masuk dengan Google terlebih dahulu untuk pengesahan akaun dan keselamatan pesanan.');
+      navigate({ to: '/userlogin', search: { redirect: '/delivery' } });
+      toast.error('Sila log masuk akaun terlebih dahulu untuk keselamatan pesanan.');
       return;
     }
 
@@ -1547,15 +1548,14 @@ function CustomerDeliveryPage() {
                 </button>
               </div>
             ) : (
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => setShowAuthModal(true)}
+              <Link
+                to="/userlogin"
+                search={{ redirect: '/delivery' }}
                 className="bg-orange-500 hover:bg-orange-600 text-white font-bold h-9 px-3.5 rounded-xl flex items-center gap-1.5 text-xs shadow-xs active:scale-95 transition-all"
               >
                 <User className="w-3.5 h-3.5" />
                 <span>Log Masuk</span>
-              </Button>
+              </Link>
             )}
 
             <Button
@@ -2730,16 +2730,15 @@ function CustomerDeliveryPage() {
                 </div>
 
                 {!currentUser ? (
-                  <Button
-                    onClick={() => {
-                      setIsCartDrawerOpen(false);
-                      handleGoogleLogin();
-                    }}
+                  <Link
+                    to="/userlogin"
+                    search={{ redirect: '/delivery' }}
+                    onClick={() => setIsCartDrawerOpen(false)}
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-3.5 rounded-2xl shadow-md flex items-center justify-center gap-2 text-xs sm:text-sm mt-3 active:scale-95 transition-all font-heading"
                   >
                     <User className="w-4 h-4" />
                     <span>Daftar / Log Masuk untuk Bayar</span>
-                  </Button>
+                  </Link>
                 ) : (
                   <Button
                     onClick={() => {
