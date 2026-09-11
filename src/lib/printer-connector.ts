@@ -6,6 +6,8 @@
  * 3. System Print Dialog (Standard Fallback)
  */
 
+import { getReceiptCustomConfig } from '@/lib/receipt-config';
+
 export interface ConnectedPrinterInfo {
   type: 'bluetooth' | 'usb' | 'system';
   name: string;
@@ -327,6 +329,15 @@ export async function printOrderDirectThermal(
   }
 
   const totalItemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const rc = getReceiptCustomConfig();
+  const storeDisplayName = rc.store_name || store.name || 'WARUNG J&J';
+  const storeSubHeader = rc.store_sub_header || 'Penampang, Sabah';
+  const storePhone = rc.phone_number || store.phone_number || '';
+  const orderPrefix = rc.order_id_prefix || 'ORDER #';
+  const cashierLabel = rc.cashier_label || 'Juruwang:';
+  const footer1 = rc.footer_line_1 || 'Terima Kasih Atas Pesanan Anda!';
+  const footer2 = rc.footer_line_2 || 'Sila Datang Lagi.';
+  const customFooter = rc.custom_footer_note ? rc.custom_footer_note.trim() : '';
 
   const chunks: Uint8Array[] = [
     ESC_POS_COMMANDS.INIT,
@@ -335,18 +346,18 @@ export async function printOrderDirectThermal(
     ESC_POS_COMMANDS.ALIGN_CENTER,
     ESC_POS_COMMANDS.EMPHASIZE_ON,
     ESC_POS_COMMANDS.DOUBLE_SIZE,
-    textToBytes(`${store.name || 'WARUNG J&J'}\n`),
+    textToBytes(`${storeDisplayName}\n`),
     ESC_POS_COMMANDS.NORMAL_TEXT,
     ESC_POS_COMMANDS.EMPHASIZE_OFF,
-    textToBytes('Penampang, Sabah\n'),
-    store.phone_number ? textToBytes(`Tel: ${store.phone_number}\n`) : new Uint8Array([]),
+    storeSubHeader ? textToBytes(`${storeSubHeader}\n`) : new Uint8Array([]),
+    storePhone ? textToBytes(`Tel: ${storePhone}\n`) : new Uint8Array([]),
     textToBytes('================================\n'),
     
     // Grab Style Big Order Number & Type
     ESC_POS_COMMANDS.ALIGN_CENTER,
     ESC_POS_COMMANDS.EMPHASIZE_ON,
     ESC_POS_COMMANDS.DOUBLE_HEIGHT,
-    textToBytes(`ORDER #${orderIdShort}\n`),
+    textToBytes(`${orderPrefix}${orderIdShort}\n`),
     ESC_POS_COMMANDS.NORMAL_TEXT,
     textToBytes(`${typeHeader}\n`),
     ESC_POS_COMMANDS.EMPHASIZE_OFF,
@@ -356,7 +367,7 @@ export async function printOrderDirectThermal(
     ESC_POS_COMMANDS.ALIGN_LEFT,
     order.customer_name ? textToBytes(`Pelanggan: ${order.customer_name}\n`) : new Uint8Array([]),
     textToBytes(formatTwoColumns(`Masa: ${timeStr}`, dateStr)),
-    textToBytes(formatTwoColumns(`Juruwang: ${cashierName}`, `${totalItemCount} Item`)),
+    textToBytes(formatTwoColumns(`${cashierLabel} ${cashierName}`, `${totalItemCount} Item`)),
     textToBytes('================================\n'),
   ];
 
@@ -377,7 +388,7 @@ export async function printOrderDirectThermal(
     }
 
     // Indented Notes / Customization
-    if (item.notes && item.notes.trim() !== '') {
+    if (rc.show_notes && item.notes && item.notes.trim() !== '') {
       chunks.push(textToBytes(`   * Nota: ${item.notes.trim()}\n`));
     }
 
@@ -426,7 +437,10 @@ export async function printOrderDirectThermal(
     textToBytes(formatTwoColumns('Status Bayaran:', payStatusStr)),
     textToBytes('================================\n'),
     ESC_POS_COMMANDS.ALIGN_CENTER,
-    textToBytes('Terima Kasih Atas Pesanan Anda!\nSila Datang Lagi.\n\n\n\n'),
+    textToBytes(`${footer1}\n`),
+    footer2 ? textToBytes(`${footer2}\n`) : new Uint8Array([]),
+    customFooter ? textToBytes(`${customFooter}\n`) : new Uint8Array([]),
+    textToBytes('\n\n\n\n'),
     ESC_POS_COMMANDS.CUT_PAPER
   );
 

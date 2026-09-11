@@ -29,12 +29,16 @@ export interface Order {
   payment_method?: string | null;
 }
 
+import { getReceiptCustomConfig, ReceiptCustomConfig } from '@/lib/receipt-config';
+
 export function generateReceiptHTML(
   order: Order,
   store: Store,
   cashierName: string,
-  items: OrderItem[]
+  items: OrderItem[],
+  customConfig?: ReceiptCustomConfig
 ): string {
+  const rc = customConfig || getReceiptCustomConfig();
   const orderDate = new Date(order.created_at);
   const formattedDate = orderDate.toLocaleDateString('en-MY', {
     day: '2-digit', month: '2-digit', year: 'numeric'
@@ -95,6 +99,15 @@ export function generateReceiptHTML(
   const paymentMethod = order.payment_method ? order.payment_method.toUpperCase() : 'TUNAI';
   const payStatus = order.paid ? `SUDAH BAYAR (${paymentMethod})` : 'BELUM DIBAYAR';
 
+  const storeDisplayName = rc.store_name || store.name || 'WARUNG J&J';
+  const storeSubHeader = rc.store_sub_header || 'Penampang, Sabah';
+  const storePhone = rc.phone_number || store.phone_number || '';
+  const orderPrefix = rc.order_id_prefix || 'ORDER #';
+  const cashierLabel = rc.cashier_label || 'Juruwang:';
+  const footer1 = rc.footer_line_1 || 'Terima Kasih Atas Pesanan Anda!';
+  const footer2 = rc.footer_line_2 || 'Sila Datang Lagi.';
+  const customFooter = rc.custom_footer_note ? rc.custom_footer_note.trim() : '';
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -113,34 +126,32 @@ export function generateReceiptHTML(
       line-height: 1.25;
       color: #000;
       margin: 0;
-      padding: 10px;
-      width: 58mm;
-      box-sizing: border-box;
+      padding: 10px 8px;
+      background: #fff;
     }
     .text-center { text-align: center; }
     .text-right { text-align: right; }
     .bold { font-weight: bold; }
     
     .logo {
-      max-width: 70%;
+      max-width: 80px;
       height: auto;
-      margin: 0 auto 5px auto;
+      margin: 0 auto 6px;
       display: block;
-      filter: grayscale(100%) contrast(1.2);
+      filter: grayscale(100%) contrast(150%);
     }
     
     .store-name {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 900;
-      margin: 4px 0 2px 0;
-      text-transform: uppercase;
+      margin-bottom: 2px;
       letter-spacing: 0.5px;
     }
-
+    
     .order-banner {
-      border: 1px solid #000;
-      padding: 6px 4px;
       margin: 8px 0;
+      padding: 6px 4px;
+      border: 1.5px solid #000;
       text-align: center;
     }
     .order-id {
@@ -205,21 +216,21 @@ export function generateReceiptHTML(
 </head>
 <body>
   <div class="text-center">
-    ${store.logo_url ? `<img src="${store.logo_url}" class="logo" alt="Logo" />` : ''}
-    <div class="store-name">${store.name}</div>
-    <div style="font-size: 10px;">Penampang, Sabah</div>
-    ${store.phone_number ? `<div style="font-size: 10px;">Tel: ${store.phone_number}</div>` : ''}
+    ${rc.show_logo && store.logo_url ? `<img src="${store.logo_url}" class="logo" alt="Logo" />` : ''}
+    <div class="store-name">${storeDisplayName}</div>
+    ${storeSubHeader ? `<div style="font-size: 10px;">${storeSubHeader}</div>` : ''}
+    ${storePhone ? `<div style="font-size: 10px;">Tel: ${storePhone}</div>` : ''}
   </div>
 
   <div class="order-banner">
-    <div class="order-id">ORDER #${orderIdShort}</div>
+    <div class="order-id">${orderPrefix}${orderIdShort}</div>
     <div class="order-type">${typeDisplay}</div>
   </div>
 
   <div class="info-grid">
     <div>Masa:</div><div>${formattedTime} &nbsp;&nbsp; ${formattedDate}</div>
     ${order.customer_name ? `<div>Pelanggan:</div><div>${order.customer_name}</div>` : ''}
-    <div>Juruwang:</div><div>${cashierName} (${totalItemCount} Item)</div>
+    <div>${cashierLabel}</div><div>${cashierName} (${totalItemCount} Item)</div>
   </div>
 
   <div class="divider-double"></div>
@@ -259,8 +270,9 @@ export function generateReceiptHTML(
   <div class="divider"></div>
 
   <div class="text-center footer">
-    <p class="bold">Terima Kasih Atas Pesanan Anda!</p>
-    <p>Sila Datang Lagi.</p>
+    <p class="bold">${footer1}</p>
+    ${footer2 ? `<p>${footer2}</p>` : ''}
+    ${customFooter ? `<p style="margin-top: 6px; font-size: 10px; font-weight: bold;">${customFooter}</p>` : ''}
   </div>
   
   <script>

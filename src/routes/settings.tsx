@@ -88,6 +88,7 @@ import { DishAddonsCustomizer } from '@/components/DishAddonsCustomizer';
 import { CallWaiterCustomizer } from '@/components/CallWaiterCustomizer';
 import { LandingPageEditor } from '@/components/LandingPageEditor';
 import { TableQrCustomizer } from '@/components/TableQrCustomizer';
+import { ReceiptCustomizer } from '@/components/ReceiptCustomizer';
 import { StaffManagementCustomizer } from '@/components/StaffManagementCustomizer';
 
 export const Route = createFileRoute('/settings')({
@@ -1142,6 +1143,16 @@ function SettingsPage() {
                     {updatePrinterMutation.isPending ? 'Menyimpan...' : 'Simpan Tetapan Pencetak & Dapur 💾'}
                   </Button>
                 </div>
+
+                {/* 📄 TETAPAN AYAT & FORMAT RESIT PELANGGAN (THERMAL RECEIPT CUSTOMIZER) */}
+                <ReceiptCustomizer 
+                  storeId={storeId} 
+                  storeData={{
+                    name: store?.name,
+                    phone_number: store?.phone_number,
+                    logo_url: store?.logo_url,
+                  }} 
+                />
 
                 {/* 🪧 TETAPAN AYAT & PELEKAT KOD QR MEJA (TABLE STANDEE / STICKER) */}
                 <TableQrCustomizer storeId={storeId} />
