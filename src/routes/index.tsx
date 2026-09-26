@@ -60,7 +60,12 @@ function LandingPage() {
           .limit(1)
           .maybeSingle();
         if (!tableErr && tableData) {
-          configData = tableData;
+          const fromConfig = (tableData.config as any)?.landing_page || (tableData.config as any)?.landing_page_config;
+          if (fromConfig) {
+            configData = fromConfig;
+          } else if (tableData.hero_section) {
+            configData = tableData;
+          }
         }
       } catch (e) {}
 
@@ -77,24 +82,53 @@ function LandingPage() {
         } catch (e) {}
       }
 
+      if (!configData) {
+        try {
+          const cached = localStorage.getItem('warung_landing_page_config');
+          if (cached) configData = JSON.parse(cached);
+        } catch (e) {}
+      }
+
       if (configData) {
         setHomepageSettings(configData);
       }
 
-      // Fetch Featured Items
-      const { data } = await supabase
-        .from("menu_items")
-        .select("*")
-        .eq("is_available", true)
-        .not("image_url", "is", null)
-        .neq("image_url", "")
-        .order("name")
-        .limit(6);
-      
-      if (data) {
-        setFeaturedItems(data);
-        setBadgesMap(getDishBadgesMap());
-      }
+      // Fetch Featured Items / Popular Dishes
+      try {
+        let itemsQuery = supabase
+          .from("menu_items")
+          .select("*")
+          .eq("is_available", true);
+
+        if (configData?.popular_dishes && Array.isArray(configData.popular_dishes) && configData.popular_dishes.length > 0) {
+          itemsQuery = itemsQuery.in("id", configData.popular_dishes);
+        } else {
+          itemsQuery = itemsQuery
+            .not("image_url", "is", null)
+            .neq("image_url", "")
+            .order("name")
+            .limit(6);
+        }
+
+        const { data } = await itemsQuery;
+        if (data && data.length > 0) {
+          setFeaturedItems(data);
+          setBadgesMap(getDishBadgesMap());
+        } else {
+          const { data: fallbackData } = await supabase
+            .from("menu_items")
+            .select("*")
+            .eq("is_available", true)
+            .not("image_url", "is", null)
+            .neq("image_url", "")
+            .order("name")
+            .limit(6);
+          if (fallbackData) {
+            setFeaturedItems(fallbackData);
+            setBadgesMap(getDishBadgesMap());
+          }
+        }
+      } catch (e) {}
 
       // Fetch all image_urls for the dropdown selections
       const { data: allMenuData } = await supabase
@@ -110,7 +144,24 @@ function LandingPage() {
         setAllMenuImages(imageMap);
       }
     };
+
     fetchFeatured();
+
+    // Realtime subscription for instant homepage updates
+    const channel = supabase
+      .channel('homepage_landing_page_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'landing_page_config' }, payload => {
+        const newRow = payload.new as any;
+        const fromConfig = (newRow?.config as any)?.landing_page || (newRow?.config as any)?.landing_page_config;
+        if (fromConfig) {
+          setHomepageSettings(fromConfig);
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
@@ -204,7 +255,11 @@ function LandingPage() {
               <Link to="/delivery" className="w-full sm:w-auto">
                 <Button size="lg" variant="outline" className="h-13 px-7 rounded-full text-base font-semibold bg-white border border-slate-200 text-slate-800 hover:bg-slate-50 shadow-sm transition-all w-full flex items-center justify-center gap-2">
                   <Bike className="w-4 h-4 mr-2 text-slate-500" />
-                  <span>Delivery (Ditutup Sementara)</span>
+                  <span>
+                    {homepageSettings?.hero_section?.is_delivery_enabled === false
+                      ? `Delivery (${homepageSettings?.hero_section?.delivery_status_note || 'Ditutup Sementara'})`
+                      : 'Pesan Delivery 🛵'}
+                  </span>
                 </Button>
               </Link>
             </motion.div>
@@ -241,7 +296,11 @@ function LandingPage() {
           >
             <div className="relative aspect-[4/3] rounded-3xl overflow-hidden shadow-xl border border-slate-200 bg-slate-100">
               <img 
-                src={homepageSettings?.hero_item_id && allMenuImages[homepageSettings.hero_item_id] ? allMenuImages[homepageSettings.hero_item_id] : (featuredItems.length > 0 && featuredItems[0]?.image_url ? featuredItems[0].image_url : "/logo.png")} 
+                src={homepageSettings?.hero_section?.hero_image_url && homepageSettings.hero_section.hero_image_url !== '/logo.png'
+                  ? homepageSettings.hero_section.hero_image_url
+                  : (homepageSettings?.hero_item_id && allMenuImages[homepageSettings.hero_item_id] 
+                    ? allMenuImages[homepageSettings.hero_item_id] 
+                    : (featuredItems.length > 0 && featuredItems[0]?.image_url ? featuredItems[0].image_url : "/logo.png"))} 
                 alt="Hidangan Warung J&J Penampang"
                 className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
               />
@@ -276,16 +335,22 @@ function LandingPage() {
             {/* Card 1: Suasana Santai */}
             <div className="md:col-span-2 relative rounded-3xl overflow-hidden group bg-white border border-slate-200 shadow-sm">
               <img 
-                src={homepageSettings?.bento_1_item_id && allMenuImages[homepageSettings.bento_1_item_id] ? allMenuImages[homepageSettings.bento_1_item_id] : (featuredItems.length > 1 && featuredItems[1]?.image_url ? featuredItems[1].image_url : (featuredItems[0]?.image_url || "/logo.png"))} 
+                src={homepageSettings?.highlights_section?.[0]?.image_url && homepageSettings.highlights_section[0].image_url !== '/logo.png'
+                  ? homepageSettings.highlights_section[0].image_url
+                  : (homepageSettings?.bento_1_item_id && allMenuImages[homepageSettings.bento_1_item_id] 
+                    ? allMenuImages[homepageSettings.bento_1_item_id] 
+                    : (featuredItems.length > 1 && featuredItems[1]?.image_url ? featuredItems[1].image_url : (featuredItems[0]?.image_url || "/logo.png")))} 
                 alt="Suasana Warung J&J"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
               <div className="absolute bottom-0 left-0 p-6 md:p-8">
                 <h3 className="text-xl md:text-2xl font-bold text-white mb-1.5 font-heading">
-                  {homepageSettings?.bento_1_title || 'Ruang Santai & Mesra Keluarga'}
+                  {homepageSettings?.highlights_section?.[0]?.title || homepageSettings?.bento_1_title || 'Ruang Santai & Mesra Keluarga'}
                 </h3>
-                <p className="text-xs md:text-sm text-slate-200 font-medium">Sesuai untuk makan tengah hari bersama rakan sekerja mahupun makan malam santai bersama seisi keluarga di Penampang.</p>
+                <p className="text-xs md:text-sm text-slate-200 font-medium">
+                  {homepageSettings?.highlights_section?.[0]?.description || 'Sesuai untuk makan tengah hari bersama rakan sekerja mahupun makan malam santai bersama seisi keluarga di Penampang.'}
+                </p>
               </div>
             </div>
 
@@ -295,8 +360,12 @@ function LandingPage() {
                 <Flame className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-slate-900 mb-1 font-heading">Sambal Gesek & Belacan Padu</h3>
-                <p className="text-xs text-slate-600 leading-relaxed font-medium">Dilecek segar setiap pagi menggunakan cili padi kampung berkualiti tinggi dan perahan limau segar.</p>
+                <h3 className="text-lg font-bold text-slate-900 mb-1 font-heading">
+                  {homepageSettings?.highlights_section?.[1]?.title || 'Sambal Gesek & Belacan Padu'}
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                  {homepageSettings?.highlights_section?.[1]?.description || 'Dilecek segar setiap pagi menggunakan cili padi kampung berkualiti tinggi dan perahan limau segar.'}
+                </p>
               </div>
             </div>
 
@@ -306,24 +375,34 @@ function LandingPage() {
                 <Leaf className="w-5 h-5 text-emerald-600" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-slate-900 mb-1 font-heading">Bahan Mentah Segar Harian</h3>
-                <p className="text-xs text-slate-600 leading-relaxed font-medium">Ayam dan ikan segar dari pasar tempatan diperap dengan adunan kunyit dan rempah istimewa sebelum digoreng rangup.</p>
+                <h3 className="text-lg font-bold text-slate-900 mb-1 font-heading">
+                  {homepageSettings?.highlights_section?.[2]?.title || 'Bahan Mentah Segar Harian'}
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                  {homepageSettings?.highlights_section?.[2]?.description || 'Ayam dan ikan segar dari pasar tempatan diperap dengan adunan kunyit dan rempah istimewa sebelum digoreng rangup.'}
+                </p>
               </div>
             </div>
 
             {/* Card 4: Aneka Add-ons & Sampingan */}
             <div className="md:col-span-2 relative rounded-3xl overflow-hidden group bg-white border border-slate-200 shadow-sm">
               <img 
-                src={homepageSettings?.bento_2_item_id && allMenuImages[homepageSettings.bento_2_item_id] ? allMenuImages[homepageSettings.bento_2_item_id] : (featuredItems.length > 2 && featuredItems[2]?.image_url ? featuredItems[2].image_url : (featuredItems[0]?.image_url || "/logo.png"))} 
+                src={homepageSettings?.highlights_section?.[3]?.image_url && homepageSettings.highlights_section[3].image_url !== '/logo.png'
+                  ? homepageSettings.highlights_section[3].image_url
+                  : (homepageSettings?.bento_2_item_id && allMenuImages[homepageSettings.bento_2_item_id] 
+                    ? allMenuImages[homepageSettings.bento_2_item_id] 
+                    : (featuredItems.length > 2 && featuredItems[2]?.image_url ? featuredItems[2].image_url : (featuredItems[0]?.image_url || "/logo.png")))} 
                 alt="Pilihan Lauk Sampingan"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
               <div className="absolute bottom-0 left-0 p-6 md:p-8">
                 <h3 className="text-xl md:text-2xl font-bold text-white mb-1.5 font-heading">
-                  {homepageSettings?.bento_2_title || 'Pilihan Tambahan & Lauk Sampingan Pelbagai'}
+                  {homepageSettings?.highlights_section?.[3]?.title || homepageSettings?.bento_2_title || 'Pilihan Tambahan & Lauk Sampingan Pelbagai'}
                 </h3>
-                <p className="text-xs md:text-sm text-slate-200 font-medium">Boleh beli terus secara berasingan: Telur Dadar Krikil, Popcorn Ayam, Telur Mata, Nasi Tambah, dan aneka sambal tambahan mengikut citarasa anda.</p>
+                <p className="text-xs md:text-sm text-slate-200 font-medium">
+                  {homepageSettings?.highlights_section?.[3]?.description || 'Boleh beli terus secara berasingan: Telur Dadar Krikil, Popcorn Ayam, Telur Mata, Nasi Tambah, dan aneka sambal tambahan mengikut citarasa anda.'}
+                </p>
               </div>
             </div>
           </div>
@@ -428,7 +507,7 @@ function LandingPage() {
                 </div>
                 <div>
                   <h4 className="font-bold text-sm text-slate-900 font-heading">Alamat Premis</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed mt-0.5 whitespace-pre-wrap">{storeInfo?.address || 'Warung JNJ\na17, Jln Datuk Panglima Banting,\n89500 Penampang, Sabah, Malaysia'}</p>
+                  <p className="text-xs text-slate-600 leading-relaxed mt-0.5 whitespace-pre-wrap">{homepageSettings?.business_info?.address || storeInfo?.address || 'Warung JNJ\na17, Jln Datuk Panglima Banting,\n89500 Penampang, Sabah, Malaysia'}</p>
                 </div>
               </div>
               
@@ -438,7 +517,7 @@ function LandingPage() {
                 </div>
                 <div>
                   <h4 className="font-bold text-sm text-slate-900 font-heading">Waktu Operasi</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed mt-0.5">Dibuka Setiap Hari: 10:00 AM - 10:00 PM</p>
+                  <p className="text-xs text-slate-600 leading-relaxed mt-0.5">{homepageSettings?.business_info?.operating_hours || 'Dibuka Setiap Hari: 10:00 AM - 10:00 PM'}</p>
                 </div>
               </div>
 
@@ -448,14 +527,14 @@ function LandingPage() {
                 </div>
                 <div>
                   <h4 className="font-bold text-sm text-slate-900 font-heading">Hubungi / WhatsApp</h4>
-                  <p className="text-xs text-slate-600 leading-relaxed mt-0.5">{storeInfo?.phone_number || '017-222 1784'}</p>
+                  <p className="text-xs text-slate-600 leading-relaxed mt-0.5">{homepageSettings?.business_info?.phone_number || storeInfo?.phone_number || '017-222 1784'}</p>
                 </div>
               </div>
             </div>
           </div>
           
           <a 
-            href="https://www.google.com/maps/dir//Warung+JNJ,+a17,+Jln+Datuk+Panglima+Banting,+89500+Penampang,+Sabah/@5.9810544,116.0768506,9z/data=!4m8!4m7!1m0!1m5!1m1!1s0x323b692e917f9eb1:0x66ccb58dff90bc87!2m2!1d116.1146463!2d5.9284153?entry=ttu" 
+            href={homepageSettings?.business_info?.google_maps_link || "https://www.google.com/maps/dir//Warung+JNJ,+a17,+Jln+Datuk+Panglima+Banting,+89500+Penampang,+Sabah/@5.9810544,116.0768506,9z/data=!4m8!4m7!1m0!1m5!1m1!1s0x323b692e917f9eb1:0x66ccb58dff90bc87!2m2!1d116.1146463!2d5.9284153?entry=ttu"} 
             target="_blank" 
             rel="noopener noreferrer"
             className="relative aspect-[4/3] rounded-3xl overflow-hidden border border-slate-200 shadow-md block group bg-white"

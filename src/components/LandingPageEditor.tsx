@@ -82,26 +82,27 @@ export function LandingPageEditor() {
   const { data, isLoading } = useQuery<LandingPageConfig, Error>({
     queryKey: ['landingPageConfig'],
     queryFn: async () => {
-      // 1. Try querying landing_page_config table if present in schema
+      // 1. Primary: Load from landing_page_config table (stored in config.landing_page)
       try {
         const { data: tableData, error: tableError } = await supabase
           .from('landing_page_config')
-          .select('*')
+          .select('id, config')
           .limit(1)
           .maybeSingle();
 
-        if (!tableError && tableData) {
+        const lpcData = (tableData?.config as any)?.landing_page || (tableData?.config as any)?.landing_page_config || ((tableData as any)?.hero_section ? tableData : null);
+        if (!tableError && lpcData) {
           return {
             ...defaultLandingPageConfig,
-            ...tableData,
-            hero_section: { ...defaultLandingPageConfig.hero_section, ...(tableData.hero_section || {}) },
-            business_info: { ...defaultLandingPageConfig.business_info, ...(tableData.business_info || {}) },
-            highlights_section: tableData.highlights_section || defaultLandingPageConfig.highlights_section,
-            popular_dishes: tableData.popular_dishes || defaultLandingPageConfig.popular_dishes,
+            ...lpcData,
+            hero_section: { ...defaultLandingPageConfig.hero_section, ...(lpcData.hero_section || {}) },
+            business_info: { ...defaultLandingPageConfig.business_info, ...(lpcData.business_info || {}) },
+            highlights_section: lpcData.highlights_section || defaultLandingPageConfig.highlights_section,
+            popular_dishes: lpcData.popular_dishes || defaultLandingPageConfig.popular_dishes,
           } as LandingPageConfig;
         }
       } catch (err) {
-        // Table not in schema cache, safely continue to fallback
+        console.warn('Could not fetch from landing_page_config:', err);
       }
 
       // 2. Seamless fallback: Load from stores.settings.landing_page_config
@@ -152,45 +153,73 @@ export function LandingPageEditor() {
   // Mutation to save/update landing page config safely
   const saveConfigMutation = useMutation<LandingPageConfig, Error, LandingPageConfig>({
     mutationFn: async (newConfig: LandingPageConfig) => {
-      // 1. Always persist to stores.settings.landing_page_config (active Supabase schema compatible)
-      const { data: storeData, error: storeFetchErr } = await supabase
-        .from('stores')
-        .select('id, settings')
+      const targetStoreId = '1094d737-8104-4a55-b678-0fe9097beba0';
+
+      // 1. Primary Sync: public.landing_page_config (Permissive RLS, guaranteed writeable)
+      const { data: existingLpc, error: lpcFetchErr } = await supabase
+        .from('landing_page_config')
+        .select('id, store_id, config')
         .limit(1)
         .maybeSingle();
 
-      if (storeFetchErr) throw storeFetchErr;
-
-      if (storeData?.id) {
-        const currentSettings = (storeData.settings as any) || {};
-        const { error: storeUpdateErr } = await supabase
-          .from('stores')
-          .update({
-            settings: {
-              ...currentSettings,
-              landing_page_config: newConfig,
-            }
-          })
-          .eq('id', storeData.id);
-
-        if (storeUpdateErr) throw storeUpdateErr;
+      if (lpcFetchErr) {
+        console.warn('Error fetching existing landing_page_config:', lpcFetchErr);
       }
 
-      // 2. Also try writing to landing_page_config table if table exists
+      if (existingLpc) {
+        const updatedConfig = {
+          ...((existingLpc.config as any) || {}),
+          landing_page: newConfig,
+        };
+        const { error: lpcUpdateErr } = await supabase
+          .from('landing_page_config')
+          .update({
+            config: updatedConfig,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', existingLpc.id);
+
+        if (lpcUpdateErr) throw lpcUpdateErr;
+      } else {
+        const { error: lpcInsertErr } = await supabase
+          .from('landing_page_config')
+          .insert({
+            store_id: targetStoreId,
+            config: { landing_page: newConfig },
+            updated_at: new Date().toISOString(),
+          });
+
+        if (lpcInsertErr) throw lpcInsertErr;
+      }
+
+      // 2. Secondary fallback: Also try updating stores.settings if permissions allow
       try {
-        if (newConfig.id) {
+        const { data: storeData } = await supabase
+          .from('stores')
+          .select('id, settings')
+          .limit(1)
+          .maybeSingle();
+
+        if (storeData?.id) {
+          const currentSettings = (storeData.settings as any) || {};
           await supabase
-            .from('landing_page_config')
-            .update(newConfig)
-            .eq('id', newConfig.id);
-        } else {
-          await supabase
-            .from('landing_page_config')
-            .insert(newConfig);
+            .from('stores')
+            .update({
+              settings: {
+                ...currentSettings,
+                landing_page_config: newConfig,
+              },
+            })
+            .eq('id', storeData.id);
         }
       } catch (e) {
-        // Table not present in schema cache, safely ignored since stores.settings is already saved
+        // Silently ignore if RLS restricts stores update
       }
+
+      // Also save locally for instant fallback
+      try {
+        localStorage.setItem('warung_landing_page_config', JSON.stringify(newConfig));
+      } catch (e) {}
 
       return newConfig;
     },
