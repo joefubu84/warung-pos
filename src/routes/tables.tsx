@@ -203,9 +203,20 @@ function TablesPage() {
           const newRow = payload.new as any;
           const oldRow = payload.old as any;
           if (newRow?.table_number?.startsWith('_')) return prev;
-          if (payload.eventType === 'INSERT') return [...prev, newRow as Table].sort((a,b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));
-          if (payload.eventType === 'UPDATE') return prev.map(t => t.id === newRow.id ? newRow as Table : t);
-          if (payload.eventType === 'DELETE') return prev.filter(t => t.id !== oldRow.id);
+          if (payload.eventType === 'INSERT') {
+            if (prev.some(t => t.id === newRow.id)) return prev;
+            return [...prev, newRow as Table].sort((a,b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));
+          }
+          if (payload.eventType === 'UPDATE') {
+            const exists = prev.some(t => t.id === newRow.id);
+            if (exists) {
+              return prev.map(t => t.id === newRow.id ? newRow as Table : t).sort((a,b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));
+            }
+            return [...prev, newRow as Table].sort((a,b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));
+          }
+          if (payload.eventType === 'DELETE') {
+            return prev.filter(t => t.id !== oldRow.id);
+          }
           return prev;
         });
       })
@@ -230,7 +241,8 @@ function TablesPage() {
       ]);
 
       if (tablesData) {
-        const sorted = (tablesData as Table[]).sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));
+        const unique = Array.from(new Map((tablesData as Table[]).map(t => [t.id, t])).values());
+        const sorted = unique.sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));
         setTables(sorted);
       }
       if (ordersData) setActiveOrders(ordersData);
@@ -243,7 +255,13 @@ function TablesPage() {
 
   const handleAddTable = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTableNumber.trim()) return;
+    const trimmed = newTableNumber.trim();
+    if (!trimmed) return;
+
+    if (tables.some(t => t.table_number.toLowerCase() === trimmed.toLowerCase())) {
+      toast.error(`Meja ${trimmed} sudah wujud! Sila gunakan nombor meja yang lain.`);
+      return;
+    }
 
     setIsAdding(true);
     try {
@@ -270,7 +288,7 @@ function TablesPage() {
       const { data, error } = await supabase
         .from('tables')
         .insert([{
-          table_number: newTableNumber.trim(),
+          table_number: trimmed,
           qr_token: qrToken,
           store_id: targetStoreId,
           status: 'available'
@@ -280,9 +298,12 @@ function TablesPage() {
 
       if (error) throw error;
       
-      setTables(prev => [...prev, data as Table].sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' })));
+      setTables(prev => {
+        if (prev.some(t => t.id === (data as Table).id)) return prev;
+        return [...prev, data as Table].sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));
+      });
       setNewTableNumber('');
-      toast.success(`Meja ${newTableNumber.trim()} berjaya ditambah!`);
+      toast.success(`Meja ${trimmed} berjaya ditambah!`);
     } catch (err: any) {
       toast.error(err.message || 'Gagal menambah meja');
     } finally {
@@ -296,19 +317,24 @@ function TablesPage() {
       if (error) {
         toast.error('Failed to delete table');
       } else {
-        setTables(tables.filter(t => t.id !== table.id));
+        setTables(prev => prev.filter(t => t.id !== table.id));
         toast.success('Table deleted');
       }
     }
   };
 
   const handleSaveEdit = async (id: string) => {
-    if (!editValue.trim()) return;
-    const { error } = await supabase.from('tables').update({ table_number: editValue.trim() }).eq('id', id);
+    const trimmed = editValue.trim();
+    if (!trimmed) return;
+    if (tables.some(t => t.id !== id && t.table_number.toLowerCase() === trimmed.toLowerCase())) {
+      toast.error(`Meja ${trimmed} sudah wujud! Sila gunakan nombor meja yang lain.`);
+      return;
+    }
+    const { error } = await supabase.from('tables').update({ table_number: trimmed }).eq('id', id);
     if (error) {
       toast.error('Gagal mengemas kini nombor meja: ' + error.message);
     } else {
-      setTables(prev => prev.map(t => t.id === id ? { ...t, table_number: editValue.trim() } : t).sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' })));
+      setTables(prev => prev.map(t => t.id === id ? { ...t, table_number: trimmed } : t).sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' })));
       setEditingId(null);
       toast.success('Nombor meja berjaya dikemas kini');
     }
