@@ -289,6 +289,7 @@ const addSplitPayment = () => {
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, (payload: any) => {
         const newRow = payload.new as any;
+        const oldRow = payload.old as any;
         if (newRow?.status && typeof newRow.status === 'string' && newRow.status.startsWith('BUZZER:')) {
           try {
             const rawJson = newRow.status.slice('BUZZER:'.length);
@@ -296,6 +297,22 @@ const addSplitPayment = () => {
             handleBuzzerNotice(parsed);
           } catch (e) {
             console.warn('Error parsing BUZZER status in counter:', e);
+          }
+        }
+
+        // Keep counter tables in sync
+        if (payload.eventType === 'INSERT') {
+          if (!newRow?.table_number?.startsWith('_')) {
+            setTables(prev => {
+              if (prev.some(t => t.id === newRow.id)) return prev;
+              return [...prev, newRow as Table].sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));
+            });
+          }
+        } else if (payload.eventType === 'DELETE') {
+          setTables(prev => prev.filter(t => t.id !== oldRow.id));
+        } else if (payload.eventType === 'UPDATE') {
+          if (!newRow?.table_number?.startsWith('_')) {
+            setTables(prev => prev.map(t => t.id === newRow.id ? (newRow as Table) : t).sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' })));
           }
         }
       })
@@ -324,11 +341,11 @@ const addSplitPayment = () => {
   const fetchTables = async () => {
     const { data, error } = await supabase
       .from('tables')
-      .select('*')
-      .not('table_number', 'like', '_%');
+      .select('*');
     
     if (!error && data) {
-      const sorted = (data as Table[]).sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));
+      const filtered = (data as Table[]).filter(t => !t.table_number?.startsWith('_'));
+      const sorted = filtered.sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));
       setTables(sorted);
     }
   };

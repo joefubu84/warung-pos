@@ -561,7 +561,8 @@ function OrdersPage() {
       .order('table_number', { ascending: true });
     
     if (!error && data) {
-      setTables(data as Table[]);
+      const filtered = (data as Table[]).filter(t => !t.table_number?.startsWith('_'));
+      setTables(filtered);
     }
   };
 

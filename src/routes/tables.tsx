@@ -233,7 +233,7 @@ function TablesPage() {
     
     try {
       const [{ data: tablesData }, { data: ordersData }] = await Promise.all([
-        supabase.from('tables').select('*').not('table_number', 'like', '_%'),
+        supabase.from('tables').select('*'),
         supabase.from('orders')
           .select('id, table_id, status, total_amount, created_at')
           .eq('type', 'dine_in')
@@ -241,7 +241,8 @@ function TablesPage() {
       ]);
 
       if (tablesData) {
-        const unique = Array.from(new Map((tablesData as Table[]).map(t => [t.id, t])).values());
+        const filtered = (tablesData as Table[]).filter(t => !t.table_number?.startsWith('_'));
+        const unique = Array.from(new Map(filtered.map(t => [t.id, t])).values());
         const sorted = unique.sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' }));
         setTables(sorted);
       }
