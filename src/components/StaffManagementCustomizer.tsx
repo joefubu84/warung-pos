@@ -147,6 +147,46 @@ export const StaffManagementCustomizer = memo(function StaffManagementCustomizer
     });
   };
 
+  // Toggle single page manually for the staff being edited/added
+  const handleToggleStaffFormPage = (path: string) => {
+    setStaffForm(prev => {
+      const current = prev.allowed_pages || [];
+      const updated = current.includes(path)
+        ? current.filter(p => p !== path)
+        : [...current, path];
+      return {
+        ...prev,
+        allowed_pages: updated
+      };
+    });
+  };
+
+  // Quick preset actions for the staff modal
+  const handleStaffFormApplyRolePreset = () => {
+    const preset = config.role_permissions[staffForm.role] || DEFAULT_ROLE_PERMISSIONS[staffForm.role] || [];
+    setStaffForm(prev => ({
+      ...prev,
+      allowed_pages: [...preset]
+    }));
+    toast.success(`Akses halaman diselaraskan dengan peranan ${getRoleBadgeInfo(staffForm.role).label}!`);
+  };
+
+  const handleStaffFormApplyAll = () => {
+    setStaffForm(prev => ({
+      ...prev,
+      allowed_pages: SYSTEM_PAGES.map(p => p.path)
+    }));
+    toast.success('Semua 10 halaman dipilih untuk staf ini!');
+  };
+
+  const handleStaffFormClearAll = () => {
+    setStaffForm(prev => ({
+      ...prev,
+      allowed_pages: []
+    }));
+    toast.info('Semua pilihan akses halaman telah dikosongkan.');
+  };
+
   // Open modal for new staff
   const handleOpenAddStaff = () => {
     setEditingStaffId(null);
@@ -485,9 +525,15 @@ export const StaffManagementCustomizer = memo(function StaffManagementCustomizer
                         </strong>
                       </div>
                       
-                      <span className="text-[10px] font-bold text-slate-500 bg-white px-2 py-0.5 rounded-full border border-slate-200">
-                        {allowedPages.length} Halaman
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditStaff(staff)}
+                        title="Klik untuk ubah pilihan akses halaman staf ini"
+                        className="text-[10px] font-bold text-slate-700 bg-white hover:bg-orange-50 hover:text-orange-700 hover:border-orange-300 px-2 py-0.5 rounded-full border border-slate-200 transition-colors flex items-center gap-1 shadow-2xs"
+                      >
+                        <Shield className="w-2.5 h-2.5 text-orange-500" />
+                        <span>{allowedPages.length}/10 Halaman</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -635,20 +681,19 @@ export const StaffManagementCustomizer = memo(function StaffManagementCustomizer
           {SYSTEM_PAGES.map((page) => {
             const currentAllowed = config.role_permissions[selectedRoleTab] || [];
             const isAllowed = currentAllowed.includes(page.path);
-            const isSettingsLocked = page.path === '/settings';
 
             return (
               <div
                 key={page.path}
                 onClick={() => handleToggleRolePage(selectedRoleTab, page.path)}
-                className={`p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 ${
+                className={`p-3.5 rounded-2xl border transition-all duration-200 cursor-pointer flex items-center justify-between gap-3 select-none ${
                   isAllowed 
-                    ? 'bg-emerald-50/50 border-emerald-300/80 shadow-xs' 
-                    : 'bg-slate-50 border-slate-200/80 opacity-70 hover:opacity-100'
+                    ? 'bg-emerald-50/70 border-emerald-400 shadow-xs ring-1 ring-emerald-400/20' 
+                    : 'bg-slate-50 border-slate-200/80 hover:bg-slate-100/70 hover:border-slate-300'
                 }`}
               >
                 <div className="flex items-start gap-3 min-w-0">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 border ${
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg shrink-0 border transition-colors ${
                     isAllowed ? 'bg-emerald-100 border-emerald-300' : 'bg-slate-200 border-slate-300'
                   }`}>
                     {page.emoji}
@@ -668,7 +713,10 @@ export const StaffManagementCustomizer = memo(function StaffManagementCustomizer
                   </div>
                 </div>
 
-                <div className="shrink-0 pl-2">
+                <div 
+                  className="shrink-0 pl-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Switch
                     checked={isAllowed}
                     onCheckedChange={() => handleToggleRolePage(selectedRoleTab, page.path)}
@@ -712,7 +760,7 @@ export const StaffManagementCustomizer = memo(function StaffManagementCustomizer
 
       {/* 4. MODAL: TAMBAH / SUNTING KAKITANGAN (ADD / EDIT STAFF MODAL) */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-md bg-white rounded-3xl p-6 border border-slate-200 shadow-2xl">
+        <DialogContent className="sm:max-w-xl max-h-[92vh] overflow-y-auto bg-white rounded-3xl p-6 border border-slate-200 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-slate-900 flex items-center gap-2">
               <UserPlus className="w-5 h-5 text-orange-600" />
@@ -817,6 +865,85 @@ export const StaffManagementCustomizer = memo(function StaffManagementCustomizer
                 checked={staffForm.active}
                 onCheckedChange={(checked) => setStaffForm(prev => ({ ...prev, active: checked }))}
               />
+            </div>
+
+            {/* Pilihan Akses Halaman Manual (Manual Page Permissions) */}
+            <div className="pt-2 border-t border-slate-200/80 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <Shield className="w-4 h-4 text-orange-600" />
+                    <Label className="text-xs font-black text-slate-900">
+                      Pilihan Akses Halaman Manual ({staffForm.allowed_pages?.length || 0}/10 Dipilih)
+                    </Label>
+                  </div>
+                  <p className="text-[11px] text-slate-500">
+                    Klik mana-mana halaman di bawah untuk buka/tutup akses khusus bagi staf ini.
+                  </p>
+                </div>
+
+                {/* Quick Presets */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={handleStaffFormApplyRolePreset}
+                    className="px-2 py-1 rounded-lg text-[10px] font-bold bg-orange-100 hover:bg-orange-200 text-orange-800 transition-colors"
+                    title="Muat semula mengikut peranan"
+                  >
+                    ⚡ Ikut Peranan
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleStaffFormApplyAll}
+                    className="px-2 py-1 rounded-lg text-[10px] font-bold bg-emerald-100 hover:bg-emerald-200 text-emerald-800 transition-colors"
+                    title="Pilih semua 10 halaman"
+                  >
+                    👑 Semua
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleStaffFormClearAll}
+                    className="px-2 py-1 rounded-lg text-[10px] font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                    title="Nyahpilih semua"
+                  >
+                    Kosongkan
+                  </button>
+                </div>
+              </div>
+
+              {/* 10 Page Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-2 gap-2 max-h-56 overflow-y-auto pr-1">
+                {SYSTEM_PAGES.map((page) => {
+                  const isChecked = (staffForm.allowed_pages || []).includes(page.path);
+                  return (
+                    <div
+                      key={page.path}
+                      onClick={() => handleToggleStaffFormPage(page.path)}
+                      className={`p-2.5 rounded-xl border cursor-pointer select-none transition-all flex items-center justify-between gap-2 ${
+                        isChecked
+                          ? 'bg-emerald-50 border-emerald-400 text-emerald-950 ring-1 ring-emerald-400/30'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="text-base shrink-0">{page.emoji}</span>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold truncate leading-tight">{page.name}</p>
+                          <code className="text-[9px] font-mono text-slate-400 block truncate">{page.path}</code>
+                        </div>
+                      </div>
+
+                      <div className={`w-5 h-5 rounded-md flex items-center justify-center shrink-0 text-[10px] font-bold border transition-colors ${
+                        isChecked
+                          ? 'bg-emerald-600 border-emerald-600 text-white'
+                          : 'border-slate-300 bg-white text-transparent'
+                      }`}>
+                        ✓
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
