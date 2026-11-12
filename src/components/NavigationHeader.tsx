@@ -3,6 +3,7 @@ import { Link, useLocation } from '@tanstack/react-router';
 import { getNavOrderConfig, NavItemConfig } from '@/lib/addons-config';
 import { SlidersHorizontal, LogOut, UserCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { clearStaffPinSession } from '@/lib/auth-state';
 import { NavCustomizerModal } from './NavCustomizerModal';
 import { 
   getActiveStaffUser, 
@@ -120,8 +121,8 @@ export function NavigationHeader() {
               onClick={async () => {
                 try {
                   setActiveStaffUser(null);
-                  localStorage.removeItem('warung_emergency_staff_session');
-                } catch (e) {}
+                  clearStaffPinSession();
+                } catch {}
                 await supabase.auth.signOut();
                 window.location.href = '/auth';
               }}

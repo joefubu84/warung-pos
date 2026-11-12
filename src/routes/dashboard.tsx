@@ -5,6 +5,7 @@ import { requireStaffAuth } from '@/lib/auth-guard';
 
 import { RestaurantSetupCard } from '@/components/RestaurantSetupCard';
 import { QuickStockBar } from '@/components/QuickStockBar';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Printer, 
   RefreshCw, 
@@ -260,10 +261,28 @@ function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] text-slate-900 p-8 flex items-center justify-center font-sans">
-        <div className="flex flex-col items-center gap-3 text-slate-500">
-          <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-          <p className="font-mono text-sm font-semibold">Memuatkan data ringkasan eksekutif...</p>
+      <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 font-sans">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="bg-white border border-slate-200/90 p-6 rounded-3xl flex flex-col sm:flex-row justify-between gap-4">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-64 rounded-xl" />
+              <Skeleton className="h-4 w-48 rounded-lg" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-10 w-10 rounded-2xl" />
+              <Skeleton className="h-10 w-36 rounded-2xl" />
+            </div>
+          </div>
+          <div className="bg-white border border-slate-200/90 p-4 rounded-3xl grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+            {Array.from({ length: 6 }).map((_, idx) => (
+              <Skeleton key={idx} className="h-14 rounded-2xl" />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Skeleton className="h-48 rounded-3xl" />
+            <Skeleton className="h-48 rounded-3xl" />
+          </div>
+          <Skeleton className="h-60 rounded-3xl" />
         </div>
       </div>
     );
@@ -372,14 +391,14 @@ function DashboardPage() {
 
             <Link
               to="/menu"
-              className="flex items-center gap-2.5 p-3 rounded-2xl bg-purple-50/60 border border-purple-200/80 text-purple-950 hover:bg-purple-100/70 transition-all font-black text-xs group active:scale-95 shadow-xs"
+              className="flex items-center gap-2.5 p-3 rounded-2xl bg-teal-50/60 border border-teal-200/80 text-teal-950 hover:bg-teal-100/70 transition-all font-black text-xs group active:scale-95 shadow-xs"
             >
-              <div className="w-8 h-8 rounded-xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <div className="w-8 h-8 rounded-xl bg-teal-600 text-white flex items-center justify-center shrink-0 shadow-xs">
                 <UtensilsCrossed className="w-4 h-4" />
               </div>
               <div className="min-w-0">
                 <p className="truncate">Menu & Stok</p>
-                <p className="text-[10px] text-purple-700/80 font-normal">Katalog Hidangan</p>
+                <p className="text-[10px] text-teal-700/80 font-normal">Katalog Hidangan</p>
               </div>
             </Link>
 
@@ -638,7 +657,7 @@ function DashboardPage() {
                 <span className="text-slate-700 font-bold flex items-center gap-2">
                   <span>🛵</span> Penghantaran (Delivery Rider)
                 </span>
-                <span className="font-black bg-purple-50 text-purple-700 border border-purple-200 px-3 py-1 rounded-full text-xs font-mono">
+                <span className="font-black bg-sky-50 text-sky-700 border border-sky-200 px-3 py-1 rounded-full text-xs font-mono">
                   {breakdown.delivery} pesanan
                 </span>
               </div>
@@ -706,7 +725,7 @@ function DashboardPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 font-mono">
               <div className="p-4 bg-slate-50 border border-slate-200/90 rounded-2xl">
                 <h3 className="font-bold text-slate-500 text-xs font-sans mb-1">Purata Masa Masak</h3>
-                <p className="text-2xl font-black text-purple-700">{timingStats.avgMins.toFixed(1)} <span className="text-xs font-normal text-slate-500">min</span></p>
+                <p className="text-2xl font-black text-orange-600">{timingStats.avgMins.toFixed(1)} <span className="text-xs font-normal text-slate-500">min</span></p>
               </div>
               <div className="p-4 bg-slate-50 border border-slate-200/90 rounded-2xl">
                 <h3 className="font-bold text-slate-500 text-xs font-sans mb-1">Paling Pantas</h3>

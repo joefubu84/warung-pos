@@ -16,8 +16,10 @@ import {
   DialogDescription,
   DialogFooter 
 } from '@/components/ui/dialog';
-import { Edit2, Trash2, Plus, Image as ImageIcon, Loader2, UtensilsCrossed, Sparkles, RefreshCw, Search, Camera, UploadCloud, X, AlertTriangle } from 'lucide-react';
+import { Edit2, Trash2, Plus, Image as ImageIcon, Loader2, UtensilsCrossed, Tag, Search, Camera, UploadCloud, X, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { 
   getAddonsConfig, 
   saveAddonsConfig, 
@@ -172,7 +174,7 @@ function MenuPage() {
       setImageUrl(finalUrl);
       toast.success("Gambar hidangan berjaya dimasukkan! 📸");
     } catch (err: any) {
-      toast.error('Gagal memproses gambar: ' + (err.message || 'Sila cuba lagi.'));
+      toast.error(getFriendlyErrorMessage(err, 'Gagal memproses gambar. Sila cuba lagi.'));
     } finally {
       setUploadingPhoto(false);
     }
@@ -256,7 +258,7 @@ function MenuPage() {
       cancelEdit();
       await fetchMenuItems();
     } catch (err: any) {
-      setError(err.message || 'Failed to save menu item');
+      setError(getFriendlyErrorMessage(err, 'Gagal menyimpan maklumat hidangan.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -355,7 +357,7 @@ function MenuPage() {
       await fetchMenuItems();
       setDeleteTargetItem(null);
     } catch (err: any) {
-      toast.error('Gagal memadam menu: ' + (err.message || 'Sila cuba lagi'));
+      toast.error(getFriendlyErrorMessage(err, 'Gagal memadam hidangan menu. Sila cuba lagi.'));
     } finally {
       setIsDeleting(false);
     }
@@ -368,7 +370,7 @@ function MenuPage() {
       .eq('id', id);
       
     if (error) {
-      alert('Error updating status: ' + error.message);
+      toast.error(getFriendlyErrorMessage(error, 'Gagal mengemas kini status hidangan.'));
     } else {
       setItems(items.map(item => item.id === id ? { ...item, is_available: !currentStatus } : item));
       toast.success(currentStatus ? "Dish set to OFF Menu" : "Dish set to ON Menu");
@@ -377,10 +379,39 @@ function MenuPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex items-center justify-center font-mono">
-        <div className="flex flex-col items-center gap-3">
-          <RefreshCw className="w-8 h-8 animate-spin text-orange-600" />
-          <p className="text-sm text-slate-500">Loading Menu & Inventory Database...</p>
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900 p-4 md:p-8 font-sans">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="bg-white border border-slate-200/90 p-6 rounded-3xl flex flex-col sm:flex-row justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <Skeleton className="w-12 h-12 rounded-full" />
+              <div className="space-y-2">
+                <Skeleton className="h-7 w-64 rounded-xl" />
+                <Skeleton className="h-4 w-80 max-w-full rounded-lg" />
+              </div>
+            </div>
+            <Skeleton className="h-10 w-44 rounded-2xl" />
+          </div>
+          <div className="bg-white p-4 rounded-3xl border border-slate-200/90 flex flex-col sm:flex-row justify-between gap-3">
+            <Skeleton className="h-10 w-full sm:w-80 rounded-xl" />
+            <div className="flex gap-2">
+              <Skeleton className="h-9 w-24 rounded-xl" />
+              <Skeleton className="h-9 w-24 rounded-xl" />
+              <Skeleton className="h-9 w-24 rounded-xl" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-white border border-slate-200/90 rounded-3xl overflow-hidden p-4 space-y-3">
+                <Skeleton className="h-40 w-full rounded-2xl" />
+                <div className="flex justify-between gap-2">
+                  <Skeleton className="h-5 w-32 rounded-lg" />
+                  <Skeleton className="h-5 w-16 rounded-lg" />
+                </div>
+                <Skeleton className="h-5 w-24 rounded-full" />
+                <Skeleton className="h-8 w-full rounded-xl" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -771,7 +802,7 @@ function MenuPage() {
                 {/* DISH BADGES CONFIGURATION */}
                 <div className="p-3.5 bg-slate-50/80 rounded-2xl space-y-3 border border-slate-200 font-mono">
                   <Label className="text-xs font-bold text-slate-800 uppercase tracking-wider block border-b border-slate-100 pb-1.5 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-600" /> Customer Menu Badges
+                    <Tag className="w-3.5 h-3.5 text-amber-600" /> Customer Menu Badges
                   </Label>
 
                   <div className="space-y-2">
@@ -885,7 +916,7 @@ function MenuPage() {
                   Padam Hidangan Menu?
                 </DialogTitle>
                 <DialogDescription className="text-xs text-slate-500 font-mono mt-1.5 leading-relaxed">
-                  Adakah anda pasti mahu memadam hidangan berikut daripada pangkalan data dan menu digital?
+                  Adakah anda pasti mahu memadam hidangan berikut daripada senarai menu digital kedai?
                 </DialogDescription>
               </div>
 
@@ -1016,7 +1047,7 @@ function AddonsAndPromosManagerCard() {
       <Card className="bg-white border-slate-200 text-slate-900 shadow-xs rounded-2xl">
         <CardHeader className="border-b border-slate-100">
           <CardTitle className="text-lg font-bold flex items-center justify-between text-orange-600">
-            <span>✨ Custom Customer Add-ons</span>
+            <span>Custom Customer Add-ons</span>
             <Badge variant="outline" className="border-emerald-300 bg-emerald-50 text-emerald-800 font-mono text-[10px]">
               {addons.length} Active
             </Badge>
@@ -1102,7 +1133,7 @@ function AddonsAndPromosManagerCard() {
             <Input
               value={newPromoText}
               onChange={(e) => setNewPromoText(e.target.value)}
-              placeholder="e.g. ⚡ Happy Hour: 20% OFF Beverages!"
+              placeholder="e.g. Happy Hour: 20% OFF Beverages!"
               className="bg-slate-50 border-slate-200 text-slate-900 text-xs"
             />
             <Button 

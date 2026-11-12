@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from '@tanstack/react-router';
-import { CheckCircle2, Circle, ArrowRight, Store, UtensilsCrossed, QrCode, CreditCard, Printer, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { fetchToyyibPayGatewayStatus, getToyyibPayConfig } from '@/lib/toyyibpay';
+import { CheckCircle2, Circle, ArrowRight, Store, UtensilsCrossed, QrCode, CreditCard, Printer, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SetupStep {
   id: string;
@@ -28,26 +30,24 @@ export function RestaurantSetupCard() {
   const checkSetupStatus = async () => {
     try {
       setLoading(true);
-      const localToyyibPay = typeof window !== 'undefined' ? localStorage.getItem('toyyibpay_config') : null;
-      let hasToyyib = false;
-      try {
-        if (localToyyibPay) {
-          const parsed = JSON.parse(localToyyibPay);
-          hasToyyib = !!(parsed?.userSecretKey && parsed?.categoryCode);
-        }
-      } catch {}
-
+      const localPrefs = getToyyibPayConfig();
       const [
+        gatewayStatus,
         { data: stores },
         { count: menuItemsCount },
         { count: tablesCount },
         { data: printerConfig }
       ] = await Promise.all([
-        supabase.from('stores').select('id, name, logo_url, phone_number').limit(1).maybeSingle(),
+        fetchToyyibPayGatewayStatus(),
+        supabase.from('stores').select('id, name, logo_url, phone_number, settings').limit(1).maybeSingle(),
         supabase.from('menu_items').select('*', { count: 'exact', head: true }),
         supabase.from('tables').select('*', { count: 'exact', head: true }),
         supabase.from('printer_settings').select('store_id, printer_name').limit(1).maybeSingle()
       ]);
+
+      const storeToyyib = (stores?.settings as any)?.toyyibpay;
+      const hasCategory = Boolean(localPrefs.categoryCode || storeToyyib?.categoryCode || gatewayStatus.categoryConfigured);
+      const hasToyyib = Boolean(gatewayStatus.configured && hasCategory);
 
       setStoreData(stores);
       setMenuCount(menuItemsCount || 0);
@@ -89,7 +89,7 @@ export function RestaurantSetupCard() {
     {
       id: 'payment_gateway',
       title: 'Gerbang Pembayaran ToyyibPay / DuitNow',
-      description: hasPaymentConfig ? 'ToyyibPay Secret & Kategori diaktifkan' : 'Sambungkan akaun ToyyibPay untuk bayaran online tanpa sentuh.',
+      description: hasPaymentConfig ? 'Pembayaran FPX automatik & kod kategori telah diaktifkan' : 'Sambungkan akaun ToyyibPay untuk bayaran online tanpa sentuh.',
       path: '/settings',
       isComplete: hasPaymentConfig,
       icon: CreditCard,
@@ -109,9 +109,9 @@ export function RestaurantSetupCard() {
 
   if (loading) {
     return (
-      <div className="bg-white border border-slate-200/90 p-5 rounded-3xl shadow-xs animate-pulse">
-        <div className="h-4 bg-slate-200 rounded-lg w-1/3 mb-2" />
-        <div className="h-2 bg-slate-100 rounded-full w-full" />
+      <div className="bg-white border border-slate-200/90 p-5 rounded-3xl shadow-xs space-y-2.5" aria-busy="true">
+        <Skeleton className="h-4 w-1/3 rounded-lg" />
+        <Skeleton className="h-2 w-full rounded-full" />
       </div>
     );
   }
@@ -122,7 +122,7 @@ export function RestaurantSetupCard() {
       <div className="p-5 border-b border-slate-100 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-orange-500 shrink-0">
-            <Sparkles className="w-5 h-5" />
+            <Store className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">

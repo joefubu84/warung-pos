@@ -20,6 +20,8 @@ import {
   Layers
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 
 export const Route = createFileRoute('/inventory')({
   ssr: false,
@@ -64,7 +66,7 @@ function InventoryPage() {
         setItems(data as InventoryItem[]);
       }
     } catch (err: any) {
-      toast.error('Gagal memuatkan data inventori: ' + err.message);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal memuatkan data inventori.'));
     } finally {
       setLoading(false);
     }
@@ -167,7 +169,7 @@ function InventoryPage() {
         toast.error(`"${item.name}" kini DITANDAKAN HABIS (86 / Sold Out)!`);
       }
     } catch (err: any) {
-      toast.error('Gagal mengemas kini status: ' + err.message);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal mengemas kini status stok.'));
     } finally {
       setUpdatingId(null);
     }
@@ -197,7 +199,7 @@ function InventoryPage() {
         is_available: newAvailable
       } : it));
     } catch (err: any) {
-      toast.error('Gagal mengemas kini kuantiti: ' + err.message);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal mengemas kini kuantiti stok.'));
     } finally {
       setUpdatingId(null);
     }
@@ -242,7 +244,7 @@ function InventoryPage() {
 
       toast.success(`Kuantiti untuk "${item.name}" dikemas kini ke ${parsed}.`);
     } catch (err: any) {
-      toast.error('Gagal menyimpan kuantiti: ' + err.message);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal menyimpan kuantiti stok.'));
     } finally {
       setUpdatingId(null);
     }
@@ -270,7 +272,7 @@ function InventoryPage() {
 
       toast.success(`"${item.name}" kini ditetapkan kepada Tanpa Had (∞).`);
     } catch (err: any) {
-      toast.error('Gagal menetapkan tanpa had: ' + err.message);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal menetapkan stok tanpa had.'));
     } finally {
       setUpdatingId(null);
     }
@@ -480,14 +482,27 @@ function InventoryPage() {
               Senarai Hidangan ({filteredItems.length} dijumpai)
             </span>
             <span className="text-[11px] text-slate-400 font-medium">
-              Kemas kini automatik disegerakkan dengan pangkalan data
+              Kemas kini automatik masa nyata merentasi semua peranti
             </span>
           </div>
 
           {loading && items.length === 0 ? (
-            <div className="py-20 text-center text-slate-400">
-              <RefreshCw className="w-8 h-8 mx-auto mb-2 animate-spin text-orange-500" />
-              <p className="text-xs font-medium">Memuatkan data inventori...</p>
+            <div className="divide-y divide-slate-100">
+              {Array.from({ length: 6 }).map((_, idx) => (
+                <div key={idx} className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3.5 min-w-[280px]">
+                    <Skeleton className="w-14 h-14 rounded-2xl shrink-0" />
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-4 w-44 rounded-md" />
+                      <Skeleton className="h-3 w-28 rounded-md" />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-9 w-36 rounded-xl" />
+                    <Skeleton className="h-10 w-36 rounded-xl" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="py-20 text-center text-slate-400">

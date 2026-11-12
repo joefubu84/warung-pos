@@ -21,7 +21,7 @@ const DEFAULT_ADDONS: CustomAddon[] = [
 ];
 
 const DEFAULT_PROMOS: string[] = [
-  "⚡ Happy Hour Special: 20% OFF All Beverages!",
+  "Happy Hour Special: 20% OFF All Beverages!",
   "🎁 Order > RM 30 & get FREE Teh O Ais!",
   "🌟 Today's Special: Nasi Ayam Warung + Drink for RM 14.90",
 ];

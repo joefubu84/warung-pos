@@ -5,7 +5,6 @@ import {
   CheckCircle2, 
   Clock, 
   ChefHat, 
-  Sparkles, 
   Bell, 
   Share2, 
   ShoppingBag,
@@ -87,7 +86,6 @@ export function CustomerOrderTracker({ orderId, onClose }: CustomerOrderTrackerP
         },
         (payload) => {
           const newStatus = (payload.new as any).status;
-          console.log(`⚡ Realtime customer order status update: ${newStatus}`);
           setStatus(newStatus);
           
           if (newStatus === 'ready') {
@@ -123,7 +121,7 @@ export function CustomerOrderTracker({ orderId, onClose }: CustomerOrderTrackerP
   const STEPS = [
     { id: 'pending', label: 'Order Received', icon: ShoppingBag },
     { id: 'preparing', label: 'In Kitchen', icon: ChefHat },
-    { id: 'ready', label: 'Ready to Serve', icon: Sparkles },
+    { id: 'ready', label: 'Ready to Serve', icon: Bell },
     { id: 'completed', label: 'Completed', icon: CheckCircle2 },
   ];
 
@@ -172,7 +170,7 @@ export function CustomerOrderTracker({ orderId, onClose }: CustomerOrderTrackerP
       {status === 'ready' ? (
         <div className="bg-emerald-50 border-2 border-emerald-500 p-4 rounded-2xl text-center space-y-1 animate-pulse">
           <div className="text-xl font-black text-emerald-800 flex items-center justify-center gap-2">
-            <Sparkles className="w-6 h-6 text-emerald-600" /> HIDANGAN ANDA SUDAH SIAP! 🎉
+            <Utensils className="w-6 h-6 text-emerald-600" /> HIDANGAN ANDA SUDAH SIAP! 🎉
           </div>
           <p className="text-xs text-emerald-700 font-medium">
             {tableNumber ? `Staf mesra kami akan menghantar hidangan panas ke Meja #${tableNumber} sebentar lagi! 🍽️` : 'Sila ambil bungkusan pesanan anda di kaunter! 🛍️'}

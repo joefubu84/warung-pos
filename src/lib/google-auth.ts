@@ -71,15 +71,15 @@ export async function signInWithGoogleOAuth(): Promise<{ success: boolean; messa
         return { 
           success: false, 
           isNotConfigured: true,
-          message: 'Google OAuth belum dikonfigurasi Client ID & Secret dalam Supabase Dashboard. Anda boleh daftar terus menggunakan No. Telefon & Nama.' 
+          message: 'Log masuk Google belum diaktifkan buat masa ini. Anda boleh daftar terus menggunakan No. Telefon & Nama.' 
         };
       }
-      return { success: false, message: error.message };
+      return { success: false, message: 'Log masuk Google tidak dapat dimulakan buat masa ini.' };
     }
 
     return { success: true, message: 'Menghubungkan ke akaun Google...' };
-  } catch (err: any) {
-    return { success: false, message: err?.message || 'Google OAuth failed to trigger.' };
+  } catch {
+    return { success: false, message: 'Log masuk Google tidak dapat dimulakan. Sila cuba lagi.' };
   }
 }
 

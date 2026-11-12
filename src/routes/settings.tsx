@@ -7,12 +7,14 @@ import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { GripVertical, SlidersHorizontal } from 'lucide-react';
 import { NavCustomizerModal } from '@/components/NavCustomizerModal';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { 
   getNavOrderConfig, 
   saveNavOrderConfig, 
@@ -78,11 +80,18 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { markManualRefundComplete } from '@/lib/riders';
-import { getToyyibPayConfig, saveToyyibPayConfig, type ToyyibPayConfig } from '@/lib/toyyibpay';
+import {
+  fetchToyyibPayGatewayStatus,
+  getToyyibPayConfig,
+  saveToyyibPayConfig,
+  type ToyyibPayConfig,
+} from '@/lib/toyyibpay';
 import { KitchenChecklistCustomizer } from '@/components/KitchenChecklistCustomizer';
 import { DishAddonsCustomizer } from '@/components/DishAddonsCustomizer';
 import { CallWaiterCustomizer } from '@/components/CallWaiterCustomizer';
@@ -103,7 +112,7 @@ function SettingsPage() {
   const { storeId } = Route.useRouteContext();
   const queryClient = useQueryClient();
 
-  const { data: store, isLoading: storeLoading } = useQuery({
+  const { data: store, isLoading: storeLoading, isError: storeError, refetch: refetchStoreMain } = useQuery({
     queryKey: ['store', storeId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -157,15 +166,15 @@ function SettingsPage() {
         .select('*');
       if (error) throw error;
       if (!data || data.length === 0) {
-        throw new Error('Store was not updated — you may not have permission to edit this store.');
+        throw new Error('Anda tidak mempunyai kebenaran untuk mengemas kini maklumat kedai ini.');
       }
       return data[0];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['store', storeId] });
-      toast.success('Restaurant information & branding updated');
+      toast.success('Maklumat restoran & penjenamaan berjaya dikemas kini');
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => toast.error(getFriendlyErrorMessage(error)),
   });
 
   const updatePrinterMutation = useMutation({
@@ -229,7 +238,7 @@ function SettingsPage() {
       queryClient.invalidateQueries({ queryKey: ['printer-settings', storeId] });
       toast.success('Tetapan Dapur & Pencetak Berjaya Disimpan');
     },
-    onError: (error) => toast.error(`Ralat menyimpan tetapan dapur: ${error.message}`),
+    onError: (error) => toast.error(getFriendlyErrorMessage(error, 'Ralat menyimpan tetapan dapur.')),
   });
 
   const updateHomepageMutation = useMutation({
@@ -248,9 +257,9 @@ function SettingsPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['store', storeId] });
-      toast.success('Homepage settings updated');
+      toast.success('Tetapan laman utama berjaya dikemas kini');
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => toast.error(getFriendlyErrorMessage(error)),
   });
 
   const updateOnlineOrderingMutation = useMutation({
@@ -276,7 +285,7 @@ function SettingsPage() {
         toast.error('🔴 Pesanan Online kini DITUTUP.');
       }
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => toast.error(getFriendlyErrorMessage(error)),
   });
 
   type SettingsSection = 
@@ -315,7 +324,7 @@ function SettingsPage() {
     badge_colors: {
       dineIn: '#3B82F6',
       takeaway: '#F97316',
-      delivery: '#8B5CF6',
+      delivery: '#0EA5E9',
       specialRequests: '#EC4899'
     } as Record<string, string>
   });
@@ -367,7 +376,7 @@ function SettingsPage() {
         badge_colors: {
           dineIn: badgeData.dineIn || '#3B82F6',
           takeaway: badgeData.takeaway || '#F97316',
-          delivery: badgeData.delivery || '#8B5CF6',
+          delivery: badgeData.delivery || '#0EA5E9',
           specialRequests: badgeData.specialRequests || '#EC4899'
         }
       });
@@ -385,7 +394,58 @@ function SettingsPage() {
     if (saved) setConnectedPrinter(saved);
   }, []);
 
-  if (storeLoading || printerLoading || menuLoading) return <div className="p-8 text-center">Loading settings...</div>;
+  if (storeLoading || printerLoading || menuLoading) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8" aria-busy="true">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="bg-white border border-slate-200 p-6 rounded-3xl flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <Skeleton className="w-12 h-12 rounded-2xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-6 w-64 rounded-lg" />
+                <Skeleton className="h-3.5 w-80 rounded-lg" />
+              </div>
+            </div>
+            <Skeleton className="h-8 w-40 rounded-full hidden sm:block" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div className="hidden md:block md:col-span-4 xl:col-span-3 bg-white border border-slate-200 rounded-3xl p-4 space-y-2.5">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full rounded-2xl" />
+              ))}
+            </div>
+            <div className="md:col-span-8 xl:col-span-9 space-y-4">
+              <Skeleton className="h-56 w-full rounded-3xl" />
+              <Skeleton className="h-44 w-full rounded-3xl" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (storeError) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white border border-rose-200 rounded-3xl p-6 text-center space-y-4 shadow-xs">
+          <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto">
+            <AlertTriangle className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-lg font-bold text-slate-900">Gagal Memuat Tetapan Premis</h2>
+            <p className="text-xs text-slate-500">Maklumat tetapan tidak dapat dipaparkan buat sementara waktu. Sila cuba lagi.</p>
+          </div>
+          <Button
+            type="button"
+            onClick={() => refetchStoreMain()}
+            className="bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl px-5 h-10 text-xs"
+          >
+            <RefreshCw className="w-3.5 h-3.5 mr-1.5" /> Cuba Semula
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const handleToggleStatus = (status: string) => {
     setPrinterForm(prev => ({
@@ -422,7 +482,7 @@ function SettingsPage() {
       recorder.start();
       setIsRecording(true);
     } catch (err) {
-      toast.error('Microphone access denied or unavailable');
+      toast.error('Akses mikrofon disekat atau tidak tersedia.');
     }
   };
 
@@ -436,7 +496,7 @@ function SettingsPage() {
 
   const handleSoundUpload = async (file: File) => {
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size must be less than 5MB');
+      toast.error('Saiz fail mestilah kurang daripada 5MB.');
       return;
     }
     
@@ -457,9 +517,9 @@ function SettingsPage() {
         sound_choice: 'custom',
         sound_file_url: publicUrl 
       }));
-      toast.success('Sound uploaded successfully');
+      toast.success('Bunyi penggera berjaya dimuat naik');
     } catch (err: any) {
-      toast.error(`Upload failed: ${err.message}`);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal memuat naik fail audio.'));
     }
   };
 
@@ -476,7 +536,7 @@ function SettingsPage() {
       toast.success(`Pencetak Bluetooth "${info.name}" berjaya disambungkan! 🖨️`);
     } catch (err: any) {
       if (err?.name !== 'NotFoundError') {
-        toast.error(err?.message || 'Gagal menyambung Bluetooth printer');
+        toast.error(getFriendlyErrorMessage(err, 'Gagal menyambung pencetak Bluetooth.'));
       }
     } finally {
       setIsConnectingBt(false);
@@ -495,7 +555,7 @@ function SettingsPage() {
       toast.success(`Pencetak USB/Serial berjaya disambungkan! 🔌`);
     } catch (err: any) {
       if (err?.name !== 'NotFoundError') {
-        toast.error(err?.message || 'Gagal menyambung USB/Serial printer');
+        toast.error(getFriendlyErrorMessage(err, 'Gagal menyambung pencetak USB/Serial.'));
       }
     } finally {
       setIsConnectingUsb(false);
@@ -514,7 +574,7 @@ function SettingsPage() {
       await printTestReceipt(storeForm.name || 'Warung J&J');
       toast.success('Ujian cetakan resit dihantar ke pencetak! 📄');
     } catch (err: any) {
-      toast.error(`Ralat cetakan: ${err.message || String(err)}`);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal menghantar ujian cetakan.'));
     } finally {
       setIsTestingPrint(false);
     }
@@ -531,10 +591,10 @@ function SettingsPage() {
     {
       id: 'staff',
       label: 'Kakitangan & Akses Staf',
-      subtitle: 'Urus Staf Kaunter & Dapur (Auto-Pages)',
+      subtitle: 'Urus Staf Kaunter & Dapur',
       icon: Users,
-      color: 'text-blue-600',
-      badge: 'Auto-Pages'
+      color: 'text-sky-700',
+      badge: 'Akses Staf'
     },
     {
       id: 'riders',
@@ -563,21 +623,21 @@ function SettingsPage() {
       label: 'Semakan Bungkus QC',
       subtitle: 'Checklist Pembungkusan Makanan',
       icon: CheckCircle2,
-      color: 'text-indigo-400',
+      color: 'text-sky-600',
     },
     {
       id: 'addons',
       label: 'Pilihan Tambahan Menu',
-      subtitle: 'Add-Ons, Sambal & Topping',
+      subtitle: 'Sampingan, Sambal & Lauk Ekstra',
       icon: Layers,
-      color: 'text-pink-400',
+      color: 'text-rose-600',
     },
     {
       id: 'waiter_call',
       label: 'Tujuan Panggil Pelayan',
       subtitle: 'Bantuan & Buzzer Meja QR',
       icon: Bell,
-      color: 'text-orange-400',
+      color: 'text-orange-600',
       badge: 'Meja QR'
     },
     {
@@ -585,28 +645,28 @@ function SettingsPage() {
       label: 'Maklumat Premis',
       subtitle: 'Warung J&J Penampang Sabah',
       icon: Store,
-      color: 'text-amber-300',
+      color: 'text-amber-700',
     },
     {
       id: 'appearance',
       label: 'Tampilan & Menu Bar',
-      subtitle: 'Hero Bento & Susunan Nav',
+      subtitle: 'Susunan Halaman & Navigasi',
       icon: Palette,
-      color: 'text-teal-400',
+      color: 'text-teal-600',
     },
     {
       id: 'landing_page_editor',
       label: 'Pengurusan Homepage',
-      subtitle: 'Hero, Sorotan & Info Kedai',
+      subtitle: 'Paparan Utama & Info Kedai',
       icon: Globe,
-      color: 'text-purple-700',
+      color: 'text-orange-600',
     },
     {
       id: 'refunds',
       label: 'Bayaran Balik (Refund)',
       subtitle: 'Antrian Pindahan Manual DuitNow',
       icon: RefreshCw,
-      color: 'text-orange-400',
+      color: 'text-orange-600',
     },
     {
       id: 'security',
@@ -663,7 +723,7 @@ function SettingsPage() {
                       <h3 className="text-sm font-bold text-slate-900 truncate flex items-center gap-1.5">
                         <span>{currentItem.label}</span>
                         {currentItem.badge && (
-                          <span className="text-[9px] px-1.5 py-0.2 bg-amber-500/20 text-amber-300 rounded font-mono">
+                          <span className="text-[9px] px-1.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded font-mono">
                             {currentItem.badge}
                           </span>
                         )}
@@ -836,10 +896,10 @@ function SettingsPage() {
                         💳 DuitNow Merchant QR & Strategi Pembayaran
                       </h2>
                       <p className="text-xs text-slate-500 font-mono mt-0.5">
-                        Alliance Bank DuitNow QR (Dine-In & Kaunter POS) | ToyyibPay FPX Webhook (Penghantaran Delivery)
+                        Alliance Bank DuitNow QR (Dine-In & Kaunter) | ToyyibPay FPX Automatik (Penghantaran Delivery)
                       </p>
                     </div>
-                    <span className="bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs px-3 py-1 rounded-full font-bold">
+                    <span className="bg-rose-50 text-rose-700 border border-rose-200 text-xs px-3 py-1 rounded-full font-bold">
                       Alliance Bank
                     </span>
                   </div>
@@ -873,16 +933,16 @@ function SettingsPage() {
                           🍽️ Dine-In & Kaunter: DuitNow QR Statik (0% Caj)
                         </h4>
                         <p className="text-xs text-slate-700">
-                          Pelanggan imbas DuitNow QR Alliance Bank di kaunter atau meja. Kakitangan mengesahkan bayaran masuk pada aplikasi perbankan sebelum sahkan di POS.
+                          Pelanggan imbas DuitNow QR Alliance Bank di kaunter atau meja. Kakitangan mengesahkan bayaran masuk pada aplikasi perbankan sebelum sahkan di kaunter.
                         </p>
                       </div>
 
                       <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl space-y-2">
                         <h4 className="text-sm font-bold text-sky-700 flex items-center gap-2">
-                          🛵 Online Delivery: ToyyibPay / FPX Gateway
+                          🛵 Online Delivery: ToyyibPay / FPX Automatik
                         </h4>
                         <p className="text-xs text-slate-700">
-                          Pesanan penghantaran diproses secara automatik dengan pengesahan tandatangan webhook pelayan ToyyibPay.
+                          Pesanan penghantaran disemak dan disahkan secara automatik melalui gerbang pembayaran ToyyibPay.
                         </p>
                       </div>
                     </div>
@@ -1090,7 +1150,7 @@ function SettingsPage() {
                       <Label className="text-slate-700">Atau Rakam Mesej Suara</Label>
                       <div>
                         {!isRecording ? (
-                          <Button type="button" variant="outline" onClick={handleStartRecording} className="bg-rose-950/40 text-rose-700 border-rose-800 hover:bg-rose-900">
+                          <Button type="button" variant="outline" onClick={handleStartRecording} className="bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100">
                             🔴 Rakam Suara
                           </Button>
                         ) : (
@@ -1192,7 +1252,7 @@ function SettingsPage() {
                       <p className="text-xs text-slate-500 font-mono mt-0.5">Sistem Eksklusif Warung J&J Penampang, Sabah</p>
                     </div>
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-700 border border-amber-500/20 w-fit">
-                      <Lock className="w-3.5 h-3.5" /> Terkunci (Backend Sahaja)
+                      <Lock className="w-3.5 h-3.5" /> Terkunci (Akses Terhad)
                     </span>
                   </div>
 
@@ -1355,7 +1415,7 @@ function SettingsPage() {
                       <span>Audit & Keselamatan Operasi POS</span>
                     </h2>
                     <Badge className="bg-rose-50 text-rose-700 border-rose-200 text-xs font-bold">
-                      RLS-Protected
+                      Dilindungi &amp; Diaudit
                     </Badge>
                   </div>
                   <p className="text-xs text-slate-500 font-mono leading-relaxed">
@@ -1536,7 +1596,7 @@ function NavbarCustomizerCard() {
       {/* REORDER & VISIBILITY CONTROLS LIST WITH DRAG HANDLES */}
       <div className="space-y-2 font-mono">
         <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">Full Nav Items List (Drag rows or click arrows):</span>
-        <div className="divide-y divide-slate-800 border border-slate-200 rounded-xl overflow-hidden bg-slate-50 text-xs">
+        <div className="divide-y divide-slate-200 border border-slate-200 rounded-xl overflow-hidden bg-slate-50 text-xs">
           {navItems.map((item, idx) => {
             const isBeingDragged = draggedIdx === idx;
             const isTargetSlot = dragOverIdx === idx;
@@ -1552,7 +1612,7 @@ function NavbarCustomizerCard() {
                 className={`p-3 flex items-center justify-between transition-all duration-200 cursor-grab active:cursor-grabbing select-none ${
                   isBeingDragged 
                     ? 'opacity-40 bg-amber-500/10 border-amber-400' 
-                    : (isTargetSlot ? 'bg-emerald-950/60 border-y-2 border-emerald-400' : 'hover:bg-white/70')
+                    : (isTargetSlot ? 'bg-emerald-50 border-y-2 border-emerald-500' : 'hover:bg-white/70')
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -1607,7 +1667,12 @@ function RefundQueueCard() {
   const queryClient = useQueryClient();
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const { data: pendingRefunds, isLoading } = useQuery({
+  const {
+    data: pendingRefunds,
+    isLoading,
+    isError,
+    refetch,
+  } = useQuery({
     queryKey: ['pending-refunds'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -1627,13 +1692,17 @@ function RefundQueueCard() {
     try {
       const res = await markManualRefundComplete(orderId, 'Staff Cashier', 'Manual DuitNow QR Transfer');
       if (res.success) {
-        toast.success(`Order #${orderId.slice(0, 8)} marked as refunded via DuitNow QR!`);
+        toast.success(`Pesanan #${orderId.slice(0, 8)} ditandakan sebagai dipulangkan melalui DuitNow QR.`);
         queryClient.invalidateQueries({ queryKey: ['pending-refunds'] });
       } else {
-        toast.error(res.message || 'Refund failed');
+        toast.error(
+          getFriendlyErrorMessage(res.message, 'Gagal memproses bayaran balik.')
+        );
       }
-    } catch (err: any) {
-      toast.error(`Refund Failed: ${err.message}`);
+    } catch (err: unknown) {
+      toast.error(
+        `Bayaran balik gagal: ${getFriendlyErrorMessage(err, 'Sila cuba sebentar lagi.')}`
+      );
     } finally {
       setProcessingId(null);
     }
@@ -1644,22 +1713,41 @@ function RefundQueueCard() {
       <div className="flex items-center justify-between border-b border-slate-200 pb-3">
         <div>
           <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-            🔴 Staff Refund Queue (Manual DuitNow QR Transfer)
+            🔴 Giliran Bayaran Balik Staf (Pindahan DuitNow QR Manual)
           </h2>
           <p className="text-xs text-slate-500 font-mono mt-0.5">
-            Process manual refunds via Alliance Bank DuitNow QR to customer phone numbers. Enforces idempotency & rider-race guards.
+            Proses bayaran balik manual melalui Alliance Bank DuitNow QR ke nombor telefon pelanggan. Dilengkapi kawalan keselamatan berganda bagi mengelakkan bayaran balik berulang.
           </p>
         </div>
-        <Badge className="bg-rose-500/20 text-rose-300 border-rose-500/30 font-mono text-xs">
-          {pendingRefunds?.length || 0} Pending
+        <Badge className="bg-rose-50 text-rose-700 border-rose-200 font-mono text-xs">
+          {pendingRefunds?.length || 0} Menunggu
         </Badge>
       </div>
 
       {isLoading ? (
-        <div className="text-center py-6 text-slate-500 font-mono text-xs">Loading refund queue...</div>
+        <div className="space-y-3" aria-busy="true" aria-label="Memuatkan senarai bayaran balik">
+          {[0, 1].map((slot) => (
+            <Skeleton key={slot} className="h-20 w-full rounded-xl bg-slate-100" />
+          ))}
+        </div>
+      ) : isError ? (
+        <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+          <span className="text-rose-800 font-medium">
+            Gagal memuatkan senarai bayaran balik buat masa ini.
+          </span>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => refetch()}
+            className="border-rose-200 bg-white text-rose-700 hover:bg-rose-50 rounded-xl text-xs"
+          >
+            Cuba Semula
+          </Button>
+        </div>
       ) : pendingRefunds?.length === 0 ? (
         <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center text-xs text-emerald-700 font-mono">
-          ✓ No pending refunds in queue. All orders clear!
+          ✓ Tiada pesanan menunggu bayaran balik. Semua pesanan bersih!
         </div>
       ) : (
         <div className="space-y-3">
@@ -1667,13 +1755,13 @@ function RefundQueueCard() {
             <div key={order.id} className="bg-slate-50 border border-slate-200 p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 font-mono text-xs">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-slate-900 text-sm">Order #{order.id.slice(0, 8)}</span>
-                  <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px]">
+                  <span className="font-bold text-slate-900 text-sm">Pesanan #{order.id.slice(0, 8)}</span>
+                  <Badge className="bg-amber-50 text-amber-800 border-amber-200 text-[10px]">
                     {order.type}
                   </Badge>
                 </div>
-                <p className="text-slate-500">Customer Phone: <span className="text-emerald-700 font-bold">{order.customer_phone || 'N/A'}</span></p>
-                <p className="text-slate-500 text-[10px]">Created: {new Date(order.created_at).toLocaleTimeString()}</p>
+                <p className="text-slate-600">Telefon Pelanggan: <span className="text-emerald-700 font-bold">{order.customer_phone || 'Tiada'}</span></p>
+                <p className="text-slate-500 text-[10px]">Masa: {new Date(order.created_at).toLocaleTimeString()}</p>
               </div>
 
               <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
@@ -1684,7 +1772,7 @@ function RefundQueueCard() {
                   disabled={processingId === order.id}
                   className="bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs shadow-md active:scale-95"
                 >
-                  {processingId === order.id ? 'Processing...' : '✅ Mark DuitNow Refunded'}
+                  {processingId === order.id ? 'Memproses...' : '✅ Tanda DuitNow Dipulangkan'}
                 </Button>
               </div>
             </div>
@@ -1697,20 +1785,87 @@ function RefundQueueCard() {
 
 function ToyyibPaySettingsCard() {
   const [config, setConfig] = useState<ToyyibPayConfig>({
-    userSecretKey: '',
     categoryCode: '',
     isSandbox: false,
     chargeToCustomer: true,
   });
+  const [gatewayStatus, setGatewayStatus] = useState<{
+    configured: boolean;
+    categoryConfigured: boolean;
+    sandbox: boolean;
+  } | null>(null);
+  const [storeRecordId, setStoreRecordId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setConfig(getToyyibPayConfig());
+    void fetchToyyibPayGatewayStatus().then((status) => {
+      setGatewayStatus(status);
+    });
+    void supabase
+      .from('stores')
+      .select('id, settings')
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data) return;
+        setStoreRecordId(data.id);
+        const savedTp = (data.settings as Record<string, unknown> | null)?.['toyyibpay'] as
+          | Partial<ToyyibPayConfig>
+          | undefined;
+        if (savedTp) {
+          setConfig((prev) => ({
+            categoryCode: prev.categoryCode || savedTp.categoryCode || '',
+            isSandbox: savedTp.isSandbox ?? prev.isSandbox,
+            chargeToCustomer: savedTp.chargeToCustomer ?? prev.chargeToCustomer,
+          }));
+        }
+      });
   }, []);
 
-  const handleSave = () => {
-    saveToyyibPayConfig(config);
-    toast.success('Tetapan ToyyibPay FPX berjaya disimpan! 🎉');
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const sanitized: ToyyibPayConfig = {
+        categoryCode: config.categoryCode.trim(),
+        isSandbox: config.isSandbox,
+        chargeToCustomer: config.chargeToCustomer,
+      };
+      saveToyyibPayConfig(sanitized);
+
+      if (storeRecordId) {
+        const { data: latestStore } = await supabase
+          .from('stores')
+          .select('settings')
+          .eq('id', storeRecordId)
+          .maybeSingle();
+        const existingSettings = (latestStore?.settings as Record<string, unknown> | null) || {};
+        const { error } = await supabase
+          .from('stores')
+          .update({
+            settings: {
+              ...existingSettings,
+              toyyibpay: sanitized,
+            } as any,
+          })
+          .eq('id', storeRecordId);
+        if (error) throw error;
+      }
+
+      toast.success('Tetapan ToyyibPay FPX berjaya disimpan!');
+      const updatedStatus = await fetchToyyibPayGatewayStatus();
+      setGatewayStatus(updatedStatus);
+    } catch (err: unknown) {
+      toast.error(
+        `Gagal menyimpan tetapan ToyyibPay: ${getFriendlyErrorMessage(err, 'Sila cuba sebentar lagi.')}`
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  const hasCategory = Boolean(config.categoryCode.trim() || gatewayStatus?.categoryConfigured);
+  const isGatewayReady = Boolean(gatewayStatus?.configured && hasCategory);
 
   return (
     <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xl space-y-5">
@@ -1718,56 +1873,53 @@ function ToyyibPaySettingsCard() {
         <div>
           <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             <Globe className="w-5 h-5 text-emerald-700" />
-            ToyyibPay FPX Gateway Settings
+            Tetapan Gerbang Bayaran ToyyibPay FPX
           </h2>
           <p className="text-xs text-slate-500 font-mono mt-0.5">
-            Sistem pembayaran automatik FPX Online Banking Malaysia (Maybank, CIMB, Bank Islam, etc.)
+            Sistem pembayaran automatik FPX Online Banking Malaysia (Maybank, CIMB, Bank Islam, dsb.)
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {config.userSecretKey && config.categoryCode ? (
-            <Badge className="bg-emerald-500/20 text-emerald-700 border-emerald-500/30 text-xs px-2.5 py-0.5 font-bold">
-              ● API Siap Dikonfigurasi
+          {isGatewayReady ? (
+            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs px-2.5 py-0.5 font-bold">
+              ● Aktif &amp; Selamat
+            </Badge>
+          ) : gatewayStatus?.configured ? (
+            <Badge className="bg-amber-50 text-amber-800 border-amber-200 text-xs px-2.5 py-0.5 font-bold">
+              Perlu Kod Kategori
             </Badge>
           ) : (
-            <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs px-2.5 py-0.5 font-bold">
-              ⏳ Menunggu Kelulusan / Kunci API
+            <Badge className="bg-amber-50 text-amber-800 border-amber-200 text-xs px-2.5 py-0.5 font-bold">
+              Menunggu Pelarasan Pentadbir
             </Badge>
           )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* User Secret Key */}
-        <div className="space-y-1.5">
-          <Label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-            <Key className="w-3.5 h-3.5 text-amber-700" /> ToyyibPay User Secret Key
-          </Label>
-          <Input 
-            type="password"
-            placeholder="e.g. w5x7srq7-rx5r-3t89-2ou2-k7361x2jewhn"
-            value={config.userSecretKey}
-            onChange={(e) => setConfig(prev => ({ ...prev, userSecretKey: e.target.value }))}
-            className="bg-slate-50 border-slate-200 text-slate-900 font-mono text-xs h-10 rounded-xl"
-          />
-          <p className="text-[11px] text-slate-500">
-            Dapatkan User Secret Key daripada portal rasmi ToyyibPay selepas pendaftaran diluluskan.
+        {/* Server-Managed Secret Notice */}
+        <div className="space-y-1.5 bg-slate-50 border border-slate-200 rounded-xl p-3.5">
+          <div className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+            <Key className="w-3.5 h-3.5 text-emerald-700" /> Keselamatan Pengesahan Bayaran
+          </div>
+          <p className="text-[11px] text-slate-600 leading-relaxed">
+            Kunci rahsia peniaga ToyyibPay dilindungi sepenuhnya di peringkat pelayan sistem dan tidak disimpan dalam pelayar web demi keselamatan transaksi premis.
           </p>
         </div>
 
         {/* Category Code */}
         <div className="space-y-1.5">
           <Label className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-            <Globe className="w-3.5 h-3.5 text-sky-700" /> ToyyibPay Category Code
+            <Globe className="w-3.5 h-3.5 text-sky-700" /> Kod Kategori ToyyibPay
           </Label>
           <Input 
-            placeholder="e.g. gcbhict9"
+            placeholder="cth: gcbhict9"
             value={config.categoryCode}
             onChange={(e) => setConfig(prev => ({ ...prev, categoryCode: e.target.value }))}
             className="bg-slate-50 border-slate-200 text-slate-900 font-mono text-xs h-10 rounded-xl"
           />
           <p className="text-[11px] text-slate-500">
-            Kod kategori bil yang dicipta di bawah menu Category dalam akaun ToyyibPay anda.
+            Kod kategori bil yang dicipta di bawah menu Category dalam portal rasmi ToyyibPay anda.
           </p>
         </div>
       </div>
@@ -1787,8 +1939,8 @@ function ToyyibPaySettingsCard() {
 
         <div className="flex items-center justify-between bg-slate-50 p-3.5 rounded-xl border border-slate-200">
           <div className="space-y-0.5">
-            <Label className="text-xs font-bold text-slate-800 block">Mod Sandbox (Testing)</Label>
-            <span className="text-[10px] text-slate-500 block">Gunakan akaun dev.toyyibpay.com untuk ujian</span>
+            <Label className="text-xs font-bold text-slate-800 block">Mod Sandbox (Ujian)</Label>
+            <span className="text-[10px] text-slate-500 block">Gunakan akaun ujian ToyyibPay sebelum siaran langsung</span>
           </div>
           <Switch 
             checked={config.isSandbox} 
@@ -1803,16 +1955,17 @@ function ToyyibPaySettingsCard() {
           href="https://toyyibpay.com" 
           target="_blank" 
           rel="noreferrer" 
-          className="text-xs text-emerald-700 hover:text-emerald-300 flex items-center gap-1.5 underline"
+          className="text-xs text-emerald-700 hover:text-emerald-800 flex items-center gap-1.5 underline"
         >
           <ExternalLink className="w-3.5 h-3.5" /> Buka Portal ToyyibPay Malaysia
         </a>
 
         <Button 
           onClick={handleSave}
+          disabled={isSaving}
           className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-6 h-10 rounded-xl shadow-lg shadow-emerald-600/20"
         >
-          Simpan Tetapan ToyyibPay 💾
+          {isSaving ? 'Menyimpan...' : 'Simpan Tetapan ToyyibPay 💾'}
         </Button>
       </div>
     </div>
@@ -1920,6 +2073,8 @@ function AdminRiderManagementCard() {
   const [editHomeAddress, setEditHomeAddress] = useState('');
   const [editEmergencyContact, setEditEmergencyContact] = useState('');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [deleteTargetRider, setDeleteTargetRider] = useState<RiderKYCRecord | null>(null);
+  const [isDeletingRider, setIsDeletingRider] = useState(false);
 
   // Helper to handle camera/file uploads into Base64
   const handleFileCapture = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
@@ -2050,30 +2205,14 @@ function AdminRiderManagementCard() {
           .eq('id', storeData.id);
       }
 
-      toast.success(nextApproved ? '✅ Rider berjaya diluluskan (APPROVED)!' : '⏸️ Kelulusan rider dinyahaktif (REVOKED).');
+      toast.success(nextApproved ? '✅ Rider berjaya diluluskan!' : '⏸️ Kelulusan rider dinyahaktifkan.');
       refetchRidersTable();
       refetchUsers();
       refetchStore();
-    } catch (err: any) {
-      toast.error('Gagal mengemas kini kelulusan rider: ' + err.message);
-    }
-  };
-
-  // Force Re-dispatch order if rider is stuck
-  const forceRedispatchOrder = async (orderId: string) => {
-    const confirmAction = window.confirm("Adakah anda pasti mahu membatalkan tugasan rider ini dan buka semula pesanan untuk dispatch?");
-    if (!confirmAction) return;
-
-    try {
-      await supabase
-        .from('orders')
-        .update({ delivery_service: null, status: 'ready', updated_at: new Date().toISOString() } as any)
-        .eq('id', orderId);
-
-      toast.success("✅ Pesanan berjaya dibuka semula untuk dispatch!");
-      refetchRidersTable();
-    } catch (err: any) {
-      toast.error("Ralat membuka semula pesanan: " + err.message);
+    } catch (err: unknown) {
+      toast.error(
+        `Gagal mengemas kini kelulusan rider: ${getFriendlyErrorMessage(err, 'Sila cuba sebentar lagi.')}`
+      );
     }
   };
 
@@ -2160,18 +2299,25 @@ function AdminRiderManagementCard() {
       refetchStore();
       refetchUsers();
       refetchRidersTable();
-    } catch (err: any) {
-      toast.error('Gagal mengemas kini maklumat rider: ' + err.message);
+    } catch (err: unknown) {
+      toast.error(
+        `Gagal mengemas kini maklumat rider: ${getFriendlyErrorMessage(err, 'Sila cuba sebentar lagi.')}`
+      );
     } finally {
       setIsSavingEdit(false);
     }
   };
 
-  // Delete Rider from Fleet
-  const handleDeleteRider = async (rider: RiderKYCRecord) => {
-    const confirmDelete = window.confirm(`Adakah anda pasti mahu memadamkan profil rakan penghantar "${rider.fullName}" (${rider.vehiclePlate}) secara kekal?`);
-    if (!confirmDelete) return;
+  // Trigger confirmation modal to delete rider from fleet
+  const handleDeleteRider = (rider: RiderKYCRecord) => {
+    setDeleteTargetRider(rider);
+  };
 
+  // Confirm and execute permanent rider removal
+  const executeDeleteRider = async () => {
+    if (!deleteTargetRider) return;
+    const rider = deleteTargetRider;
+    setIsDeletingRider(true);
     try {
       // 1. Remove from store settings verified_riders
       if (storeData?.id) {
@@ -2199,12 +2345,17 @@ function AdminRiderManagementCard() {
       }
 
       toast.success(`🗑️ Rakan penghantar "${rider.fullName}" telah dipadamkan.`);
+      setDeleteTargetRider(null);
       if (isDetailOpen) setIsDetailOpen(false);
       refetchStore();
       refetchUsers();
       refetchRidersTable();
-    } catch (err: any) {
-      toast.error('Gagal memadamkan rakan penghantar: ' + err.message);
+    } catch (err: unknown) {
+      toast.error(
+        `Gagal memadamkan rakan penghantar: ${getFriendlyErrorMessage(err, 'Sila cuba sebentar lagi.')}`
+      );
+    } finally {
+      setIsDeletingRider(false);
     }
   };
 
@@ -2311,8 +2462,10 @@ function AdminRiderManagementCard() {
       
       refetchStore();
       refetchUsers();
-    } catch (err: any) {
-      toast.error(`Ralat pendaftaran rider: ${err.message}`);
+    } catch (err: unknown) {
+      toast.error(
+        `Ralat pendaftaran rider: ${getFriendlyErrorMessage(err, 'Sila semak maklumat rider dan cuba lagi.')}`
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -2342,10 +2495,10 @@ function AdminRiderManagementCard() {
         <div>
           <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
             <span>🛵</span>
-            <span>Pengurusan & Pendaftaran Rakan Penghantar (KYC & Gaji Rider)</span>
+            <span>Pengurusan &amp; Pendaftaran Rakan Penghantar (KYC &amp; Gaji Rider)</span>
           </h2>
           <p className="text-xs text-slate-500 font-mono mt-0.5">
-            Pendaftaran bersemuka oleh Admin. Lengkap dengan MyKad, lesen sah, kenderaan, akaun bank gaji, & dokumen foto.
+            Pendaftaran bersemuka oleh Admin. Lengkap dengan MyKad, lesen sah, kenderaan, akaun bank gaji, &amp; dokumen foto.
           </p>
         </div>
 
@@ -2365,9 +2518,9 @@ function AdminRiderManagementCard() {
           <div className="flex items-center justify-between border-b border-slate-200 pb-3">
             <div className="flex items-center gap-2 text-amber-700 font-bold text-sm">
               <UserCheck className="w-5 h-5 text-amber-500" />
-              <span>Borang Pengesahan Identiti, Kenderaan & Akaun Bank Gaji Rider</span>
+              <span>Borang Pengesahan Identiti, Kenderaan &amp; Akaun Bank Gaji Rider</span>
             </div>
-            <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[10px]">
+            <Badge className="bg-amber-50 text-amber-800 border-amber-200 text-[10px]">
               Wajib Hadir di Kaunter Warung
             </Badge>
           </div>
@@ -2547,7 +2700,7 @@ function AdminRiderManagementCard() {
                 <Label className="text-slate-700 font-bold">Emel Log Masuk Rider *</Label>
                 <Input
                   type="email"
-                  placeholder="azlan.rider@warungjnj.com"
+                  placeholder="azlan.rider@warungjnj.online"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="bg-white border-slate-200 text-slate-900 h-10 rounded-xl"
@@ -2702,7 +2855,7 @@ function AdminRiderManagementCard() {
           {/* SUBMIT BUTTON */}
           <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200">
             <span className="text-[11px] text-slate-500">
-              🛡️ Semua butiran peribadi & akaun bank disimpan secara selamat dalam pangkalan data berpusat Warung J&J.
+              🛡️ Semua butiran peribadi &amp; akaun bank disimpan secara selamat dalam rekod digital berpusat Warung J&amp;J.
             </span>
 
             <Button
@@ -2720,7 +2873,7 @@ function AdminRiderManagementCard() {
       <div className="space-y-3 font-mono">
         <div className="flex items-center justify-between text-xs text-slate-500">
           <span className="font-bold text-slate-700 uppercase tracking-wider">
-            Senarai Rakan Penghantar Sah Warung J&J ({kycRecords.length || dbRiders?.length || 0})
+            Senarai Rakan Penghantar Sah Warung J&amp;J ({kycRecords.length || dbRiders?.length || 0})
           </span>
           <button
             type="button"
@@ -2735,7 +2888,7 @@ function AdminRiderManagementCard() {
           <div className="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 text-slate-500 text-xs space-y-2">
             <Bike className="w-8 h-8 mx-auto text-slate-600" />
             <p className="font-bold text-slate-500">Belum ada rakan penghantar didaftarkan.</p>
-            <p className="text-[11px]">Gunakan butang "➕ Daftar Rider Baru (KYC & Gaji)" di atas untuk memulakan proses pendaftaran.</p>
+            <p className="text-[11px]">Gunakan butang "➕ Daftar Rider Baru (KYC &amp; Gaji)" di atas untuk memulakan proses pendaftaran.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -2752,7 +2905,7 @@ function AdminRiderManagementCard() {
                 >
                   <div className="flex items-start gap-3">
                     {/* AVATAR / PHOTO */}
-                    <div className="w-14 h-14 rounded-2xl bg-white border border-slate-700 overflow-hidden shrink-0 flex items-center justify-center">
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
                       {rider.photoRider ? (
                         <img src={rider.photoRider} alt={rider.fullName} className="w-full h-full object-cover" />
                       ) : (
@@ -2767,12 +2920,12 @@ function AdminRiderManagementCard() {
                         <div className="flex items-center gap-1.5 shrink-0">
                           {/* LIVE STATUS BADGE */}
                           {statusVal === 'available' && (
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 border border-emerald-500/40 animate-pulse">
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 animate-pulse">
                               🟢 ONLINE
                             </span>
                           )}
                           {statusVal === 'busy' && (
-                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200">
                               🟡 BUSY
                             </span>
                           )}
@@ -2901,7 +3054,7 @@ function AdminRiderManagementCard() {
             <div className="space-y-4 text-xs pt-2">
               {/* HEADER WITH PHOTO */}
               <div className="flex items-center gap-4 bg-slate-50 p-4 rounded-2xl border border-slate-200">
-                <div className="w-16 h-16 rounded-2xl bg-white border border-slate-700 overflow-hidden shrink-0">
+                <div className="w-16 h-16 rounded-2xl bg-white border border-slate-200 overflow-hidden shrink-0">
                   {selectedRider.photoRider ? (
                     <img src={selectedRider.photoRider} alt={selectedRider.fullName} className="w-full h-full object-cover" />
                   ) : (
@@ -2917,7 +3070,7 @@ function AdminRiderManagementCard() {
               </div>
 
               {/* SECTION: BANK ACCOUNT & PAYOUT HIGHLIGHT */}
-              <div className="bg-emerald-950/30 border border-emerald-500/30 p-4 rounded-2xl space-y-2">
+              <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-emerald-700 font-bold text-xs">
                     <Landmark className="w-4 h-4" />
@@ -2942,7 +3095,7 @@ function AdminRiderManagementCard() {
                   </div>
                   <div>
                     <span className="text-[10px] text-slate-500 block">No. Akaun:</span>
-                    <span className="font-bold text-emerald-300 font-mono tracking-wider">{selectedRider.bankAccountNumber || 'Tiada'}</span>
+                    <span className="font-bold text-emerald-800 font-mono tracking-wider">{selectedRider.bankAccountNumber || 'Tiada'}</span>
                   </div>
                   <div className="col-span-2 sm:col-span-1">
                     <span className="text-[10px] text-slate-500 block">Pemegang Akaun:</span>
@@ -2988,7 +3141,7 @@ function AdminRiderManagementCard() {
                   {selectedRider.photoIc && (
                     <div className="space-y-1">
                       <span className="text-[10px] text-slate-500 block">Salinan MyKad</span>
-                      <div className="aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-50">
+                      <div className="aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
                         <img src={selectedRider.photoIc} alt="IC" className="w-full h-full object-contain" />
                       </div>
                     </div>
@@ -2996,8 +3149,8 @@ function AdminRiderManagementCard() {
 
                   {selectedRider.photoLicense && (
                     <div className="space-y-1">
-                      <span className="text-[10px] text-slate-500 block">Salinan Lesen & Roadtax</span>
-                      <div className="aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-50">
+                      <span className="text-[10px] text-slate-500 block">Salinan Lesen &amp; Roadtax</span>
+                      <div className="aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
                         <img src={selectedRider.photoLicense} alt="Lesen" className="w-full h-full object-contain" />
                       </div>
                     </div>
@@ -3006,7 +3159,7 @@ function AdminRiderManagementCard() {
                   {selectedRider.photoBankStatement && (
                     <div className="space-y-1">
                       <span className="text-[10px] text-slate-500 block">Penyata / Kad Bank</span>
-                      <div className="aspect-video rounded-xl overflow-hidden border border-slate-700 bg-slate-50">
+                      <div className="aspect-video rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
                         <img src={selectedRider.photoBankStatement} alt="Penyata Bank" className="w-full h-full object-contain" />
                       </div>
                     </div>
@@ -3033,7 +3186,7 @@ function AdminRiderManagementCard() {
                     type="button"
                     variant="outline"
                     onClick={() => handleDeleteRider(selectedRider)}
-                    className="bg-rose-950/40 border-rose-900 text-rose-700 hover:bg-rose-900/60 hover:text-slate-900 font-bold text-xs h-9 px-3 rounded-xl gap-1.5"
+                    className="bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100 font-bold text-xs h-9 px-3 rounded-xl gap-1.5"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Padam Rider</span>
@@ -3067,7 +3220,7 @@ function AdminRiderManagementCard() {
               {/* SECTION 1: BUTIRAN PERIBADI */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                 <span className="font-bold text-amber-700 flex items-center gap-1.5 text-xs">
-                  <User className="w-4 h-4" /> 1. Butiran Peribadi & Log Masuk
+                  <User className="w-4 h-4" /> 1. Butiran Peribadi &amp; Log Masuk
                 </span>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -3077,7 +3230,7 @@ function AdminRiderManagementCard() {
                       value={editFullName}
                       onChange={(e) => setEditFullName(e.target.value)}
                       placeholder="Nama penuh mengikut MyKad"
-                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-200 text-slate-900 rounded-xl h-9 text-xs"
                       required
                     />
                   </div>
@@ -3088,7 +3241,7 @@ function AdminRiderManagementCard() {
                       value={editIcNumber}
                       onChange={(e) => setEditIcNumber(e.target.value)}
                       placeholder="Contoh: 980101-12-1234"
-                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-200 text-slate-900 rounded-xl h-9 text-xs"
                     />
                   </div>
 
@@ -3098,7 +3251,7 @@ function AdminRiderManagementCard() {
                       value={editPhone}
                       onChange={(e) => setEditPhone(e.target.value)}
                       placeholder="Contoh: 0198887766"
-                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-200 text-slate-900 rounded-xl h-9 text-xs"
                       required
                     />
                   </div>
@@ -3109,7 +3262,7 @@ function AdminRiderManagementCard() {
                       value={editEmail}
                       onChange={(e) => setEditEmail(e.target.value)}
                       placeholder="rider@warungjnj.online"
-                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-200 text-slate-900 rounded-xl h-9 text-xs"
                     />
                   </div>
                 </div>
@@ -3120,7 +3273,7 @@ function AdminRiderManagementCard() {
                     value={editHomeAddress}
                     onChange={(e) => setEditHomeAddress(e.target.value)}
                     placeholder="Alamat tempat tinggal rider"
-                    className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
+                    className="bg-white border-slate-200 text-slate-900 rounded-xl h-9 text-xs"
                   />
                 </div>
 
@@ -3130,7 +3283,7 @@ function AdminRiderManagementCard() {
                     value={editEmergencyContact}
                     onChange={(e) => setEditEmergencyContact(e.target.value)}
                     placeholder="Nama & No. Telefon Waris (cth: Isteri - 0123456789)"
-                    className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
+                    className="bg-white border-slate-200 text-slate-900 rounded-xl h-9 text-xs"
                   />
                 </div>
               </div>
@@ -3138,7 +3291,7 @@ function AdminRiderManagementCard() {
               {/* SECTION 2: KENDERAAN & LESEN */}
               <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                 <span className="font-bold text-sky-700 flex items-center gap-1.5 text-xs">
-                  <Bike className="w-4 h-4" /> 2. Maklumat Motosikal & Lesen
+                  <Bike className="w-4 h-4" /> 2. Maklumat Motosikal &amp; Lesen
                 </span>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -3148,7 +3301,7 @@ function AdminRiderManagementCard() {
                       value={editVehiclePlate}
                       onChange={(e) => setEditVehiclePlate(e.target.value)}
                       placeholder="Contoh: SAB 1234 A"
-                      className="bg-white border-slate-700 text-slate-900 uppercase rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-200 text-slate-900 uppercase rounded-xl h-9 text-xs"
                       required
                     />
                   </div>
@@ -3159,7 +3312,7 @@ function AdminRiderManagementCard() {
                       value={editVehicleModel}
                       onChange={(e) => setEditVehicleModel(e.target.value)}
                       placeholder="Contoh: Yamaha Y15ZR / Honda Wave"
-                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-200 text-slate-900 rounded-xl h-9 text-xs"
                     />
                   </div>
 
@@ -3169,7 +3322,7 @@ function AdminRiderManagementCard() {
                       type="date"
                       value={editLicenseExpiry}
                       onChange={(e) => setEditLicenseExpiry(e.target.value)}
-                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-200 text-slate-900 rounded-xl h-9 text-xs"
                     />
                   </div>
 
@@ -3179,7 +3332,7 @@ function AdminRiderManagementCard() {
                       type="date"
                       value={editRoadtaxExpiry}
                       onChange={(e) => setEditRoadtaxExpiry(e.target.value)}
-                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-200 text-slate-900 rounded-xl h-9 text-xs"
                     />
                   </div>
                 </div>
@@ -3197,7 +3350,7 @@ function AdminRiderManagementCard() {
                     <select
                       value={editBankName}
                       onChange={(e) => setEditBankName(e.target.value)}
-                      className="w-full bg-white border border-slate-700 text-slate-900 rounded-xl h-9 px-3 text-xs"
+                      className="w-full bg-white border border-slate-200 text-slate-900 rounded-xl h-9 px-3 text-xs"
                     >
                       {MALAYSIAN_BANKS.map((b) => (
                         <option key={b} value={b}>{b}</option>
@@ -3211,7 +3364,7 @@ function AdminRiderManagementCard() {
                       value={editBankAccountNumber}
                       onChange={(e) => setEditBankAccountNumber(e.target.value)}
                       placeholder="Nombor akaun bank tanpa sengkang"
-                      className="bg-white border-slate-700 text-slate-900 font-mono rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-200 text-slate-900 font-mono rounded-xl h-9 text-xs"
                       required
                     />
                   </div>
@@ -3222,7 +3375,7 @@ function AdminRiderManagementCard() {
                       value={editBankAccountHolder}
                       onChange={(e) => setEditBankAccountHolder(e.target.value)}
                       placeholder="Nama pada akaun bank"
-                      className="bg-white border-slate-700 text-slate-900 rounded-xl h-9 text-xs"
+                      className="bg-white border-slate-200 text-slate-900 rounded-xl h-9 text-xs"
                     />
                   </div>
                 </div>
@@ -3256,6 +3409,47 @@ function AdminRiderManagementCard() {
               </div>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL: CONFIRM DELETE RIDER */}
+      <Dialog
+        open={Boolean(deleteTargetRider)}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingRider) setDeleteTargetRider(null);
+        }}
+      >
+        <DialogContent className="bg-white border border-slate-200 text-slate-900 max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2 text-rose-700">
+              <AlertTriangle className="w-5 h-5" />
+              <span>Sahkan Pemadaman Rider</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-600 pt-1">
+              Adakah anda pasti mahu memadamkan profil rakan penghantar{' '}
+              <strong className="text-slate-900">{deleteTargetRider?.fullName}</strong> (
+              {deleteTargetRider?.vehiclePlate}) secara kekal? Tindakan ini tidak boleh dipulihkan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isDeletingRider}
+              onClick={() => setDeleteTargetRider(null)}
+              className="border-slate-200 text-slate-700 rounded-xl text-xs"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              disabled={isDeletingRider}
+              onClick={executeDeleteRider}
+              className="bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs"
+            >
+              {isDeletingRider ? 'Memadam...' : 'Ya, Padam Rider'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

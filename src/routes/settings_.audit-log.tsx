@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   ArrowLeft, 
   Search, 
@@ -216,11 +217,11 @@ function AuditLogPage() {
             <CardHeader className="p-0 pb-2">
               <CardTitle className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center justify-between">
                 <span>Security Threats Blocked</span>
-                <ShieldAlert className="w-4 h-4 text-purple-600" />
+                <ShieldAlert className="w-4 h-4 text-rose-600" />
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <p className="text-3xl font-black text-purple-600">{securityLogs.length}</p>
+              <p className="text-3xl font-black text-rose-600">{securityLogs.length}</p>
               <span className="text-[10px] text-slate-400 font-sans">Rate-limits & hijack blocks</span>
             </CardContent>
           </Card>
@@ -253,7 +254,7 @@ function AuditLogPage() {
               onClick={() => setActiveTab('security')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
                 activeTab === 'security'
-                  ? 'bg-purple-600 text-white shadow-xs'
+                  ? 'bg-rose-600 text-white shadow-xs'
                   : 'bg-slate-50 text-slate-600 hover:text-slate-900 hover:bg-slate-100 border border-slate-200'
               }`}
             >
@@ -289,7 +290,17 @@ function AuditLogPage() {
           <CardContent className="p-0">
             {activeTab === 'orders' ? (
               isOrderLoading ? (
-                <p className="text-center text-slate-400 py-12 text-xs">Loading audit logs...</p>
+                <div className="p-5 space-y-3">
+                  {Array.from({ length: 5 }).map((_, idx) => (
+                    <div key={idx} className="grid grid-cols-5 gap-3 items-center">
+                      <Skeleton className="h-4 rounded-md" />
+                      <Skeleton className="h-5 w-20 rounded-full" />
+                      <Skeleton className="h-4 rounded-md" />
+                      <Skeleton className="h-4 rounded-md" />
+                      <Skeleton className="h-4 rounded-md" />
+                    </div>
+                  ))}
+                </div>
               ) : filteredOrderLogs.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs text-left">
@@ -347,7 +358,16 @@ function AuditLogPage() {
               )
             ) : activeTab === 'cash' ? (
               isCashLoading ? (
-                <p className="text-center text-slate-400 py-12 text-xs">Loading cash logs...</p>
+                <div className="p-5 space-y-3">
+                  {Array.from({ length: 5 }).map((_, idx) => (
+                    <div key={idx} className="grid grid-cols-4 gap-3 items-center">
+                      <Skeleton className="h-4 rounded-md" />
+                      <Skeleton className="h-4 rounded-md" />
+                      <Skeleton className="h-4 rounded-md" />
+                      <Skeleton className="h-4 rounded-md" />
+                    </div>
+                  ))}
+                </div>
               ) : filteredCashLogs.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-xs text-left">
@@ -418,7 +438,7 @@ function AuditLogPage() {
                                 ? 'bg-rose-50 text-rose-700 border border-rose-200' 
                                 : log.type === 'PRICE_MISMATCH'
                                 ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                                : 'bg-purple-50 text-purple-700 border border-purple-200'
+                                : 'bg-orange-50 text-orange-700 border border-orange-200'
                             }`}>
                               {log.type}
                             </span>
@@ -440,8 +460,8 @@ function AuditLogPage() {
               ) : (
                 <div className="p-12 text-center space-y-2">
                   <ShieldCheck className="w-10 h-10 text-emerald-600 mx-auto animate-pulse" />
-                  <p className="text-sm font-bold text-slate-900">No Threat Alerts Recorded</p>
-                  <p className="text-xs text-slate-500 font-mono">Your rate limiting, HMAC signed tokens, and RLS policies are actively protecting the server.</p>
+                  <p className="text-sm font-bold text-slate-900">Tiada Amaran Ancaman Direkodkan</p>
+                  <p className="text-xs text-slate-500 font-mono">Perlindungan akses, pengesanan kadar luar biasa, dan pemantauan keselamatan beroperasi secara aktif.</p>
                 </div>
               )
             )}

@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { toast } from 'sonner';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 
 export interface StockItem {
   id: string;
@@ -122,7 +123,7 @@ export const QuickStockModal = React.memo(function QuickStockModal({
 
       if (onItemUpdated) onItemUpdated();
     } catch (err: any) {
-      toast.error('Gagal mengemas kini status stok: ' + err.message);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal mengemas kini status stok.'));
     } finally {
       setUpdatingId(null);
     }
@@ -153,7 +154,7 @@ export const QuickStockModal = React.memo(function QuickStockModal({
 
       if (onItemUpdated) onItemUpdated();
     } catch (err: any) {
-      toast.error('Gagal mengemas kini kuantiti: ' + err.message);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal mengemas kini kuantiti stok.'));
     } finally {
       setUpdatingId(null);
     }

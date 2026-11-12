@@ -94,30 +94,33 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#f8fafc] px-4 font-sans text-slate-900">
-      <div className="max-w-md text-center p-6 bg-white rounded-3xl border border-slate-200 shadow-xl">
-        <h1 className="text-xl font-bold tracking-tight text-slate-900 font-heading">
-          Halaman Tidak Dapat Dimuatkan
-        </h1>
-        <pre className="mt-2 text-xs text-rose-700 text-left bg-rose-50 border border-rose-200 p-4 rounded-2xl overflow-auto font-mono">
-          {error?.message || "Unknown error"}
-          {"\n"}
-          {error?.stack}
-        </pre>
-        <div className="mt-6 flex flex-wrap justify-center gap-2">
+      <div className="max-w-md w-full text-center p-7 bg-white rounded-3xl border border-slate-200 shadow-sm space-y-4">
+        <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mx-auto font-bold text-lg">
+          !
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 font-heading">
+            Halaman Tidak Dapat Dimuatkan
+          </h1>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            Maaf, berlaku gangguan sementara semasa memaparkan halaman ini. Sila cuba muat semula atau kembali ke halaman utama.
+          </p>
+        </div>
+        <div className="pt-2 flex flex-wrap justify-center gap-2.5">
           <button
             onClick={() => {
               router.invalidate();
               reset();
             }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center justify-center rounded-xl bg-orange-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-orange-700 cursor-pointer"
           >
-            Try again
+            Cuba Semula
           </button>
           <a
             href="/"
-            className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
+            className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
           >
-            Go home
+            Laman Utama
           </a>
         </div>
       </div>

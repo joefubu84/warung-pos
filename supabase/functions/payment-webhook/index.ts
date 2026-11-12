@@ -8,15 +8,7 @@ function md5(string: string): string {
     return (lValue << iShiftBits) | (lValue >>> (32 - iShiftBits));
   }
   function addUnsigned(lX: number, lY: number): number {
-    const lX4 = lX & 0x40000000;
-    const lY4 = lY & 0x40000000;
-    const lResult = (lX & 0x3fffffff) + (lY & 0x3fffffff);
-    if (lX4 & lY4) return lResult ^ 0x80000000 ^ lX4 ^ lY4;
-    if (lX4 | lY4) {
-      if (lResult & 0x40000000) return lResult ^ 0xc0000000 ^ lX4 ^ lY4;
-      return lResult ^ 0x40000000 ^ lX4 ^ lY4;
-    }
-    return lResult;
+    return ((lX | 0) + (lY | 0)) | 0;
   }
   function F(x: number, y: number, z: number): number { return (x & y) | ((~x) & z); }
   function G(x: number, y: number, z: number): number { return (x & z) | (y & (~z)); }
@@ -40,26 +32,25 @@ function md5(string: string): string {
     return addUnsigned(rotateLeft(a, s), b);
   }
 
-  function convertToWordArray(string: string): number[] {
-    let lMessageLength = string.length;
-    let lNumberOfWords_temp1 = lMessageLength + 8;
-    let lNumberOfWords_temp2 = (lNumberOfWords_temp1 - (lNumberOfWords_temp1 % 64)) / 64;
-    let lNumberOfWords = (lNumberOfWords_temp2 + 1) * 16;
-    let lWordArray: number[] = Array(lNumberOfWords - 1);
-    let lBytePosition = 0;
-    let lByteCount = 0;
-    while (lByteCount < lMessageLength) {
-      let lWordCount = (lByteCount - (lByteCount % 4)) / 4;
-      lBytePosition = (lByteCount % 4) * 8;
-      lWordArray[lWordCount] = (lWordArray[lWordCount] | (string.charCodeAt(lByteCount) << lBytePosition));
-      lByteCount++;
+  function convertToWordArray(str: string): number[] {
+    const bytes = new TextEncoder().encode(str);
+    const byteLength = bytes.length;
+    const wordBlocks = Math.floor((byteLength + 8) / 64);
+    const numberOfWords = (wordBlocks + 1) * 16;
+    const words = new Array<number>(numberOfWords).fill(0);
+    let byteCount = 0;
+    while (byteCount < byteLength) {
+      const wordIdx = Math.floor(byteCount / 4);
+      const bitOffset = (byteCount % 4) * 8;
+      words[wordIdx] |= (bytes[byteCount] ?? 0) << bitOffset;
+      byteCount++;
     }
-    let lWordCount = (lByteCount - (lByteCount % 4)) / 4;
-    lBytePosition = (lByteCount % 4) * 8;
-    lWordArray[lWordCount] = lWordArray[lWordCount] | (0x80 << lBytePosition);
-    lWordArray[lNumberOfWords - 2] = lMessageLength << 3;
-    lWordArray[lNumberOfWords - 1] = lMessageLength >>> 29;
-    return lWordArray;
+    const endWordIdx = Math.floor(byteCount / 4);
+    const endBitOffset = (byteCount % 4) * 8;
+    words[endWordIdx] |= 0x80 << endBitOffset;
+    words[numberOfWords - 2] = (byteLength << 3) >>> 0;
+    words[numberOfWords - 1] = byteLength >>> 29;
+    return words;
   }
 
   function wordToHex(lValue: number): string {
@@ -130,7 +121,7 @@ function md5(string: string): string {
     c = HH(c, d, a, b, x[k + 3], S33, 0xD4EF3085);
     b = HH(b, c, d, a, x[k + 6], S34, 0x4881D05);
     a = HH(a, b, c, d, x[k + 9], S31, 0xD9D4D039);
-    d = HH(d, a, b, c, x[k + 12], S32, 0xE6AB1F5C);
+    d = HH(d, a, b, c, x[k + 12], S32, 0xE6DB99E5);
     c = HH(c, d, a, b, x[k + 15], S33, 0x1FA27CF8);
     b = HH(b, c, d, a, x[k + 2], S34, 0xC4AC5665);
 
@@ -165,10 +156,14 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
 
-const TOYYIB_SECRET = Deno.env.get("TOYYIBPAY_SECRET_KEY") || "toyyib_secret_warung_2026";
+const TOYYIB_SECRET = Deno.env.get("TOYYIBPAY_SECRET_KEY") ?? "";
 
 serve(async (req) => {
   try {
+    if (!TOYYIB_SECRET) {
+      return new Response(JSON.stringify({ error: "Payment gateway secret not configured" }), { status: 503 });
+    }
+
     const body = await req.formData();
     const status_id  = body.get("status_id")?.toString() ?? "";
     const billcode   = body.get("billcode")?.toString() ?? "";
@@ -183,7 +178,7 @@ serve(async (req) => {
     if (expected_checksum !== received_checksum.toLowerCase()) {
       await supabase.from("security_events").insert({
         event_type: "FAKE_WEBHOOK_SIGNATURE",
-        details: `Invalid MD5 checksum received for order ${order_id}. Expected: ${expected_checksum}, Received: ${received_checksum}`,
+        details: `Invalid MD5 checksum received for bill ${billcode} (order: ${order_id})`,
       });
       return new Response(JSON.stringify({ error: "Invalid signature checksum" }), { status: 401 });
     }
@@ -229,7 +224,7 @@ serve(async (req) => {
 
     return new Response(JSON.stringify({ success: true, order_id: order_id }), { status: 200 });
 
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message || "Webhook processing error" }), { status: 500 });
+  } catch {
+    return new Response(JSON.stringify({ error: "Webhook processing error" }), { status: 500 });
   }
 });

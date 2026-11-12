@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { 
   AlertTriangle, 
   Lock, 
@@ -207,7 +208,7 @@ export function ReopenRegisterModal({ isOpen, onClose, onSuccess, closedAt }: Re
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err.message || "Failed to reopen register");
+      toast.error(getFriendlyErrorMessage(err, 'Gagal membuka semula laci tunai.'));
     } finally {
       setIsSubmitting(false);
     }

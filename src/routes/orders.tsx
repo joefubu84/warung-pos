@@ -15,6 +15,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from 'sonner';
 import { getActiveStaffUser } from '@/lib/staff-access-config';
 import { shareReceiptWhatsAppPDF } from '@/lib/receipt';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 
 export const Route = createFileRoute('/orders')({
   ssr: false,
@@ -318,8 +320,9 @@ function OrdersPage() {
 
     if (error) {
       console.error('Error fetching orders:', error);
-      setError(error.message);
+      setError(getFriendlyErrorMessage(error, 'Ralat memuatkan senarai pesanan.'));
     } else if (data) {
+      setError(null);
       setOrders(data as unknown as Order[]);
     }
   };
@@ -352,7 +355,7 @@ function OrdersPage() {
       toast.success('🎉 Bayaran disahkan! Pesanan kini dihantar ke dapur dan rider di /rider.');
       await fetchOrders();
     } catch (e: any) {
-      toast.error('Gagal mengesahkan bayaran: ' + e.message);
+      toast.error(getFriendlyErrorMessage(e, 'Gagal mengesahkan bayaran pesanan.'));
     }
   };
 
@@ -385,7 +388,7 @@ function OrdersPage() {
 
   const handleSaveEdit = async () => {
     if (!editingOrder || !editReason) {
-      alert('Please provide a reason for the change.');
+      toast.error('Sila pilih atau masukkan sebab perubahan pesanan.');
       return;
     }
 
@@ -497,7 +500,7 @@ function OrdersPage() {
       setEditingOrder(null);
       await fetchOrders();
     } catch (err: any) {
-      alert('Failed to save changes: ' + err.message);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal menyimpan perubahan pesanan.'));
     } finally {
       setIsSavingEdit(false);
     }
@@ -505,7 +508,7 @@ function OrdersPage() {
 
   const handleDeleteOrder = async () => {
     if (!deletingOrder || !deleteReason) {
-      alert('Please provide a reason for deletion.');
+      toast.error('Sila pilih sebab pemadaman pesanan.');
       return;
     }
 
@@ -534,7 +537,7 @@ function OrdersPage() {
       setDeletingOrder(null);
       await fetchOrders();
     } catch (err: any) {
-      alert('Failed to delete order: ' + err.message);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal memadam pesanan.'));
     } finally {
       setIsDeleting(false);
     }
@@ -548,7 +551,7 @@ function OrdersPage() {
 
     if (error) {
       console.error('Error updating status:', error);
-      alert('Failed to update status: ' + error.message);
+      toast.error(getFriendlyErrorMessage(error, 'Gagal mengemas kini status pesanan.'));
     } else {
       await fetchOrders();
     }
@@ -579,7 +582,10 @@ function OrdersPage() {
   };
 
   const handleAddToCart = () => {
-    if (!selectedMenuItemId) return alert('Please select a menu item');
+    if (!selectedMenuItemId) {
+      toast.error('Sila pilih hidangan daripada senarai menu.');
+      return;
+    }
     const selectedItem = menuItems.find(item => item.id === selectedMenuItemId);
     if (!selectedItem) return;
 
@@ -612,7 +618,10 @@ function OrdersPage() {
 
   const handleSubmitOrder = async () => {
     if (cart.length === 0) return;
-    if (cart.some(item => item.fulfillmentType === 'dine_in') && !selectedTableId) return alert('Please select a table');
+    if (cart.some(item => item.fulfillmentType === 'dine_in') && !selectedTableId) {
+      toast.error('Sila pilih nombor meja untuk pesanan Dine-In.');
+      return;
+    }
     
     setIsSubmitting(true);
     setError(null);
@@ -672,13 +681,47 @@ function OrdersPage() {
       setCustomerName('');
       await fetchOrders();
     } catch (err: any) {
-      setError(err.message || 'Failed to submit order');
+      setError(getFriendlyErrorMessage(err, 'Gagal menghantar pesanan. Sila cuba lagi.'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (isLoading) return <div className="p-8">Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8 font-sans">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="bg-white border border-slate-200/90 p-6 rounded-3xl space-y-4">
+            <div className="flex flex-col md:flex-row justify-between gap-4">
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-56 rounded-xl" />
+                <Skeleton className="h-4 w-72 rounded-lg" />
+              </div>
+              <Skeleton className="h-10 w-full md:w-72 rounded-full" />
+            </div>
+            <Skeleton className="h-12 w-full rounded-2xl" />
+            <div className="flex gap-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-9 w-28 rounded-2xl" />
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-white border border-slate-200/90 rounded-3xl p-5 space-y-4">
+                <div className="flex justify-between">
+                  <Skeleton className="h-6 w-32 rounded-lg" />
+                  <Skeleton className="h-8 w-28 rounded-xl" />
+                </div>
+                <Skeleton className="h-16 w-full rounded-2xl" />
+                <Skeleton className="h-12 w-full rounded-2xl" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const statusOptions: OrderStatus[] = ['pending', 'preparing', 'ready', 'completed', 'cancelled'];
 
@@ -722,7 +765,7 @@ function OrdersPage() {
                   : 'bg-white text-slate-600 hover:bg-orange-50 hover:text-orange-700 border border-slate-200 shadow-xs'
               }`}
             >
-              <span>⚡ Today / Shift</span>
+              <span>Hari Ini / Sif</span>
             </button>
             <button
               onClick={() => setDateFilter('yesterday')}
@@ -839,6 +882,21 @@ function OrdersPage() {
           );
         })()}
       </div>
+
+        {/* Error Banner */}
+        {error && (
+          <div className="bg-rose-50 border border-rose-200 text-rose-800 px-5 py-4 rounded-2xl flex items-center justify-between gap-3 shadow-xs">
+            <span className="text-xs font-bold">{error}</span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => fetchOrders()}
+              className="border-rose-300 text-rose-700 hover:bg-rose-100 rounded-xl text-xs font-bold shrink-0"
+            >
+              Cuba Semula
+            </Button>
+          </div>
+        )}
 
         {/* Orders Grid */}
         {(() => {
@@ -1015,7 +1073,7 @@ function OrdersPage() {
                                 .eq('id', order.id);
 
                               if (error) {
-                                toast.error('Payment failed: ' + error.message);
+                                toast.error(getFriendlyErrorMessage(error, 'Gagal merekod bayaran.'));
                               } else {
                                 toast.success('🎉 Bayaran berjaya direkod!');
                                 await fetchOrders();
@@ -1150,7 +1208,7 @@ function OrdersPage() {
                                 toast.success(`Resit #${order.id.slice(0, 8)} berjaya dicetak ke peranti ${res.mode.toUpperCase()}! 🖨️`);
                               }
                             } catch (printErr: any) {
-                              toast.error(`Ralat cetakan: ${printErr?.message || String(printErr)}`);
+                              toast.error(getFriendlyErrorMessage(printErr, 'Ralat mencetak resit thermal.'));
                             }
                           }}
                           className="bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 px-3 py-1.5 rounded-xl text-xs font-black shadow-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
@@ -1206,7 +1264,7 @@ function OrdersPage() {
                               toast.success(`Resit PDF #${order.id.slice(0, 8)} sedia dikongsi ke WhatsApp! 📱`);
                             } catch (waErr: any) {
                               toast.dismiss(`pdf-${order.id}`);
-                              toast.error(`Gagal berkongsi PDF: ${waErr?.message || String(waErr)}`);
+                              toast.error(getFriendlyErrorMessage(waErr, 'Gagal menjana atau berkongsi PDF resit.'));
                             }
                           }}
                           className="bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1.5 rounded-xl text-xs font-black shadow-xs active:scale-95 transition-all cursor-pointer flex items-center gap-1.5"
@@ -1501,7 +1559,10 @@ function OrdersPage() {
           
           <div className="py-4">
             {isLoadingHistory ? (
-              <p className="text-center italic py-8 text-slate-500 font-mono">Loading history...</p>
+              <div className="space-y-3 py-4">
+                <Skeleton className="h-16 w-full rounded-2xl" />
+                <Skeleton className="h-16 w-full rounded-2xl" />
+              </div>
             ) : editLogs.length === 0 ? (
               <p className="text-center italic py-8 text-slate-500 font-mono">No edits recorded for this order.</p>
             ) : (

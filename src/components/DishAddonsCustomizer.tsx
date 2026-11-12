@@ -6,11 +6,13 @@ import { Switch } from '@/components/ui/switch';
 import { 
   Dialog, 
   DialogContent, 
+  DialogDescription,
   DialogHeader, 
   DialogTitle, 
   DialogFooter 
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { supabase } from '@/integrations/supabase/client';
 import { 
   CustomAddon, 
@@ -24,7 +26,6 @@ import {
   RotateCcw, 
   Utensils, 
   RefreshCw, 
-  Sparkles, 
   Pencil, 
   Image as ImageIcon, 
   Camera,
@@ -59,6 +60,9 @@ export function DishAddonsCustomizer() {
   const [editAvailable, setEditAvailable] = useState(true);
   const [uploadingEditPhoto, setUploadingEditPhoto] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<
+    { type: 'delete'; id: string; name: string } | { type: 'reset' } | null
+  >(null);
 
   useEffect(() => {
     const current = getAddonsConfig();
@@ -77,7 +81,7 @@ export function DishAddonsCustomizer() {
       await syncAddonsToDatabase(addons);
       toast.success(`🎉 Berjaya menyegerakkan ${addons.length} add-on ke menu utama! Pelanggan kini boleh membeli terus dari menu.`);
     } catch (e: any) {
-      toast.error('Gagal menyegerakkan: ' + e.message);
+      toast.error(getFriendlyErrorMessage(e, 'Gagal menyegerakkan tambahan pilihan.'));
     } finally {
       setIsSyncing(false);
     }
@@ -106,7 +110,7 @@ export function DishAddonsCustomizer() {
       setNewImageUrl(data.publicUrl);
       toast.success("Foto add-on berjaya dimuat naik!");
     } catch (err: any) {
-      toast.error('Gagal memuat naik gambar: ' + err.message);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal memuat naik gambar add-on.'));
     } finally {
       setUploadingNewPhoto(false);
     }
@@ -135,7 +139,7 @@ export function DishAddonsCustomizer() {
       setEditImageUrl(data.publicUrl);
       toast.success("Foto add-on dikemaskini!");
     } catch (err: any) {
-      toast.error('Gagal memuat naik gambar: ' + err.message);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal memuat naik gambar add-on.'));
     } finally {
       setUploadingEditPhoto(false);
     }
@@ -231,18 +235,22 @@ export function DishAddonsCustomizer() {
 
   const handleRemoveAddon = (id: string) => {
     const target = addons.find(a => a.id === id);
-    const targetName = target?.name || 'Add-on';
-
-    if (confirm(`Adakah anda pasti mahu memadam add-on "${targetName}"?`)) {
-      const updated = addons.filter(a => a.id !== id);
-      setAddons(updated);
-      saveAddonsConfig(updated);
-      toast.info(`Add-on "${targetName}" telah dipadam.`);
-    }
+    const targetName = target?.name || 'Item';
+    setConfirmAction({ type: 'delete', id, name: targetName });
   };
 
   const handleResetDefaults = () => {
-    if (confirm('Kembalikan senarai Tambahan Pilihan (Add-ons) kepada tetapan asal warung?')) {
+    setConfirmAction({ type: 'reset' });
+  };
+
+  const executeConfirmAction = () => {
+    if (!confirmAction) return;
+    if (confirmAction.type === 'delete') {
+      const updated = addons.filter(a => a.id !== confirmAction.id);
+      setAddons(updated);
+      saveAddonsConfig(updated);
+      toast.info(`Tambahan "${confirmAction.name}" telah dipadam.`);
+    } else {
       const defaultAddons: CustomAddon[] = [
         { id: 'egg', name: 'Telur Mata (Fried Egg)', price: 1.50, available: true },
         { id: 'sambal', name: 'Extra Sambal Special', price: 1.00, available: true },
@@ -252,8 +260,9 @@ export function DishAddonsCustomizer() {
       ];
       setAddons(defaultAddons);
       saveAddonsConfig(defaultAddons);
-      toast.success('Senarai add-ons dikembalikan kepada tetapan asal.');
+      toast.success('Senarai tambahan pilihan dikembalikan kepada tetapan asal.');
     }
+    setConfirmAction(null);
   };
 
   return (
@@ -279,7 +288,7 @@ export function DishAddonsCustomizer() {
                 onClick={handleManualSync}
                 className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm shadow-orange-500/20 rounded-xl h-8 px-3"
               >
-                {isSyncing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                {isSyncing ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
                 <span>{isSyncing ? 'Sedang Selaras...' : 'Selaraskan ke Menu Utama'}</span>
               </Button>
               <Button
@@ -628,6 +637,49 @@ export function DishAddonsCustomizer() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(confirmAction)}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+      >
+        <DialogContent className="bg-white border border-slate-200 text-slate-900 max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-slate-900">
+              {confirmAction?.type === 'delete'
+                ? `Padam "${confirmAction.name}"?`
+                : 'Pulihkan Tambahan Pilihan Asal?'}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-600">
+              {confirmAction?.type === 'delete'
+                ? 'Item tambahan ini akan dikeluarkan daripada senarai pilihan pelanggan.'
+                : 'Semua senarai tambahan pilihan akan dikembalikan kepada tetapan asal warung.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmAction(null)}
+              className="border-slate-200 text-slate-700 rounded-xl text-xs"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              onClick={executeConfirmAction}
+              className={
+                confirmAction?.type === 'delete'
+                  ? 'bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs'
+                  : 'bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs'
+              }
+            >
+              {confirmAction?.type === 'delete' ? 'Ya, Padam' : 'Ya, Pulihkan'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

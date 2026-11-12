@@ -26,9 +26,28 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
 }
 
 
+const FALLBACK_SUPABASE_URL = 'https://gtmzzblomcvgmwzjalja.supabase.co';
+const FALLBACK_SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_m0I3z41KlguoyAcf1VM53Q_cuJgYe_Q';
+
+function resolveEnvValue(value: string | undefined, deprecatedToken: string): string | undefined {
+  if (!value || value.includes(deprecatedToken)) return undefined;
+  return value;
+}
+
 function createSupabaseClient() {
-  const SUPABASE_URL = 'https://gtmzzblomcvgmwzjalja.supabase.co';
-  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_m0I3z41KlguoyAcf1VM53Q_cuJgYe_Q';
+  const envUrl =
+    (typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_SUPABASE_URL : undefined) ||
+    (typeof process !== 'undefined' ? process.env?.['SUPABASE_URL'] || process.env?.['VITE_SUPABASE_URL'] : undefined);
+
+  const envKey =
+    (typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY : undefined) ||
+    (typeof process !== 'undefined'
+      ? process.env?.['SUPABASE_PUBLISHABLE_KEY'] || process.env?.['VITE_SUPABASE_PUBLISHABLE_KEY']
+      : undefined);
+
+  const SUPABASE_URL = resolveEnvValue(envUrl, 'ilvbuhinmasmdsjcxfbn') || FALLBACK_SUPABASE_URL;
+  const SUPABASE_PUBLISHABLE_KEY =
+    resolveEnvValue(envKey, 'W1moaaZz9eXPPPjQOf0e2g_YcIbl0e7') || FALLBACK_SUPABASE_PUBLISHABLE_KEY;
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
     global: {

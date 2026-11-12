@@ -7,11 +7,14 @@ import { Switch } from '@/components/ui/switch';
 import { 
   Dialog, 
   DialogContent, 
+  DialogDescription,
   DialogHeader, 
   DialogTitle, 
   DialogFooter 
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { 
   CallWaiterReason, 
   DEFAULT_CALL_WAITER_REASONS, 
@@ -32,10 +35,8 @@ import {
   ChevronDown, 
   Pencil, 
   Check, 
-  Sparkles, 
   Loader2,
-  Smartphone,
-  Eye
+  Smartphone
 } from 'lucide-react';
 
 export function CallWaiterCustomizer() {
@@ -59,6 +60,9 @@ export function CallWaiterCustomizer() {
   // Preview Selected State (for interactive mobile mock)
   const [previewSelectedId, setPreviewSelectedId] = useState<string>('waiter');
   const [isTestingCall, setIsTestingCall] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<
+    { type: 'delete'; id: string; title: string } | { type: 'reset' } | null
+  >(null);
 
   const handleTestPreviewCall = async () => {
     try {
@@ -135,7 +139,7 @@ export function CallWaiterCustomizer() {
         duration: 4000
       });
     } catch (err: any) {
-      toast.error('Gagal menghantar ujian: ' + (err?.message || 'Ralat'));
+      toast.error(getFriendlyErrorMessage(err, 'Gagal menghantar ujian panggilan.'));
     } finally {
       setTimeout(() => setIsTestingCall(false), 600);
     }
@@ -189,20 +193,17 @@ export function CallWaiterCustomizer() {
     await syncCallWaiterReasonsToSupabase(reordered);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = (id: string) => {
     if (reasons.length <= 1) {
       toast.error('Perlu ada sekurang-kurangnya 1 pilihan bantuan untuk pelanggan.');
       return;
     }
     const itemToDelete = reasons.find(r => r.id === id);
-    if (!confirm(`Padam pilihan "${itemToDelete?.title}"?`)) return;
-
-    const updated = reasons
-      .filter(r => r.id !== id)
-      .map((item, idx) => ({ ...item, order: idx }));
-    setReasons(updated);
-    await syncCallWaiterReasonsToSupabase(updated);
-    toast.success('Pilihan bantuan dipadam');
+    setConfirmAction({
+      type: 'delete',
+      id,
+      title: itemToDelete?.title || 'Pilihan',
+    });
   };
 
   const handleAddPreset = async (preset: { title: string; description: string; icon: string }) => {
@@ -288,27 +289,42 @@ export function CallWaiterCustomizer() {
     try {
       const ok = await syncCallWaiterReasonsToSupabase(reasons);
       if (ok) {
-        toast.success('🎉 Semua tetapan panggil pelayan berjaya disimpan ke Supabase!');
+        toast.success('Semua tetapan panggil pelayan berjaya disimpan!');
       } else {
-        toast.error('Gagal menyimpan ke pangkalan data.');
+        toast.error('Gagal menyimpan tetapan. Sila cuba lagi.');
       }
     } catch (err: any) {
-      toast.error(err.message || 'Ralat menyimpan ke Supabase');
+      toast.error('Ralat menyimpan tetapan. Sila cuba sebentar lagi.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleReset = async () => {
-    if (confirm('Kembalikan semua tujuan panggil pelayan kepada 4 tetapan asal? Pilihan tambahan anda akan digantikan.')) {
-      setIsSaving(true);
-      try {
-        const res = await resetCallWaiterReasonsToDefault();
-        setReasons(res);
-        toast.success('Tetapan dikembalikan ke nilai lalai asal.');
-      } finally {
-        setIsSaving(false);
-      }
+  const handleReset = () => {
+    setConfirmAction({ type: 'reset' });
+  };
+
+  const executeConfirmAction = async () => {
+    if (!confirmAction) return;
+    if (confirmAction.type === 'delete') {
+      const updated = reasons
+        .filter(r => r.id !== confirmAction.id)
+        .map((item, idx) => ({ ...item, order: idx }));
+      setReasons(updated);
+      setConfirmAction(null);
+      await syncCallWaiterReasonsToSupabase(updated);
+      toast.success('Pilihan bantuan dipadam');
+      return;
+    }
+
+    setConfirmAction(null);
+    setIsSaving(true);
+    try {
+      const res = await resetCallWaiterReasonsToDefault();
+      setReasons(res);
+      toast.success('Tetapan dikembalikan ke nilai lalai asal.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -357,7 +373,7 @@ export function CallWaiterCustomizer() {
             className="bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl text-xs gap-2 h-10 px-4 shadow-sm shadow-orange-500/20"
           >
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4 stroke-[3]" />}
-            Simpan ke Supabase
+            Simpan Perubahan
           </Button>
         </div>
       </div>
@@ -366,7 +382,7 @@ export function CallWaiterCustomizer() {
       <div className="bg-slate-50 border border-slate-200/80 p-4 rounded-2xl space-y-2.5">
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-slate-700 flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-orange-500" /> Cadangan Preset Pantas (1-Klik Tambah):
+            <Plus className="w-4 h-4 text-orange-500" /> Cadangan Preset Pantas (1-Klik Tambah):
           </span>
           <span className="text-[10px] text-slate-500 font-mono">Klik untuk masukkan ke senarai</span>
         </div>
@@ -422,9 +438,19 @@ export function CallWaiterCustomizer() {
 
             <CardContent className="p-4 space-y-2.5">
               {isLoading ? (
-                <div className="py-12 text-center text-slate-500 flex flex-col items-center gap-2">
-                  <Loader2 className="w-6 h-6 animate-spin text-orange-500" />
-                  <span className="text-xs font-mono">Memuatkan tetapan...</span>
+                <div className="space-y-2.5 py-2" aria-busy="true">
+                  {[1, 2, 3, 4].map((idx) => (
+                    <div key={idx} className="p-3.5 rounded-2xl border border-slate-200/80 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 flex-1">
+                        <Skeleton className="w-10 h-10 rounded-2xl shrink-0" />
+                        <div className="space-y-2 flex-1">
+                          <Skeleton className="h-3.5 w-1/2 rounded-md" />
+                          <Skeleton className="h-2.5 w-3/4 rounded-md" />
+                        </div>
+                      </div>
+                      <Skeleton className="w-20 h-7 rounded-xl shrink-0" />
+                    </div>
+                  ))}
                 </div>
               ) : reasons.length === 0 ? (
                 <div className="py-8 text-center text-slate-500 text-xs font-mono">
@@ -790,6 +816,49 @@ export function CallWaiterCustomizer() {
               className="bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl shadow-sm shadow-orange-500/20"
             >
               Simpan Perubahan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(confirmAction)}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+      >
+        <DialogContent className="bg-white border border-slate-200 text-slate-900 max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-slate-900">
+              {confirmAction?.type === 'delete'
+                ? `Padam Pilihan "${confirmAction.title}"?`
+                : 'Pulihkan Tetapan Panggil Pelayan?'}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-600">
+              {confirmAction?.type === 'delete'
+                ? 'Pilihan bantuan ini tidak lagi akan dipaparkan pada menu QR pelanggan.'
+                : 'Semua tujuan panggil pelayan akan dikembalikan kepada 4 tetapan asal.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmAction(null)}
+              className="border-slate-200 text-slate-700 rounded-xl text-xs"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              onClick={executeConfirmAction}
+              className={
+                confirmAction?.type === 'delete'
+                  ? 'bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs'
+                  : 'bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs'
+              }
+            >
+              {confirmAction?.type === 'delete' ? 'Ya, Padam' : 'Ya, Pulihkan'}
             </Button>
           </DialogFooter>
         </DialogContent>

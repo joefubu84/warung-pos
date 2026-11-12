@@ -31,6 +31,8 @@ export interface Order {
   payment_method?: string | null;
 }
 
+import { toast } from 'sonner';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { getReceiptCustomConfig, ReceiptCustomConfig } from '@/lib/receipt-config';
 
 export function generateReceiptHTML(
@@ -536,7 +538,9 @@ export async function shareReceiptWhatsAppPDF(
   } catch (error: any) {
     console.error("Failed to share PDF receipt via WhatsApp:", error);
     if (error?.name !== 'AbortError') {
-      alert("Gagal menjana PDF resit: " + (error?.message || String(error)));
+      toast.error(
+        `Gagal menjana PDF resit: ${getFriendlyErrorMessage(error, 'Sila cuba sebentar lagi.')}`
+      );
     }
   }
 }

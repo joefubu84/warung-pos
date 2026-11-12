@@ -1,60 +1,80 @@
 import { redirect } from '@tanstack/react-router';
 import { supabase } from '@/integrations/supabase/client';
 import type { AuthState } from '@/lib/auth-state';
+import { getStaffPinSession } from '@/lib/auth-state';
 import { getTodayCashStatus } from '@/lib/cash-guard';
-import { 
-  getActiveStaffUser, 
-  isPageAllowedForUser, 
-  getPrimaryPageForRole 
+import {
+  getActiveStaffUser,
+  getStaffAccessConfig,
+  isPageAllowedForUser,
+  getPrimaryPageForRole,
+  type StaffUser,
 } from '@/lib/staff-access-config';
 
 const DEFAULT_STORE_ID = '1094d737-8104-4a55-b678-0fe9097beba0';
+const VERIFIED_OWNER_EMAILS = new Set(['ogyic84@gmail.com', 'joefubu84@gmail.com']);
 
 async function getUserProfile(session: any) {
-  // 0. Active staff user session (PIN quick login or POS staff selector)
-  const activeStaff = getActiveStaffUser();
-  if (activeStaff && activeStaff.active) {
-    return {
-      userProfile: {
-        id: activeStaff.id,
-        role: activeStaff.role,
-        store_id: DEFAULT_STORE_ID,
-        email: activeStaff.email,
-        name: activeStaff.name,
-      },
-      error: null
-    };
-  }
-
   if (!session?.user) return { userProfile: null, error: null };
 
-  // Emergency / Official Admin instant bypass
-  if (
-    session.user.id === '0f81ea5a-e622-4343-a188-62f90dc1ef14' ||
-    session.user.email === 'ogyic84@gmail.com' ||
-    session.user.email === 'joefubu84@gmail.com' ||
-    session.user.email === 'teststaffa@test.com' ||
-    session.access_token === 'emergency_warung_staff_token'
-  ) {
+  // Never honor deprecated insecure bypass tokens
+  if (session.access_token === 'emergency_warung_staff_token') {
+    return { userProfile: null, error: null };
+  }
+
+  // 1. Scoped PIN quick-login session (must pass getStaffPinSession expiry & integrity check)
+  if (session.staff_pin_verified === true) {
+    const validPinSession = getStaffPinSession() as any;
+    if (!validPinSession || validPinSession.access_token !== session.access_token) {
+      return { userProfile: null, error: null };
+    }
+
+    const staffConfig = getStaffAccessConfig();
+    const activeStaff = getActiveStaffUser();
+    const targetStaffId = validPinSession.staff_id || session.user.id;
+    const directoryStaff = staffConfig.staff_users.find((s) => s.id === targetStaffId);
+    const resolvedStaff = directoryStaff || (activeStaff?.id === targetStaffId ? activeStaff : null);
+
+    if (!resolvedStaff || !resolvedStaff.active) {
+      return { userProfile: null, error: null };
+    }
+
     return {
       userProfile: {
-        id: session.user.id || '0f81ea5a-e622-4343-a188-62f90dc1ef14',
-        role: 'admin',
+        id: resolvedStaff.id,
+        role: resolvedStaff.role,
         store_id: DEFAULT_STORE_ID,
-        email: session.user.email || 'ogyic84@gmail.com'
+        email: resolvedStaff.email,
+        name: resolvedStaff.name,
       },
-      error: null
+      staffRecord: resolvedStaff as StaffUser,
+      error: null,
     };
   }
 
-  // 1. Try lookup by user ID
+  // 2. Real Supabase Auth session: verified store owner allowlist
+  const emailLower = (session.user.email || '').toLowerCase();
+  if (emailLower && VERIFIED_OWNER_EMAILS.has(emailLower)) {
+    return {
+      userProfile: {
+        id: session.user.id,
+        role: 'admin',
+        store_id: DEFAULT_STORE_ID,
+        email: session.user.email,
+      },
+      staffRecord: null,
+      error: null,
+    };
+  }
+
+  // 3. Lookup by user ID in public.users
   let { data: userProfile, error } = await supabase
     .from('users')
     .select('id, role, store_id, email')
     .eq('id', session.user.id)
     .maybeSingle();
 
-  // 2. If not found by ID, try matching by email
+  // 4. Fallback lookup by email in public.users
   if (!userProfile && session.user.email) {
     const { data: byEmail } = await supabase
       .from('users')
@@ -68,51 +88,59 @@ async function getUserProfile(session: any) {
     }
   }
 
-  // 3. Check metadata role from Supabase auth
-  const metaRole = session.user.user_metadata?.role || session.user.app_metadata?.role;
-
-  if (!userProfile && metaRole) {
-    userProfile = {
-      id: session.user.id,
-      role: metaRole,
-      store_id: DEFAULT_STORE_ID,
-      email: session.user.email
-    };
-    error = null;
-  }
-
-  // 4. Fallback for authenticated email/password users (who login via /auth)
-  const isEmailAuth = session.user.app_metadata?.provider === 'email' || !session.user.app_metadata?.provider;
-  if (!userProfile && isEmailAuth && session.user.email) {
-    userProfile = {
-      id: session.user.id,
-      role: 'admin',
-      store_id: DEFAULT_STORE_ID,
-      email: session.user.email
-    };
-    error = null;
-  }
-
-  // 5. Admin fallback for store owner / admin accounts
-  if (!userProfile && session.user.email) {
-    const emailLower = session.user.email.toLowerCase();
-    if (emailLower.includes('admin') || emailLower === 'ogyic84@gmail.com' || emailLower === 'joefubu84@gmail.com' || emailLower.endsWith('@warungjnj.online')) {
+  // 5. Match configured active staff directory by verified email (using configured role only)
+  if (!userProfile && emailLower) {
+    const staffDirectoryMatch = getStaffAccessConfig().staff_users.find(
+      (s) => s.active && s.email?.toLowerCase() === emailLower
+    );
+    if (staffDirectoryMatch) {
       userProfile = {
         id: session.user.id,
-        role: 'admin',
+        role: staffDirectoryMatch.role as any,
         store_id: DEFAULT_STORE_ID,
-        email: session.user.email
+        email: session.user.email,
       };
       error = null;
     }
   }
 
-  // Ensure store_id is never empty or null
+  // 6. Check server-controlled app_metadata role or safe customer/rider user_metadata role
+  if (!userProfile) {
+    const appMetaRole = session.user.app_metadata?.role;
+    const userMetaRole = session.user.user_metadata?.role;
+    if (appMetaRole) {
+      userProfile = {
+        id: session.user.id,
+        role: appMetaRole,
+        store_id: DEFAULT_STORE_ID,
+        email: session.user.email,
+      };
+      error = null;
+    } else if (userMetaRole === 'rider' || userMetaRole === 'customer') {
+      userProfile = {
+        id: session.user.id,
+        role: userMetaRole,
+        store_id: DEFAULT_STORE_ID,
+        email: session.user.email,
+      };
+      error = null;
+    }
+  }
+
   if (userProfile && !userProfile.store_id) {
     userProfile.store_id = DEFAULT_STORE_ID;
   }
 
-  return { userProfile, error };
+  const activeStaff = getActiveStaffUser();
+  const matchedActiveStaff =
+    activeStaff &&
+    activeStaff.active &&
+    (activeStaff.id === session.user.id ||
+      (emailLower && activeStaff.email?.toLowerCase() === emailLower))
+      ? activeStaff
+      : null;
+
+  return { userProfile, staffRecord: matchedActiveStaff, error };
 }
 
 export async function requireAuth(location: { pathname: string }, auth: AuthState, allowedRoles: string[]) {
@@ -126,7 +154,7 @@ export async function requireAuth(location: { pathname: string }, auth: AuthStat
     });
   }
 
-  const { userProfile, error } = await getUserProfile(session);
+  const { userProfile, staffRecord, error } = await getUserProfile(session);
 
   if (error || !userProfile || !allowedRoles.includes(userProfile.role)) {
     if (userProfile?.role === 'rider') {
@@ -143,18 +171,17 @@ export async function requireAuth(location: { pathname: string }, auth: AuthStat
 
     throw redirect({
       to: '/auth',
-      search: { 
+      search: {
         redirect: location.pathname,
-        reason: 'unauthorized'
+        reason: 'unauthorized',
       },
     });
   }
 
   // Check granular page permission configured by Admin
   if (userProfile.role !== 'admin') {
-    const activeStaff = getActiveStaffUser();
-    if (!isPageAllowedForUser(location.pathname, userProfile.role, activeStaff)) {
-      const fallbackTarget = getPrimaryPageForRole(userProfile.role, activeStaff);
+    if (!isPageAllowedForUser(location.pathname, userProfile.role, staffRecord)) {
+      const fallbackTarget = getPrimaryPageForRole(userProfile.role, staffRecord);
       if (fallbackTarget !== location.pathname) {
         throw redirect({
           to: fallbackTarget as any,

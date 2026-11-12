@@ -11,7 +11,7 @@ const order = {
 
 const store = {
   name: "Warung J&J",
-  logo_url: "https://ilvbuhinmasmdsjcxfbn.supabase.co/storage/v1/object/public/logos/1094d737-8104-4a55-b678-0fe9097beba0/logo.png",
+  logo_url: "https://gtmzzblomcvgmwzjalja.supabase.co/storage/v1/object/public/logos/1094d737-8104-4a55-b678-0fe9097beba0/logo.png",
   phone_number: "60172221784",
   phone_number_2: "60178284578"
 };

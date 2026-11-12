@@ -4,12 +4,22 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { 
   Receipt, 
   Save, 
   RotateCcw, 
-  Sparkles, 
+  FileText, 
   Eye, 
   Loader2, 
   Store, 
@@ -27,9 +37,9 @@ import {
 interface ReceiptCustomizerProps {
   storeId?: string;
   storeData?: {
-    name?: string;
-    phone_number?: string;
-    logo_url?: string;
+    name?: string | null | undefined;
+    phone_number?: string | null | undefined;
+    logo_url?: string | null | undefined;
   };
 }
 
@@ -65,6 +75,7 @@ export function ReceiptCustomizer({ storeId, storeData }: ReceiptCustomizerProps
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit');
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -95,26 +106,30 @@ export function ReceiptCustomizer({ storeId, storeData }: ReceiptCustomizerProps
     try {
       const success = await syncReceiptConfigToSupabase(config, storeId);
       if (success) {
-        toast.success('Tetapan ayat resit berjaya disimpan & dikemaskini ke cloud! 📄✨');
+        toast.success('Tetapan ayat resit berjaya disimpan dan dikemaskini!');
       } else {
-        toast.error('Gagal menyimpan tetapan resit ke pangkalan data.');
+        toast.error('Gagal menyimpan tetapan resit. Sila cuba lagi.');
       }
     } catch (err: any) {
-      toast.error('Ralat: ' + (err.message || 'Gagal menyimpan'));
+      toast.error(getFriendlyErrorMessage(err, 'Gagal menyimpan tetapan resit.'));
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleReset = async () => {
-    if (!confirm('Adakah anda pasti mahu memulihkan semua tetapan ayat resit ke teks asal?')) return;
+  const handleReset = () => {
+    setIsResetConfirmOpen(true);
+  };
+
+  const confirmReset = async () => {
+    setIsResetConfirmOpen(false);
     setIsSaving(true);
     try {
       const reset = await resetReceiptConfigToDefault(storeId);
       setConfig(reset);
       toast.success('Ayat resit telah dipulihkan ke teks lalai asal.');
     } catch (err: any) {
-      toast.error('Gagal memulihkan: ' + (err.message || 'Ralat'));
+      toast.error(getFriendlyErrorMessage(err, 'Gagal memulihkan tetapan resit.'));
     } finally {
       setIsSaving(false);
     }
@@ -175,15 +190,18 @@ export function ReceiptCustomizer({ storeId, storeData }: ReceiptCustomizerProps
 
       <CardContent className="p-6 space-y-6">
         {isLoading ? (
-          <div className="py-12 flex flex-col items-center justify-center gap-2 text-slate-400 font-mono text-xs">
-            <Loader2 className="w-6 h-6 animate-spin text-amber-600" />
-            <span>Memuatkan konfigurasi resit...</span>
+          <div className="space-y-4 py-4" aria-busy="true">
+            <Skeleton className="h-24 w-full rounded-2xl" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Skeleton className="h-12 w-full rounded-xl" />
+              <Skeleton className="h-12 w-full rounded-xl" />
+            </div>
           </div>
         ) : activeTab === 'edit' ? (
           <div className="space-y-6">
             <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200 space-y-2.5">
               <div className="flex items-center gap-2 text-xs font-bold text-slate-800 font-mono uppercase tracking-wider">
-                <Sparkles className="w-4 h-4 text-amber-600" />
+                <FileText className="w-4 h-4 text-amber-600" />
                 <span>Pilih Contoh Ayat Pantas (Presets)</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 font-mono">
@@ -454,6 +472,36 @@ export function ReceiptCustomizer({ storeId, storeData }: ReceiptCustomizerProps
           </div>
         )}
       </CardContent>
+
+      <Dialog open={isResetConfirmOpen} onOpenChange={setIsResetConfirmOpen}>
+        <DialogContent className="bg-white border border-slate-200 text-slate-900 max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-slate-900">
+              Pulihkan Ayat Resit ke Teks Asal?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-600">
+              Semua tetapan ayat kepala dan nota kaki resit akan dikembalikan ke nilai lalai asal.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsResetConfirmOpen(false)}
+              className="border-slate-200 text-slate-700 rounded-xl text-xs"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmReset}
+              className="bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs"
+            >
+              Ya, Pulihkan Asal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

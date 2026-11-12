@@ -5,19 +5,24 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { 
   QrCode, 
   Printer, 
   Save, 
   RotateCcw, 
-  Sparkles, 
   Eye, 
-  Check, 
-  Loader2, 
-  Info,
-  Layers,
-  ArrowRight
+  Loader2
 } from 'lucide-react';
 import { 
   TableQrConfig, 
@@ -55,6 +60,7 @@ export function TableQrCustomizer({ storeId, onOpenPrintModal }: TableQrCustomiz
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit');
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -81,24 +87,28 @@ export function TableQrCustomizer({ storeId, onOpenPrintModal }: TableQrCustomiz
       if (success) {
         toast.success('Tetapan ayat pelekat kod QR meja berjaya disimpan!');
       } else {
-        toast.error('Gagal menyimpan tetapan ke pangkalan data.');
+        toast.error('Gagal menyimpan tetapan. Sila cuba lagi.');
       }
     } catch (err: any) {
-      toast.error(`Ralat: ${err.message || 'Gagal menyimpan'}`);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal menyimpan tetapan pelekat QR.'));
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleReset = async () => {
-    if (!confirm('Adakah anda pasti mahu memulihkan semua ayat pelekat QR ke ayat asal?')) return;
+  const handleReset = () => {
+    setIsResetConfirmOpen(true);
+  };
+
+  const confirmReset = async () => {
+    setIsResetConfirmOpen(false);
     setIsSaving(true);
     try {
       const reset = await resetTableQrConfigToDefault(storeId);
       setConfig(reset);
       toast.success('Ayat pelekat QR telah dipulihkan ke teks asal.');
     } catch (err: any) {
-      toast.error(`Ralat: ${err.message || 'Gagal menetapkan semula'}`);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal menetapkan semula tetapan pelekat QR.'));
     } finally {
       setIsSaving(false);
     }
@@ -111,9 +121,18 @@ export function TableQrCustomizer({ storeId, onOpenPrintModal }: TableQrCustomiz
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-8 text-center text-slate-500 flex items-center justify-center gap-2">
-        <Loader2 className="w-5 h-5 animate-spin text-orange-500" />
-        <span>Memuatkan tetapan pelekat QR meja...</span>
+      <div className="bg-white border border-slate-200/90 rounded-3xl p-6 space-y-4" aria-busy="true">
+        <div className="flex items-center justify-between gap-4">
+          <Skeleton className="h-7 w-64 rounded-xl" />
+          <Skeleton className="h-10 w-36 rounded-xl" />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <div className="lg:col-span-7 space-y-3">
+            <Skeleton className="h-28 w-full rounded-2xl" />
+            <Skeleton className="h-24 w-full rounded-2xl" />
+          </div>
+          <Skeleton className="lg:col-span-5 h-72 w-full rounded-3xl" />
+        </div>
       </div>
     );
   }
@@ -459,6 +478,36 @@ export function TableQrCustomizer({ storeId, onOpenPrintModal }: TableQrCustomiz
         </div>
 
       </div>
+
+      <Dialog open={isResetConfirmOpen} onOpenChange={setIsResetConfirmOpen}>
+        <DialogContent className="bg-white border border-slate-200 text-slate-900 max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-slate-900">
+              Pulihkan Ayat Pelekat QR?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-600">
+              Semua tetapan ayat pelekat kod QR meja akan dikembalikan kepada teks asal.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsResetConfirmOpen(false)}
+              className="border-slate-200 text-slate-700 rounded-xl text-xs"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmReset}
+              className="bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs"
+            >
+              Ya, Pulihkan Asal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

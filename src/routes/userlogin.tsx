@@ -3,8 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Lock, Mail, ArrowLeft, Loader2, Eye, EyeOff, User, Phone, Sparkles } from 'lucide-react';
+import { Lock, Mail, ArrowLeft, Loader2, Eye, EyeOff, User, Phone, ShoppingBag } from 'lucide-react';
 import { toast } from 'sonner';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { saveStoredGoogleUser, getOrCreateMemberFromGoogle, GoogleAuthUser } from '@/lib/google-auth';
 
 export const Route = createFileRoute('/userlogin')({
@@ -114,7 +115,7 @@ function UserLoginPage() {
         navigate({ to: getRedirectTarget() });
       }
     } catch (err: any) {
-      setError(err.message || 'Log masuk gagal. Sila semak maklumat log masuk anda.');
+      setError(getFriendlyErrorMessage(err, 'Log masuk gagal. Sila semak maklumat log masuk anda.'));
       toast.error('Log masuk gagal.');
     } finally {
       setIsSubmitting(false);
@@ -190,7 +191,7 @@ function UserLoginPage() {
         navigate({ to: getRedirectTarget() });
       }
     } catch (err: any) {
-      setError(err.message || 'Pendaftaran akaun gagal. Sila cuba lagi.');
+      setError(getFriendlyErrorMessage(err, 'Pendaftaran akaun gagal. Sila cuba lagi.'));
       toast.error('Pendaftaran gagal.');
     } finally {
       setIsSubmitting(false);
@@ -228,7 +229,7 @@ function UserLoginPage() {
         </button>
 
         <div className="flex items-center gap-1.5 text-xs text-orange-600 font-bold bg-orange-50 border border-orange-200/80 px-2.5 py-1 rounded-xl">
-          <Sparkles className="w-3.5 h-3.5" />
+          <ShoppingBag className="w-3.5 h-3.5" />
           <span>Portal Pelanggan</span>
         </div>
       </div>

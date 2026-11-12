@@ -10,7 +10,6 @@ import {
   Edit3, 
   Save, 
   RotateCcw, 
-  Sparkles, 
   Lock, 
   Phone, 
   Mail, 
@@ -103,7 +102,7 @@ export const StaffManagementCustomizer = memo(function StaffManagementCustomizer
         [role]: [...presetPages]
       }
     }));
-    toast.success(`⚡ Pratetap pintar untuk ${getRoleBadgeInfo(role).label} berjaya dimuatkan!`);
+    toast.success(`Pratetap pintar untuk ${getRoleBadgeInfo(role).label} berjaya dimuatkan!`);
   };
 
   const handleApplyFullAccess = (role: AppRole) => {
@@ -344,12 +343,12 @@ export const StaffManagementCustomizer = memo(function StaffManagementCustomizer
     try {
       const ok = await syncStaffAccessConfigToSupabase(config, storeId);
       if (ok) {
-        toast.success('🎉 Tetapan Kakitangan & Hak Akses Halaman berjaya disimpan ke Supabase!');
+        toast.success('Tetapan Kakitangan & Hak Akses Halaman berjaya disimpan!');
       } else {
         toast.success('Tetapan disimpan secara selamat ke storan sistem!');
       }
     } catch (err: any) {
-      toast.error(`Ralat menyimpan: ${err.message || String(err)}`);
+      toast.error('Ralat menyimpan tetapan kakitangan. Sila cuba lagi.');
     } finally {
       setIsSaving(false);
     }
@@ -615,7 +614,7 @@ export const StaffManagementCustomizer = memo(function StaffManagementCustomizer
         <div className="bg-orange-50/60 border border-orange-200/80 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-orange-600" />
+              <Shield className="w-4 h-4 text-orange-600" />
               <strong className="text-xs font-black text-orange-900">
                 Pilihan Pantas Automatik (Auto-Presets) Untuk {getRoleBadgeInfo(selectedRoleTab).label}
               </strong>
@@ -632,7 +631,7 @@ export const StaffManagementCustomizer = memo(function StaffManagementCustomizer
                 onClick={() => handleApplyRoleAutoPreset('cashier')}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs h-8"
               >
-                ⚡ Auto-Pilih Untuk Kaunter
+                Auto-Pilih Untuk Kaunter
               </Button>
             )}
 
@@ -642,7 +641,7 @@ export const StaffManagementCustomizer = memo(function StaffManagementCustomizer
                 onClick={() => handleApplyRoleAutoPreset('chef')}
                 className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-xs h-8"
               >
-                ⚡ Auto-Pilih Untuk Dapur
+                Auto-Pilih Untuk Dapur
               </Button>
             )}
 
@@ -652,7 +651,7 @@ export const StaffManagementCustomizer = memo(function StaffManagementCustomizer
                 onClick={() => handleApplyRoleAutoPreset('staff')}
                 className="bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs h-8"
               >
-                ⚡ Auto-Pilih Untuk Staf Am
+                Auto-Pilih Untuk Staf Am
               </Button>
             )}
 
@@ -841,7 +840,7 @@ export const StaffManagementCustomizer = memo(function StaffManagementCustomizer
                 type="email"
                 value={staffForm.email}
                 onChange={(e) => setStaffForm(prev => ({ ...prev, email: e.target.value }))}
-                placeholder="siti@warungjnj.com"
+                placeholder="siti@warungjnj.online"
                 className="bg-slate-50 border-slate-200 rounded-xl text-xs h-10"
               />
             </div>
@@ -890,7 +889,7 @@ export const StaffManagementCustomizer = memo(function StaffManagementCustomizer
                     className="px-2 py-1 rounded-lg text-[10px] font-bold bg-orange-100 hover:bg-orange-200 text-orange-800 transition-colors"
                     title="Muat semula mengikut peranan"
                   >
-                    ⚡ Ikut Peranan
+                    Ikut Peranan
                   </button>
                   <button
                     type="button"
@@ -961,7 +960,7 @@ export const StaffManagementCustomizer = memo(function StaffManagementCustomizer
               onClick={handleSaveStaffFromModal}
               className="bg-orange-500 hover:bg-orange-600 text-white font-black text-xs rounded-xl shadow-xs px-5"
             >
-              {editingStaffId ? 'Simpan Maklumat' : 'Daftar Staf Sekarang 🚀'}
+              {editingStaffId ? 'Simpan Maklumat' : 'Daftar Staf Sekarang'}
             </Button>
           </DialogFooter>
         </DialogContent>

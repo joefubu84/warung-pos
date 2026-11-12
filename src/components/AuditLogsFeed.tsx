@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { 
   History, 
   User, 
@@ -8,10 +9,11 @@ import {
   Trash2, 
   Broom, 
   FileText, 
-  RefreshCw, 
-  Loader2
+  RefreshCw,
+  AlertTriangle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface AuditLogItem {
   id: string;
@@ -27,9 +29,11 @@ interface AuditLogItem {
 export function AuditLogsFeed() {
   const [logs, setLogs] = useState<AuditLogItem[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchLogs = async () => {
     setIsLoading(true);
+    setErrorMessage(null);
     try {
       const { data, error } = await supabase
         .from('daily_cash_edit_logs')
@@ -40,7 +44,7 @@ export function AuditLogsFeed() {
       if (error) throw error;
       setLogs(data || []);
     } catch (err) {
-      console.error("Error loading audit logs:", err);
+      setErrorMessage(getFriendlyErrorMessage(err, 'Gagal memuatkan sejarah log audit. Sila cuba lagi.'));
     } finally {
       setIsLoading(false);
     }
@@ -73,8 +77,21 @@ export function AuditLogsFeed() {
       </div>
 
       {isLoading ? (
-        <div className="py-12 text-center text-slate-500 font-mono text-xs flex items-center justify-center gap-2 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-          <Loader2 className="w-4 h-4 animate-spin text-amber-600" /> Loading audit history...
+        <div className="space-y-3" aria-busy="true">
+          {[1, 2, 3, 4].map((idx) => (
+            <div key={idx} className="bg-slate-50/80 p-4 rounded-2xl border border-slate-200 flex items-center gap-3">
+              <Skeleton className="w-9 h-9 rounded-xl shrink-0" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-3.5 w-2/3 rounded-md" />
+                <Skeleton className="h-3 w-1/3 rounded-md" />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : errorMessage ? (
+        <div className="py-10 px-4 text-center bg-rose-50/70 rounded-2xl border border-rose-200 text-rose-700 text-xs space-y-2">
+          <AlertTriangle className="w-5 h-5 mx-auto text-rose-500" />
+          <p className="font-semibold">{errorMessage}</p>
         </div>
       ) : logs.length === 0 ? (
         <div className="py-12 text-center bg-slate-50/60 rounded-2xl border border-dashed border-slate-200 text-slate-400 text-xs font-mono">

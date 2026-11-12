@@ -26,9 +26,13 @@ import { Route as RiderRouteImport } from './routes/rider'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TablesRouteImport } from './routes/tables'
 import { Route as UserloginRouteImport } from './routes/userlogin'
+import { Route as ApiToyyibpayWebhookRouteImport } from './routes/api/toyyibpay-webhook'
 import { Route as SettingsAuditLogRouteImport } from './routes/settings_.audit-log'
 import { Route as TTokenRouteImport } from './routes/t.$token'
 import { Route as ApiPublicMcpRouteImport } from './routes/api/public/mcp'
+import { Route as ApiToyyibpayConfigRouteImport } from './routes/api/toyyibpay/config'
+import { Route as ApiToyyibpayCreateBillRouteImport } from './routes/api/toyyibpay/create-bill'
+import { Route as ApiToyyibpayStatusRouteImport } from './routes/api/toyyibpay/status'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -115,6 +119,11 @@ const UserloginRoute = UserloginRouteImport.update({
   path: '/userlogin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiToyyibpayWebhookRoute = ApiToyyibpayWebhookRouteImport.update({
+  id: '/api/toyyibpay-webhook',
+  path: '/api/toyyibpay-webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsAuditLogRoute = SettingsAuditLogRouteImport.update({
   id: '/settings_/audit-log',
   path: '/settings/audit-log',
@@ -128,6 +137,21 @@ const TTokenRoute = TTokenRouteImport.update({
 const ApiPublicMcpRoute = ApiPublicMcpRouteImport.update({
   id: '/api/public/mcp',
   path: '/api/public/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiToyyibpayConfigRoute = ApiToyyibpayConfigRouteImport.update({
+  id: '/api/toyyibpay/config',
+  path: '/api/toyyibpay/config',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiToyyibpayCreateBillRoute = ApiToyyibpayCreateBillRouteImport.update({
+  id: '/api/toyyibpay/create-bill',
+  path: '/api/toyyibpay/create-bill',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiToyyibpayStatusRoute = ApiToyyibpayStatusRouteImport.update({
+  id: '/api/toyyibpay/status',
+  path: '/api/toyyibpay/status',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -149,9 +173,13 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/tables': typeof TablesRoute
   '/userlogin': typeof UserloginRoute
+  '/api/toyyibpay-webhook': typeof ApiToyyibpayWebhookRoute
   '/settings/audit-log': typeof SettingsAuditLogRoute
   '/t/$token': typeof TTokenRoute
   '/api/public/mcp': typeof ApiPublicMcpRoute
+  '/api/toyyibpay/config': typeof ApiToyyibpayConfigRoute
+  '/api/toyyibpay/create-bill': typeof ApiToyyibpayCreateBillRoute
+  '/api/toyyibpay/status': typeof ApiToyyibpayStatusRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -171,9 +199,13 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/tables': typeof TablesRoute
   '/userlogin': typeof UserloginRoute
+  '/api/toyyibpay-webhook': typeof ApiToyyibpayWebhookRoute
   '/settings/audit-log': typeof SettingsAuditLogRoute
   '/t/$token': typeof TTokenRoute
   '/api/public/mcp': typeof ApiPublicMcpRoute
+  '/api/toyyibpay/config': typeof ApiToyyibpayConfigRoute
+  '/api/toyyibpay/create-bill': typeof ApiToyyibpayCreateBillRoute
+  '/api/toyyibpay/status': typeof ApiToyyibpayStatusRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -194,9 +226,13 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/tables': typeof TablesRoute
   '/userlogin': typeof UserloginRoute
+  '/api/toyyibpay-webhook': typeof ApiToyyibpayWebhookRoute
   '/settings_/audit-log': typeof SettingsAuditLogRoute
   '/t/$token': typeof TTokenRoute
   '/api/public/mcp': typeof ApiPublicMcpRoute
+  '/api/toyyibpay/config': typeof ApiToyyibpayConfigRoute
+  '/api/toyyibpay/create-bill': typeof ApiToyyibpayCreateBillRoute
+  '/api/toyyibpay/status': typeof ApiToyyibpayStatusRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -218,9 +254,13 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tables'
     | '/userlogin'
+    | '/api/toyyibpay-webhook'
     | '/settings/audit-log'
     | '/t/$token'
     | '/api/public/mcp'
+    | '/api/toyyibpay/config'
+    | '/api/toyyibpay/create-bill'
+    | '/api/toyyibpay/status'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -240,9 +280,13 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tables'
     | '/userlogin'
+    | '/api/toyyibpay-webhook'
     | '/settings/audit-log'
     | '/t/$token'
     | '/api/public/mcp'
+    | '/api/toyyibpay/config'
+    | '/api/toyyibpay/create-bill'
+    | '/api/toyyibpay/status'
   id:
     | '__root__'
     | '/'
@@ -262,9 +306,13 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tables'
     | '/userlogin'
+    | '/api/toyyibpay-webhook'
     | '/settings_/audit-log'
     | '/t/$token'
     | '/api/public/mcp'
+    | '/api/toyyibpay/config'
+    | '/api/toyyibpay/create-bill'
+    | '/api/toyyibpay/status'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -285,9 +333,13 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   TablesRoute: typeof TablesRoute
   UserloginRoute: typeof UserloginRoute
+  ApiToyyibpayWebhookRoute: typeof ApiToyyibpayWebhookRoute
   SettingsAuditLogRoute: typeof SettingsAuditLogRoute
   TTokenRoute: typeof TTokenRoute
   ApiPublicMcpRoute: typeof ApiPublicMcpRoute
+  ApiToyyibpayConfigRoute: typeof ApiToyyibpayConfigRoute
+  ApiToyyibpayCreateBillRoute: typeof ApiToyyibpayCreateBillRoute
+  ApiToyyibpayStatusRoute: typeof ApiToyyibpayStatusRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -411,6 +463,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UserloginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/toyyibpay-webhook': {
+      id: '/api/toyyibpay-webhook'
+      path: '/api/toyyibpay-webhook'
+      fullPath: '/api/toyyibpay-webhook'
+      preLoaderRoute: typeof ApiToyyibpayWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings_/audit-log': {
       id: '/settings_/audit-log'
       path: '/settings/audit-log'
@@ -430,6 +489,27 @@ declare module '@tanstack/react-router' {
       path: '/api/public/mcp'
       fullPath: '/api/public/mcp'
       preLoaderRoute: typeof ApiPublicMcpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/toyyibpay/config': {
+      id: '/api/toyyibpay/config'
+      path: '/api/toyyibpay/config'
+      fullPath: '/api/toyyibpay/config'
+      preLoaderRoute: typeof ApiToyyibpayConfigRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/toyyibpay/create-bill': {
+      id: '/api/toyyibpay/create-bill'
+      path: '/api/toyyibpay/create-bill'
+      fullPath: '/api/toyyibpay/create-bill'
+      preLoaderRoute: typeof ApiToyyibpayCreateBillRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/toyyibpay/status': {
+      id: '/api/toyyibpay/status'
+      path: '/api/toyyibpay/status'
+      fullPath: '/api/toyyibpay/status'
+      preLoaderRoute: typeof ApiToyyibpayStatusRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -453,9 +533,13 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   TablesRoute: TablesRoute,
   UserloginRoute: UserloginRoute,
+  ApiToyyibpayWebhookRoute: ApiToyyibpayWebhookRoute,
   SettingsAuditLogRoute: SettingsAuditLogRoute,
   TTokenRoute: TTokenRoute,
   ApiPublicMcpRoute: ApiPublicMcpRoute,
+  ApiToyyibpayConfigRoute: ApiToyyibpayConfigRoute,
+  ApiToyyibpayCreateBillRoute: ApiToyyibpayCreateBillRoute,
+  ApiToyyibpayStatusRoute: ApiToyyibpayStatusRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

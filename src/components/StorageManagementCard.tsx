@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { 
   HardDrive, 
   Trash2, 
@@ -158,7 +160,7 @@ export function StorageManagementCard({ onRefreshExpenses, dailyCashId }: Storag
       fetchStorageFiles();
       onRefreshExpenses();
     } catch (err: any) {
-      toast.error(`Failed to delete storage file: ${err.message}`);
+      toast.error(getFriendlyErrorMessage(err, 'Failed to delete storage file.'));
     }
   };
 
@@ -197,7 +199,7 @@ export function StorageManagementCard({ onRefreshExpenses, dailyCashId }: Storag
       fetchStorageFiles();
       onRefreshExpenses();
     } catch (err: any) {
-      toast.error(`Cleanup failed: ${err.message}`);
+      toast.error(getFriendlyErrorMessage(err, 'Failed to clean up orphaned files.'));
     } finally {
       setIsCleaning(false);
     }
@@ -241,7 +243,7 @@ export function StorageManagementCard({ onRefreshExpenses, dailyCashId }: Storag
       fetchStorageFiles();
       onRefreshExpenses();
     } catch (err: any) {
-      toast.error(`Purge failed: ${err.message}`);
+      toast.error(getFriendlyErrorMessage(err, 'Failed to purge old receipts.'));
     } finally {
       setIsCleaning(false);
     }
@@ -256,7 +258,7 @@ export function StorageManagementCard({ onRefreshExpenses, dailyCashId }: Storag
             <HardDrive className="w-5 h-5 text-emerald-600" /> Receipt Storage & File Manager
           </h3>
           <p className="text-slate-500 text-xs mt-0.5">
-            Monitor Supabase Storage usage, inspect receipt image files, and purge orphaned data.
+            Monitor cloud storage usage, inspect receipt image files, and purge orphaned data.
           </p>
         </div>
 
@@ -340,14 +342,20 @@ export function StorageManagementCard({ onRefreshExpenses, dailyCashId }: Storag
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 font-mono">
-            Receipt Files in Supabase Storage ({files.length})
+            Stored Receipt Files ({files.length})
           </h4>
           <span className="text-[10px] text-slate-500 font-mono">Sorted by Upload Date</span>
         </div>
 
         {isLoading ? (
-          <div className="py-12 text-center text-slate-500 font-mono text-xs flex items-center justify-center gap-2 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-            <Loader2 className="w-4 h-4 animate-spin text-emerald-600" /> Loading storage files...
+          <div className="space-y-2.5 py-2" aria-busy="true">
+            {[1, 2, 3, 4].map((idx) => (
+              <div key={idx} className="p-3.5 rounded-2xl border border-slate-200 flex items-center justify-between gap-3">
+                <Skeleton className="h-4 w-48 rounded-md" />
+                <Skeleton className="h-4 w-24 rounded-md" />
+                <Skeleton className="h-6 w-20 rounded-full" />
+              </div>
+            ))}
           </div>
         ) : files.length === 0 ? (
           <div className="py-12 text-center bg-slate-50/60 rounded-2xl border border-dashed border-slate-200 text-slate-400 text-xs font-mono">
@@ -426,7 +434,7 @@ export function StorageManagementCard({ onRefreshExpenses, dailyCashId }: Storag
               <Trash2 className="w-5 h-5 text-rose-600" /> Delete Storage File?
             </DialogTitle>
             <DialogDescription className="text-slate-500 text-xs">
-              This action permanently deletes receipt photo <span className="font-mono text-slate-900 font-bold">{deleteConfirmFile?.name}</span> ({deleteConfirmFile?.sizeKb} KB) from Supabase Storage.
+              This action permanently deletes receipt photo <span className="font-mono text-slate-900 font-bold">{deleteConfirmFile?.name}</span> ({deleteConfirmFile?.sizeKb} KB) from cloud storage.
             </DialogDescription>
           </DialogHeader>
 

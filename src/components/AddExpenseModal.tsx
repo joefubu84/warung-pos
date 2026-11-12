@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import Tesseract from 'tesseract.js';
 import { 
   DollarSign, 
@@ -14,7 +15,6 @@ import {
   Camera,
   Upload,
   X,
-  Sparkles,
   Loader2,
   FileText,
   AlertTriangle
@@ -278,9 +278,9 @@ export function AddExpenseModal({ isOpen, onClose, onSuccess, dailyCashId, store
     try {
       let uploadedReceiptUrl = '';
 
-      // Upload receipt file if attached directly to Supabase Storage
+      // Upload receipt file if attached
       if (receiptFile) {
-        toast.info("Uploading receipt image to Supabase Storage...");
+        toast.info("Memuat naik gambar resit...");
         
         const cleanName = receiptFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         const filePath = `expenses/${Date.now()}_${cleanName}`;
@@ -371,7 +371,7 @@ export function AddExpenseModal({ isOpen, onClose, onSuccess, dailyCashId, store
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err.message || "Failed to record cash expense");
+      toast.error(getFriendlyErrorMessage(err, "Failed to record cash expense"));
     } finally {
       setIsSubmitting(false);
     }
@@ -393,7 +393,7 @@ export function AddExpenseModal({ isOpen, onClose, onSuccess, dailyCashId, store
         <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200/80 space-y-3 font-sans">
           <div className="flex justify-between items-center">
             <label className="text-xs font-bold uppercase tracking-wider text-amber-800 flex items-center gap-1.5 font-mono">
-              <Receipt className="w-4 h-4 text-amber-600" /> 1. Imbas / Muat Naik Resit (AI OCR)
+              <Receipt className="w-4 h-4 text-amber-600" /> 1. Imbas / Muat Naik Resit (Auto Imbas)
             </label>
             {receiptPreviewUrl && (
               <button

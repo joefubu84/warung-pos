@@ -103,18 +103,53 @@ function saveLocalSession(session: TableSession) {
   }
 }
 
+function getOrCreateEphemeralSigningKey(): Uint8Array {
+  const bytes = new Uint8Array(32);
+  if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
+    try {
+      const storageKey = 'warung_ephemeral_session_salt';
+      const existing = sessionStorage.getItem(storageKey);
+      if (existing) {
+        const decoded = atob(existing);
+        if (decoded.length === 32) {
+          for (let i = 0; i < 32; i++) bytes[i] = decoded.charCodeAt(i);
+          return bytes;
+        }
+      }
+      window.crypto.getRandomValues(bytes);
+      let rawStr = '';
+      for (let i = 0; i < bytes.length; i++) rawStr += String.fromCharCode(bytes[i]);
+      sessionStorage.setItem(storageKey, btoa(rawStr));
+      return bytes;
+    } catch {
+      window.crypto.getRandomValues(bytes);
+      return bytes;
+    }
+  }
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(bytes);
+  }
+  return bytes;
+}
+
 /**
- * Cryptographic HMAC Signed Session Token
+ * Cryptographic Ephemeral HMAC Signed Session Token
  */
 export async function generateSignedSessionToken(tableId: string, deviceId: string): Promise<string> {
-  const secret = "warung_jnj_secure_table_secret_2026";
-  const payload = `${tableId}:${deviceId}:${Date.now()}`;
-  if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
+  const nonce =
+    typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : Math.random().toString(36).slice(2, 12);
+  const payload = `${tableId}:${deviceId}:${Date.now()}:${nonce}`;
+  if (typeof crypto !== 'undefined' && crypto.subtle) {
     try {
       const encoder = new TextEncoder();
+      const rawKey = getOrCreateEphemeralSigningKey();
+      const keyBuffer = new ArrayBuffer(rawKey.byteLength);
+      new Uint8Array(keyBuffer).set(rawKey);
       const key = await crypto.subtle.importKey(
         'raw',
-        encoder.encode(secret),
+        keyBuffer,
         { name: 'HMAC', hash: 'SHA-256' },
         false,
         ['sign']
@@ -124,10 +159,10 @@ export async function generateSignedSessionToken(tableId: string, deviceId: stri
       const hexSig = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
       return btoa(`${payload}:${hexSig}`);
     } catch {
-      return btoa(`${payload}:fallback-sig`);
+      return btoa(`${payload}:${nonce}`);
     }
   }
-  return btoa(`${payload}:fallback-sig`);
+  return btoa(`${payload}:${nonce}`);
 }
 
 /**
@@ -213,7 +248,7 @@ export async function validateOrderPricesAgainstDB(
           device_id: getOrCreateDeviceId(),
           details: `Order attempt rejected for missing item ID: ${clientItem.menuItemId}`
         });
-        return { isValid: false, expectedTotal: 0, message: `Item not found in menu database.` };
+        return { isValid: false, expectedTotal: 0, message: `Hidangan tidak ditemui dalam senarai menu.` };
       }
       const charge = clientItem.containerCharge || 0;
       calculatedTotal += (dbBasePrice + charge) * clientItem.quantity;

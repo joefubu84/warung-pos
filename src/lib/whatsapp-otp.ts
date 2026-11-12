@@ -315,13 +315,13 @@ export function sendRiderDeliveryWhatsAppNotification(
 
   switch (status) {
     case 'picked_up':
-      message = `🛵 *WARUNG J&J DELIVERY UPDATE* 🛵\n\nHai ${cName}! Pesanan anda *#${shortId}* telah diambil oleh *${rName}* dan kini sedang dihantar ke lokasi anda!\n\n📍 *Alamat:* ${extra?.address || 'Lokasi anda'}\n🔗 *Jejak Status Pesanan Langsung (Live Tracking):*\n${trackUrl}\n\nSila bersedia menerima pesanan ya! Terima kasih 🍽️✨`;
+      message = `🛵 *WARUNG J&J DELIVERY UPDATE*\n\nHai ${cName}! Pesanan anda *#${shortId}* telah diambil oleh *${rName}* dan kini sedang dihantar ke lokasi anda!\n\n📍 *Alamat:* ${extra?.address || 'Lokasi anda'}\n🔗 *Jejak Status Pesanan Langsung (Live Tracking):*\n${trackUrl}\n\nSila bersedia menerima pesanan ya! Terima kasih 🍽️`;
       break;
     case 'arrived':
-      message = `🛵 *RIDER TELAH TIBA!* 🛵\n\nHai ${cName}, *${rName}* telah sampai di hadapan lokasi penghantaran pesanan *#${shortId}*.\n\nSila bersedia untuk menerima pesanan anda. Terima kasih! 🍱✨`;
+      message = `🛵 *RIDER TELAH TIBA!*\n\nHai ${cName}, *${rName}* telah sampai di hadapan lokasi penghantaran pesanan *#${shortId}*.\n\nSila bersedia untuk menerima pesanan anda. Terima kasih! 🍱`;
       break;
     case 'completed':
-      message = `✅ *PESANAN SELESAI DISERAHKAN!* ✅\n\nTerima kasih ${cName}! Pesanan *#${shortId}* telah selamat diserahkan. Selamat menjamu selera!\n\n🌟 Kumpul mata ganjaran keahlian & pesan lagi di https://warungjnj.online/delivery ✨`;
+      message = `✅ *PESANAN SELESAI DISERAHKAN!*\n\nTerima kasih ${cName}! Pesanan *#${shortId}* telah selamat diserahkan. Selamat menjamu selera!\n\n🌟 Kumpul mata ganjaran keahlian & pesan lagi di https://warungjnj.online/delivery`;
       break;
     case 'contact_customer':
       message = `Halo ${cName}! Saya *${rName}*, rider yang menghantar pesanan Warung J&J anda *#${shortId}*.\n\n🔗 *Pautan Status Pesanan:* ${trackUrl}\n\nAda sebarang panduan spesifik atau nombor unit/lot untuk memudahkan penghantaran? Terima kasih! 🛵`;

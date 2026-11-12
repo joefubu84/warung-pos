@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { 
   Pencil, 
   Receipt, 
@@ -200,8 +201,8 @@ export function EditExpenseModal({ isOpen, onClose, onSuccess, expense, dailyCas
           }
         }
 
-        // Upload new receipt photo directly to Supabase Storage
-        toast.info("Uploading replacement receipt to Supabase Storage...");
+        // Upload new receipt photo
+        toast.info("Memuat naik gambar resit gantian...");
         const cleanName = newReceiptFile.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         const filePath = `expenses/${Date.now()}_${cleanName}`;
 
@@ -213,7 +214,9 @@ export function EditExpenseModal({ isOpen, onClose, onSuccess, expense, dailyCas
           });
 
         if (uploadErr) {
-          toast.error(`Failed to upload replacement receipt: ${uploadErr.message}. Edit not saved.`);
+          toast.error(
+            `Failed to upload replacement receipt: ${getFriendlyErrorMessage(uploadErr, 'Sila cuba muat naik semula.')} Edit not saved.`
+          );
           setIsSubmitting(false);
           return;
         }
@@ -312,7 +315,7 @@ export function EditExpenseModal({ isOpen, onClose, onSuccess, expense, dailyCas
       onSuccess();
       onClose();
     } catch (err: any) {
-      toast.error(err.message || "Failed to update expense");
+      toast.error(getFriendlyErrorMessage(err, "Failed to update expense"));
     } finally {
       setIsSubmitting(false);
     }

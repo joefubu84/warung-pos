@@ -16,10 +16,6 @@ import {
   Download, 
   Layers, 
   QrCode, 
-  Check, 
-  Sparkles,
-  HelpCircle,
-  FileText,
   Settings
 } from 'lucide-react';
 import { toast } from 'sonner';

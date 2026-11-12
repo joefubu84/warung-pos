@@ -173,7 +173,7 @@ export const FoodDeliveryAnimation: React.FC<FoodDeliveryAnimationProps> = ({
         <div className={`flex w-[200%] ${isDriving ? 'animate-road-move' : ''}`}>
           {Array.from({ length: 16 }).map((_, i) => (
             <div key={i} className="flex-1 flex justify-center">
-              <div className="w-8 h-1 bg-amber-400 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.5)]" />
+              <div className="w-8 h-1 bg-amber-400 rounded-full shadow-xs" />
             </div>
           ))}
         </div>
@@ -190,7 +190,7 @@ export const FoodDeliveryAnimation: React.FC<FoodDeliveryAnimationProps> = ({
                 ? 'bg-orange-50 text-orange-800 border-orange-300'
                 : 'bg-amber-50 text-amber-800 border-amber-300'
         }`}>
-          <span>{isCompleted ? '✨ Selesai' : isDriving ? '🛵 Dalam Penghantaran' : isPreparing ? '👨‍🍳 Sedang Dimasak' : '🕒 Diterima'}</span>
+          <span>{isCompleted ? 'Selesai' : isDriving ? '🛵 Dalam Penghantaran' : isPreparing ? '👨‍🍳 Sedang Dimasak' : '🕒 Diterima'}</span>
         </span>
       </div>
 

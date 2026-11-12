@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Lock, Mail, ArrowLeft, Loader2, Eye, EyeOff, Bike, User, Phone, CheckCircle2, Truck, Smartphone, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 
 export const Route = createFileRoute('/authrider')({
@@ -66,7 +67,7 @@ function AuthRiderPage() {
         navigate({ to: '/rider' });
       }
     } catch (err: any) {
-      setError(err.message || 'Log masuk gagal. Sila semak emel dan kata laluan.');
+      setError(getFriendlyErrorMessage(err, 'Log masuk gagal. Sila semak emel dan kata laluan.'));
       toast.error('Log masuk gagal.');
     } finally {
       setIsSubmitting(false);
@@ -127,8 +128,9 @@ function AuthRiderPage() {
         toast.success('🎉 Pendaftaran Rakan Rider Berjaya!');
       }
     } catch (err: any) {
-      setError(err.message || 'Pendaftaran gagal. Sila cuba lagi.');
-      toast.error(err.message || 'Pendaftaran gagal.');
+      const msg = getFriendlyErrorMessage(err, 'Pendaftaran gagal. Sila cuba lagi.');
+      setError(msg);
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }

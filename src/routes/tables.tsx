@@ -10,7 +10,6 @@ import {
   Table as TableIcon,
   QrCode,
   AlertCircle,
-  Loader2,
   Clock,
   Receipt,
   Utensils,
@@ -18,17 +17,21 @@ import {
   Printer
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { requireStaffAuth } from '@/lib/auth-guard';
 import { getTodayCashStatus, CashStatus } from '@/lib/cash-guard';
 import { ReopenRegisterModal } from '@/components/ReopenRegisterModal';
 import { TableQrPrintModal } from '@/components/TableQrPrintModal';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { Lock, Unlock } from 'lucide-react';
 import { useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -50,10 +53,10 @@ export const Route = createFileRoute('/tables')({
         <div className="w-16 h-16 bg-destructive/10 text-destructive rounded-full flex items-center justify-center mx-auto mb-6">
           <AlertCircle className="w-8 h-8" />
         </div>
-        <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-        <p className="text-muted-foreground mb-8">{error.message}</p>
+        <h1 className="text-2xl font-bold mb-2">Akses Tidak Dibenarkan</h1>
+        <p className="text-muted-foreground mb-8">Sila log masuk dengan akaun staf yang sah untuk mengakses susun atur meja.</p>
         <a href="/" className="inline-flex items-center justify-center rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all">
-          Back to Home
+          Kembali ke Utama
         </a>
       </motion.div>
     </div>
@@ -138,6 +141,8 @@ function TablesPage() {
   const [isReopenModalOpen, setIsReopenModalOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [tableToPrint, setTableToPrint] = useState<Table | null>(null);
+  const [tablePendingDelete, setTablePendingDelete] = useState<Table | null>(null);
+  const [isDeletingTable, setIsDeletingTable] = useState(false);
 
   const fetchCashStatus = useCallback(async () => {
     const res = await getTodayCashStatus(storeId);
@@ -165,8 +170,7 @@ function TablesPage() {
     } else {
       const origin = window.location.origin.replace("-preview--", "--");
       if (origin.includes('localhost')) {
-        // Fallback to active devtunnels domain for phone camera scanning
-        setAppBaseUrl('https://p6x6tkn4-8080.asse.devtunnels.ms');
+        setAppBaseUrl(((import.meta as any).env?.VITE_PUBLIC_QR_DOMAIN as string) || 'https://warungjnj.online');
       } else {
         setAppBaseUrl(origin);
       }
@@ -306,21 +310,30 @@ function TablesPage() {
       setNewTableNumber('');
       toast.success(`Meja ${trimmed} berjaya ditambah!`);
     } catch (err: any) {
-      toast.error(err.message || 'Gagal menambah meja');
+      toast.error(getFriendlyErrorMessage(err, 'Gagal menambah meja.'));
     } finally {
       setIsAdding(false);
     }
   };
 
-  const handleDeleteTable = async (table: Table) => {
-    if (confirm('Are you sure you want to delete this table?')) {
-      const { error } = await supabase.from('tables').delete().eq('id', table.id);
+  const handleDeleteTable = (table: Table) => {
+    setTablePendingDelete(table);
+  };
+
+  const executeDeleteTable = async () => {
+    if (!tablePendingDelete) return;
+    setIsDeletingTable(true);
+    try {
+      const { error } = await supabase.from('tables').delete().eq('id', tablePendingDelete.id);
       if (error) {
-        toast.error('Failed to delete table');
+        toast.error(getFriendlyErrorMessage(error, 'Gagal memadam meja.'));
       } else {
-        setTables(prev => prev.filter(t => t.id !== table.id));
-        toast.success('Table deleted');
+        setTables(prev => prev.filter(t => t.id !== tablePendingDelete.id));
+        toast.success(`Meja ${tablePendingDelete.table_number} berjaya dipadam.`);
+        setTablePendingDelete(null);
       }
+    } finally {
+      setIsDeletingTable(false);
     }
   };
 
@@ -333,7 +346,7 @@ function TablesPage() {
     }
     const { error } = await supabase.from('tables').update({ table_number: trimmed }).eq('id', id);
     if (error) {
-      toast.error('Gagal mengemas kini nombor meja: ' + error.message);
+      toast.error(getFriendlyErrorMessage(error, 'Gagal mengemas kini nombor meja.'));
     } else {
       setTables(prev => prev.map(t => t.id === id ? { ...t, table_number: trimmed } : t).sort((a, b) => a.table_number.localeCompare(b.table_number, undefined, { numeric: true, sensitivity: 'base' })));
       setEditingId(null);
@@ -377,7 +390,33 @@ function TablesPage() {
   };
 
   if (isLoading) {
-    return <div className="p-8 flex items-center justify-center h-[50vh]"><Loader2 className="w-8 h-8 animate-spin" /></div>;
+    return (
+      <div className="min-h-screen bg-[#f8fafc] p-4 md:p-8">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="bg-white border border-slate-200/90 p-6 rounded-3xl flex flex-col md:flex-row justify-between gap-4">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-56 rounded-xl" />
+              <Skeleton className="h-4 w-72 rounded-lg" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-10 w-44 rounded-2xl" />
+              <Skeleton className="h-10 w-40 rounded-2xl" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {Array.from({ length: 10 }).map((_, idx) => (
+              <div key={idx} className="bg-white border border-slate-200/90 rounded-3xl p-4 h-32 flex flex-col justify-between">
+                <div className="flex justify-between items-start">
+                  <Skeleton className="h-8 w-12 rounded-lg" />
+                  <Skeleton className="h-3 w-3 rounded-full" />
+                </div>
+                <Skeleton className="h-4 w-20 rounded-md" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -542,14 +581,14 @@ function TablesPage() {
                   <QrCode className="w-4 h-4 text-orange-500" /> Phone Camera QR Code Domain URL
                 </h3>
                 <p className="text-[11px] text-slate-500">
-                  URL embedded in QR codes: <strong className="text-orange-600">{appBaseUrl || 'Loading...'}</strong>
+                  URL embedded in QR codes: <strong className="text-orange-600">{appBaseUrl || 'https://warungjnj.online'}</strong>
                 </p>
               </div>
               
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 <input
                   type="text"
-                  placeholder="e.g. https://p6x6tkn4-8080.asse.devtunnels.ms"
+                  placeholder="cth: https://warungjnj.online"
                   value={appBaseUrl}
                   onChange={(e) => {
                     const val = e.target.value;
@@ -564,11 +603,11 @@ function TablesPage() {
                     localStorage.removeItem('warung_custom_qr_domain');
                     const origin = window.location.origin.replace("-preview--", "--");
                     if (origin.includes('localhost')) {
-                      setAppBaseUrl('https://p6x6tkn4-8080.asse.devtunnels.ms');
+                      setAppBaseUrl(((import.meta as any).env?.VITE_PUBLIC_QR_DOMAIN as string) || 'https://warungjnj.online');
                     } else {
                       setAppBaseUrl(origin);
                     }
-                    toast.success("QR Domain reset to devtunnels/public URL.");
+                    toast.success("Domain QR ditetapkan semula ke pautan awam.");
                   }}
                   className="bg-white hover:bg-slate-50 text-slate-700 text-xs font-mono px-3 py-2 rounded-xl border border-slate-200 shrink-0 shadow-xs"
                 >
@@ -579,7 +618,7 @@ function TablesPage() {
             
             {appBaseUrl.includes('localhost') ? (
               <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs font-sans">
-                ⚠️ <strong>Notice for Physical Phone Cameras:</strong> Your QR code URL is set to <code className="font-mono text-slate-900 bg-amber-100 px-1 py-0.5 rounded">localhost</code>. Physical smartphones cannot connect to "localhost". Enter your <strong>DevTunnels URL</strong> above (e.g. <code className="font-mono text-orange-700 bg-amber-100 px-1 py-0.5 rounded">https://p6x6tkn4-8080.asse.devtunnels.ms</code>) or local Wi-Fi IP address!
+                <strong>Makluman Kamera Telefon:</strong> Pautan kod QR semasa ditetapkan ke <code className="font-mono text-slate-900 bg-amber-100 px-1 py-0.5 rounded">localhost</code>. Telefon pintar tidak boleh mengakses pautan tempatan. Masukkan domain awam (cth. <code className="font-mono text-orange-700 bg-amber-100 px-1 py-0.5 rounded">https://warungjnj.online</code>) di atas.
               </div>
             ) : (
               <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-900 text-xs font-sans flex items-center gap-2">
@@ -610,11 +649,39 @@ function TablesPage() {
 
           <div className="space-y-3">
             {tables.map((table) => (
-              <div key={table.id} className="flex items-center justify-between p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs">
+              <div key={table.id} className="flex items-center justify-between p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs gap-3">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center font-black text-lg text-slate-900 font-mono">
-                    {table.table_number}
-                  </div>
+                  {editingId === table.id ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        placeholder="Nombor meja"
+                        autoFocus
+                        className="w-24 bg-slate-50 border border-orange-400 rounded-xl px-3 py-2 text-sm font-black text-slate-900 font-mono outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSaveEdit(table.id)}
+                        className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-colors cursor-pointer"
+                        title="Simpan Nombor Meja"
+                      >
+                        <Check className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setEditingId(null)}
+                        className="px-2.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                      >
+                        Batal
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="w-12 h-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center font-black text-lg text-slate-900 font-mono">
+                      {table.table_number}
+                    </div>
+                  )}
                   <div className="bg-white p-1.5 rounded-xl border border-slate-200 shadow-xs">
                     <QRCodeSVG value={`${appBaseUrl}/t/${table.qr_token}`} size={42} />
                   </div>
@@ -633,16 +700,18 @@ function TablesPage() {
                     <Printer className="w-3.5 h-3.5 text-orange-600" />
                     <span>Cetak Pelekat</span>
                   </button>
-                  <button onClick={() => {
-                    const newNum = prompt("Masukkan nombor meja baharu:", table.table_number);
-                    if (newNum) {
-                      setEditValue(newNum);
-                      handleSaveEdit(table.id);
-                    }
-                  }} className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-800 transition-colors cursor-pointer" title="Ubah Nombor Meja">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingId(table.id);
+                      setEditValue(table.table_number);
+                    }}
+                    className="p-2 hover:bg-slate-100 rounded-xl text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                    title="Ubah Nombor Meja"
+                  >
                     <Edit2 className="w-4 h-4" />
                   </button>
-                  <button onClick={() => handleDeleteTable(table)} className="p-2 hover:bg-rose-50 text-rose-600 rounded-xl transition-colors cursor-pointer" title="Padam Meja">
+                  <button type="button" onClick={() => handleDeleteTable(table)} className="p-2 hover:bg-rose-50 text-rose-600 rounded-xl transition-colors cursor-pointer" title="Padam Meja">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -769,6 +838,43 @@ function TablesPage() {
         selectedTable={tableToPrint}
         appBaseUrl={appBaseUrl}
       />
+
+      {/* CONFIRM DELETE TABLE DIALOG */}
+      <Dialog
+        open={Boolean(tablePendingDelete)}
+        onOpenChange={(open) => {
+          if (!open && !isDeletingTable) setTablePendingDelete(null);
+        }}
+      >
+        <DialogContent className="bg-white border border-slate-200 text-slate-900 max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-rose-700">
+              Padam Meja {tablePendingDelete?.table_number}?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-600">
+              Meja dan kod QR berkaitan akan dipadamkan secara kekal daripada senarai premis.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <button
+              type="button"
+              disabled={isDeletingTable}
+              onClick={() => setTablePendingDelete(null)}
+              className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Batal
+            </button>
+            <button
+              type="button"
+              disabled={isDeletingTable}
+              onClick={executeDeleteTable}
+              className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold"
+            >
+              {isDeletingTable ? 'Memadam...' : 'Ya, Padam Meja'}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       </div>
     </div>
   );

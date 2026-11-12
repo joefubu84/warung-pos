@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { Bell, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { 
   CallWaiterReason, 
   getCallWaiterReasons, 
@@ -118,7 +119,7 @@ export function CallWaiterModal({ isOpen, onClose, tableNumber, storeId }: CallW
         onClose();
       }, 1500);
     } catch (err: any) {
-      toast.error('Gagal menghantar panggilan: ' + err.message);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal menghantar panggilan ke kaunter.'));
     } finally {
       setIsSending(false);
     }

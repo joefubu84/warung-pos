@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Globe, Sparkles, UtensilsCrossed, MapPin, Plus, Trash2, Save } from 'lucide-react';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
+import { Globe, Star, Award, UtensilsCrossed, MapPin, Plus, Trash2, Save } from 'lucide-react';
 
 interface HeroSection {
   headline: string;
@@ -229,7 +231,7 @@ export function LandingPageEditor() {
       toast.success('🎉 Konfigurasi homepage Warung J&J berjaya disimpan!');
     },
     onError: (err) => {
-      toast.error(`Gagal menyimpan konfigurasi: ${err.message}`);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal menyimpan konfigurasi laman utama.'));
     },
   });
 
@@ -278,9 +280,19 @@ export function LandingPageEditor() {
 
   if (isLoading) {
     return (
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-12 text-center shadow-xs">
-        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-        <p className="text-sm font-semibold text-slate-600">Memuatkan konfigurasi homepage...</p>
+      <div className="bg-white border border-slate-200/90 rounded-3xl p-6 space-y-5 shadow-xs" aria-busy="true">
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-2 flex-1">
+            <Skeleton className="h-6 w-64 rounded-lg" />
+            <Skeleton className="h-3.5 w-80 rounded-md" />
+          </div>
+          <Skeleton className="h-10 w-36 rounded-2xl" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Skeleton className="h-24 w-full rounded-2xl md:col-span-2" />
+          <Skeleton className="h-16 w-full rounded-2xl" />
+          <Skeleton className="h-16 w-full rounded-2xl" />
+        </div>
       </div>
     );
   }
@@ -291,7 +303,7 @@ export function LandingPageEditor() {
       <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2.5">
-            <Globe className="w-6 h-6 text-purple-600" />
+            <Globe className="w-6 h-6 text-orange-600" />
             <span>Pengurusan Homepage Laman Web</span>
           </h2>
           <p className="text-xs text-slate-500 font-mono mt-1">
@@ -314,7 +326,7 @@ export function LandingPageEditor() {
         {/* HERO SECTION */}
         <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xs space-y-4">
           <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-            <Sparkles className="w-5 h-5 text-orange-500" />
+            <Star className="w-5 h-5 text-orange-500" />
             <h3 className="text-lg font-black text-slate-900 tracking-tight">Hero Banner Utama</h3>
           </div>
 
@@ -403,7 +415,7 @@ export function LandingPageEditor() {
         <div className="bg-white border border-slate-200/90 rounded-3xl p-6 shadow-xs space-y-4">
           <div className="flex items-center justify-between pb-3 border-b border-slate-100">
             <div className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-amber-500" />
+              <Award className="w-5 h-5 text-amber-500" />
               <h3 className="text-lg font-black text-slate-900 tracking-tight">Sorotan Istimewa (Highlights)</h3>
             </div>
             <Button

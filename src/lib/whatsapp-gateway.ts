@@ -22,7 +22,7 @@ const GATEWAY_CONFIG_KEY = 'warung_whatsapp_gateway_config_v2';
 
 export const DEFAULT_GATEWAY_CONFIG: WhatsAppGatewayConfig = {
   mode: 'A',
-  gatewayUrl: 'http://localhost:3001',
+  gatewayUrl: ((import.meta as any).env?.VITE_WHATSAPP_GATEWAY_URL as string) || '',
   fonnteToken: '',
   apiKey: '',
   autoSendEnabled: true,
@@ -64,17 +64,30 @@ export async function dispatchWhatsAppOTP({ phone, code, mode, fonnteToken }: Di
   }
 
   switch (mode) {
-    case 'A': { // Mode A: Local Node.js Microservice Gateway (Port 3001)
+    case 'A': { // Mode A: Configured WhatsApp Microservice Gateway
+      const configuredGateway = (
+        ((import.meta as any).env?.VITE_WHATSAPP_GATEWAY_URL as string) ||
+        getWhatsAppGatewayConfig().gatewayUrl ||
+        ''
+      ).trim();
+
+      if (!configuredGateway) {
+        const encodedText = encodeURIComponent(textMessage);
+        const waUrl = `https://wa.me/${cleanPhone}?text=${encodedText}`;
+        return { success: true, method: 'Native App Deep Link Fallback', waUrl };
+      }
+
       try {
-        const localResponse = await fetch('http://localhost:3001/api/send-message', {
+        const endpoint = `${configuredGateway.replace(/\/$/, '')}/api/send-message`;
+        const localResponse = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ phone: cleanPhone, message: textMessage }),
         });
-        if (!localResponse.ok) throw new Error('Local gateway failed to dispatch');
-        return { success: true, method: 'Local Microservice (Port 3001)' };
+        if (!localResponse.ok) throw new Error('Gateway failed to dispatch');
+        return { success: true, method: 'WhatsApp Gateway Service' };
       } catch (err) {
-        console.warn('Local Node Gateway unreachable, falling back to Native Deep Link:', err);
+        console.warn('WhatsApp Gateway unreachable, falling back to Native Deep Link:', err);
         const encodedText = encodeURIComponent(textMessage);
         const waUrl = `https://wa.me/${cleanPhone}?text=${encodedText}`;
         return { success: true, method: 'Native App Deep Link Fallback', waUrl };

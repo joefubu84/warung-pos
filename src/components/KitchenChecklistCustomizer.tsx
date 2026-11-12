@@ -2,6 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { 
   KitchenComponent, 
@@ -29,6 +37,7 @@ export function KitchenChecklistCustomizer({ menuItems = [] }: Props) {
   const [menuItemMap, setMenuItemMap] = useState<Record<string, KitchenComponent[]>>({});
   const [customDishIcon, setCustomDishIcon] = useState('🍗');
   const [customDishLabel, setCustomDishLabel] = useState('');
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   useEffect(() => {
     setGlobalComponents(getGlobalChecklistComponents());
@@ -62,11 +71,14 @@ export function KitchenChecklistCustomizer({ menuItems = [] }: Props) {
   };
 
   const handleResetGlobal = () => {
-    if (confirm('Reset semula senarai semak dapur kepada tetapan asal?')) {
-      setGlobalComponents(DEFAULT_GLOBAL_COMPONENTS);
-      saveGlobalChecklistComponents(DEFAULT_GLOBAL_COMPONENTS);
-      toast.success('Senarai semak dapur dikembalikan kepada asal.');
-    }
+    setIsResetConfirmOpen(true);
+  };
+
+  const confirmResetGlobal = () => {
+    setGlobalComponents(DEFAULT_GLOBAL_COMPONENTS);
+    saveGlobalChecklistComponents(DEFAULT_GLOBAL_COMPONENTS);
+    setIsResetConfirmOpen(false);
+    toast.success('Senarai semak dapur dikembalikan kepada asal.');
   };
 
   // Handlers for Specific Menu Item Checklist
@@ -236,7 +248,7 @@ export function KitchenChecklistCustomizer({ menuItems = [] }: Props) {
               <option value="">-- Pilih Menu (cth: Nasi Lalapan / Roti Canai / Burger) --</option>
               {menuItems.map(item => (
                 <option key={item.id} value={item.id}>
-                  {item.name} {menuItemMap[item.id] ? '✨ (Ada Butang Khas)' : ''}
+                  {item.name} {menuItemMap[item.id] ? '(Ada Butang Khas)' : ''}
                 </option>
               ))}
             </select>
@@ -303,6 +315,36 @@ export function KitchenChecklistCustomizer({ menuItems = [] }: Props) {
           )}
         </div>
       </CardContent>
+
+      <Dialog open={isResetConfirmOpen} onOpenChange={setIsResetConfirmOpen}>
+        <DialogContent className="bg-white border border-slate-200 text-slate-900 max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-slate-900">
+              Pulihkan Senarai Semak Dapur?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-600">
+              Semua komponen senarai semak am akan dikembalikan kepada tetapan asal warung.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsResetConfirmOpen(false)}
+              className="border-slate-200 text-slate-700 rounded-xl text-xs"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmResetGlobal}
+              className="bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs"
+            >
+              Ya, Pulihkan Asal
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

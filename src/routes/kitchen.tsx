@@ -4,7 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { requireChefAuth } from '@/lib/auth-guard';
 import { playKitchenSound, unlockAudio } from '@/lib/sounds';
 import { resolveDishComponents, detectModifierBadges } from '@/lib/kitchen-checklist-config';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { toast } from 'sonner';
+import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Dialog, 
   DialogContent, 
@@ -194,12 +196,12 @@ const OrderCard = memo(({
                   </span>
                 )}
                 {isModified && (
-                  <span className="text-[10px] bg-rose-600 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider font-black animate-pulse shadow-[0_0_10px_rgba(244,63,94,0.9)] border border-white">
+                  <span className="text-[10px] bg-rose-600 text-white px-2.5 py-0.5 rounded-full uppercase tracking-wider font-black animate-pulse shadow-md border border-white">
                     🚨 PERUBAHAN PESANAN
                   </span>
                 )}
                 {order.order_edit_logs && order.order_edit_logs.length > 0 && !highlight && (
-                  <span className="text-[10px] bg-amber-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wider font-bold shadow-[0_0_8px_rgba(234,88,12,0.6)]">
+                  <span className="text-[10px] bg-amber-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wider font-bold shadow-sm">
                     ✏️ PERNAH DIUBAH
                   </span>
                 )}
@@ -311,7 +313,7 @@ const OrderCard = memo(({
 
                     {isNewItem && (
                       <span className="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded-md font-black uppercase tracking-wider">
-                        BARU / DIUBAH ✨
+                        BARU / DIUBAH
                       </span>
                     )}
                     {dishAllDone && (
@@ -344,7 +346,7 @@ const OrderCard = memo(({
                       }`}
                       title="Tandakan semua komponen hidangan ini"
                     >
-                      {dishAllDone ? 'Batal Semua' : '⚡ Siap Semua'}
+                      {dishAllDone ? 'Batal Semua' : '✓ Siap Semua'}
                     </button>
                   </div>
                 </div>
@@ -775,7 +777,7 @@ function KitchenPage() {
         const { data, error } = await query;
         if (error) {
           console.error('Error fetching kitchen orders:', error);
-          setFetchError(error.message);
+          setFetchError(getFriendlyErrorMessage(error, 'Ralat memuatkan pesanan dapur.'));
         } else if (data) {
           // Delivery orders are ONLY sent to kitchen once verified and paid by cashier!
           ordersData = data.filter((o: any) => {
@@ -862,7 +864,7 @@ function KitchenPage() {
       }
     } catch (err: any) {
       console.error('Kitchen fetch fatal error:', err);
-      setFetchError(err.message || 'Ralat memuatkan pesanan dapur');
+      setFetchError(getFriendlyErrorMessage(err, 'Ralat memuatkan pesanan dapur.'));
     } finally {
       setIsLoading(false);
     }
@@ -899,7 +901,7 @@ function KitchenPage() {
     const channelName = `kitchen_orders_${Date.now()}`;
     const channel = supabase.channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
-        console.log('⚡ Realtime event received: orders table', payload);
+        console.log('Realtime event received: orders table', payload);
         const newRow = payload.new as any;
         // Don't ring kitchen bell if it's an unverified/unpaid delivery order!
         if (newRow?.type === 'delivery') {
@@ -913,7 +915,7 @@ function KitchenPage() {
         playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, (payload) => {
-        console.log('⚡ Realtime event received: order_items table', payload);
+        console.log('Realtime event received: order_items table', payload);
         fetchActiveOrders(true);
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'tables' }, (payload) => {
@@ -953,11 +955,11 @@ function KitchenPage() {
     // Instant Customer Order Broadcast Channel for Zero-Delay Notification
     const broadcastChannel = supabase.channel('kitchen_realtime_broadcast')
       .on('broadcast', { event: 'new_order_placed' }, (msg) => {
-        console.log('⚡ Instant Kitchen broadcast received: new order placed!', msg);
+        console.log('Instant Kitchen broadcast received: new order placed!', msg);
         fetchActiveOrders(true);
         const s = settingsRef.current;
         playKitchenSound(s?.sound_choice || 'kitchen_bell', s?.sound_file_url);
-        toast.info('⚡ Pesanan Baru Diterima Dari Meja!', { duration: 4000 });
+        toast.info('🔔 Pesanan Baru Diterima Dari Meja!', { duration: 4000 });
       })
       .subscribe();
 
@@ -1028,19 +1030,55 @@ function KitchenPage() {
 
       if (error) {
         console.error('Error updating status:', error);
-        alert('Failed to update status');
+        toast.error(getFriendlyErrorMessage(error, 'Gagal mengemas kini status pesanan.'));
         // Revert optimistic update by fully fetching
         fetchActiveOrders(true);
       }
     }
   }, [fetchActiveOrders]);
 
-  if (isLoading) return <div className="p-8">Loading Kitchen...</div>;
+  if (isLoading) {
+    return (
+      <div className="p-4 md:p-8 min-h-screen bg-[#f8fafc]">
+        <div className="max-w-7xl mx-auto space-y-6">
+          <div className="bg-white border border-slate-200/90 p-6 rounded-3xl flex flex-col md:flex-row justify-between gap-4">
+            <div className="space-y-2">
+              <Skeleton className="h-8 w-72 rounded-xl" />
+              <Skeleton className="h-4 w-96 max-w-full rounded-lg" />
+            </div>
+            <div className="flex gap-2">
+              <Skeleton className="h-9 w-36 rounded-xl" />
+              <Skeleton className="h-9 w-28 rounded-xl" />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white border border-slate-200/90 p-5 rounded-2xl space-y-4">
+                <div className="flex justify-between items-start">
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-20 rounded-full" />
+                    <Skeleton className="h-6 w-36 rounded-lg" />
+                  </div>
+                  <Skeleton className="h-6 w-20 rounded-lg" />
+                </div>
+                <Skeleton className="h-10 w-full rounded-xl" />
+                <div className="space-y-2">
+                  <Skeleton className="h-14 w-full rounded-xl" />
+                  <Skeleton className="h-14 w-full rounded-xl" />
+                </div>
+                <Skeleton className="h-10 w-full rounded-xl" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const badgeColors = printerSettings?.badge_colors || {
     dineIn: '#3B82F6',
     takeaway: '#F97316',
-    delivery: '#8B5CF6',
+    delivery: '#0EA5E9',
     specialRequests: '#EC4899'
   };
 

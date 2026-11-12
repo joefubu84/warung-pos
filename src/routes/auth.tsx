@@ -4,14 +4,16 @@ import { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Lock, Mail, Store, AlertCircle, ArrowLeft, Loader2, Eye, EyeOff, KeyRound, UserCheck, ChefHat, ShoppingBag, Shield } from "lucide-react";
+import { Lock, Mail, Store, AlertCircle, ArrowLeft, Loader2, Eye, EyeOff, KeyRound, ShieldCheck } from "lucide-react";
 import { toast } from 'sonner';
-import { EMERGENCY_ADMIN_SESSION } from '@/lib/auth-state';
-import { 
-  getStaffAccessConfig, 
-  setActiveStaffUser, 
-  StaffUser, 
-  getPrimaryPageForRole 
+import { createStaffPinSession, clearStaffPinSession } from '@/lib/auth-state';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
+import {
+  getStaffAccessConfig,
+  fetchStaffAccessConfigFromSupabase,
+  setActiveStaffUser,
+  StaffUser,
+  getPrimaryPageForRole
 } from '@/lib/staff-access-config';
 
 const authSearchSchema = z.object({
@@ -40,74 +42,70 @@ function AuthPage() {
 
   const [staffConfig, setStaffConfig] = useState(getStaffAccessConfig());
   const activeStaffList = staffConfig.staff_users.filter(s => s.active);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number>(0);
 
   const [error, setError] = useState<string | null>(() => {
     if (reason === 'unauthorized') return 'Akaun anda memerlukan kebenaran Staf/Admin untuk mengakses halaman tersebut.';
-    if (reason === 'page_restricted') return '🚫 Akses Dihadkan: Halaman ini tidak dibenarkan oleh Admin untuk peranan akaun anda.';
+    if (reason === 'page_restricted') return 'Akses Dihadkan: Halaman ini tidak dibenarkan oleh Admin untuk peranan akaun anda.';
     return null;
   });
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Refresh staff list
+    // Load latest staff directory & clear stale legacy emergency bypass keys
+    clearStaffPinSession();
     setStaffConfig(getStaffAccessConfig());
+    fetchStaffAccessConfigFromSupabase()
+      .then((latest) => {
+        if (latest) setStaffConfig(latest);
+      })
+      .catch(() => {});
   }, []);
-
-  const handleForceStaffLogin = () => {
-    try {
-      localStorage.setItem('warung_emergency_staff_session', JSON.stringify(EMERGENCY_ADMIN_SESSION));
-    } catch (e) {}
-    toast.success('⚡ Akses Staf / Admin POS Diberikan Secara Terus!');
-    const destination = redirectPath || '/counter';
-    window.location.href = destination;
-  };
 
   // PIN QUICK LOGIN HANDLER
   const handlePinLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!pinInput || pinInput.length < 4) {
+    if (Date.now() < lockoutUntil) {
+      const remainingSec = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      setError(`Terlalu banyak cubaan PIN gagal. Sila tunggu ${remainingSec} saat sebelum mencuba lagi.`);
+      return;
+    }
+
+    const trimmedPin = pinInput.trim();
+    if (!trimmedPin || trimmedPin.length < 4) {
       setError('Sila masukkan sekurang-kurangnya 4 digit PIN Pantas.');
       return;
     }
 
     // Match by selected staff or by pin across active staff
-    const matched = selectedStaff 
-      ? (selectedStaff.pin === pinInput.trim() ? selectedStaff : null)
-      : activeStaffList.find(s => s.pin === pinInput.trim());
+    const matched = selectedStaff
+      ? (selectedStaff.pin === trimmedPin ? selectedStaff : null)
+      : activeStaffList.find(s => s.pin === trimmedPin);
 
     if (!matched) {
-      setError('PIN tidak sah. Sila masukkan PIN yang betul atau hubungi Admin.');
+      const nextAttempts = failedAttempts + 1;
+      setFailedAttempts(nextAttempts);
+      if (nextAttempts >= 5) {
+        setLockoutUntil(Date.now() + 60 * 1000);
+        setFailedAttempts(0);
+        setError('Terlalu banyak cubaan PIN gagal. Akses PIN dikunci selama 60 saat demi keselamatan.');
+      } else {
+        setError('PIN tidak sah. Sila masukkan PIN yang betul atau hubungi Admin.');
+      }
+      setPinInput('');
       return;
     }
 
-    // Set active staff user
+    setFailedAttempts(0);
+    setLockoutUntil(0);
     setActiveStaffUser(matched);
+    createStaffPinSession(matched);
 
-    // Set emergency session in localStorage so Supabase guards pass
-    try {
-      localStorage.setItem('warung_emergency_staff_session', JSON.stringify({
-        ...EMERGENCY_ADMIN_SESSION,
-        user: {
-          ...EMERGENCY_ADMIN_SESSION.user,
-          id: matched.id,
-          email: matched.email || 'staff@warungjnj.com',
-          user_metadata: {
-            name: matched.name,
-            role: matched.role
-          },
-          app_metadata: {
-            provider: 'email',
-            providers: ['email'],
-            role: matched.role
-          }
-        }
-      }));
-    } catch (e) {}
-
-    toast.success(`⚡ Selamat bertugas, ${matched.name}!`);
+    toast.success(`Selamat bertugas, ${matched.name}!`);
     const destination = redirectPath || getPrimaryPageForRole(matched.role, matched);
     window.location.href = destination;
   };
@@ -125,18 +123,18 @@ function AuthPage() {
       });
 
       if (signInError) {
-        setError(signInError.message || 'Log masuk gagal. Sila periksa emel dan kata laluan.');
+        setError(getFriendlyErrorMessage(signInError, 'Log masuk gagal. Sila periksa emel dan kata laluan.'));
         setLoading(false);
         return;
       }
 
       const user = signInData?.user;
       if (user) {
-        // 1. Fetch store id
-        const { data: storeData } = await supabase.from('stores').select('id').limit(1).maybeSingle();
-        const storeId = storeData?.id || '';
+        const emailLower = (user.email || '').toLowerCase();
+        const ownerEmails = new Set(['ogyic84@gmail.com', 'joefubu84@gmail.com']);
+        const staffAllowedRoles = new Set(['admin', 'cashier', 'chef', 'staff']);
 
-        // 2. Fetch existing user profile
+        // Fetch existing user profile
         const { data: userProfile } = await supabase
           .from('users')
           .select('id, role, store_id')
@@ -148,20 +146,45 @@ function AuthPage() {
           return;
         }
 
-        // If user profile is missing or not a staff role, upsert staff/admin profile
-        if (!userProfile || (userProfile.role !== 'admin' && userProfile.role !== 'cashier' && userProfile.role !== 'chef' && userProfile.role !== 'staff')) {
-          const assignedRole = user.email?.includes('admin') || user.email === 'joefubu84@gmail.com' ? 'admin' : 'staff';
+        if (userProfile?.role === 'customer' || user.user_metadata?.role === 'customer') {
+          await supabase.auth.signOut();
+          clearStaffPinSession();
+          setError('Akaun pelanggan tidak dibenarkan mengakses Portal Staf. Sila gunakan Portal Pelanggan.');
+          setLoading(false);
+          return;
+        }
+
+        // Match against active staff directory if present
+        const matchedStaff = activeStaffList.find(s => s.email?.toLowerCase() === emailLower);
+
+        if (!userProfile && !ownerEmails.has(emailLower) && !matchedStaff) {
+          await supabase.auth.signOut();
+          clearStaffPinSession();
+          setError('Akaun ini tidak berdaftar sebagai kakitangan Warung J&J. Sila hubungi Admin.');
+          setLoading(false);
+          return;
+        }
+
+        if (userProfile && !staffAllowedRoles.has(userProfile.role) && !ownerEmails.has(emailLower)) {
+          await supabase.auth.signOut();
+          clearStaffPinSession();
+          setError('Akaun anda tidak mempunyai kebenaran Staf POS.');
+          setLoading(false);
+          return;
+        }
+
+        if (!userProfile && (ownerEmails.has(emailLower) || matchedStaff)) {
+          const { data: storeData } = await supabase.from('stores').select('id').limit(1).maybeSingle();
+          const assignedRole = ownerEmails.has(emailLower) ? 'admin' : matchedStaff!.role;
           await supabase.from('users').upsert({
             id: user.id,
-            name: user.user_metadata?.['name'] || user.email?.split('@')[0] || 'Staff Warung',
+            name: user.user_metadata?.['name'] || matchedStaff?.name || user.email?.split('@')[0] || 'Staf Warung',
             email: user.email,
             role: assignedRole as any,
-            store_id: storeId
+            store_id: storeData?.id || ''
           } as any);
         }
 
-        // Match with staff directory if exists
-        const matchedStaff = activeStaffList.find(s => s.email?.toLowerCase() === user.email?.toLowerCase());
         if (matchedStaff) {
           setActiveStaffUser(matchedStaff);
         }
@@ -170,8 +193,9 @@ function AuthPage() {
       const destination = redirectPath || '/counter';
       navigate({ to: destination });
     } catch (err: any) {
-      // In case of network / provider error, allow emergency staff login
-      handleForceStaffLogin();
+      setError(getFriendlyErrorMessage(err, 'Gagal menghubungi pelayan log masuk. Sila cuba sebentar lagi.'));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -217,7 +241,7 @@ function AuthPage() {
             }`}
           >
             <KeyRound className="w-3.5 h-3.5" />
-            <span>PIN Pantas Staf ⚡</span>
+            <span>PIN Pantas Staf</span>
           </button>
 
           <button
@@ -329,7 +353,8 @@ function AuthPage() {
               type="submit"
               className="w-full h-12 bg-orange-500 hover:bg-orange-600 text-white font-black text-xs rounded-xl shadow-md shadow-orange-500/20 transition-all active:scale-[0.98] mt-2 flex items-center justify-center gap-2 cursor-pointer font-heading"
             >
-              <span>Masuk Sekarang ⚡</span>
+              <ShieldCheck className="w-4 h-4" />
+              <span>Masuk Sekarang</span>
             </Button>
           </form>
         )}
@@ -347,7 +372,7 @@ function AuthPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nama@warungjnj.com"
+                  placeholder="nama@warungjnj.online"
                   className="bg-slate-50 border-slate-200 pl-10 h-11 text-xs rounded-xl text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500"
                   required
                 />

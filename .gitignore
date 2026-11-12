@@ -15,9 +15,11 @@ dist-ssr
 .tanstack/**
 .nitro
 *.local
-.env.local
-.env.*.local
-.env.production
+.env
+.env.*
+!.env.example
+coverage
+whatsapp-auth
 
 # Wrangler / Cloudflare
 .wrangler/

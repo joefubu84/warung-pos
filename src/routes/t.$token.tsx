@@ -11,11 +11,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getTodayCashStatus } from '@/lib/cash-guard';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { 
   Lock, 
   Search, 
-  Sparkles, 
+  Tag, 
   Flame, 
   Star, 
   Plus, 
@@ -264,7 +266,7 @@ export function TableQRPage() {
       setIsMemberModalOpen(false);
       toast.success(res.message);
     } catch (err: any) {
-      toast.error(err?.message || "Failed to process member registration.");
+      toast.error(getFriendlyErrorMessage(err, "Pendaftaran ahli gagal diproses."));
     } finally {
       setIsSubmittingMember(false);
     }
@@ -639,7 +641,7 @@ export function TableQRPage() {
           .single();
 
         if (orderError) throw orderError;
-        if (!orderData?.id) throw new Error('Pengkalan data tidak memulangkan pengesahan ID pesanan.');
+        if (!orderData?.id) throw new Error('Sistem pesanan tidak memulangkan pengesahan ID pesanan.');
         placedOrderId = orderData.id;
 
         const orderItemsToInsert = orderItemsToPlace.map(it => ({
@@ -662,7 +664,7 @@ export function TableQRPage() {
 
       // 6. Absolute verification check
       if (!placedOrderId) {
-        throw new Error('Pesanan gagal disahkan oleh pelayan pengkalan data. Sila cuba sebentar lagi.');
+        throw new Error('Pesanan gagal disahkan oleh pelayan kedai. Sila cuba sebentar lagi.');
       }
 
       // 7. Instant Realtime Kitchen Broadcast Notification
@@ -705,12 +707,12 @@ export function TableQRPage() {
       setShowOrderDialog(false);
       setIsMobileCartOpen(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      toast.success("🎉 Pesanan berjaya dihantar terus ke dapur! Loceng dapur telah dibunyikan.");
+      toast.success("Pesanan berjaya dihantar terus ke dapur! Loceng dapur telah dibunyikan.");
     } catch (err: any) {
       console.error('Error placing order:', err);
-      const errMsg = err.message || 'Gagal menghantar pesanan. Sila panggil staf atau cuba sebentar lagi.';
+      const errMsg = getFriendlyErrorMessage(err, 'Gagal menghantar pesanan. Sila panggil staf atau cuba sebentar lagi.');
       setError(errMsg);
-      toast.error(`⛔ ${errMsg}`);
+      toast.error(errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -793,12 +795,12 @@ export function TableQRPage() {
       setShowOrderDialog(false);
       setIsMobileCartOpen(false);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      toast.success("🎉 Tambahan hidangan berjaya dihantar ke dapur!");
+      toast.success("Tambahan hidangan berjaya dihantar ke dapur!");
     } catch (err: any) {
       console.error('Error adding to order:', err);
-      const errMsg = err.message || 'Gagal menambah hidangan ke pesanan sedia ada.';
+      const errMsg = getFriendlyErrorMessage(err, 'Gagal menambah hidangan ke pesanan sedia ada.');
       setError(errMsg);
-      toast.error(`⛔ ${errMsg}`);
+      toast.error(errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -806,12 +808,47 @@ export function TableQRPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col items-center justify-center p-6 font-sans">
-        <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center mb-4 shadow-sm border border-orange-200">
-          <Utensils className="w-7 h-7 text-orange-500 animate-bounce" />
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans">
+        <div className="max-w-md mx-auto min-h-screen bg-[#f8fafc] sm:border-x sm:border-slate-200/80 px-4 pt-5 pb-20 space-y-4">
+          <div className="flex items-center justify-between pt-1 pb-1">
+            <Skeleton className="h-10 w-36 rounded-2xl" />
+            <Skeleton className="h-10 w-32 rounded-2xl" />
+          </div>
+          <Skeleton className="h-36 w-full rounded-3xl" />
+          <div className="flex items-center gap-2 overflow-hidden">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <Skeleton key={idx} className="h-9 w-24 rounded-xl shrink-0" />
+            ))}
+          </div>
+          <Skeleton className="h-11 w-full rounded-2xl" />
+          <div className="space-y-3 pt-1">
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <Skeleton key={idx} className="h-24 w-full rounded-2xl" />
+            ))}
+          </div>
         </div>
-        <p className="text-sm font-bold text-slate-700">Loading Warung J&J Menu...</p>
-        <p className="text-xs text-slate-400 mt-1">Meja #{tableNumber || '..'}</p>
+      </div>
+    );
+  }
+
+  if (error && !tableId) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex items-center justify-center p-6 font-sans">
+        <div className="bg-white rounded-3xl p-6 max-w-sm w-full border border-rose-200 shadow-lg text-center space-y-4">
+          <div className="w-14 h-14 bg-rose-50 border border-rose-200 rounded-2xl text-rose-500 mx-auto flex items-center justify-center">
+            <ShieldAlert className="w-7 h-7" />
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-lg font-black text-slate-900">Kod Meja Tidak Ditemui</h2>
+            <p className="text-slate-500 text-xs leading-relaxed">{error}</p>
+          </div>
+          <Button
+            onClick={() => window.location.reload()}
+            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-xl h-10 text-xs"
+          >
+            Cuba Semula
+          </Button>
+        </div>
       </div>
     );
   }
@@ -907,7 +944,7 @@ export function TableQRPage() {
               className="relative p-2 text-slate-700 hover:text-orange-500 hover:bg-orange-50 rounded-xl transition-colors"
               title={customerPhone ? `VIP Member: +${customerPhone}` : "VIP Loyalty & Ganjaran"}
             >
-              <Sparkles className={`w-4 h-4 ${customerPhone ? 'text-amber-500' : ''}`} />
+              <Award className={`w-4 h-4 ${customerPhone ? 'text-amber-500' : ''}`} />
               {memberData && memberData.points > 0 && (
                 <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-black px-1 rounded-full flex items-center justify-center shadow-sm">
                   {memberData.points}p
@@ -917,12 +954,25 @@ export function TableQRPage() {
           </div>
         </div>
 
+        {error && (
+          <div className="bg-rose-50 border border-rose-200 text-rose-800 px-3.5 py-2.5 rounded-2xl text-xs flex items-center justify-between gap-2">
+            <span>{error}</span>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="text-rose-600 hover:text-rose-800 font-bold shrink-0"
+            >
+              Tutup
+            </button>
+          </div>
+        )}
+
         {/* 2. HERO PROMO BANNER (Fauna Kitchen Warm Editorial Banner) */}
         <div className="bg-gradient-to-br from-orange-500 via-amber-500 to-orange-600 text-white rounded-3xl p-5 shadow-lg relative overflow-hidden flex items-center justify-between border border-orange-400/40">
           <div className="space-y-3 z-10 max-w-[58%]">
             {/* SPECIAL OFFER! BADGE */}
             <div className="inline-flex items-center gap-1.5 bg-white/95 text-orange-950 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-sm">
-              <Sparkles className="w-3 h-3 text-orange-600" />
+              <Tag className="w-3 h-3 text-orange-600" />
               <span>SPECIAL OFFER!</span>
             </div>
 
@@ -1098,12 +1148,12 @@ export function TableQRPage() {
 
       </div>
 
-      {/* 🌟 FLOATING "SEMAK & BAYAR" DOCK (WARNA OREN FLOATING) */}
+      {/* FLOATING "SEMAK & BAYAR" DOCK (WARNA OREN FLOATING) */}
       {cart.length > 0 && (
         <div className="fixed bottom-5 sm:bottom-6 inset-x-3 sm:inset-x-4 max-w-md mx-auto z-50 animate-in fade-in slide-in-from-bottom-4 duration-300 pointer-events-none">
           <div 
             onClick={() => setIsMobileCartOpen(true)}
-            className="pointer-events-auto w-full bg-white/95 backdrop-blur-xl border border-orange-200/90 p-3 sm:p-3.5 rounded-2xl sm:rounded-3xl shadow-[0_14px_40px_rgba(249,115,22,0.3)] flex items-center justify-between gap-3 active:scale-[0.99] transition-all cursor-pointer group hover:border-orange-300"
+            className="pointer-events-auto w-full bg-white/95 backdrop-blur-xl border border-orange-200/90 p-3 sm:p-3.5 rounded-2xl sm:rounded-3xl shadow-xl flex items-center justify-between gap-3 active:scale-[0.99] transition-all cursor-pointer group hover:border-orange-300"
           >
             {/* LEFT: CART SUMMARY */}
             <div className="flex items-center gap-2.5 min-w-0">
@@ -1256,13 +1306,13 @@ export function TableQRPage() {
               <div className="pt-3.5 pb-2 border-t border-slate-200/90 space-y-2.5 bg-orange-50/30 p-3 rounded-2xl border border-orange-100">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-orange-500" />
+                    <Tag className="w-4 h-4 text-orange-500" />
                     <span className="text-xs font-black uppercase tracking-wider text-slate-900">
                       Tambahan / Sampingan (Pilihan Sebelum Bayar)
                     </span>
                   </div>
                   <span className="text-[10px] text-orange-600 font-extrabold bg-orange-100 px-2 py-0.5 rounded-full border border-orange-200">
-                    1-Klik Tambah ⚡
+                    1-Klik Tambah
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 font-medium">
@@ -1441,7 +1491,7 @@ export function TableQRPage() {
         <DialogContent className="bg-white text-slate-900 border-slate-200 max-w-sm rounded-3xl p-6 shadow-2xl">
           <DialogHeader className="text-left space-y-1.5">
             <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-orange-500 mb-1">
-              <Sparkles className="w-5 h-5" />
+              <Award className="w-5 h-5" />
             </div>
             <DialogTitle className="text-lg font-black text-slate-900 tracking-tight">
               {customerPhone ? 'Profil VIP Member' : 'Daftar / Log Masuk VIP'}

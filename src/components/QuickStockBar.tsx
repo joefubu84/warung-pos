@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Search, Flame, Check, X, AlertTriangle, RefreshCw, ExternalLink } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { toast } from 'sonner';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 
 interface StockItem {
   id: string;
@@ -76,7 +77,7 @@ export function QuickStockBar({ onItemUpdated }: { onItemUpdated?: () => void })
 
       if (onItemUpdated) onItemUpdated();
     } catch (err: any) {
-      toast.error('Gagal mengemas kini status stok: ' + err.message);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal mengemas kini status stok.'));
     } finally {
       setUpdatingId(null);
     }

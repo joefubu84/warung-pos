@@ -16,7 +16,6 @@ import {
   Bike,
   QrCode,
   ShoppingBag,
-  Sparkles,
   Image as ImageIcon
 } from "lucide-react";
 import { Button } from "@/components/ui/button";

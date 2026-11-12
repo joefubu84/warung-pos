@@ -22,8 +22,8 @@
 * **Store ID:** `1094d737-8104-4a55-b678-0fe9097beba0`
 * **Lokasi GPS:** Penampang, Sabah (`5.918, 116.082`)
 * **Kadar Penghantaran:** RM 1.00 / km (Caj minimum: RM 2.00, Radius maksimum: 15.0 km, Pesanan Min: RM 15.00)
-* **Admin Staff Email:** `teststaffa@test.com` (`0f81ea5a-e622-4343-a188-62f90dc1ef14`)
-* **Kata Laluan (Password):** `warungjnj2026`
+* **Admin Staff Email:** `<rujuk .env / pengurusan staf>` (`0f81ea5a-e622-4343-a188-62f90dc1ef14`)
+* **Kata Laluan (Password):** `<Disimpan selamat dalam pengurusan identiti — jangan simpan teks biasa>`
 * **Akaun Bank:** Alliance Bank (`101960010088888` / `J&J CAFE & CATERING`)
 
 ### 🏪 Cawangan Tambahan (Store B — Expansion Branch)
@@ -63,8 +63,8 @@
 * **Nama VM:** `aaPanel-Debian` (Network: Bridged Adapter)
 * **IP Tempatan (LAN):** `192.168.0.175`
 * **URL aaPanel:** `https://192.168.0.175:28319/5d47c177`
-* **aaPanel Username:** `3pmvo2yk`
-* **aaPanel Password:** `janda10`
+* **aaPanel Username:** `<Disimpan di pengurus kata laluan / SSH vault>`
+* **aaPanel Password:** `<Disimpan selamat — jangan simpan teks biasa>`
 * **Direktori Projek VM:** `/www/wwwroot/warung-pos`
 * **Pengurusan Proses:** PM2 (`pm2 start "bun run dev" --name "warung-pos"`)
 * **Port Aktif:** `5173` (Vite Web App) & `3000`
@@ -72,7 +72,7 @@
 ### C. Pangkalan Data Supabase (Standalone Baru - Tanpa Lovable)
 * **Project ID:** `gtmzzblomcvgmwzjalja`
 * **Project URL:** `https://gtmzzblomcvgmwzjalja.supabase.co`
-* **Publishable / Anon Key:** `sb_publishable_m0I3z41KlguoyAcf1VM53Q_cuJgYe_Q`
+* **Publishable / Anon Key:** `<Rujuk VITE_SUPABASE_PUBLISHABLE_KEY dalam .env>`
 * **Region:** `aws-0-ap-southeast-1` (Singapore)
 * **Status Migrasi:** Selesai 100% (Semua 71 menu, meja A1–A4, RLS realtime, dan fungsi atomik place_order / get_kitchen_orders telah aktif).
 

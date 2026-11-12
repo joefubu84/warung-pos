@@ -6,7 +6,6 @@ import {
   Search, 
   Plus, 
   Gift, 
-  Sparkles, 
   Crown, 
   Phone, 
   User, 
@@ -226,10 +225,10 @@ function LoyaltyPage() {
   };
 
   const getTierBadge = (tier: string) => {
-    if (tier === 'Platinum') return <span className="bg-purple-100 text-purple-800 border border-purple-200 px-2.5 py-1 rounded-full text-xs font-bold font-mono">💎 Platinum VIP</span>;
-    if (tier === 'Gold') return <span className="bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-1 rounded-full text-xs font-bold font-mono">🥇 Gold VIP</span>;
-    if (tier === 'Silver') return <span className="bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-full text-xs font-bold font-mono">🥈 Silver Member</span>;
-    return <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-1 rounded-full text-xs font-bold font-mono">🥉 Bronze Member</span>;
+    if (tier === 'Platinum') return <span className="bg-slate-900 text-amber-300 border border-slate-700 px-2.5 py-1 rounded-full text-xs font-bold font-mono">Platinum VIP</span>;
+    if (tier === 'Gold') return <span className="bg-amber-100 text-amber-800 border border-amber-300 px-2.5 py-1 rounded-full text-xs font-bold font-mono">Gold VIP</span>;
+    if (tier === 'Silver') return <span className="bg-slate-100 text-slate-700 border border-slate-300 px-2.5 py-1 rounded-full text-xs font-bold font-mono">Silver Member</span>;
+    return <span className="bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-1 rounded-full text-xs font-bold font-mono">Bronze Member</span>;
   };
 
   const emojiPresets = ['💎', '🎁', '🥤', '☕', '🍗', '🍱', '🍔', '💵', '🌟', '🏷️', '🎉', '🔥'];
@@ -279,7 +278,7 @@ function LoyaltyPage() {
 
           <div className="bg-white border border-slate-200/90 p-4 rounded-2xl shadow-xs">
             <span className="text-xs text-slate-500 block">Platinum VIPs (1k+ pts)</span>
-            <span className="text-2xl font-black text-purple-700">{platinumCount}</span>
+            <span className="text-2xl font-black text-slate-900">{platinumCount}</span>
           </div>
         </div>
 

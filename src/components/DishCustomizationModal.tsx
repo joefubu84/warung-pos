@@ -285,7 +285,7 @@ export function DishCustomizationModal({ isOpen, onClose, onAddToCart, menuItem,
                   ? `3. Permintaan Khas Setiap ${fulfillmentType === 'dine_in' ? 'Pinggan' : 'Pek'} (1 - ${quantity})` 
                   : '3. Permintaan Khas Dapur (Pilihan)'}
               </label>
-              <span className="text-[10px] text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">Pilihan Pantas ⚡</span>
+              <span className="text-[10px] text-orange-600 font-bold bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">Pilihan Pantas</span>
             </div>
 
             {quantity > 1 ? (

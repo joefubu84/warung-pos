@@ -15,6 +15,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
+import { Skeleton } from '@/components/ui/skeleton';
+import { getFriendlyErrorMessage } from '@/lib/error-utils';
 import { 
   Dialog, 
   DialogContent, 
@@ -549,7 +551,7 @@ function RiderPortalPage() {
         await fetchRiderProfile(authRes.user.id);
       }
     } catch (err: any) {
-      toast.error(err.message || 'Pendaftaran gagal. Sila cuba lagi.');
+      toast.error(getFriendlyErrorMessage(err, 'Pendaftaran gagal. Sila cuba lagi.'));
     } finally {
       setIsAuthSubmitting(false);
     }
@@ -578,7 +580,7 @@ function RiderPortalPage() {
         await fetchRiderProfile(authRes.user.id);
       }
     } catch (err: any) {
-      toast.error(err.message || 'Log masuk gagal. Sila semak emel & kata laluan.');
+      toast.error(getFriendlyErrorMessage(err, 'Log masuk gagal. Sila semak emel & kata laluan.'));
     } finally {
       setIsAuthSubmitting(false);
     }
@@ -614,7 +616,7 @@ function RiderPortalPage() {
     };
 
     setAvailableJobs(prev => [mockOrder, ...prev]);
-    toast.success('🧪 Pesanan penghantaran ujian berjaya dicipta! Sila klik "Terima Tugasan" untuk mencuba.');
+    toast.success('Pesanan penghantaran ujian berjaya dicipta. Sila klik "Terima Tugasan" untuk mencuba.');
   };
 
   // Claim Delivery Job (Atomic Job Acceptance)
@@ -635,10 +637,10 @@ function RiderPortalPage() {
         console.warn('Backend acceptJob notification:', backendErr);
       }
 
-      toast.success(`🎉 Pesanan #${job.id.slice(0, 8).toUpperCase()} berjaya diterima! Sila ambil di Warung J&J.`);
+      toast.success(`Pesanan #${job.id.slice(0, 8).toUpperCase()} berjaya diterima! Sila ambil di Warung J&J.`);
       setActiveTab('active');
     } catch (err: any) {
-      toast.error(err.message || 'Gagal mengambil tugasan ini.');
+      toast.error(getFriendlyErrorMessage(err, 'Gagal mengambil tugasan ini.'));
     } finally {
       setIsClaiming(null);
     }
@@ -670,11 +672,11 @@ function RiderPortalPage() {
 
       if (error) throw error;
 
-      toast.success('🎉 Penghantaran selesai! Upah dimasukkan ke dalam dompet pendapatan.');
+      toast.success('Penghantaran selesai! Upah dimasukkan ke dalam dompet pendapatan.');
       await fetchDeliveryOrders();
       setActiveTab('wallet');
     } catch (err: any) {
-      toast.error(err.message || 'Ralat mengesahkan penghantaran.');
+      toast.error(getFriendlyErrorMessage(err, 'Ralat mengesahkan penghantaran.'));
     }
   };
 
@@ -729,10 +731,10 @@ function RiderPortalPage() {
         }
       }
 
-      toast.success(newStatus === 'picked_up' ? '🍱 Pesanan telah diambil dari warung!' : '🛵 Anda telah tiba di lokasi pelanggan!');
+      toast.success(newStatus === 'picked_up' ? 'Pesanan telah diambil dari warung!' : 'Anda telah tiba di lokasi pelanggan!');
       sendRiderDeliveryWhatsAppNotification(newStatus, activeJob.customer_phone || '', activeJob.id, extraInfo);
     } catch (err: any) {
-      toast.error('Gagal mengemas kini status: ' + err.message);
+      toast.error(getFriendlyErrorMessage(err, 'Gagal mengemas kini status penghantaran.'));
     }
   };
 
@@ -839,6 +841,25 @@ function RiderPortalPage() {
   const periodTrips = filteredCompletedJobs.length;
   const periodAvg = periodTrips > 0 ? periodEarnings / periodTrips : 0;
   const periodDistance = filteredCompletedJobs.reduce((sum, j) => sum + getJobDistanceKm(j), 0);
+
+  if (isLoadingAuth && !sessionUser) {
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex flex-col justify-center items-center p-4 sm:p-6 font-sans">
+        <div className="w-full max-w-md bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="flex flex-col items-center space-y-3">
+            <Skeleton className="w-20 h-20 rounded-full" />
+            <Skeleton className="h-6 w-44" />
+            <Skeleton className="h-3.5 w-32" />
+          </div>
+          <div className="space-y-4">
+            <Skeleton className="h-11 w-full rounded-xl" />
+            <Skeleton className="h-11 w-full rounded-xl" />
+            <Skeleton className="h-11 w-full rounded-xl" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // 1. AUTHENTICATION VIEW (CLEAN WARUNG BRANDING)
   if (!sessionUser) {
@@ -1086,9 +1107,23 @@ function RiderPortalPage() {
             </div>
 
             {loadingJobs ? (
-              <div className="py-12 text-center text-slate-500 text-xs flex flex-col items-center gap-2">
-                <Loader2 className="w-5 h-5 animate-spin text-orange-500" />
-                <span>Memeriksa pesanan baru...</span>
+              <div className="space-y-3 py-2">
+                {Array.from({ length: 3 }).map((_, idx) => (
+                  <Card key={idx} className="bg-white border border-slate-200/90 rounded-3xl shadow-xs">
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex justify-between items-start border-b border-slate-100 pb-2.5">
+                        <div className="space-y-1.5">
+                          <Skeleton className="h-3 w-20" />
+                          <Skeleton className="h-4 w-36" />
+                        </div>
+                        <Skeleton className="h-6 w-20 rounded-xl" />
+                      </div>
+                      <Skeleton className="h-3.5 w-48" />
+                      <Skeleton className="h-8 w-full rounded-xl" />
+                      <Skeleton className="h-10 w-full rounded-2xl" />
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             ) : availableJobs.length === 0 ? (
               <div className="p-8 text-center bg-white rounded-3xl border border-slate-200/90 text-slate-500 space-y-2 shadow-xs">
@@ -1268,7 +1303,7 @@ function RiderPortalPage() {
 
                     <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2.5">
                       <span className="text-[11px] font-bold text-orange-600 block uppercase tracking-wider">
-                        🚀 Tindakan Kemajuan Penghantaran:
+                        Tindakan Kemajuan Penghantaran:
                       </span>
 
                       {/* STEP 1: PICKED UP */}

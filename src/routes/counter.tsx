@@ -20,6 +20,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, Minus, Search, Trash2, ShoppingCart, CheckCircle2, Lock, Unlock, AlertTriangle, Split, Globe, Radio, Bell, Flame, Maximize, Minimize, Volume2 } from "lucide-react";
 import { COMMON_MODIFIERS, detectModifierBadges } from "@/lib/kitchen-checklist-config";
 import { QuickStockModal } from "@/components/QuickStockModal";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getFriendlyErrorMessage } from "@/lib/error-utils";
 import { toast } from 'sonner';
 
 export const Route = createFileRoute('/counter')({
@@ -71,8 +73,9 @@ function CounterPage() {
   const [selectedTableId, setSelectedTableId] = useState('');
   const [orderType, setOrderType] = useState<'dine_in' | 'takeaway'>('dine_in');
   
-// Submission
+  // Submission
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isClearCartConfirmOpen, setIsClearCartConfirmOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -538,11 +541,14 @@ const addSplitPayment = () => {
   };
 
   const clearCart = () => {
-    if (window.confirm('Clear all items from cart?')) {
-      setCart([]);
-      setCustomerName('');
-      setSelectedTableId('');
-    }
+    setIsClearCartConfirmOpen(true);
+  };
+
+  const confirmClearCart = () => {
+    setCart([]);
+    setCustomerName('');
+    setSelectedTableId('');
+    setIsClearCartConfirmOpen(false);
   };
 
 
@@ -682,16 +688,63 @@ const addSplitPayment = () => {
       setTimeout(() => setSuccessMsg(null), 3000);
 
     } catch (err: any) {
-      setError(err.message || 'Failed to submit order');
+      setError(getFriendlyErrorMessage(err, 'Gagal menghantar pesanan. Sila cuba lagi.'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   if (isLoading) return (
-    <div className="flex h-screen items-center justify-center bg-[#f8fafc]">
-      <div className="w-14 h-14 rounded-2xl bg-orange-100 flex items-center justify-center shadow-xs border border-orange-200">
-        <ShoppingCart className="w-7 h-7 text-orange-500 animate-bounce" />
+    <div className="h-screen w-full bg-[#f8fafc] flex flex-col overflow-hidden">
+      <div className="h-16 bg-white border-b border-slate-200/90 px-5 flex justify-between items-center shrink-0">
+        <div className="flex items-center gap-3">
+          <Skeleton className="w-9 h-9 rounded-full" />
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-32 rounded" />
+            <Skeleton className="h-3 w-44 rounded" />
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Skeleton className="h-8 w-36 rounded-full" />
+          <Skeleton className="h-8 w-28 rounded-full" />
+        </div>
+      </div>
+      <div className="flex-1 flex overflow-hidden">
+        <div className="w-[60%] p-4 space-y-4">
+          <Skeleton className="h-10 w-full rounded-xl" />
+          <div className="flex gap-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-9 w-24 rounded-xl shrink-0" />
+            ))}
+          </div>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="bg-white border border-slate-200/90 rounded-2xl p-3 space-y-3">
+                <Skeleton className="h-36 w-full rounded-xl" />
+                <Skeleton className="h-5 w-3/4 rounded" />
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-6 w-20 rounded" />
+                  <Skeleton className="h-7 w-20 rounded-xl" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="w-[40%] bg-white border-l border-slate-200/90 p-4 flex flex-col justify-between">
+          <div className="space-y-3">
+            <Skeleton className="h-10 w-full rounded-xl" />
+            <div className="flex gap-2">
+              <Skeleton className="h-10 flex-1 rounded-xl" />
+              <Skeleton className="h-10 flex-1 rounded-xl" />
+            </div>
+            <Skeleton className="h-24 w-full rounded-2xl" />
+            <Skeleton className="h-24 w-full rounded-2xl" />
+          </div>
+          <div className="space-y-3 pt-4 border-t border-slate-200">
+            <Skeleton className="h-8 w-full rounded-lg" />
+            <Skeleton className="h-14 w-full rounded-2xl" />
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1350,7 +1403,7 @@ const addSplitPayment = () => {
                 <div className="grid grid-cols-2 gap-2.5">
                   <Button 
                     variant="outline" 
-                    className="h-12 font-black border border-purple-200 bg-purple-50 text-purple-800 hover:bg-purple-100 rounded-2xl shadow-2xs active:scale-95 transition-all cursor-pointer"
+                    className="h-12 font-black border border-sky-200 bg-sky-50 text-sky-800 hover:bg-sky-100 rounded-2xl shadow-2xs active:scale-95 transition-all cursor-pointer"
                     onClick={() => handleSubmitOrder('card')}
                     disabled={isSubmitting}
                   >
@@ -1586,6 +1639,37 @@ const addSplitPayment = () => {
               </Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* CLEAR CART CONFIRMATION DIALOG */}
+      <Dialog open={isClearCartConfirmOpen} onOpenChange={setIsClearCartConfirmOpen}>
+        <DialogContent className="bg-white border border-slate-200 text-slate-900 max-w-sm rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold text-slate-900">
+              Kosongkan Troli Pesanan?
+            </DialogTitle>
+            <DialogDescription className="text-xs text-slate-600">
+              Semua item dalam pesanan semasa akan dipadamkan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsClearCartConfirmOpen(false)}
+              className="border-slate-200 text-slate-700 rounded-xl text-xs"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              onClick={confirmClearCart}
+              className="bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs"
+            >
+              Ya, Kosongkan
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
