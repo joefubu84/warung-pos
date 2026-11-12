@@ -110,8 +110,8 @@ export function ReopenRegisterModal({ isOpen, onClose, onSuccess, closedAt }: Re
           .order('opened_at', { ascending: false })
           .limit(1);
 
-        if (sData && sData.length > 0) {
-          const s = sData[0];
+        const s = sData?.[0];
+        if (s) {
           const openedDateStr = new Date(s.opened_at).toLocaleDateString('en-CA');
           if (openedDateStr === todayDateStr) {
             todayCash = s;

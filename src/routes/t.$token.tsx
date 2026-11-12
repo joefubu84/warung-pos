@@ -79,13 +79,13 @@ interface CartItem {
   price: number;
   quantity: number;
   fulfillmentType: 'dine_in' | 'takeaway';
-  containerSize?: 'small' | 'large' | null;
-  containerCharge?: number;
-  notes?: string;
-  packNotes?: string[];
-  portionSize?: string;
-  spiceLevel?: string;
-  selectedAddons?: { name: string; price: number }[];
+  containerSize?: 'small' | 'large' | null | undefined;
+  containerCharge?: number | undefined;
+  notes?: string | undefined;
+  packNotes?: string[] | undefined;
+  portionSize?: string | undefined;
+  spiceLevel?: string | undefined;
+  selectedAddons?: { name: string; price: number }[] | undefined;
 }
 
 import { getPromoConfig, getDishBadgesMap, DishBadgeConfig } from '@/lib/addons-config';
@@ -149,11 +149,12 @@ export function TableQRPage() {
         i.menuItemId === resolvedMenuItemId || 
         i.name.trim().toLowerCase() === addon.name.trim().toLowerCase()
       );
-      if (existingIdx >= 0) {
+      const existingItem = existingIdx >= 0 ? prev[existingIdx] : undefined;
+      if (existingItem) {
         const updated = [...prev];
         updated[existingIdx] = {
-          ...updated[existingIdx],
-          quantity: updated[existingIdx].quantity + 1
+          ...existingItem,
+          quantity: existingItem.quantity + 1
         };
         return updated;
       }
@@ -642,10 +643,11 @@ export function TableQRPage() {
 
         if (orderError) throw orderError;
         if (!orderData?.id) throw new Error('Sistem pesanan tidak memulangkan pengesahan ID pesanan.');
-        placedOrderId = orderData.id;
+        const confirmedOrderId: string = orderData.id;
+        placedOrderId = confirmedOrderId;
 
         const orderItemsToInsert = orderItemsToPlace.map(it => ({
-          order_id: placedOrderId,
+          order_id: confirmedOrderId,
           menu_item_id: it.menu_item_id,
           quantity: it.quantity,
           price_at_order: it.price,

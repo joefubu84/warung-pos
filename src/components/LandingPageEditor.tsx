@@ -187,7 +187,7 @@ export function LandingPageEditor() {
           .from('landing_page_config')
           .insert({
             store_id: targetStoreId,
-            config: { landing_page: newConfig },
+            config: { landing_page: newConfig } as any,
             updated_at: new Date().toISOString(),
           });
 
@@ -247,7 +247,9 @@ export function LandingPageEditor() {
 
   const handleHighlightChange = (index: number, field: keyof Highlight, value: string) => {
     const newHighlights = [...config.highlights_section];
-    newHighlights[index] = { ...newHighlights[index], [field]: value };
+    const current = newHighlights[index];
+    if (!current) return;
+    newHighlights[index] = { ...current, [field]: value };
     setConfig((prev) => ({ ...prev, highlights_section: newHighlights }));
   };
 

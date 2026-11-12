@@ -81,14 +81,15 @@ function UserLoginPage() {
       if (authErr) throw authErr;
 
       if (data.user) {
-        const uName = data.user.user_metadata?.full_name || data.user.user_metadata?.name || identifier.split('@')[0];
-        const uPhone = data.user.user_metadata?.phone || data.user.user_metadata?.phone_number || (isPhone ? cleanPhone : '');
+        const meta = data.user.user_metadata;
+        const uName = meta?.['full_name'] || meta?.['name'] || identifier.split('@')[0];
+        const uPhone = meta?.['phone'] || meta?.['phone_number'] || (isPhone ? cleanPhone : '');
         
         const gUser: GoogleAuthUser = {
           id: data.user.id,
           email: data.user.email || '',
           name: uName,
-          avatarUrl: data.user.user_metadata?.avatar_url
+          avatarUrl: meta?.['avatar_url']
         };
         saveStoredGoogleUser(gUser);
 
@@ -213,6 +214,7 @@ function UserLoginPage() {
         }
       };
     }
+    return undefined;
   }, []);
 
   return (

@@ -89,7 +89,7 @@ function InventoryPage() {
             const newItem = payload.new as InventoryItem;
             setItems(prev => [...prev, newItem]);
           } else if (payload.eventType === 'DELETE') {
-            setItems(prev => prev.filter(it => it.id !== payload.old.id));
+            setItems(prev => prev.filter(it => it.id !== payload.old['id']));
           }
         }
       )

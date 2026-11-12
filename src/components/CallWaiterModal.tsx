@@ -16,7 +16,7 @@ interface CallWaiterModalProps {
   isOpen: boolean;
   onClose: () => void;
   tableNumber: string;
-  storeId?: string;
+  storeId?: string | undefined;
 }
 
 export function CallWaiterModal({ isOpen, onClose, tableNumber, storeId }: CallWaiterModalProps) {

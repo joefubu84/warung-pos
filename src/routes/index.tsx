@@ -76,7 +76,7 @@ function LandingPage() {
             .limit(1)
             .maybeSingle();
           if ((storeData?.settings as any)?.landing_page_config) {
-            configData = (storeData.settings as any).landing_page_config;
+            configData = (storeData?.settings as any).landing_page_config;
           }
         } catch (e) {}
       }

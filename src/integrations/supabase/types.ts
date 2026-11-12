@@ -274,6 +274,33 @@ export type Database = {
           },
         ]
       }
+      landing_page_config: {
+        Row: {
+          config: Json | null
+          created_at: string | null
+          hero_section: Json | null
+          id: string
+          store_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string | null
+          hero_section?: Json | null
+          id?: string
+          store_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string | null
+          hero_section?: Json | null
+          id?: string
+          store_id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       members: {
         Row: {
           created_at: string
@@ -934,6 +961,7 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_auth_store_id: { Args: never; Returns: string }
+      get_kitchen_orders: { Args: { p_store_id: string }; Returns: Json }
       get_nearest_available_rider: {
         Args: { p_lat: number; p_lng: number }
         Returns: {
@@ -956,6 +984,10 @@ export type Database = {
       get_order_status: { Args: { p_order_id: string }; Returns: Json }
       place_order: {
         Args: { p_items: Json; p_order: Json; p_payments?: Json }
+        Returns: Json
+      }
+      update_kitchen_order_status: {
+        Args: { p_order_id: string; p_status: string }
         Returns: Json
       }
     }

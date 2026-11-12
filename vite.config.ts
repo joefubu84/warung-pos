@@ -13,6 +13,11 @@ export default defineConfig({
     server: { entry: "server" },
   },
   nitro: ({
+    cloudflare: {
+      wrangler: {
+        name: "warung-pos",
+      },
+    },
     rollupConfig: {
       output: {
         inlineDynamicImports: true,

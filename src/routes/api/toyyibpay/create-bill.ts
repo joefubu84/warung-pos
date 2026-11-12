@@ -23,7 +23,7 @@ const CreateBillSchema = z.object({
 });
 
 function mapToyyibPayGatewayError(rawText: string, isSandbox: boolean): string {
-  const clean = rawText.replace(/[\[\]"']/g, '').trim();
+  const clean = rawText.replace(/["'[\]]/g, '').trim();
 
   if (clean.includes('KEY-DID-NOT-EXIST') || clean.includes('KEY-NOT-EXIST')) {
     return isSandbox

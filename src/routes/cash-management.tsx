@@ -324,8 +324,8 @@ export function CashManagementPage() {
             .order('opened_at', { ascending: false })
             .limit(1);
 
-          if (sessionData && sessionData.length > 0) {
-            const latestSession = sessionData[0];
+          const latestSession = sessionData?.[0];
+          if (latestSession) {
             const openedDateStr = new Date(latestSession.opened_at).toLocaleDateString('en-CA');
             if (openedDateStr === todayDateStr) {
               cashData = {
@@ -519,7 +519,7 @@ export function CashManagementPage() {
             date: todayDateStr,
             opening_balance: balance,
             opened_by_name: effectiveStaffName
-          });
+          } as any);
 
         if (!error) {
           inserted = true;
@@ -548,7 +548,7 @@ export function CashManagementPage() {
             .from('cash_sessions')
             .insert({
               store_id: storeId || '1094d737-8104-4a55-b678-0fe9097beba0',
-              staff_id: userId || null,
+              staff_id: (userId || null) as any,
               opening_balance: balance,
               opened_at: new Date().toISOString()
             });

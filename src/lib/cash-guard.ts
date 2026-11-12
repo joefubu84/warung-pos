@@ -20,8 +20,8 @@ export async function getTodayCashStatus(storeId?: string | null): Promise<Daily
       .order('created_at', { ascending: false })
       .limit(1);
 
-    if (!error && data && data.length > 0) {
-      const latestRecord = data[0];
+    const latestRecord = data?.[0];
+    if (!error && latestRecord) {
       if (latestRecord.closed_at) {
         return {
           status: 'CLOSED',
@@ -43,8 +43,8 @@ export async function getTodayCashStatus(storeId?: string | null): Promise<Daily
       .order('opened_at', { ascending: false })
       .limit(1);
 
-    if (!sessionErr && sessionData && sessionData.length > 0) {
-      const latestSession = sessionData[0];
+    const latestSession = sessionData?.[0];
+    if (!sessionErr && latestSession) {
       const openedDateStr = new Date(latestSession.opened_at).toLocaleDateString('en-CA');
       if (openedDateStr === todayDateStr) {
         if (latestSession.closed_at) {

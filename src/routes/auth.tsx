@@ -146,7 +146,7 @@ function AuthPage() {
           return;
         }
 
-        if (userProfile?.role === 'customer' || user.user_metadata?.role === 'customer') {
+        if (userProfile?.role === 'customer' || user.user_metadata?.['role'] === 'customer') {
           await supabase.auth.signOut();
           clearStaffPinSession();
           setError('Akaun pelanggan tidak dibenarkan mengakses Portal Staf. Sila gunakan Portal Pelanggan.');

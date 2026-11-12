@@ -414,11 +414,12 @@ export function TableQrPrintModal({
   }, []);
 
   React.useEffect(() => {
+    const firstTable = tables[0];
     if (selectedTable) {
       setActiveTable(selectedTable);
       setPrintMode('single');
-    } else if (tables.length > 0 && !activeTable) {
-      setActiveTable(tables[0]);
+    } else if (firstTable && !activeTable) {
+      setActiveTable(firstTable);
     }
   }, [selectedTable, tables, activeTable]);
 

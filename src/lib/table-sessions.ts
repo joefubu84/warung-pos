@@ -118,7 +118,7 @@ function getOrCreateEphemeralSigningKey(): Uint8Array {
       }
       window.crypto.getRandomValues(bytes);
       let rawStr = '';
-      for (let i = 0; i < bytes.length; i++) rawStr += String.fromCharCode(bytes[i]);
+      for (let i = 0; i < bytes.length; i++) rawStr += String.fromCharCode(bytes[i] ?? 0);
       sessionStorage.setItem(storageKey, btoa(rawStr));
       return bytes;
     } catch {
@@ -200,7 +200,7 @@ export function checkOrderRateLimit(deviceId: string): { allowed: boolean; remai
  */
 export async function validateOrderPricesAgainstDB(
   storeId: string, 
-  cartItems: Array<{ menuItemId: string; price: number; quantity: number; containerCharge?: number }>
+  cartItems: Array<{ menuItemId: string; price: number; quantity: number; containerCharge?: number | undefined }>
 ): Promise<{ isValid: boolean; expectedTotal: number; message?: string }> {
   if (cartItems.length === 0) return { isValid: false, expectedTotal: 0, message: 'Cart is empty.' };
 

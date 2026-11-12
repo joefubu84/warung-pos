@@ -186,9 +186,21 @@ export function resetRateLimitStore(): void {
   rateLimitStore.clear();
 }
 
+function stripControlChars(input: string): string {
+  let out = '';
+  for (let i = 0; i < input.length; i++) {
+    const code = input.charCodeAt(i);
+    if ((code >= 0 && code <= 31) || code === 127) {
+      out += ' ';
+    } else {
+      out += input[i] ?? '';
+    }
+  }
+  return out;
+}
+
 export function sanitizeText(value: string, maxLen = 200): string {
-  return value
-    .replace(/[\u0000-\u001F\u007F]/g, ' ')
+  return stripControlChars(value)
     .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, ' ')
     .replace(/<[^>]*>/g, '')
     .replace(/\s+/g, ' ')

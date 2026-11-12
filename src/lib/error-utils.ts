@@ -51,8 +51,9 @@ export function extractRawErrorMessage(error: unknown): string {
   if (!error) return '';
   if (typeof error === 'string') return error;
   if (error instanceof Error) return error.message || '';
-  if (typeof error === 'object' && 'message' in error && typeof (error as any).message === 'string') {
-    return (error as any).message;
+  if (typeof error === 'object' && 'message' in error) {
+    const msg = (error as { message?: unknown }).message;
+    if (typeof msg === 'string') return msg;
   }
   return '';
 }

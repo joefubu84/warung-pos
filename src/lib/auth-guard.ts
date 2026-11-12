@@ -185,7 +185,7 @@ export async function requireAuth(location: { pathname: string }, auth: AuthStat
       if (fallbackTarget !== location.pathname) {
         throw redirect({
           to: fallbackTarget as any,
-          search: { reason: 'page_restricted' },
+          search: { reason: 'page_restricted' } as any,
         });
       }
     }

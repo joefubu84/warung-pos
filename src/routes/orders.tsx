@@ -1181,7 +1181,7 @@ function OrdersPage() {
                                     .map((l: string) => {
                                       const clean = l.replace(/^\+\s*/, '').trim();
                                       const priceMatch = clean.match(/RM\s*([\d.]+)/i);
-                                      const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                                      const price = priceMatch?.[1] ? parseFloat(priceMatch[1]) : 0;
                                       const name = clean.replace(/(\(RM\s*[\d.]+\)|RM\s*[\d.]+)/i, '').trim();
                                       return { name, price };
                                     });
@@ -1231,7 +1231,7 @@ function OrdersPage() {
                                     .map((l: string) => {
                                       const clean = l.replace(/^\+\s*/, '').trim();
                                       const priceMatch = clean.match(/RM\s*([\d.]+)/i);
-                                      const price = priceMatch ? parseFloat(priceMatch[1]) : 0;
+                                      const price = priceMatch?.[1] ? parseFloat(priceMatch[1]) : 0;
                                       const name = clean.replace(/(\(RM\s*[\d.]+\)|RM\s*[\d.]+)/i, '').trim();
                                       return { name, price };
                                     });
